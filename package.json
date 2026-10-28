@@ -1,0 +1,20 @@
+{
+  "name": "rocket-forge",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "serve": "node tools/serve.mjs",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node tools/test_booster_landing.mjs && node tools/test_iss.mjs && node tools/test_moon.mjs && node tools/test_plane.mjs && node tools/test_rotation.mjs && node tools/test_camera_controls.mjs && node tools/test_plane_turn.mjs && node tools/test_rover_drive.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1",
+    "vite": "^6.0.0"
+  }
+}

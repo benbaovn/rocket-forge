@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rocket Forge – Lắp ráp & Phóng tên lửa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;600;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/node_modules/three/build/three.module.js",
+      "three/addons/": "/node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <div id="loading">
+    <div class="load-logo">ROCKET<span>FORGE</span></div>
+    <div class="load-bar"><div id="load-fill"></div></div>
+    <div id="load-text">Đang tạo vật liệu & shader…</div>
+  </div>
+
+  <!-- ================= BUILD UI ================= -->
+  <div id="build-ui" class="ui hidden">
+    <header class="topbar glass">
+      <div class="logo">ROCKET<span>FORGE</span></div>
+      <div class="crumb">Xưởng lắp ráp · VAB</div>
+      <button id="gpu-badge" class="gpu-badge" type="button" title="Thông tin GPU & Đồ họa (Click để mở cài đặt)">
+        <span class="gpu-dot"></span>
+        <span id="gpu-badge-name">GPU: Đang nhận diện…</span>
+        <span id="gpu-badge-fps" class="gpu-fps">— FPS</span>
+      </button>
+      <div class="top-actions">
+        <button id="btn-mission" class="btn mission-btn">🎯 <span id="mission-name">Bay tự do</span></button>
+        <select id="preset" class="btn">
+          <option value="">📐 Mẫu tên lửa…</option>
+        </select>
+        <button id="btn-undo" class="btn">↶ Hoàn tác</button>
+        <button id="btn-clear" class="btn danger">🗑 Xóa hết</button>
+        <button id="btn-settings" class="btn icon" title="Cài đặt (O)">⚙</button>
+      </div>
+    </header>
+
+    <aside id="palette" class="glass panel left">
+      <h3>Linh kiện</h3>
+      <div id="part-list"></div>
+    </aside>
+
+    <aside id="stats" class="glass panel right">
+      <h3>Thông số</h3>
+      <div class="stat-grid">
+        <div class="stat"><label>Khối lượng</label><b id="st-mass">0 t</b></div>
+        <div class="stat"><label>Chiều cao</label><b id="st-height">0 m</b></div>
+        <div class="stat"><label>TWR cất cánh</label><b id="st-twr">–</b></div>
+        <div class="stat"><label>Tổng Δv</label><b id="st-dv">0 m/s</b></div>
+      </div>
+      <div class="dv-target">
+        <div class="dv-bar"><div id="dv-fill"></div><i style="left:35%" data-l="Không gian"></i><i style="left:78%" data-l="Quỹ đạo"></i></div>
+      </div>
+      <h4>Các tầng</h4>
+      <div id="stage-list"></div>
+      <div id="warnings"></div>
+    </aside>
+
+    <div id="sel-box" class="glass hidden">
+      <div class="sel-title-row">
+        <div id="sel-name">—</div>
+        <div id="sel-angles" class="sel-angles">X: 0° · Y: 0° · Z: 0°</div>
+      </div>
+      <div id="sel-desc"></div>
+      <div class="rot-toolbar">
+        <button id="btn-rot-x" class="btn rot-btn rot-x" title="Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X">🔴 Xoay X (90°)</button>
+        <button id="btn-rot-y" class="btn rot-btn rot-y" title="Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y">🟢 Xoay Y (90°)</button>
+        <button id="btn-rot-z" class="btn rot-btn rot-z" title="Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z">🔵 Xoay Z (90°)</button>
+        <button id="btn-rot-reset" class="btn rot-btn rot-reset" title="Đặt lại góc xoay ban đầu (0°)">↺ Đặt lại</button>
+      </div>
+      <button id="btn-side-toggle" class="btn wide" style="margin-bottom:6px;background:rgba(56,189,248,0.18);border-color:rgba(56,189,248,0.45);color:#7dd3fc;">↔ Gắn sang 2 bên</button>
+      <button id="btn-del" class="btn danger">Xóa linh kiện (Del)</button>
+    </div>
+
+    <div id="quick-rot-bar" class="glass rot-bar">
+      <span class="rot-bar-title">📐 XOAY 3D:</span>
+      <button id="bar-rot-x" class="btn rot-btn rot-x" title="Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X">🔴 Trục X (90°)</button>
+      <button id="bar-rot-y" class="btn rot-btn rot-y" title="Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y">🟢 Trục Y (90°)</button>
+      <button id="bar-rot-z" class="btn rot-btn rot-z" title="Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z">🔵 Trục Z (90°)</button>
+      <button id="bar-rot-reset" class="btn rot-btn rot-reset" title="Đặt lại góc xoay ban đầu (0°)">↺ 0°</button>
+    </div>
+
+    <div class="hint glass">🖱 Kéo linh kiện · Click chọn · <b>Phím 1/2/3 hoặc X/Y/Z</b> xoay 3 chiều · <kbd>Del</kbd> xóa · <kbd>Ctrl+Z</kbd> hoàn tác</div>
+    <button id="btn-launchpad" class="big-btn">🚀 RA BỆ PHÓNG</button>
+  </div>
+
+  <!-- ================= LAUNCH UI ================= -->
+  <div id="launch-ui" class="ui hidden">
+    <div id="countdown"></div>
+    <div id="milestone"></div>
+
+    <div class="hud hud-left glass">
+      <div class="big-readout"><label>ĐỘ CAO</label><b id="h-alt">0</b><small id="h-alt-u">m</small></div>
+      <div class="big-readout"><label id="h-vel-l">VẬN TỐC</label><b id="h-vel">0</b><small>m/s</small></div>
+      <div class="rows">
+        <div><span>Vận tốc đứng</span><b id="h-vs">0</b></div>
+        <div><span>Vận tốc ngang</span><b id="h-hs">0</b></div>
+        <div><span>Mach</span><b id="h-mach">0.0</b></div>
+        <div><span>Gia tốc</span><b id="h-g">1.0 G</b></div>
+        <div><span>Áp suất động</span><b id="h-q">0 kPa</b></div>
+        <div><span>Góc nghiêng</span><b id="h-pitch">0°</b></div>
+        <div><span>Thời gian bay</span><b id="h-met">T+00:00</b></div>
+      </div>
+      <h4 class="sub">Quỹ đạo · <span id="h-body">Trái Đất</span></h4>
+      <div class="rows">
+        <div><span>Viễn điểm (Ap)</span><b id="h-ap-alt">—</b></div>
+        <div><span>Cận điểm (Pe)</span><b id="h-pe-alt">—</b></div>
+        <div><span>Chu kỳ</span><b id="h-period">—</b></div>
+      </div>
+      <div id="h-target-box" class="hidden">
+        <h4 class="sub" id="h-target-name">Mục tiêu</h4>
+        <div class="rows">
+          <div><span>Khoảng cách</span><b id="h-tdist">—</b></div>
+          <div><span>Vận tốc tương đối</span><b id="h-trel">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud hud-right glass">
+      <h4>Tầng &amp; nhiên liệu</h4>
+      <div id="h-stages"></div>
+      <div class="rows">
+        <div><span>SAS</span><b id="h-sas">BẬT</b></div>
+        <div><span>Chế độ SAS</span><b id="h-sasmode">Giữ hướng</b></div>
+        <div><span>Lái tự động</span><b id="h-ap">TẮT</b></div>
+        <div><span>Tua nhanh</span><b id="h-warp">1×</b></div>
+        <div><span>Camera</span><b id="h-cam">Bám theo</b></div>
+      </div>
+      <div id="h-prog" class="prog hidden"></div>
+      <button id="btn-autopilot" class="btn" style="width: 100%; margin-top: 8px; font-weight: 700; background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.45); color: #86efac; padding: 7px 10px;">🤖 TỰ LÁI NHIỆM VỤ (G)</button>
+      <button id="btn-toggle-map" class="btn" style="width: 100%; margin-top: 6px; font-weight: 700; background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.5); color: #7dd3fc; padding: 7px 10px;">🌐 BẢN ĐỒ QUỸ ĐẠO 3D (M)</button>
+      <button id="gpu-launch-badge" class="gpu-badge gpu-launch" type="button" title="Đồ họa GPU & FPS (O)">
+        <span class="gpu-dot"></span>
+        <span id="gpu-launch-name">RTX 4070 Ti</span>
+        <span id="gpu-launch-fps" class="gpu-fps">— FPS</span>
+      </button>
+    </div>
+
+    <div id="mission-panel" class="glass hidden">
+      <div class="mp-title" id="mp-title">Nhiệm vụ</div>
+      <div id="mp-list"></div>
+    </div>
+
+    <div id="events"></div>
+
+    <div id="dock-hud" class="hidden">
+      <div class="dk-ring"></div>
+      <div class="dk-dot" id="dk-dot"></div>
+      <div class="dk-info" id="dk-info"></div>
+    </div>
+
+    <div id="pip" class="hidden"><div class="pip-label" id="pip-label">TẦNG 1</div><div class="pip-status" id="pip-status"></div></div>
+    
+    <!-- ================= 3D ORBITAL MAP VIEWPORT ================= -->
+    <div id="map" class="hidden">
+      <canvas id="map-gl"></canvas>
+      <canvas id="map-hud"></canvas>
+      <div id="map-focus-bar" class="glass">
+        <button type="button" class="map-fbtn active" data-focus="vessel">🚀 Tàu</button>
+        <button type="button" class="map-fbtn" data-focus="sun">☀️ Mặt Trời</button>
+        <button type="button" class="map-fbtn" data-focus="mercury">⚪ Sao Thủy</button>
+        <button type="button" class="map-fbtn" data-focus="venus">🟡 Sao Kim</button>
+        <button type="button" class="map-fbtn" data-focus="earth">🌍 Trái Đất</button>
+        <button type="button" class="map-fbtn" data-focus="iss">🛰️ ISS</button>
+        <button type="button" class="map-fbtn" data-focus="moon">🌕 Mặt Trăng</button>
+        <button type="button" class="map-fbtn" data-focus="mars">🔴 Sao Hỏa</button>
+        <button type="button" class="map-fbtn" data-focus="phobos">🪨 Phobos</button>
+        <button type="button" class="map-fbtn" data-focus="deimos">🪨 Deimos</button>
+        <button type="button" class="map-fbtn" data-focus="jupiter">🟠 Sao Mộc</button>
+        <button type="button" class="map-fbtn" data-focus="io">🌋 Io</button>
+        <button type="button" class="map-fbtn" data-focus="europa">🧊 Europa</button>
+        <button type="button" class="map-fbtn" data-focus="ganymede">🌕 Ganymede</button>
+        <button type="button" class="map-fbtn" data-focus="callisto">🪨 Callisto</button>
+        <button type="button" class="map-fbtn" data-focus="saturn">🪐 Sao Thổ</button>
+        <button type="button" class="map-fbtn" data-focus="mimas">🪨 Mimas</button>
+        <button type="button" class="map-fbtn" data-focus="enceladus">❄️ Enceladus</button>
+        <button type="button" class="map-fbtn" data-focus="tethys">🧊 Tethys</button>
+        <button type="button" class="map-fbtn" data-focus="dione">🌕 Dione</button>
+        <button type="button" class="map-fbtn" data-focus="rhea">🌕 Rhea</button>
+        <button type="button" class="map-fbtn" data-focus="titan">🟠 Titan</button>
+        <button type="button" class="map-fbtn" data-focus="iapetus">🌓 Iapetus</button>
+        <button type="button" class="map-fbtn" data-focus="uranus">🩵 Thiên Vương</button>
+        <button type="button" class="map-fbtn" data-focus="miranda">🪨 Miranda</button>
+        <button type="button" class="map-fbtn" data-focus="ariel">🧊 Ariel</button>
+        <button type="button" class="map-fbtn" data-focus="umbriel">🌑 Umbriel</button>
+        <button type="button" class="map-fbtn" data-focus="titania">🌕 Titania</button>
+        <button type="button" class="map-fbtn" data-focus="oberon">🪨 Oberon</button>
+        <button type="button" class="map-fbtn" data-focus="neptune">🔵 Hải Vương</button>
+        <button type="button" class="map-fbtn" data-focus="triton">❄️ Triton</button>
+        <button type="button" class="map-fbtn" data-focus="pluto">🟤 Diêm Vương</button>
+      </div>
+      <div id="map-telemetry" class="glass">
+        <h4>THÔNG SỐ QUỸ ĐẠO</h4>
+        <div id="map-tel-rows"></div>
+        <div id="map-obj-list"></div>
+      </div>
+      <div id="map-obj-popup" class="glass hidden">
+        <div class="mop-info">
+          <b id="mop-name">Tầng tách #1</b>
+          <span id="mop-meta">Quỹ đạo Trái Đất · 120 km</span>
+        </div>
+        <button type="button" id="btn-map-delete" class="btn danger mop-del-btn">🗑️ Xóa vật thể</button>
+      </div>
+      <button id="map-close-btn" class="btn" title="Đóng bản đồ (M)">✕</button>
+    </div>
+    <div id="map-legend" class="glass hidden">
+      <span>🖱 <kbd>Chuột trái</kbd> Xoay 3D</span>
+      <span>🖱 <kbd>Chuột phải</kbd> Lia</span>
+      <span>📜 <kbd>Cuộn</kbd> Thu phóng</span>
+      <span><kbd>,</kbd>/<kbd>.</kbd> Tua thời gian</span>
+      <span><kbd>Tab</kbd> Đổi tâm</span>
+      <span><kbd>M</kbd> Đóng</span>
+    </div>
+
+    <div class="hud hud-bottom glass">
+      <div class="throttle">
+        <label>GA</label>
+        <div class="thr-bar"><div id="h-thr"></div></div>
+        <b id="h-thr-v">100%</b>
+      </div>
+      <div class="keys">
+        <span><kbd>Shift</kbd>/<kbd>Ctrl</kbd> ga</span>
+        <span><kbd>Z</kbd>/<kbd>X</kbd> max/tắt</span>
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> lái 3D theo camera</span>
+        <span><kbd>Space</kbd> tách tầng</span>
+        <span><kbd>T</kbd> SAS</span>
+        <span><kbd>F</kbd> chế độ SAS</span>
+        <span><kbd>G</kbd> tự lái</span>
+        <span><kbd>M</kbd> bản đồ</span>
+        <span><kbd>B</kbd> xem tầng 1</span>
+        <span><kbd>C</kbd> camera</span>
+        <span><kbd>,</kbd>/<kbd>.</kbd> tua</span>
+        <span><kbd>I</kbd><kbd>K</kbd><kbd>J</kbd><kbd>L</kbd><kbd>H</kbd><kbd>N</kbd> RCS</span>
+        <span><kbd>P</kbd> dù/chân</span>
+        <span><kbd>O</kbd> cài đặt</span>
+        <span><kbd>Esc</kbd> menu</span>
+      </div>
+    </div>
+
+    <button id="btn-go" class="big-btn">▶ BẮT ĐẦU ĐẾM NGƯỢC</button>
+    <button id="btn-back" class="btn back">← Về xưởng</button>
+  </div>
+
+  <div id="mission-modal" class="modal hidden"><div class="modal-card glass wide-card"><h2>Chọn nhiệm vụ</h2><div id="mission-cards"></div><button class="btn wide" id="btn-mission-close">Đóng</button></div></div>
+
+  <!-- ================= MODALS ================= -->
+  <div id="menu" class="modal hidden">
+    <div class="modal-card glass">
+      <h2>Tạm dừng</h2>
+      <button class="btn wide" data-act="resume">Tiếp tục</button>
+      <button class="btn wide" data-act="restart">Phóng lại</button>
+      <button class="btn wide" data-act="build">Về xưởng lắp ráp</button>
+      <div class="setting">
+        <label id="lbl-quality-1">Chất lượng đồ họa</label>
+        <div class="seg" id="quality-seg">
+          <button data-q="rtx" class="rtx-btn">⚡ RTX 4070 Ti</button><button data-q="ultra">Ultra</button><button data-q="high">High</button><button data-q="medium">Medium</button>
+        </div>
+      </div>
+      <div class="setting">
+        <label id="lbl-lang-1">Ngôn ngữ / Language</label>
+        <div class="seg" id="lang-seg">
+          <button type="button" id="btn-menu-lang-vi" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button type="button" id="btn-menu-lang-en" data-lang="en">🇬🇧 Tiếng Anh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" class="modal hidden">
+    <div class="modal-card glass">
+      <h2>Cài đặt</h2>
+      <div class="gpu-card" id="gpu-card">
+        <div class="gpu-card-hdr">
+          <span class="gpu-dot"></span>
+          <b id="gpu-model-name">NVIDIA GeForce RTX 4070 Ti</b>
+          <span class="gpu-tag" id="gpu-tier-tag">RTX EXTREME</span>
+        </div>
+        <div class="gpu-card-row"><span id="lbl-gpu-api">API &amp; Phần cứng</span><b id="gpu-caps">WebGL2 · 8× MSAA · 16× Aniso</b></div>
+        <div class="gpu-card-row"><span id="lbl-gpu-pipe">Pipeline Đồ họa</span><b id="gpu-pipeline">Shadow 8192² · GTAO 24-spp · Sky 28-step</b></div>
+        <div class="gpu-card-row"><span id="lbl-gpu-perf">Hiệu năng thực tế</span><b id="gpu-perf">— FPS · — Draw Calls</b></div>
+      </div>
+      <div class="setting">
+        <label id="lbl-quality-2">Chất lượng đồ họa</label>
+        <div class="seg" id="quality-seg2">
+          <button data-q="rtx" class="rtx-btn">⚡ RTX 4070 Ti</button><button data-q="ultra">Ultra</button><button data-q="high">High</button><button data-q="medium">Medium</button>
+        </div>
+      </div>
+      <div class="setting">
+        <label id="lbl-lang-2">Ngôn ngữ / Language</label>
+        <div class="seg" id="lang-seg2">
+          <button type="button" id="btn-lang-vi" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button type="button" id="btn-lang-en" data-lang="en">🇬🇧 Tiếng Anh</button>
+        </div>
+      </div>
+      <button class="btn wide" id="btn-settings-close">Đóng</button>
+    </div>
+  </div>
+
+  <div id="result" class="modal hidden">
+    <div class="modal-card glass">
+      <h2 id="r-title">Kết quả</h2>
+      <div id="r-rank" class="rank">A</div>
+      <div id="r-sub"></div>
+      <div id="r-reason" class="r-reason hidden"></div>
+      <div class="stat-grid">
+        <div class="stat"><label>Độ cao tối đa</label><b id="r-alt">0</b></div>
+        <div class="stat"><label>Vận tốc tối đa</label><b id="r-vel">0</b></div>
+        <div class="stat"><label>Thời gian bay</label><b id="r-time">0</b></div>
+        <div class="stat"><label>G tối đa</label><b id="r-g">0</b></div>
+      </div>
+      <div class="row-btns">
+        <button class="btn wide" data-act="restart">🔁 Phóng lại</button>
+        <button class="btn wide" data-act="build">🔧 Sửa tên lửa</button>
+        <button class="btn wide" data-act="continue">👁 Xem tiếp</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

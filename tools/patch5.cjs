@@ -1,0 +1,14 @@
+const fs = require('fs');
+const f = 'd:/vibecodes/rocket-forge/src/fx/moon.js';
+let s = fs.readFileSync(f, 'utf8');
+const crlf = s.includes('\r\n');
+s = s.replace(/\r\n/g, '\n');
+const a = 'varying vec3 vObj; varying vec3 vWorld; varying vec3 vNormalW;';
+const parts = s.split(a);
+if (parts.length !== 3) throw new Error('expected 2 matches, got ' + (parts.length - 1));
+s = parts[0] + a + ' varying vec3 vM0; varying vec3 vM1; varying vec3 vM2;' + parts[1] + a + ' varying vec3 vM0; varying vec3 vM1; varying vec3 vM2;' + parts[2];
+s = s.replace('vNormalW = normalize(mat3(modelMatrix) * normal);', 'vNormalW = normalize(mat3(modelMatrix) * normal);\n        vM0 = modelMatrix[0].xyz; vM1 = modelMatrix[1].xyz; vM2 = modelMatrix[2].xyz;');
+s = s.replace('mat3 m3 = mat3(modelMatrix);\n        vec3 N = normalize(m3 * Nf);', 'mat3 m3 = mat3(vM0, vM1, vM2);\n        vec3 N = normalize(m3 * Nf);');
+if (crlf) s = s.replace(/\n/g, '\r\n');
+fs.writeFileSync(f, s);
+console.log('ok', (s.match(/modelMatrix/g) || []).length);

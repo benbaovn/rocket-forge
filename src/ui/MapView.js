@@ -361,6 +361,68 @@ export class MapView {
 
     // Main Asteroid Belt between Mars (67,000 km) and Jupiter (115,000 km)
     this.initAsteroidBelt();
+
+    // 3D Map Supernova Shockwave & Remnant Nebula around the Sun
+    this.mapSupernovaGroup = new THREE.Group();
+    this.mapSupernovaGroup.visible = false;
+    this.sunGroup.add(this.mapSupernovaGroup);
+
+    const snShellMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const snShell = new THREE.Mesh(new THREE.SphereGeometry(sunR, 32, 24), snShellMat);
+    this.mapSupernovaGroup.add(snShell);
+
+    const snWebMat = new THREE.MeshBasicMaterial({
+      color: 0xf43f5e,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const snWeb = new THREE.Mesh(new THREE.IcosahedronGeometry(sunR * 1.15, 2), snWebMat);
+    this.mapSupernovaGroup.add(snWeb);
+
+    const snRing1Mat = new THREE.MeshBasicMaterial({
+      color: 0x7dd3fc,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const snRing1 = new THREE.Mesh(new THREE.RingGeometry(sunR * 0.82, sunR * 1.0, 64), snRing1Mat);
+    snRing1.rotation.x = Math.PI / 2;
+    this.mapSupernovaGroup.add(snRing1);
+
+    const snRing2Mat = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const snRing2 = new THREE.Mesh(new THREE.RingGeometry(sunR * 0.85, sunR * 1.0, 64), snRing2Mat);
+    snRing2.rotation.set(Math.PI / 2 + 0.55, 0.35, 0);
+    this.mapSupernovaGroup.add(snRing2);
+
+    this.mapSupernovaParts = { snShell, snShellMat, snWeb, snWebMat, snRing1, snRing1Mat, snRing2, snRing2Mat };
+    this.supernovaStart = 0;
+  }
+
+  triggerSupernova(focusSun = false) {
+    this.supernovaStart = performance.now();
+    if (this.mapSupernovaGroup) this.mapSupernovaGroup.visible = true;
+    if (focusSun && this.visible) {
+      this.setFocus('sun');
+    }
   }
 
   initAsteroidBelt() {
@@ -934,6 +996,20 @@ export class MapView {
       noseMesh.renderOrder = 999;
       group.add(noseMesh);
 
+      // 3D Alien UFO Saucer marker for map
+      const ufoGroup = new THREE.Group();
+      const saucerMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, depthTest: false });
+      const saucerDisc = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 3.5, 24), saucerMat);
+      saucerDisc.renderOrder = 999;
+      ufoGroup.add(saucerDisc);
+      const domeMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, depthTest: false });
+      const saucerDome = new THREE.Mesh(new THREE.SphereGeometry(8.5, 16, 12), domeMat);
+      saucerDome.position.y = 3.2;
+      saucerDome.renderOrder = 999;
+      ufoGroup.add(saucerDome);
+      ufoGroup.visible = false;
+      group.add(ufoGroup);
+
       group.renderOrder = 999;
       group.visible = false;
       this.othersRoot.add(group);
@@ -956,7 +1032,7 @@ export class MapView {
       orbitLine.visible = false;
       this.othersRoot.add(orbitLine);
 
-      this.otherPool.push({ group, bodyMat, noseMesh, orbitGeo, orbitMat, orbitLine });
+      this.otherPool.push({ group, bodyMat, bodyMesh, noseMesh, ufoGroup, saucerMat, orbitGeo, orbitMat, orbitLine });
     }
     return this.otherPool[idx];
   }
@@ -1293,6 +1369,29 @@ export class MapView {
     if (this.asteroidBeltGroup) {
       this.asteroidBeltGroup.rotation.y = -t * 1.15e-5;
     }
+    if (this.supernovaStart && this.mapSupernovaGroup && this.mapSupernovaParts) {
+      const age = (performance.now() - this.supernovaStart) / 1000;
+      const maxLife = 6.5;
+      if (age >= maxLife) {
+        this.supernovaStart = 0;
+        this.mapSupernovaGroup.visible = false;
+      } else {
+        this.mapSupernovaGroup.visible = true;
+        const p = age / maxLife;
+        const fade = Math.pow(Math.max(0, 1 - p), 1.25);
+        const P = this.mapSupernovaParts;
+        P.snShell.scale.setScalar(1.0 + Math.pow(p, 0.55) * 28);
+        P.snShellMat.opacity = fade * 0.65;
+        P.snWeb.scale.setScalar(1.0 + Math.pow(p, 0.6) * 36);
+        P.snWeb.rotation.y = age * 1.2;
+        P.snWeb.rotation.x = age * 0.7;
+        P.snWebMat.opacity = fade * 0.8;
+        P.snRing1.scale.setScalar(1.2 + Math.pow(p, 0.48) * 55);
+        P.snRing1Mat.opacity = fade * 0.95;
+        P.snRing2.scale.setScalar(1.1 + Math.pow(p, 0.52) * 44);
+        P.snRing2Mat.opacity = fade * 0.88;
+      }
+    }
 
     // Earth position (around Sun) & rotation
     this.earthGroup.position.copy(earthV3);
@@ -1369,8 +1468,15 @@ export class MapView {
       slot.group.scale.set(os, os, os);
       if (o.beta !== undefined) slot.group.rotation.set(0, -o.beta, 0);
       const isSelected = this.selectedObjectId === o.id || this.focus === 'obj:' + o.id;
-      slot.bodyMat.color.set(isSelected ? '#ffffff' : (o.color || '#ff7a3a'));
+      const isAlien = o.kind === 'alien';
+      slot.bodyMesh.visible = !isAlien;
       slot.noseMesh.visible = o.kind === 'vessel';
+      slot.ufoGroup.visible = isAlien;
+      if (isAlien) {
+        slot.saucerMat.color.set(isSelected ? '#ffffff' : (o.color || '#4ade80'));
+      } else {
+        slot.bodyMat.color.set(isSelected ? '#ffffff' : (o.color || '#ff7a3a'));
+      }
       slot.group.visible = true;
 
       // Closed Keplerian orbit ring for this space object
@@ -1693,7 +1799,7 @@ export class MapView {
         const fKey = 'obj:' + o.id;
         const isFocused = this.focus === fKey || this.selectedObjectId === o.id;
         const oAltKm = o.alt !== undefined ? `${(o.alt / 1000).toFixed(1)} km` : null;
-        const icon = o.kind === 'vessel' ? '🚀' : '🛰️';
+        const icon = o.kind === 'alien' ? '👽' : (o.kind === 'vessel' ? '🚀' : '🛰️');
         const br = this.drawBadge(ctx, op.x, op.y, `${icon} ${o.name}`, o.color || '#ff7a3a', isFocused, oAltKm, true);
         this.hudTargets.push({
           x: op.x,
@@ -1841,9 +1947,10 @@ export class MapView {
         return;
       }
       const refB = BODIES[found.ref] || BODIES.earth;
-      const icon = found.kind === 'vessel' ? '🚀' : '🛰️';
+      const icon = found.kind === 'alien' ? '👽' : (found.kind === 'vessel' ? '🚀' : '🛰️');
       name = `${icon} ${found.name}`;
-      meta = `${tr('Quỹ đạo', 'Orbit')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((found.alt || 0) / 1000, 1)} km · ${fmt(found.speedOrb || 0, 0)} m/s`;
+      meta = `${tr('Vị trí:', 'Location:')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((found.alt || 0) / 1000, 1)} km · ${fmt(found.speedOrb || 0, 0)} m/s`;
+      if (this.btnDeleteObj) this.btnDeleteObj.classList.toggle('hidden', !found.deletable);
     }
     if (this.mopName) this.mopName.textContent = name;
     if (this.mopMeta) this.mopMeta.textContent = meta;
@@ -1922,10 +2029,10 @@ export class MapView {
         if (!others.length) {
           this.objListBox.innerHTML = '';
         } else {
-          let listHtml = `<div class="mol-title">${tr('VẬT THỂ TRONG VŨ TRỤ', 'OBJECTS IN SPACE')} (${others.length})</div>`;
+          let listHtml = `<div class="mol-title">${tr('VẬT THỂ & ALIEN TRONG VŨ TRỤ', 'SPACE OBJECTS & ALIENS')} (${others.length})</div>`;
           for (const o of others) {
             const sel = this.selectedObjectId === o.id || this.focus === 'obj:' + o.id;
-            const icon = o.kind === 'vessel' ? '🚀' : '🛰️';
+            const icon = o.kind === 'alien' ? '👽' : (o.kind === 'vessel' ? '🚀' : '🛰️');
             const altStr = o.alt !== undefined ? `${fmt(o.alt / 1000, 0)} km` : '';
             listHtml += `<div class="map-obj-item ${sel ? 'active' : ''}" data-obj-id="${o.id}">
               <span class="moi-name">${icon} ${o.name}</span>

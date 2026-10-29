@@ -130,6 +130,86 @@ class AudioEngine {
     if (!this.ctx) return;
     this.engine(0, 0); this.wind(0);
   }
+
+  laserShot(vol = 0.32) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(1450, t);
+    o.frequency.exponentialRampToValueAtTime(190, t + 0.16);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    o.connect(g).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.2);
+  }
+
+  waterBlast(vol = 0.38) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.white;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.setValueAtTime(2200, t);
+    f.frequency.exponentialRampToValueAtTime(950, t + 0.22);
+    f.Q.value = 1.1;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    s.connect(f).connect(g).connect(this.master);
+    s.start(t);
+    s.stop(t + 0.27);
+  }
+
+  alienBoom(vol = 0.65) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(520, t);
+    o.frequency.exponentialRampToValueAtTime(55, t + 0.55);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.connect(g).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.65);
+    this.thunk(vol * 0.8);
+  }
+
+  supernova(vol = 0.9) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    // Implosion sweep + deep cosmic sub-bass + resonant pulsar shimmer + shockwave roar
+    const o1 = this.ctx.createOscillator();
+    const g1 = this.ctx.createGain();
+    o1.type = 'sawtooth';
+    o1.frequency.setValueAtTime(180, t);
+    o1.frequency.exponentialRampToValueAtTime(920, t + 0.18);
+    o1.frequency.exponentialRampToValueAtTime(28, t + 2.8);
+    g1.gain.setValueAtTime(vol * 0.65, t);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + 2.9);
+    o1.connect(g1).connect(this.master);
+    o1.start(t);
+    o1.stop(t + 2.95);
+
+    const o2 = this.ctx.createOscillator();
+    const g2 = this.ctx.createGain();
+    o2.type = 'sine';
+    o2.frequency.setValueAtTime(110, t + 0.12);
+    o2.frequency.exponentialRampToValueAtTime(22, t + 3.2);
+    g2.gain.setValueAtTime(0.001, t);
+    g2.gain.linearRampToValueAtTime(vol * 0.95, t + 0.16);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 3.3);
+    o2.connect(g2).connect(this.master);
+    o2.start(t);
+    o2.stop(t + 3.35);
+
+    this.explosion(1.3);
+  }
 }
 
 export const audio = new AudioEngine();

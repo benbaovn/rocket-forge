@@ -50,6 +50,10 @@ const PART_I18N = {
     vi: { name: 'Cục Pin Năng Lượng', cat: 'Nhiên liệu', desc: 'Pin lượng tử siêu tụ điện chuyên dụng cung cấp nguồn năng lượng cho Động cơ Lazer và Động cơ Phản Trọng Lực' },
     en: { name: 'Quantum Energy Battery', cat: 'Fuel Tanks', desc: 'High-capacity quantum supercapacitor battery cell powering Laser and Anti-Gravity engines' },
   },
+  batteryPackL: {
+    vi: { name: 'Cục Pin Năng Lượng Lớn (50 Tấn)', cat: 'Nhiên liệu', desc: 'Siêu Pin Lượng Tử cỡ đại chứa 50 tấn năng lượng (chỉ dùng cho Động cơ Phản Trọng Lực và Động cơ Lazer, không dùng cho động cơ thường)' },
+    en: { name: 'Giant Quantum Battery Pack (50t)', cat: 'Fuel Tanks', desc: 'Massive 50-ton quantum supercapacitor battery bank (exclusively for Anti-Gravity and Laser engines)' },
+  },
   engHeavy: {
     vi: { name: 'Động cơ Sấm Sét', cat: 'Động cơ', desc: '4 buồng đốt, lực đẩy cực lớn' },
     en: { name: 'Thunder Heavy Engine', cat: 'Engines', desc: '4 combustion chambers, massive liftoff thrust' },
@@ -67,12 +71,12 @@ const PART_I18N = {
     en: { name: 'Vacuum Engine', cat: 'Engines', desc: 'High specific impulse in outer space' },
   },
   engAntiGrav: {
-    vi: { name: 'Động cơ Phản Trọng Lực', cat: 'Động cơ', desc: 'Đẩy bằng trường phản trọng lực (không phun khói lửa): nơi trọng lực càng mạnh gia tốc càng nhanh, nơi trọng lực càng yếu gia tốc càng chậm' },
-    en: { name: 'Quantum Anti-Gravity Engine', cat: 'Engines', desc: 'Propels by pushing against gravity fields (no exhaust): stronger gravity yields faster acceleration, weaker gravity yields slower acceleration' },
+    vi: { name: 'Động cơ Phản Trọng Lực', cat: 'Động cơ', desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Đẩy bằng trường phản trọng lực: trọng lực càng mạnh gia tốc càng nhanh' },
+    en: { name: 'Quantum Anti-Gravity Engine', cat: 'Engines', desc: 'Requires Quantum Energy Battery (cannot use regular fuel tanks) · Propels via gravity fields: stronger gravity yields faster acceleration' },
   },
   engLaser: {
-    vi: { name: 'Động cơ Lazer Năng Lượng Cao', cat: 'Động cơ', desc: 'Phóng chùm tia lazer hội tụ: ở chỗ càng sáng gia tốc càng chậm, ở chỗ càng tối (không gian tối / bóng đêm) gia tốc càng nhanh' },
-    en: { name: 'High-Energy Laser Thruster', cat: 'Engines', desc: 'Collimated photon-plasma laser thruster: accelerates slower in bright light and faster in darkness / deep space shadow' },
+    vi: { name: 'Động cơ Lazer Năng Lượng Cao', cat: 'Động cơ', desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Phóng tia lazer hội tụ: chỗ càng tối gia tốc càng nhanh' },
+    en: { name: 'High-Energy Laser Thruster', cat: 'Engines', desc: 'Requires Quantum Energy Battery (cannot use regular fuel tanks) · Collimated photon-plasma thruster: accelerates faster in darkness' },
   },
   decoupler: {
     vi: { name: 'Bộ tách tầng', cat: 'Cấu trúc', desc: 'Tách tầng bằng phím SPACE' },
@@ -93,6 +97,14 @@ const PART_I18N = {
   solarPanel: {
     vi: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời đa tầng cung cấp điện năng cho tàu vũ trụ, tên lửa & xe' },
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays providing power for spacecraft & rovers' },
+  },
+  gunLaser: {
+    vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
+    en: { name: 'Twin Plasma Laser Turrets ×2', cat: 'Weapons', desc: '360° gimbaled high-energy laser cannons that vaporize Aliens in space and on planets/moons (Press V to fire)' },
+  },
+  waterCannon: {
+    vi: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
+    en: { name: '1,000,000 PSI Water Cannon ×2', cat: 'Weapons', desc: 'Ultra-high-pressure 1,000,000 PSI supersonic hydro-jet cannons that blast and shred Aliens (Press V to fire)' },
   },
   booster: {
     vi: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
@@ -258,6 +270,7 @@ export const PRESET_LABELS = {
   'Tàu lượn phản lực siêu âm': { vi: 'Tàu lượn phản lực siêu âm', en: 'Hypersonic Rocket Plane' },
   'Tàu Phản Trọng Lực Lượng Tử': { vi: '🛸 Tàu Phản Trọng Lực Lượng Tử', en: '🛸 Quantum Anti-Gravity Ship' },
   'Tàu Chiến Lazer Liên Hành Tinh': { vi: '⚡ Tàu Chiến Lazer Liên Hành Tinh', en: '⚡ Interplanetary Laser Cruiser' },
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': { vi: '👽 Chiến Hạm Diệt Alien (Lazer + Nước 1,000,000 PSI)', en: '👽 Alien Hunter Warship (Laser + 1M PSI Water)' },
 };
 
 const MISSION_I18N = {

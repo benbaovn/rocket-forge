@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
 import { MISSIONS, missionById } from '../missions.js';
-import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS } from '../rocket.js';
+import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
@@ -204,9 +204,11 @@ export class BuildScene {
   loadStack() {
     try {
       const raw = JSON.parse(localStorage.getItem('rf-stack') || 'null');
-      if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0]])) return stackFromTypes(raw);
+      if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0]])) {
+        return ensureStackHasWeapons(stackFromTypes(raw));
+      }
     } catch { /* ignore */ }
-    return stackFromTypes(Object.values(PRESETS)[0]);
+    return ensureStackHasWeapons(stackFromTypes(Object.values(PRESETS)[0]));
   }
 
   saveStack() {
@@ -291,7 +293,12 @@ export class BuildScene {
     $('btn-clear').onclick = () => { this.pushHistory(); this.stack = []; this.select(null); this.rebuild(true); };
     $('btn-del').onclick = () => this.deleteSelection();
     if ($('btn-side-toggle')) $('btn-side-toggle').onclick = () => this.toggleSideAttach();
-    $('btn-launchpad').onclick = () => { audio.init(); this.app.goLaunch(cloneStack(this.stack), this.missionId); };
+    $('btn-launchpad').onclick = () => {
+      audio.init();
+      ensureStackHasWeapons(this.stack);
+      this.rebuild(true);
+      this.app.goLaunch(cloneStack(this.stack), this.missionId);
+    };
 
     // 3D rotation buttons
     $('btn-rot-x').onclick = (e) => this.rotateSelection('x', e.shiftKey ? -Math.PI / 2 : Math.PI / 2);
@@ -380,7 +387,7 @@ export class BuildScene {
           obj.add(fl);
         }
       }
-      else if (type === 'solarRover' || type === 'solarPanel') {
+      else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
         obj = new THREE.Group();
         for (const pl of radialPlacements(type)) {
           const sl = buildPart(type);
@@ -582,16 +589,16 @@ export class BuildScene {
       // topmost tank of the bottom stage (directly below the lowest decoupler)
       const idx = stages[stages.length - 1] || [];
       for (const i of idx) if (isTank(i)) { if (!st[i].attach.includes('gridfins')) { st[i].attach.push('gridfins'); placed = true; } break; }
-    } else if (type === 'solarPanel') {
+    } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
       // prefer upper-stage tank or capsule/cabin first
       for (let i = 0; i < st.length; i++) {
-        if (isTank(i) && !st[i].attach.includes('solarPanel')) { st[i].attach.push('solarPanel'); placed = true; break; }
+        if (isTank(i) && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
       }
       if (!placed) {
         for (let i = 0; i < st.length; i++) {
           const t = st[i].type;
-          if ((t === 'capsule' || t.startsWith('cockpit') || t.startsWith('cabin')) && !st[i].attach.includes('solarPanel')) {
-            st[i].attach.push('solarPanel'); placed = true; break;
+          if ((t === 'capsule' || t.startsWith('cockpit') || t.startsWith('cabin')) && !st[i].attach.includes(type)) {
+            st[i].attach.push(type); placed = true; break;
           }
         }
       }

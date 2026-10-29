@@ -13,18 +13,21 @@ export const PARTS = {
   tankS: { name: 'Bồn nhiên liệu S', cat: 'Nhiên liệu', kind: 'stack', height: 2.2, dry: 0.45, fuel: 4.0, desc: '4 tấn nhiên liệu' },
   tankM: { name: 'Bồn nhiên liệu M', cat: 'Nhiên liệu', kind: 'stack', height: 4.5, dry: 0.9, fuel: 9.0, desc: '9 tấn nhiên liệu' },
   tankL: { name: 'Bồn nhiên liệu L', cat: 'Nhiên liệu', kind: 'stack', height: 9.0, dry: 1.6, fuel: 18.0, desc: '18 tấn nhiên liệu' },
-  batteryPack: { name: 'Cục Pin Năng Lượng', cat: 'Nhiên liệu', kind: 'stack', height: 3.2, dry: 0.65, fuel: 18.0, isBattery: true, desc: 'Pin lượng tử siêu tụ điện chuyên dụng cung cấp nguồn năng lượng cho Động cơ Lazer và Động cơ Phản Trọng Lực' },
+  batteryPack: { name: 'Cục Pin Năng Lượng', cat: 'Nhiên liệu', kind: 'stack', height: 3.2, dry: 0.65, fuel: 28.0, isBattery: true, desc: 'Pin lượng tử siêu tụ điện chuyên dụng cung cấp nguồn năng lượng cho Động cơ Lazer và Động cơ Phản Trọng Lực' },
+  batteryPackL: { name: 'Cục Pin Năng Lượng Lớn (50 Tấn)', cat: 'Nhiên liệu', kind: 'stack', height: 6.8, dry: 1.35, fuel: 50.0, isBattery: true, desc: 'Siêu Pin Lượng Tử cỡ đại chứa 50 tấn năng lượng (chỉ dùng cho Động cơ Phản Trọng Lực và Động cơ Lazer, không dùng cho động cơ thường)' },
   engHeavy: { name: 'Động cơ Sấm Sét', cat: 'Động cơ', kind: 'stack', height: 2.6, dry: 2.4, thrustSL: 1000, thrustVac: 1120, ispSL: 280, ispVac: 310, engines: 4, desc: '4 buồng đốt, lực đẩy cực lớn' },
   engReuse: { name: 'Động cơ Đại Bàng', cat: 'Động cơ', kind: 'stack', height: 2.6, dry: 2.6, thrustSL: 1150, thrustVac: 1250, ispSL: 282, ispVac: 311, engines: 9, minThrottle: 0.4, restart: true, desc: 'Cụm 9 động cơ (octaweb), khởi động lại được – dùng cho tầng hạ cánh' },
   engMid: { name: 'Động cơ Đa Năng', cat: 'Động cơ', kind: 'stack', height: 2.5, dry: 1.2, thrustSL: 430, thrustVac: 490, ispSL: 285, ispVac: 325, engines: 1, desc: 'Cân bằng lực đẩy & hiệu suất' },
   engVac: { name: 'Động cơ Chân Không', cat: 'Động cơ', kind: 'stack', height: 3.4, dry: 0.7, thrustSL: 60, thrustVac: 190, ispSL: 140, ispVac: 360, engines: 1, desc: 'Hiệu suất cao ngoài không gian' },
-  engAntiGrav: { name: 'Động cơ Phản Trọng Lực', cat: 'Động cơ', kind: 'stack', height: 2.8, dry: 1.5, fuel: 10.0, thrustSL: 2600, thrustVac: 2600, ispSL: 5500, ispVac: 6500, engines: 1, restart: true, desc: 'Đẩy bằng trường phản trọng lực (không phun khói lửa): nơi trọng lực càng mạnh gia tốc càng nhanh, nơi trọng lực càng yếu gia tốc càng chậm' },
-  engLaser: { name: 'Động cơ Lazer Năng Lượng Cao', cat: 'Động cơ', kind: 'stack', height: 3.0, dry: 1.4, fuel: 8.0, thrustSL: 2400, thrustVac: 2600, ispSL: 4500, ispVac: 5500, engines: 1, restart: true, desc: 'Phóng chùm tia lazer hội tụ: ở chỗ càng sáng gia tốc càng chậm, ở chỗ càng tối (không gian tối / bóng đêm) gia tốc càng nhanh' },
+  engAntiGrav: { name: 'Động cơ Phản Trọng Lực', cat: 'Động cơ', kind: 'stack', height: 2.8, dry: 1.5, thrustSL: 2600, thrustVac: 2600, ispSL: 5500, ispVac: 6500, engines: 1, restart: true, desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Đẩy bằng trường phản trọng lực: trọng lực càng mạnh gia tốc càng nhanh' },
+  engLaser: { name: 'Động cơ Lazer Năng Lượng Cao', cat: 'Động cơ', kind: 'stack', height: 3.0, dry: 1.4, thrustSL: 2400, thrustVac: 2600, ispSL: 4500, ispVac: 5500, engines: 1, restart: true, desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Phóng tia lazer hội tụ: chỗ càng tối gia tốc càng nhanh' },
   decoupler: { name: 'Bộ tách tầng', cat: 'Cấu trúc', kind: 'stack', height: 0.45, dry: 0.12, desc: 'Tách tầng bằng phím SPACE' },
   fins: { name: 'Cánh ổn định ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.08, desc: 'Gắn vào bồn – giữ tên lửa bay thẳng' },
   legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng cung cấp điện năng cho tàu vũ trụ, tên lửa & xe' },
+  gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
+  waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
   booster: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', kind: 'radial', count: 2, height: 11.8, dry: 1.8, fuel: 14, thrustSL: 1100, thrustVac: 1200, ispSL: 240, ispVac: 265, desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
   cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
   chassisRover: { name: 'Khung gầm Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
@@ -261,6 +264,8 @@ const builders = {
   legs() { return buildLeg(); },
   gridfins() { return buildGridFin(); },
   solarPanel() { return buildSolarPanel(); },
+  gunLaser() { return buildGunLaser(); },
+  waterCannon() { return buildWaterCannon(); },
 
   tankS() { return tank(PARTS.tankS.height, MAT.white, true); },
   tankM() { return tank(PARTS.tankM.height, MAT.checker, false); },
@@ -321,6 +326,78 @@ const builders = {
 
       const glowMat = i % 2 === 0 ? cellCyan : cellRuby;
       const bar = mesh(new THREE.BoxGeometry(0.06, H - 0.82, 0.24), glowMat, px * 1.02, H * 0.5, pz * 1.02);
+      bar.rotation.y = -a;
+      g.add(bar);
+    }
+    return g;
+  },
+
+  batteryPackL() {
+    const g = new THREE.Group();
+    const H = PARTS.batteryPackL.height;
+    const cellCyan = new THREE.MeshStandardMaterial({
+      color: 0x00e5ff,
+      emissive: new THREE.Color(0x00b8d4),
+      emissiveIntensity: 1.9,
+      roughness: 0.16,
+      metalness: 0.32,
+    });
+    const cellEmerald = new THREE.MeshStandardMaterial({
+      color: 0x10b981,
+      emissive: new THREE.Color(0x059669),
+      emissiveIntensity: 1.6,
+      roughness: 0.18,
+      metalness: 0.3,
+    });
+    const cellRuby = new THREE.MeshStandardMaterial({
+      color: 0xff1744,
+      emissive: new THREE.Color(0xd50000),
+      emissiveIntensity: 1.7,
+      roughness: 0.18,
+      metalness: 0.3,
+    });
+    const cellGold = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: new THREE.Color(0xd97706),
+      emissiveIntensity: 1.5,
+      roughness: 0.2,
+      metalness: 0.4,
+    });
+
+    // Top, middle & bottom heavy titanium bulkhead adapter rings
+    g.add(mesh(new THREE.CylinderGeometry(R, R, 0.40, 64), MAT.darkMetal, 0, H - 0.20, 0));
+    g.add(mesh(new THREE.CylinderGeometry(R * 1.015, R * 1.015, 0.12, 64), MAT.silver, 0, H - 0.06, 0));
+    g.add(mesh(new THREE.CylinderGeometry(R * 1.01, R * 1.01, 0.36, 64), MAT.darkMetal, 0, H * 0.5, 0));
+    g.add(mesh(new THREE.CylinderGeometry(R, R, 0.40, 64), MAT.darkMetal, 0, 0.20, 0));
+    g.add(mesh(new THREE.CylinderGeometry(R * 1.015, R * 1.015, 0.12, 64), MAT.silver, 0, 0.06, 0));
+
+    // Inner carbon-armored 50-ton quantum battery core cylinder
+    g.add(mesh(new THREE.CylinderGeometry(R * 0.91, R * 0.91, H - 0.72, 56), MAT.carbon, 0, H * 0.5, 0));
+
+    // 8 horizontal glowing supercapacitor cell banks across both halves
+    const ringData = [
+      [0.12, cellCyan], [0.22, cellEmerald], [0.32, cellGold], [0.41, cellRuby],
+      [0.59, cellCyan], [0.68, cellEmerald], [0.78, cellGold], [0.88, cellRuby],
+    ];
+    for (const [yf, mat] of ringData) {
+      g.add(mesh(new THREE.CylinderGeometry(R * 0.945, R * 0.945, 0.22, 56), mat, 0, H * yf, 0));
+    }
+
+    // Heavy copper high-voltage induction coils between cells
+    for (const yf of [0.17, 0.27, 0.365, 0.635, 0.73, 0.83]) {
+      g.add(mesh(new THREE.TorusGeometry(R * 0.95, 0.036, 12, 56).rotateX(Math.PI / 2), MAT.copper, 0, H * yf, 0));
+    }
+
+    // 8 vertical armored busbar ribs with glowing quantum energy strips
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const px = Math.cos(a) * (R * 0.96), pz = Math.sin(a) * (R * 0.96);
+      const rib = mesh(new THREE.BoxGeometry(0.17, H - 0.64, 0.22), MAT.titanium, px, H * 0.5, pz);
+      rib.rotation.y = -a;
+      g.add(rib);
+
+      const glowMat = i % 2 === 0 ? cellCyan : cellRuby;
+      const bar = mesh(new THREE.BoxGeometry(0.065, H - 0.92, 0.24), glowMat, px * 1.02, H * 0.5, pz * 1.02);
       bar.rotation.y = -a;
       g.add(bar);
     }
@@ -1247,6 +1324,125 @@ function buildSolarPanel() {
   // End cap bar with gold tip accent
   wing.add(mesh(new THREE.BoxGeometry(0.045, 0.045, segH + 0.04), MAT.gold, totalLen - 0.01, 0, 0));
 
+  return g;
+}
+
+function buildGunLaser() {
+  const g = new THREE.Group();
+  const rubyMat = new THREE.MeshStandardMaterial({
+    color: 0xff1744,
+    emissive: new THREE.Color(0xff0055),
+    emissiveIntensity: 2.4,
+    roughness: 0.15,
+    metalness: 0.3,
+  });
+  const cyanMat = new THREE.MeshStandardMaterial({
+    color: 0x00e5ff,
+    emissive: new THREE.Color(0x00b8d4),
+    emissiveIntensity: 1.9,
+    roughness: 0.2,
+    metalness: 0.3,
+  });
+
+  // Armored side sponson pylon attaching to rocket hull
+  g.add(mesh(new THREE.BoxGeometry(0.22, 0.56, 0.48), MAT.darkMetal, 0.08, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.46, 0.28, 0.34), MAT.carbon, 0.36, -0.06, 0));
+  // Glowing power conduit cables along pylon
+  for (const sz of [-0.14, 0.14]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.48, 12).rotateZ(Math.PI / 2), rubyMat, 0.34, 0.06, sz));
+  }
+  // Turret rotary pedestal base
+  g.add(mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.18, 24), MAT.titanium, 0.62, -0.04, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.25, 0.025, 10, 28).rotateX(Math.PI / 2), cyanMat, 0.62, 0.05, 0));
+
+  // Articulated 360-degree laser turret head
+  const turret = new THREE.Group();
+  turret.position.set(0.62, 0.14, 0);
+  g.add(turret);
+
+  // Armored turret housing + glowing ruby energy core
+  turret.add(mesh(new THREE.BoxGeometry(0.38, 0.34, 0.44), MAT.darkMetal, 0, 0.08, 0));
+  turret.add(mesh(new THREE.BoxGeometry(0.40, 0.16, 0.32), MAT.silver, 0, 0.14, 0));
+  turret.add(mesh(new THREE.SphereGeometry(0.14, 18, 14), rubyMat, 0.06, 0.12, 0));
+
+  // Twin high-energy plasma-laser barrels pointing forward (+Y by default)
+  for (const sz of [-0.12, 0.12]) {
+    turret.add(mesh(new THREE.CylinderGeometry(0.052, 0.064, 0.95, 18), MAT.titanium, 0.02, 0.62, sz));
+    turret.add(mesh(new THREE.CylinderGeometry(0.036, 0.036, 1.12, 16), MAT.carbon, 0.02, 0.72, sz));
+    // Glowing cooling coils along barrels
+    for (const cy of [0.46, 0.68, 0.90]) {
+      turret.add(mesh(new THREE.TorusGeometry(0.058, 0.014, 8, 20).rotateX(Math.PI / 2), rubyMat, 0.02, cy, sz));
+    }
+    // Focusing emitter lens at tip
+    turret.add(mesh(new THREE.CylinderGeometry(0.055, 0.042, 0.10, 18), rubyMat, 0.02, 1.28, sz));
+  }
+
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(0.02, 1.34, 0);
+  turret.add(muzzle);
+
+  g.userData.turret = turret;
+  g.userData.muzzle = muzzle;
+  g.userData.weaponType = 'laser';
+  return g;
+}
+
+function buildWaterCannon() {
+  const g = new THREE.Group();
+  const hydroMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: new THREE.Color(0x0284c7),
+    emissiveIntensity: 2.0,
+    roughness: 0.15,
+    metalness: 0.25,
+  });
+  const gaugeMat = new THREE.MeshStandardMaterial({
+    color: 0xfacc15,
+    emissive: new THREE.Color(0xeab308),
+    emissiveIntensity: 1.2,
+    roughness: 0.25,
+    metalness: 0.4,
+  });
+
+  // Heavy-duty reinforced hydro-bracket
+  g.add(mesh(new THREE.BoxGeometry(0.24, 0.64, 0.56), MAT.darkMetal, 0.08, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.52, 0.30, 0.44), MAT.blue, 0.36, -0.08, 0));
+
+  // Twin 1,000,000 PSI ultra-pressure water accumulator tanks on sides
+  for (const sz of [-0.22, 0.22]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.62, 20), MAT.blue, 0.34, 0.12, sz));
+    g.add(mesh(new THREE.SphereGeometry(0.11, 16, 12), MAT.silver, 0.34, 0.43, sz));
+    g.add(mesh(new THREE.SphereGeometry(0.11, 16, 12), MAT.silver, 0.34, -0.19, sz));
+    // Glowing cyan water pressure sight-glass bands
+    g.add(mesh(new THREE.CylinderGeometry(0.114, 0.114, 0.14, 20), hydroMat, 0.34, 0.12, sz));
+  }
+
+  // 1,000,000 PSI pressure manifold & brass gauge dial
+  g.add(mesh(new THREE.CylinderGeometry(0.25, 0.28, 0.20, 24), MAT.titanium, 0.66, -0.02, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 18).rotateZ(Math.PI / 2), gaugeMat, 0.78, 0.04, 0));
+
+  // Rotating 1,000,000 PSI Hydro-Blaster Turret
+  const turret = new THREE.Group();
+  turret.position.set(0.66, 0.14, 0);
+  g.add(turret);
+
+  // Pump chamber & reinforced stainless steel barrel
+  turret.add(mesh(new THREE.BoxGeometry(0.38, 0.36, 0.38), MAT.silver, 0, 0.08, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.52, 24), MAT.titanium, 0, 0.46, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.075, 0.10, 0.68, 24), MAT.silver, 0, 0.92, 0));
+  // High-pressure reinforcement collars & diamond orifice tip
+  for (const cy of [0.40, 0.66, 0.94, 1.18]) {
+    turret.add(mesh(new THREE.TorusGeometry(0.095, 0.018, 10, 24).rotateX(Math.PI / 2), MAT.copper, 0, cy, 0));
+  }
+  turret.add(mesh(new THREE.CylinderGeometry(0.055, 0.088, 0.16, 24), hydroMat, 0, 1.32, 0));
+
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(0, 1.42, 0);
+  turret.add(muzzle);
+
+  g.userData.turret = turret;
+  g.userData.muzzle = muzzle;
+  g.userData.weaponType = 'water';
   return g;
 }
 
@@ -3350,7 +3546,7 @@ function mergeGroupMeshesByMaterial(rootGroup, excludeSet = new Set()) {
   }
 }
 
-const DYNAMIC_PARTS = new Set(['legs', 'gridfins', 'wheelsRover', 'gearPlane']);
+const DYNAMIC_PARTS = new Set(['legs', 'gridfins', 'wheelsRover', 'gearPlane', 'gunLaser', 'waterCannon']);
 
 export function buildPart(type) {
   const g = builders[type]();
@@ -3394,7 +3590,7 @@ export function radialPlacements(type) {
       { angle: Math.PI, dist: 1.12, offsetZ: 0 },
     ];
   }
-  if (type === 'solarPanel') {
+  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
     return [
       { angle: 0, dist: R - 0.05, offsetZ: 0 },
       { angle: Math.PI, dist: R - 0.05, offsetZ: 0 },

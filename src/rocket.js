@@ -26,36 +26,53 @@ export function stackFromTypes(list) {
 }
 
 export const PRESETS = {
-  'Saturn V (Apollo)': ['saturnApollo', 'saturnSM', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
-  'Hai tầng (khuyên dùng)': ['capsule', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
-  'Soyuz / R-7 Semyorka': ['soyuzNose', 'soyuzFairing', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
-  'N1 Liên Xô (Mặt Trăng)': ['n1Tower', 'n1Fairing', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
-  'Titan IV (Tàu Voyager)': ['nose', 'tankS+solarPanel', 'engVac', 'decoupler', 'tankM', 'engMid', 'decoupler', 'tankL+booster+fins', 'engHeavy'],
-  'Tàu con thoi Space Shuttle': ['dockPort', 'capsule', 'tankM+fins', 'engMid', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Energia – Buran': ['dockPort', 'capsule', 'tankM+fins', 'engVac', 'decoupler', 'tankL+booster', 'tankL+booster+fins', 'engReuse'],
-  'Proton-M (Nga)': ['dockPort', 'nose', 'tankM+solarPanel', 'engVac', 'decoupler', 'tankL', 'engMid', 'decoupler', 'tankL+booster+fins', 'engHeavy'],
-  'Ariane 5 (James Webb)': ['nose', 'tankS+solarPanel', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Atlas V (Sao Hỏa)': ['nose', 'tankM+legs', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Delta IV Heavy': ['capsule', 'tankM', 'engVac', 'decoupler', 'tankL+nose+tankL', 'tankL+tankL+engHeavy+fins', 'engHeavy'],
-  'Trường Chinh 5 (Long March 5)': ['dockPort', 'capsule', 'tankM+solarPanel', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Falcon 9 (SpaceX)': ['capsule', 'tankM', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
-  'Falcon Heavy (SpaceX)': ['capsule', 'tankM+solarPanel', 'engVac', 'decoupler', 'tankL+gridfins+nose+tankL', 'tankL+tankL+engReuse+legs', 'engReuse'],
-  'SLS Artemis (NASA)': ['capsule', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL+booster', 'tankL+booster+fins', 'engReuse'],
-  'Starship & Super Heavy': ['nose', 'capsule', 'tankL+fins', 'tankM+legs', 'engReuse', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+booster+legs', 'engReuse'],
-  'Nhỏ gọn': ['nose', 'tankM', 'tankM+fins', 'engMid'],
-  'Siêu nặng (lên quỹ đạo)': ['capsule', 'tankS', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'tankM', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
-  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
-  'Apollo (Mặt Trăng)': ['saturnApollo', 'saturnSM', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
-  'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover'],
-  'Xe thám hiểm phản lực': ['cockpitRover', 'chassisRover+wheelsRover+solarRover', 'tankS', 'engMid'],
-  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat', 'motorBoat'],
-  'Thuyền phản lực tên lửa': ['cabinBoat', 'hullBoat+floatsBoat', 'tankS', 'engReuse'],
-  'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane', 'tailPlane', 'engJet'],
-  'Tàu lượn phản lực siêu âm': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane', 'tankS', 'engReuse'],
-  'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs', 'engAntiGrav'],
-  'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
+  'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon', 'saturnSM+gunLaser+waterCannon', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
+  'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
+  'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon', 'soyuzFairing+gunLaser+waterCannon', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
+  'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon', 'n1Fairing+gunLaser+waterCannon', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
+  'Titan IV (Tàu Voyager)': ['nose', 'tankS+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankM', 'engMid', 'decoupler', 'tankL+booster+fins', 'engHeavy'],
+  'Tàu con thoi Space Shuttle': ['dockPort', 'capsule', 'tankM+fins+gunLaser+waterCannon', 'engMid', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Energia – Buran': ['dockPort', 'capsule', 'tankM+fins+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+booster', 'tankL+booster+fins', 'engReuse'],
+  'Proton-M (Nga)': ['dockPort', 'nose', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'engMid', 'decoupler', 'tankL+booster+fins', 'engHeavy'],
+  'Ariane 5 (James Webb)': ['nose', 'tankS+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Atlas V (Sao Hỏa)': ['nose', 'tankM+legs+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Delta IV Heavy': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+nose+tankL', 'tankL+tankL+engHeavy+fins', 'engHeavy'],
+  'Trường Chinh 5 (Long March 5)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Falcon 9 (SpaceX)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
+  'Falcon Heavy (SpaceX)': ['capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins+nose+tankL', 'tankL+tankL+engReuse+legs', 'engReuse'],
+  'SLS Artemis (NASA)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+booster', 'tankL+booster+fins', 'engReuse'],
+  'Starship & Super Heavy': ['nose', 'capsule', 'tankL+fins+gunLaser+waterCannon', 'tankM+legs', 'engReuse', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+booster+legs', 'engReuse'],
+  'Nhỏ gọn': ['nose', 'tankM+gunLaser+waterCannon', 'tankM+fins', 'engMid'],
+  'Siêu nặng (lên quỹ đạo)': ['capsule', 'tankS+gunLaser+waterCannon', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
+  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
+  'Apollo (Mặt Trăng)': ['saturnApollo+gunLaser+waterCannon', 'saturnSM+gunLaser+waterCannon', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
+  'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
+  'Xe thám hiểm phản lực': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon', 'tankS', 'engMid'],
+  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+gunLaser+waterCannon', 'motorBoat'],
+  'Thuyền phản lực tên lửa': ['cabinBoat', 'hullBoat+floatsBoat+gunLaser+waterCannon', 'tankS', 'engReuse'],
+  'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tailPlane', 'engJet'],
+  'Tàu lượn phản lực siêu âm': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tankS', 'engReuse'],
+  'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
+  'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
 };
+
+export function ensureStackHasWeapons(stack) {
+  if (!Array.isArray(stack) || !stack.length) return stack;
+  const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon')));
+  if (hasWeapon) return stack;
+  // Find best upper-stage body/tank part to mount weapons
+  let target = stack.find((it) => {
+    const d = PARTS[it.type];
+    return d && (d.cat === 'Nhiên liệu' || it.type === 'chassisRover' || it.type === 'hullBoat' || it.type === 'fuselagePlane');
+  }) || stack[0];
+  if (target) {
+    if (!target.attach.includes('gunLaser')) target.attach.push('gunLaser');
+    if (!target.attach.includes('waterCannon')) target.attach.push('waterCannon');
+  }
+  return stack;
+}
 
 /** y offsets (bottom of each part), top->bottom order preserved */
 export function layout(stack) {
@@ -94,25 +111,45 @@ function itemMass(it) {
 }
 
 export function segmentInfo(stack, idx) {
-  const s = { dry: 0, fuel: 0, tSL: 0, tVac: 0, mdot: 0, tAntiGrav: 0, mdotAntiGrav: 0, tLaser: 0, mdotLaser: 0, batteryCount: 0, hasSolar: false, bDry: 0, bFuel: 0, bTSL: 0, bTVac: 0, bMdot: 0, fins: false, engines: 0, engCount: 0, restart: false, legs: false, gridfins: false, antiGrav: false, laser: false };
+  const s = {
+    dry: 0, fuel: 0, chemFuel: 0, batteryFuel: 0,
+    tSL: 0, tVac: 0, mdot: 0,
+    tChemSL: 0, tChemVac: 0, mdotChem: 0, chemEngines: 0,
+    tAntiGrav: 0, mdotAntiGrav: 0, tLaser: 0, mdotLaser: 0,
+    batteryCount: 0, hasSolar: false,
+    bDry: 0, bFuel: 0, bTSL: 0, bTVac: 0, bMdot: 0,
+    fins: false, engines: 0, engCount: 0, restart: false,
+    legs: false, gridfins: false, antiGrav: false, laser: false,
+    needsBattery: false, needsChemFuel: false,
+    useChemFuel: false, useBatteryFuel: false,
+  };
   for (const i of idx) {
     const it = stack[i];
     const d = PARTS[it.type];
-    s.dry += d.dry; s.fuel += d.fuel || 0;
+    s.dry += d.dry;
+    if (it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery) {
+      s.batteryCount += it.type === 'batteryPackL' ? 2 : 1;
+      s.batteryFuel += d.fuel || 0;
+    } else {
+      s.chemFuel += d.fuel || 0;
+    }
     if (d.hasFins) s.fins = true;
-    if (it.type === 'batteryPack' || d.isBattery) s.batteryCount++;
     if (it.type === 'engAntiGrav') {
       s.antiGrav = true;
       s.tAntiGrav += d.thrustVac;
       s.mdotAntiGrav += d.thrustVac / (d.ispVac * G0);
-    }
-    if (it.type === 'engLaser') {
+    } else if (it.type === 'engLaser') {
       s.laser = true;
       s.tLaser += d.thrustVac;
       s.mdotLaser += d.thrustVac / (d.ispVac * G0);
+    } else if (d.thrustVac) {
+      s.tChemSL += d.thrustSL;
+      s.tChemVac += d.thrustVac;
+      s.mdotChem += d.thrustVac / (d.ispVac * G0);
+      s.chemEngines++;
     }
     if (d.thrustVac) {
-      s.tSL += d.thrustSL; s.tVac += d.thrustVac; s.mdot += d.thrustVac / (d.ispVac * G0); s.engines++;
+      s.engines++;
       s.engCount += d.engines || 1;
       if (d.restart) s.restart = true;
     }
@@ -120,29 +157,34 @@ export function segmentInfo(stack, idx) {
       const ad = PARTS[a];
       if (!ad) continue;
       const cnt = ad.count || 2;
-      if (a === 'batteryPack' || ad.isBattery) s.batteryCount += cnt;
       if (a === 'solarPanel' || a === 'solarRover') s.hasSolar = true;
-      if (a === 'engAntiGrav') {
-        s.antiGrav = true;
-        s.tAntiGrav += ad.thrustVac * cnt;
-        s.mdotAntiGrav += (cnt * ad.thrustVac) / (ad.ispVac * G0);
-      }
-      if (a === 'engLaser') {
-        s.laser = true;
-        s.tLaser += ad.thrustVac * cnt;
-        s.mdotLaser += (cnt * ad.thrustVac) / (ad.ispVac * G0);
-      }
       if (a === 'booster') {
         s.bDry += ad.dry * cnt; s.bFuel += ad.fuel * cnt;
         s.bTSL += ad.thrustSL * cnt; s.bTVac += ad.thrustVac * cnt;
         s.bMdot += cnt * ad.thrustVac / (ad.ispVac * G0);
       } else {
         s.dry += ad.dry * cnt;
-        s.fuel += (ad.fuel || 0) * cnt;
+        if (a === 'batteryPack' || a === 'batteryPackL' || ad.isBattery) {
+          s.batteryCount += cnt * (a === 'batteryPackL' ? 2 : 1);
+          s.batteryFuel += (ad.fuel || 0) * cnt;
+        } else {
+          s.chemFuel += (ad.fuel || 0) * cnt;
+        }
+        if (a === 'engAntiGrav') {
+          s.antiGrav = true;
+          s.tAntiGrav += ad.thrustVac * cnt;
+          s.mdotAntiGrav += (cnt * ad.thrustVac) / (ad.ispVac * G0);
+        } else if (a === 'engLaser') {
+          s.laser = true;
+          s.tLaser += ad.thrustVac * cnt;
+          s.mdotLaser += (cnt * ad.thrustVac) / (ad.ispVac * G0);
+        } else if (ad.thrustVac) {
+          s.tChemSL += ad.thrustSL * cnt;
+          s.tChemVac += ad.thrustVac * cnt;
+          s.mdotChem += (cnt * ad.thrustVac) / (ad.ispVac * G0);
+          s.chemEngines += cnt;
+        }
         if (ad.thrustVac) {
-          s.tSL += ad.thrustSL * cnt;
-          s.tVac += ad.thrustVac * cnt;
-          s.mdot += (cnt * ad.thrustVac) / (ad.ispVac * G0);
           s.engines += cnt;
           s.engCount += (ad.engines || 1) * cnt;
           if (ad.restart) s.restart = true;
@@ -153,6 +195,33 @@ export function segmentInfo(stack, idx) {
       }
     }
   }
+  const hasSciFi = s.antiGrav || s.laser;
+  if (hasSciFi && s.batteryFuel <= 0) {
+    // Laser & Anti-Gravity engines ONLY work with batteryPack (never with regular fuel tanks)
+    s.needsBattery = true;
+    s.tAntiGrav = 0; s.mdotAntiGrav = 0;
+    s.tLaser = 0; s.mdotLaser = 0;
+  }
+  if (s.chemEngines > 0 && s.chemFuel <= 0) {
+    // Regular engines ONLY work with regular fuel tanks (never with batteryPack)
+    if (s.batteryFuel > 0) s.needsChemFuel = true;
+    s.tChemSL = 0; s.tChemVac = 0; s.mdotChem = 0;
+  }
+  s.useBatteryFuel = hasSciFi && s.batteryFuel > 0;
+  s.useChemFuel = s.chemEngines > 0 && s.chemFuel > 0;
+  // Unusable fuel in this stage (e.g. regular fuel tank attached to a Laser/Anti-Grav engine) counts as dead dry mass
+  if (s.useBatteryFuel) s.fuel += s.batteryFuel;
+  else s.dry += s.batteryFuel;
+  if (s.useChemFuel) s.fuel += s.chemFuel;
+  else s.dry += s.chemFuel;
+
+  // Keep engine thrust visible in VAB when no fuel at all is attached yet, EXCEPT when wrong fuel type is used or sci-fi engine lacks battery
+  const sciFiSL = (s.tAntiGrav ? 2600 * (s.tAntiGrav / 2600) : 0) + (s.tLaser ? 2400 * (s.tLaser / 2600) : 0);
+  const sciFiVac = s.tAntiGrav + s.tLaser;
+  const sciFiMdot = s.mdotAntiGrav + s.mdotLaser;
+  s.tSL = s.tChemSL + sciFiSL;
+  s.tVac = s.tChemVac + sciFiVac;
+  s.mdot = s.mdotChem + sciFiMdot;
   s.mass = s.dry + s.fuel + s.bDry + s.bFuel;
   return s;
 }
@@ -214,14 +283,31 @@ export function computeStats(stack) {
     if (!stack.some((it) => it.attach.includes('wingsPlane'))) warnings.push(tr('Máy bay cần gắn Cánh nâng phản lực ×2 để tạo lực nâng cất cánh.', 'Aircraft needs Swept Jet Wings ×2 for lift.'));
     if (!stack.some((it) => it.type === 'engJet' || PARTS[it.type]?.thrustSL > 0)) warnings.push(tr('Máy bay cần Động cơ phản lực để tạo lực đẩy cất cánh.', 'Aircraft needs a Jet Engine for thrust.'));
   } else {
-    if (!st1 || st1.thrust <= 0) warnings.push(tr('Tầng 1 chưa có động cơ!', 'Stage 1 has no engine!'));
-    else if (st1.twr < 1) warnings.push(tr('TWR < 1: tên lửa quá nặng, không thể cất cánh.', 'TWR < 1: rocket is too heavy to lift off.'));
+    const st1Info = infos[infos.length - 1];
+    if (!st1 || (st1.thrust <= 0 && (!st1Info || st1Info.engines === 0))) warnings.push(tr('Tầng 1 chưa có động cơ!', 'Stage 1 has no engine!'));
+    else if (st1.thrust > 0 && st1.twr < 1) warnings.push(tr('TWR < 1: tên lửa quá nặng, không thể cất cánh.', 'TWR < 1: rocket is too heavy to lift off.'));
     infos.forEach((s, k) => {
-      if (s.engines > 0 && s.fuel <= 0) warnings.push(tr(`Tầng ${infos.length - k} có động cơ nhưng không có nhiên liệu.`, `Stage ${infos.length - k} has an engine but no fuel.`));
+      const stNum = infos.length - k;
+      if (s.needsBattery) {
+        warnings.push(tr(
+          `Tầng ${stNum}: Động cơ Lazer / Phản Trọng Lực chỉ chạy bằng Cục Pin Năng Lượng (không dùng được nhiên liệu thường)!`,
+          `Stage ${stNum}: Laser / Anti-Gravity Engine requires a Quantum Energy Battery (cannot use regular fuel tanks)!`
+        ));
+      } else if (s.needsChemFuel) {
+        warnings.push(tr(
+          `Tầng ${stNum}: Động cơ thường cần Bồn nhiên liệu (không chạy bằng Cục Pin Năng Lượng)!`,
+          `Stage ${stNum}: Chemical engine requires a regular Fuel Tank (cannot run on Quantum Energy Battery)!`
+        ));
+      } else if (s.engines > 0 && s.fuel <= 0) {
+        warnings.push(tr(`Tầng ${stNum} có động cơ nhưng không có nhiên liệu.`, `Stage ${stNum} has an engine but no fuel.`));
+      }
     });
     if (!infos.some((s) => s.fins) && lay.height > 14) warnings.push(tr('Không có cánh ổn định – tên lửa dễ bị lật.', 'No stabilizer fins – rocket may flip in flight.'));
     const bottom = stack[stack.length - 1];
     if (bottom && !PARTS[bottom.type].thrustVac) warnings.push(tr('Phần dưới cùng nên là động cơ.', 'The bottom part should be an engine.'));
+  }
+  if (stack.length && !stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon')))) {
+    warnings.push(tr('Tên lửa chưa có vũ khí (Súng Lazer / Máy Phun Nước 1M PSI) để bắn Alien!', 'Rocket has no weapons (Laser Gun / 1M PSI Water Cannon) to shoot Aliens!'));
   }
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos };
 }
@@ -247,6 +333,7 @@ export function buildRocket(stack) {
   const boosters = [];
   const deployables = [];
   const roverWheels = [];
+  const weapons = [];
   let capsule = null, dockPort = null;
   for (const p of lay.parts) {
     const k = segOf.get(p.index);
@@ -304,6 +391,12 @@ export function buildRocket(stack) {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.65; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'solarPanel') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.55; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+        } else if (a === 'gunLaser') {
+          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower') ? 2.4 : p.def.height;
+          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + effH * 0.72; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+        } else if (a === 'waterCannon') {
+          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower') ? 2.4 : p.def.height;
+          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + effH * 0.28; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {
@@ -364,9 +457,14 @@ export function buildRocket(stack) {
         boosters.push({ seg: k, objs: group, fuel: ad.fuel * ad.count, dry: ad.dry * ad.count, count: ad.count, attached: true });
       }
       if (a === 'legs' || a === 'gridfins') deployables.push({ seg: k, type: a, objs: group, partIndex: p.index });
+      if (a === 'gunLaser' || a === 'waterCannon') {
+        for (const ao of group) {
+          weapons.push({ seg: k, type: a, weaponType: PARTS[a].weapon, obj: ao, muzzle: ao.userData.muzzle, turret: ao.userData.turret });
+        }
+      }
     }
   }
-  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels };
+  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons };
 }
 
 /** Center of mass (y) of the given set of segments, including fuel state */

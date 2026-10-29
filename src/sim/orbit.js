@@ -251,17 +251,79 @@ export function rk4(s, t, h, ax = 0, ay = 0, az = 0) {
 
 /** a sensible coast step size for the current position */
 export function coastStep(x, y, z, t) {
+  const ref = refBody(x, y, z, t);
+  if (ref !== 'earth') {
+    const B = BODIES[ref];
+    bodyPos(ref, t, _m);
+    const d = Math.max(B.R * 0.4, Math.hypot(x - _m.x, y - _m.y, z - _m.z));
+    const tMin = Math.sqrt(d ** 3 / B.mu);
+    return Math.max(0.05, tMin * 0.012);
+  }
   const r = Math.hypot(x, y, z);
   let tMin = Math.sqrt(r ** 3 / MU_E);
-  for (let i = 0; i < SATELLITE_BODIES.length; i++) {
-    const name = SATELLITE_BODIES[i];
-    const B = BODIES[name];
-    bodyPos(name, t, _m);
-    const d = Math.max(B.R * 0.4, Math.hypot(x - _m.x, y - _m.y, z - _m.z));
-    const tB = Math.sqrt(d ** 3 / B.mu);
-    if (tB < tMin) tMin = tB;
-  }
+  bodyPos('moon', t, _m);
+  const dM = Math.max(BODIES.moon.R * 0.4, Math.hypot(x - _m.x, y - _m.y, z - _m.z));
+  const tM = Math.sqrt(dM ** 3 / MU_M);
+  if (tM < tMin) tMin = tM;
   return Math.max(0.05, tMin * 0.012);
+}
+
+const _bp0 = { x: 0, y: 0, z: 0 }, _bv0 = { x: 0, y: 0, z: 0 };
+const _bp1 = { x: 0, y: 0, z: 0 }, _bv1 = { x: 0, y: 0, z: 0 };
+
+/**
+ * Exact 2-body Keplerian propagation over step h around reference body `ref` for high time-warp stability.
+ * Returns true if propagated analytically, false if hyperbolic/degenerate (caller should use rk4).
+ */
+export function keplerStep(s, ref, t, h) {
+  const B = BODIES[ref] || BODIES.earth;
+  const mu = B.mu;
+  bodyState(ref, t, _bp0, _bv0);
+  const rx = s.x - _bp0.x, ry = s.y - _bp0.y;
+  const vx = s.vx - _bv0.x, vy = s.vy - _bv0.y;
+  const r = Math.hypot(rx, ry), v2 = vx * vx + vy * vy;
+  if (r <= B.R) return false;
+  const energy = v2 / 2 - mu / r;
+  if (energy >= -1e-6) return false;
+  const hAng = rx * vy - ry * vx;
+  const rv = rx * vx + ry * vy;
+  const ex = ((v2 - mu / r) * rx - rv * vx) / mu;
+  const ey = ((v2 - mu / r) * ry - rv * vy) / mu;
+  const e = Math.hypot(ex, ey);
+  if (e >= 0.98) return false;
+  const a = -mu / (2 * energy);
+  const pe = a * (1 - e);
+  if (!B.gasGiant && pe < B.R + (B.atm || 0)) return false;
+
+  const px = e > 1e-7 ? ex / e : rx / r;
+  const py = e > 1e-7 ? ey / e : ry / r;
+  const qx = hAng <= 0 ? py : -py;
+  const qy = hAng <= 0 ? -px : px;
+  const sq = Math.sqrt(Math.max(0, 1 - e * e));
+  const cosE0 = (rx * px + ry * py) / a + e;
+  const sinE0 = (rx * qx + ry * qy) / (a * sq);
+  const E0 = Math.atan2(sinE0, cosE0);
+  const M0 = E0 - e * Math.sin(E0);
+  const n = Math.sqrt(mu / (a * a * a));
+  const M1 = wrapPi(M0 + n * h);
+  let E1 = M1;
+  for (let k = 0; k < 6; k++) {
+    E1 -= (E1 - e * Math.sin(E1) - M1) / (1 - e * Math.cos(E1));
+  }
+  const cE = Math.cos(E1), sE = Math.sin(E1);
+  const r1 = a * (1 - e * cE);
+  const rx1 = a * (cE - e) * px + a * sq * sE * qx;
+  const ry1 = a * (cE - e) * py + a * sq * sE * qy;
+  const vFac = Math.sqrt(mu * a) / r1;
+  const vx1 = vFac * (-sE * px + sq * cE * qx);
+  const vy1 = vFac * (-sE * py + sq * cE * qy);
+
+  bodyState(ref, t + h, _bp1, _bv1);
+  s.x = _bp1.x + rx1;
+  s.y = _bp1.y + ry1;
+  s.vx = _bv1.x + vx1;
+  s.vy = _bv1.y + vy1;
+  return true;
 }
 
 /**

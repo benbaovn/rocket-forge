@@ -20,6 +20,7 @@ import { MISSIONS, missionById } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
 import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight } from '../fx/moon.js';
+import { createAlienMesh, createBeamVisual, createSupernovaMesh } from '../fx/aliens.js';
 import { tr } from '../i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -29,7 +30,7 @@ const BEND = 1 / (2 * R_E);
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
 const fmt = (v, d = 0) => v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d });
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-const WARPS = [1, 2, 4, 10, 50, 100, 1000, 10000];
+const WARPS = [1, 2, 4, 10, 50, 100, 1000, 10000, 100000, 1000000, 10000000];
 const SAS_MODES_VI = ['Giữ hướng', 'Prograde', 'Retrograde', 'Hướng tâm ra', 'Hướng tâm vào', 'Mục tiêu', 'Ngược mục tiêu'];
 const SAS_MODES_EN = ['Hold Attitude', 'Prograde', 'Retrograde', 'Radial Out', 'Radial In', 'Target', 'Anti-Target'];
 const CAM_MODES_VI = ['Bám theo', 'Tháp quan sát', 'Gắn trên thân', 'Điện ảnh'];
@@ -487,6 +488,8 @@ export class LaunchScene {
       if (k === 'tab') { e.preventDefault(); this.map.cycleFocus(); }
       if (k === 'b') this.toggleBoosterFocus();
       if (k === 'p') this.toggleDeploy();
+      if (k === 'v' || e.key === 'Enter') { e.preventDefault(); audio.init(); this.fireWeapons(); }
+      if (k === 'u') { e.preventDefault(); audio.init(); this.triggerSupernova(); }
       if (k === 'z' && !this.docked) this.throttle = 1;
       if (k === 'x') this.throttle = 0;
       if (k === '.') this.setWarp(1);
@@ -502,13 +505,58 @@ export class LaunchScene {
     if (btnAp) btnAp.onclick = () => { audio.init(); this.toggleAutopilot(); };
     const btnMap = $('btn-toggle-map');
     if (btnMap) btnMap.onclick = () => this.map.toggle();
+    const btnFire = $('btn-fire-weapon');
+    if (btnFire) {
+      btnFire.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        audio.init();
+        this.firingHeld = true;
+        this.fireWeapons();
+      });
+      window.addEventListener('pointerup', () => { this.firingHeld = false; });
+    }
+    const btnSn = $('btn-supernova');
+    if (btnSn) {
+      btnSn.onclick = () => {
+        audio.init();
+        this.triggerSupernova();
+      };
+    }
+    const btnMapSn = $('btn-map-supernova');
+    if (btnMapSn) {
+      btnMapSn.onclick = () => {
+        audio.init();
+        this.triggerSupernova();
+      };
+    }
+    this.app.canvas.addEventListener('pointerdown', (e) => {
+      if (!this.active || this.map.visible || !this.aliens.length) return;
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), this.camera);
+      const hits = ray.intersectObjects(this.aliens.map((a) => a.mesh), true);
+      if (hits.length) {
+        let obj = hits[0].object;
+        const hitAlien = this.aliens.find((a) => {
+          let cur = obj;
+          while (cur) { if (cur === a.mesh) return true; cur = cur.parent; }
+          return false;
+        });
+        if (hitAlien) {
+          audio.init();
+          this.fireWeapons(hitAlien);
+        }
+      }
+    });
   }
 
   setWarp(d) {
-    let i = WARPS.indexOf(this.warp) + d;
-    i = Math.max(0, Math.min(WARPS.length - 1, i));
+    const cur = this.userWarp || this.warp || 1;
+    let i = WARPS.findIndex((w) => w >= cur);
+    if (i < 0) i = WARPS.length - 1;
+    i = Math.max(0, Math.min(WARPS.length - 1, i + d));
     this.warp = WARPS[i];
     this.userWarp = this.warp;
+    this.event(tr(`⏩ Tốc độ tua thời gian: ${fmt(this.warp)}×`, `⏩ Time Warp: ${fmt(this.warp)}×`));
   }
 
   cycleCam() {
@@ -726,6 +774,14 @@ export class LaunchScene {
     if (this.rocket) roots.add(this.rocket.root);
     for (const d of this.debris) if (d.obj) roots.add(d.obj);
     for (const r of roots) { r.parent && r.parent.remove(r); freeGPU(r); }
+    for (const a of (this.aliens || [])) { if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh); }
+    for (const b of (this.weaponBeams || [])) { if (b.mesh && b.mesh.parent) b.mesh.parent.remove(b.mesh); }
+    for (const sn of (this.supernovas || [])) {
+      if (sn.mesh && sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
+      if (sn.mesh?.userData?.dispose) sn.mesh.userData.dispose();
+    }
+    this.aliens = []; this.weaponBeams = []; this.supernovas = [];
+    this.alienSpawnTimer = 1.0; this.weaponCooldown = 0; this.firingHeld = false;
     this.debris = []; this.vessels = [];
     this.smoke.clear(); this.fire.clear();
     $('events').innerHTML = '';
@@ -810,7 +866,7 @@ export class LaunchScene {
     this.reqWarpNext = null; this.reqWarpPrev = 1;
     this.holdBeta = this.player.beta;
     if (this.player.dir3D) this.player.holdDir3D.copy(this.player.dir3D);
-    this.program = null; this.programDone = false;
+    this.program = null; this.programDone = false; this.autoShootAliens = false;
     this.docked = null;
     this.ignited = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.released = this.player.isBoat || this.player.isRover || this.player.isPlane;
@@ -937,25 +993,35 @@ export class LaunchScene {
 
   toggleAutopilot() {
     if (!this.player || this.player.crashed || this.docked) return;
-    if (this.program) {
+    if (!this.mission || this.mission.id === 'free') {
       this.program = null;
+      this.autoShootAliens = false;
+      this.event(
+        tr(
+          '🚫 Chế độ Bay tự do không cho phép dùng Lái tự động! Hãy tự điều khiển hoặc chọn một Nhiệm vụ cụ thể.',
+          '🚫 Autopilot is disabled in Free Flight mode! Fly manually or select a specific Mission.'
+        ),
+        'warn'
+      );
+      return;
+    }
+    if (this.program || this.autoShootAliens) {
+      this.program = null;
+      this.autoShootAliens = false;
       this.player.ctl.targetBeta = null;
       this.player.ctl.rcs = [0, 0, 0];
       this.holdAttitude();
-      this.event(tr('Tắt lái tự động.', 'Autopilot OFF.'));
+      this.event(tr('Tắt lái tự động & tự động bắn Alien.', 'Autopilot & Auto-Turret OFF.'));
       return;
     }
     const id = this.mission.id;
     if (id === 'iss') this.program = new RendezvousProgram(this.issOrbit, 85e3);
     else if (BODIES[id] && id !== 'earth' && id !== 'sun' && !BODIES[id].gasGiant) this.program = new MoonProgram(id);
     else this.program = new AscentProgram(85e3, 'earth');
-    if (this.mission && this.mission.id !== 'free') {
-      this.program.label = `${this.mission.icon} ${this.mission.name}`;
-    } else {
-      this.program.label = tr('Bay lên quỹ đạo', 'Ascent to Orbit');
-    }
+    this.program.label = `${this.mission.icon} ${this.mission.name}`;
     this.programDone = false;
-    this.event(tr('🤖 Bật lái tự động theo nhiệm vụ: ', '🤖 Mission Autopilot ON: ') + this.program.label + '.');
+    this.autoShootAliens = true;
+    this.event(tr('🤖 Bật lái tự động & tự động bắn Alien: ', '🤖 Mission Autopilot & Auto-Turret ON: ') + this.program.label + '.');
     if (this.phase === 'ready') {
       this.startCountdown();
     }
@@ -1286,11 +1352,22 @@ export class LaunchScene {
     const d = snap?.details || P?.crashDetails || null;
 
     if (!this.lifted && this.met > 35) {
+      const st0 = P ? this.segInfo[P.activeSeg] : null;
       const twr = this.thrustTotalSL() / ((P?.com?.mass || 1) * G_E);
-      if (this.thrustTotalSL() <= 0) {
+      if (st0?.needsBattery) {
         reasons.push(tr(
-          'Tầng dưới cùng chưa được lắp động cơ nên không có lực đẩy khi phóng.',
-          'The bottom stage has no engine installed, producing zero liftoff thrust.'
+          'Động cơ Lazer và Động cơ Phản Trọng Lực bắt buộc phải lắp Cục Pin Năng Lượng mới hoạt động được (không chạy bằng bồn nhiên liệu thường).',
+          'Laser and Anti-Gravity Engines require a Quantum Energy Battery to operate (they cannot run on regular fuel tanks).'
+        ));
+      } else if (st0?.needsChemFuel) {
+        reasons.push(tr(
+          'Động cơ thường bắt buộc phải lắp Bồn nhiên liệu (không thể dùng Cục Pin Năng Lượng).',
+          'Regular chemical engines require a standard Fuel Tank (they cannot run on a Quantum Energy Battery).'
+        ));
+      } else if (this.thrustTotalSL() <= 0) {
+        reasons.push(tr(
+          'Tầng dưới cùng chưa được lắp động cơ hoặc thiếu nhiên liệu tương thích nên không có lực đẩy khi phóng.',
+          'The bottom stage has no engine installed or lacks compatible fuel, producing zero liftoff thrust.'
         ));
       } else if (twr < 1) {
         reasons.push(tr(
@@ -1455,18 +1532,18 @@ export class LaunchScene {
   }
 
   effectiveWarp() {
-    let w = this.program ? (this.reqWarpPrev || 1) : this.userWarp;
+    let w = this.program
+      ? (this.reqWarpPrev === 1 && this.player?.engineOn ? 1 : Math.max(this.reqWarpPrev || 1, this.userWarp || 1))
+      : this.userWarp;
     if (this.phase === 'countdown') w = 1;
     let cap = Infinity;
     for (const v of this.vessels) {
       if (v.dead || v.crashed) continue;
-      const atm = v.ref === 'earth' && v.alt < ATM_TOP;
-      if (atm && (v.engineOn || v.coreFiring || v.boosterFiring)) cap = Math.min(cap, 4);
-      if (v.kind === 'booster' && v.rec && v.rec.phase !== 'done' && v.rec.phase !== 'lost') cap = Math.min(cap, 4);
-      if (v === this.player && atm && v.alt < 30000 && v.vSurf.u < 0) cap = Math.min(cap, 10);
-      if (v === this.player && v.ref !== 'earth' && !v.landed && v.alt < Math.max(40e3, (v.body?.atm || 0) + 10e3)) cap = Math.min(cap, 10);
+      const atm = v.ref === 'earth' && v.alt < ATM_TOP && !v.clamped && !v.landed;
+      if (atm && (v.engineOn || v.coreFiring || v.boosterFiring)) cap = Math.min(cap, 10);
+      if (v.kind === 'booster' && v.rec && v.rec.phase !== 'done' && v.rec.phase !== 'lost') cap = Math.min(cap, 10);
     }
-    if (this.player && this.mission.id === 'iss' && this.flags.orbit && !this.docked && this.issDistance() < 2500) cap = Math.min(cap, 4);
+    if (this.player && this.mission.id === 'iss' && this.flags.orbit && !this.docked && this.issDistance() < 2500) cap = Math.min(cap, 10);
     return Math.min(w, cap);
   }
 
@@ -1825,7 +1902,12 @@ export class LaunchScene {
       if (this.met >= -3 && !this.ignited) {
         const st = this.segInfo[P.activeSeg];
         if (st.tVac > 0 || this.rocket.boosters.some((b) => b.seg === P.activeSeg)) { this.ignited = true; P.engineOn = true; P.throttle = this.throttle; this.event('Đánh lửa động cơ chính!', 'warn'); }
-        else if (!this.flags.noEngine) { this.flags.noEngine = true; this.event('Không có động cơ ở tầng 1!', 'bad'); }
+        else if (!this.flags.noEngine) {
+          this.flags.noEngine = true;
+          if (st.needsBattery) this.event('Động cơ Lazer / Phản Trọng Lực cần Cục Pin Năng Lượng (không dùng nhiên liệu thường)!', 'bad');
+          else if (st.needsChemFuel) this.event('Động cơ thường cần Bồn nhiên liệu (không chạy bằng Pin)!', 'bad');
+          else this.event('Không có động cơ hoặc nhiên liệu ở tầng 1!', 'bad');
+        }
       }
       if (this.met >= 0) {
         this.phase = 'flight'; this.released = true; this.launchT = this.simT;
@@ -1845,8 +1927,17 @@ export class LaunchScene {
     let remaining = dt * eff;
     let guard = 0;
     const fine = this.needsFine();
+    const isSurfaceIdle = (P.clamped && this.phase !== 'countdown') || (P.landed && !P.engineOn && !(P.ctl && P.ctl.drive));
+    const minStepForWarp = remaining / 320;
     while (remaining > 1e-9 && guard++ < 700) {
-      let h = fine ? 0.02 : Math.min(coastStep(P.s.x, P.s.y, P.s.z, this.simT) * 2, 30);
+      let h;
+      if (isSurfaceIdle) {
+        h = Math.max(0.02, remaining / 4);
+      } else if (fine) {
+        h = Math.max(0.02, minStepForWarp);
+      } else {
+        h = Math.max(coastStep(P.s.x, P.s.y, P.s.z, this.simT) * 2.5, minStepForWarp);
+      }
       h = Math.min(h, remaining);
       this.simStep(h);
       remaining -= h;
@@ -1917,6 +2008,7 @@ export class LaunchScene {
     this.animateParts();
     this.placeScene(this.focus);
     this.scene.updateMatrixWorld(true);
+    this.updateAliensAndWeapons(dt);
     this.updateCamera(dt);
     const F = this.focus;
     const camAlt = Math.max(0, F.alt + this.camera.position.y);
@@ -1945,6 +2037,482 @@ export class LaunchScene {
     let T = this.segInfo[k].tSL;
     for (const b of v.boosters()) if (b.seg === k) T += PARTS.booster.thrustSL * b.count;
     return T;
+  }
+
+  // =================================================================== ALIEN INVADERS & WEAPONS (LASER GUN + 1,000,000 PSI WATER CANNON)
+  getActivePlayerWeapons() {
+    if (!this.rocket || !this.rocket.weapons || !this.player || this.player.dead || this.player.crashed) return [];
+    return this.rocket.weapons.filter((w) => this.player.owns(w.seg));
+  }
+
+  spawnAlien() {
+    if (!this.player || this.player.crashed) return;
+    // Never spawn Aliens on Earth (only in outer space >= ATM_TOP or on other planets/moons)
+    if (this.player.ref === 'earth' && this.player.alt < ATM_TOP) return;
+    if (!this.aliens) this.aliens = [];
+
+    // Mix of low-HP Scout Aliens, medium-HP Warrior Aliens, and high-HP Boss Mothership Aliens
+    const roll = Math.random();
+    let tier = 'scout';
+    let maxHp = 45 + Math.floor(Math.random() * 20); // 45–64 HP (ít máu: 1–2 phát bắn)
+    let speedMul = 1.35;
+    let radiusBase = 22;
+    let labelVi = 'Alien Trinh Sát (Ít máu)';
+    let labelEn = 'Scout Alien (Low HP)';
+    let mapColor = '#4ade80';
+
+    if (roll > 0.72) {
+      tier = 'boss';
+      maxHp = 280 + Math.floor(Math.random() * 140); // 280–420 HP (nhiều máu: tàu mẹ hạng nặng)
+      speedMul = 0.65;
+      radiusBase = 36;
+      labelVi = 'Tàu Mẹ Alien Hạng Nặng (Nhiều máu)';
+      labelEn = 'Heavy Boss Alien (High HP)';
+      mapColor = '#fb7185';
+    } else if (roll > 0.36) {
+      tier = 'warrior';
+      maxHp = 115 + Math.floor(Math.random() * 45); // 115–160 HP (máu trung bình)
+      speedMul = 0.95;
+      radiusBase = 28;
+      labelVi = 'Alien Chiến Binh';
+      labelEn = 'Warrior Alien';
+      mapColor = '#c084fc';
+    }
+
+    const mesh = createAlienMesh(tier);
+    this.scene.add(mesh);
+
+    const orbitAngle = Math.random() * Math.PI * 2;
+    const orbitRadius = radiusBase + Math.random() * 32;
+    const orbitSpeed = (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.42) * speedMul;
+    const inSpace = this.player.ref !== 'earth' || this.player.alt > 25000;
+    const baseY = inSpace ? (-12 + Math.random() * 34) : (10 + Math.random() * 24);
+    const relPos = new THREE.Vector3(Math.cos(orbitAngle) * orbitRadius, baseY, Math.sin(orbitAngle) * orbitRadius);
+    mesh.position.copy(this.player.root.position).add(relPos);
+
+    const alien = {
+      id: 'alien_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
+      mesh,
+      tier,
+      labelVi,
+      labelEn,
+      mapColor,
+      hp: maxHp,
+      maxHp,
+      hitFlash: 0,
+      orbitAngle,
+      orbitRadius,
+      orbitSpeed,
+      baseY,
+      bobPhase: Math.random() * Math.PI * 2,
+      bobAmp: 3.5 + Math.random() * 5.5,
+      relPos,
+      pushOffset: new THREE.Vector3(),
+      vel: new THREE.Vector3(),
+    };
+    this.aliens.push(alien);
+
+    if (!this._alienAnnounced || tier === 'boss' || (this.aliens.length === 1 && Math.random() < 0.35)) {
+      this._alienAnnounced = true;
+      const bodyLabel = (BODIES[this.player.ref] || BODIES.earth).label;
+      const locText = this.player.alt > 40000
+        ? tr(`ngoài không gian quanh ${bodyLabel}`, `in outer space near ${bodyLabel}`)
+        : tr(`trên ${bodyLabel}`, `at ${bodyLabel}`);
+      this.event(
+        tr(
+          `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
+          `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
+        ),
+        'warn'
+      );
+    }
+  }
+
+  fireWeapons(targetAlien = null) {
+    const P = this.player;
+    if (!P || P.dead || P.crashed) return;
+    if (this.weaponCooldown > 0) return;
+
+    let weapons = this.getActivePlayerWeapons();
+    if (!weapons.length) {
+      if (!this._noWeaponWarned) {
+        this._noWeaponWarned = true;
+        this.event(
+          tr(
+            '💡 Mẹo: Hãy gắn "Súng Lazer Siêu Hạng ×2" hoặc "Máy Phun Nước 1,000,000 PSI ×2" trong Xưởng để tăng hỏa lực! (Đang bắn pháo dự phòng)',
+            '💡 Tip: Attach "Twin Plasma Laser Turrets ×2" or "1,000,000 PSI Water Cannon ×2" in the VAB for maximum firepower!'
+          ),
+          'warn'
+        );
+      }
+      weapons = [
+        { weaponType: 'laser', muzzle: P.root, fallbackOffset: new THREE.Vector3(-1.4, (this.rocketHeight || 8) * 0.65, 0) },
+        { weaponType: 'water', muzzle: P.root, fallbackOffset: new THREE.Vector3(1.4, (this.rocketHeight || 8) * 0.65, 0) },
+      ];
+    }
+
+    this.weaponCooldown = 0.14;
+
+    // Pick target Alien (either clicked Alien, or closest Alien to player)
+    let tgt = targetAlien;
+    if (!tgt && this.aliens && this.aliens.length) {
+      let bestD = Infinity;
+      for (const a of this.aliens) {
+        const d = a.relPos.length();
+        if (d < bestD) { bestD = d; tgt = a; }
+      }
+    }
+
+    let firedLaser = false;
+    let firedWater = false;
+    const pWorld = P.root.position;
+    const wxOff = P.sx, wyOff = P.alt, wzOff = P.s.z || 0;
+
+    for (const w of weapons) {
+      const startPos = new THREE.Vector3();
+      if (w.fallbackOffset) {
+        startPos.copy(w.fallbackOffset).applyQuaternion(P.root.quaternion).add(pWorld);
+      } else if (w.muzzle) {
+        w.muzzle.getWorldPosition(startPos);
+      } else {
+        startPos.copy(pWorld);
+      }
+
+      const endPos = new THREE.Vector3();
+      if (tgt && tgt.mesh) {
+        endPos.copy(tgt.mesh.position);
+        endPos.x += (Math.random() - 0.5) * 0.8;
+        endPos.y += 0.35 + (Math.random() - 0.5) * 0.6;
+        endPos.z += (Math.random() - 0.5) * 0.8;
+      } else {
+        const fwd = (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
+        endPos.copy(startPos).addScaledVector(fwd, 85);
+      }
+
+      const beam = createBeamVisual(w.weaponType, startPos, endPos);
+      this.scene.add(beam);
+      this.weaponBeams.push({
+        mesh: beam,
+        relStart: startPos.clone().sub(pWorld),
+        relEnd: endPos.clone().sub(pWorld),
+        life: beam.userData.life,
+        maxLife: beam.userData.maxLife,
+      });
+
+      const dir = new THREE.Vector3().subVectors(endPos, startPos).normalize();
+      const hitX = wxOff + (endPos.x - pWorld.x);
+      const hitY = wyOff + (endPos.y - pWorld.y);
+      const hitZ = wzOff + (endPos.z - pWorld.z);
+      const muzX = wxOff + (startPos.x - pWorld.x);
+      const muzY = wyOff + (startPos.y - pWorld.y);
+      const muzZ = wzOff + (startPos.z - pWorld.z);
+
+      if (w.weaponType === 'water') {
+        firedWater = true;
+        // 1,000,000 PSI Supersonic Water Jet spray + high-pressure mist burst
+        for (let i = 0; i < 16; i++) {
+          const sp = 55 + Math.random() * 85;
+          this.fire.emit(
+            muzX + dir.x * i * 1.4,
+            muzY + dir.y * i * 1.4,
+            muzZ + dir.z * i * 1.4,
+            P.vSurf.e + dir.x * sp + (Math.random() - 0.5) * 12,
+            P.vSurf.u + dir.y * sp + (Math.random() - 0.5) * 12,
+            dir.z * sp + (Math.random() - 0.5) * 12,
+            { life: 0.22 + Math.random() * 0.18, size0: 1.2, size1: 3.6, alpha: 0.85, drag: 1.2, buoy: 0, color: [0.65, 2.8, 5.5] }
+          );
+        }
+        for (let i = 0; i < 18; i++) {
+          const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(12 + Math.random() * 26);
+          this.smoke.emit(
+            hitX, hitY, hitZ,
+            P.vSurf.e + d.x, P.vSurf.u + d.y, d.z,
+            { life: 0.65 + Math.random() * 0.5, size0: 2.0, size1: 7.5, alpha: 0.75, drag: 0.5, buoy: 0.2, color: [0.82, 0.95, 1.0] }
+          );
+        }
+        if (tgt && tgt.hp > 0) {
+          tgt.hp -= 30;
+          tgt.hitFlash = 0.16;
+          // 1,000,000 PSI knockback impulse
+          tgt.vel.addScaledVector(dir, 24);
+          tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
+          if (tgt.hp <= 0) this.destroyAlien(tgt, 'water');
+        }
+      } else {
+        firedLaser = true;
+        // High-energy Laser impact plasma sparks
+        for (let i = 0; i < 18; i++) {
+          const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(15 + Math.random() * 35);
+          this.fire.emit(
+            hitX, hitY, hitZ,
+            P.vSurf.e + d.x, P.vSurf.u + d.y, d.z,
+            { life: 0.25 + Math.random() * 0.25, size0: 1.6, size1: 4.8, alpha: 0.95, drag: 1.4, buoy: 0, color: [7.5, 0.7, 2.2] }
+          );
+        }
+        if (tgt && tgt.hp > 0) {
+          tgt.hp -= 35;
+          tgt.hitFlash = 0.16;
+          tgt.vel.addScaledVector(dir, 8);
+          tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
+          if (tgt.hp <= 0) this.destroyAlien(tgt, 'laser');
+        }
+      }
+    }
+
+    if (firedLaser) audio.laserShot(0.32);
+    if (firedWater) audio.waterBlast(0.38);
+  }
+
+  destroyAlien(alien, weaponType) {
+    if (!alien || alien.dead) return;
+    alien.dead = true;
+    const P = this.player;
+    const pWorld = P ? P.root.position : new THREE.Vector3();
+    const hitX = (P ? P.sx : 0) + (alien.mesh.position.x - pWorld.x);
+    const hitY = (P ? P.alt : 0) + (alien.mesh.position.y - pWorld.y);
+    const hitZ = (P ? (P.s.z || 0) : 0) + (alien.mesh.position.z - pWorld.z);
+
+    // Big neon green & purple Alien UFO explosion
+    for (let i = 0; i < 65; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(10 + Math.random() * 42);
+      const col = i % 2 === 0 ? [1.2, 6.8, 2.2] : [4.8, 1.4, 6.8];
+      this.fire.emit(
+        hitX, hitY, hitZ,
+        (P?.vSurf?.e || 0) + d.x, (P?.vSurf?.u || 0) + d.y, d.z,
+        { life: 0.55 + Math.random() * 0.65, size0: 3.2, size1: 14 + Math.random() * 10, alpha: 1.0, drag: 1.1, buoy: 0.4, color: col }
+      );
+    }
+    for (let i = 0; i < 32; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(8 + Math.random() * 24);
+      this.smoke.emit(
+        hitX, hitY, hitZ,
+        (P?.vSurf?.e || 0) + d.x, (P?.vSurf?.u || 0) + d.y, d.z,
+        { life: 2.2 + Math.random() * 2.0, size0: 4, size1: 18, alpha: 0.7, drag: 0.4, buoy: 0.5, color: [0.35, 0.85, 0.45] }
+      );
+    }
+
+    if (alien.mesh && alien.mesh.parent) alien.mesh.parent.remove(alien.mesh);
+    this.aliens = this.aliens.filter((a) => a !== alien);
+    this.aliensKilled = (this.aliensKilled || 0) + 1;
+    audio.alienBoom(0.7);
+    this.flash = Math.max(this.flash || 0, 0.55);
+    this.flashPos = { x: hitX, y: hitY, z: hitZ };
+
+    const wLabel = weaponType === 'supernova'
+      ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
+      : weaponType === 'water'
+        ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
+        : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
+    const aName = tr(alien.labelVi || 'UFO Alien', alien.labelEn || 'Alien UFO');
+    this.event(
+      tr(
+        `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
+        `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
+      )
+    );
+    // Heavy Boss Alien core collapses into a mini Supernova on destruction!
+    if (alien.tier === 'boss' && weaponType !== 'supernova') {
+      this.triggerSupernova(alien.relPos ? alien.relPos.clone() : null, 0.58, true);
+    }
+  }
+
+  triggerSupernova(originRel = null, scale = 1.15, isBossCollapse = false) {
+    const P = this.player;
+    if (!P) return;
+    if (!this.supernovas) this.supernovas = [];
+
+    const pWorld = P.root ? P.root.position : new THREE.Vector3();
+    let relPos = originRel ? originRel.clone() : null;
+    if (!relPos) {
+      if (this.aliens && this.aliens.length) {
+        relPos = this.aliens[0].relPos.clone();
+      } else {
+        const fwd = (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
+        relPos = new THREE.Vector3(18, 28, -22).addScaledVector(fwd, 32);
+      }
+    }
+
+    const mesh = createSupernovaMesh(scale);
+    mesh.position.copy(pWorld).add(relPos);
+    this.scene.add(mesh);
+
+    const maxLife = isBossCollapse ? 3.8 : 5.6;
+    this.supernovas.push({
+      mesh,
+      relPos,
+      age: 0,
+      maxLife,
+    });
+
+    const hitX = (P.sx || 0) + relPos.x;
+    const hitY = (P.alt || 0) + relPos.y;
+    const hitZ = (P.s?.z || 0) + relPos.z;
+
+    // Multi-chromatic Supernova plasma ejecta (cyan, magenta, solar gold, pure white)
+    const snPalette = [
+      [1.5, 5.5, 9.0],
+      [8.5, 1.4, 5.2],
+      [9.0, 6.2, 1.2],
+      [7.5, 7.5, 9.5],
+    ];
+    const count = isBossCollapse ? 85 : 150;
+    for (let i = 0; i < count; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize()
+        .multiplyScalar((18 + Math.random() * 95) * scale);
+      const col = snPalette[i % snPalette.length];
+      this.fire.emit(
+        hitX, hitY, hitZ,
+        (P.vSurf?.e || 0) + d.x, (P.vSurf?.u || 0) + d.y, d.z,
+        { life: 0.9 + Math.random() * 1.4, size0: 4.5 * scale, size1: (22 + Math.random() * 18) * scale, alpha: 1.0, drag: 0.75, buoy: 0.2, color: col }
+      );
+    }
+
+    audio.supernova(isBossCollapse ? 0.65 : 0.95);
+    this.flash = Math.max(this.flash || 0, isBossCollapse ? 1.2 : 2.2);
+    this.flashPos = { x: hitX, y: hitY, z: hitZ };
+    this.shakeBoost = Math.max(this.shakeBoost || 0, isBossCollapse ? 2.5 : 4.5);
+
+    if (this.map && this.map.triggerSupernova) {
+      this.map.triggerSupernova(this.map.visible && !isBossCollapse);
+    }
+
+    if (!isBossCollapse) {
+      // Vaporize all live Aliens caught in the Supernova shockwave!
+      const doomed = (this.aliens || []).slice();
+      for (const a of doomed) {
+        this.destroyAlien(a, 'supernova');
+      }
+      this.milestone(
+        tr('💥 VỤ NỔ SIÊU TÂN TINH!', '💥 SUPERNOVA CATACLYSM!'),
+        doomed.length
+          ? tr(`Sóng xung kích Siêu Tân Tinh đã quét sạch ${doomed.length} UFO Alien!`, `Supernova shockwave vaporized ${doomed.length} Alien UFOs!`)
+          : tr('Sóng xung kích lượng tử & chớp tia Gamma giải phóng toàn vũ trụ!', 'Relativistic shockwave & Gamma-Ray Burst unleashed across space!')
+      );
+      this.event(
+        tr(
+          `💥🌟 KÍCH HOẠT VỤ NỔ SIÊU TÂN TINH! Sóng xung kích đa tầng & chớp tia Gamma bùng nổ${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
+          `💥🌟 SUPERNOVA EXPLOSION TRIGGERED! Multi-ring shockwave & Gamma-Ray Burst erupted${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
+        ),
+        'warn'
+      );
+    } else {
+      this.event(
+        tr(
+          '💥🌟 Lõi Tàu Mẹ Alien sụp đổ tạo ra Vụ Nổ Siêu Tân Tinh Mini!',
+          '💥🌟 Boss Alien core collapsed into a Mini Supernova Explosion!'
+        ),
+        'warn'
+      );
+    }
+  }
+
+  updateAliensAndWeapons(dt) {
+    const P = this.player;
+    if (!P || P.dead || P.crashed) return;
+    if (!this.aliens) this.aliens = [];
+    if (!this.weaponBeams) this.weaponBeams = [];
+
+    this.weaponCooldown = Math.max(0, (this.weaponCooldown || 0) - dt);
+    if ((this.keys['v'] || this.keys['enter'] || this.firingHeld) && this.weaponCooldown <= 0) {
+      this.fireWeapons();
+    }
+
+    // Never allow Aliens on Earth (< ATM_TOP); only spawn in outer space or on other planets/moons
+    const onEarth = P.ref === 'earth' && P.alt < ATM_TOP;
+    if (onEarth) {
+      if (this.aliens.length) {
+        for (const a of this.aliens) {
+          if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
+        }
+        this.aliens = [];
+      }
+    } else {
+      this.alienSpawnTimer = (this.alienSpawnTimer || 0) - dt;
+      if (this.aliens.length < 4 && this.alienSpawnTimer <= 0) {
+        this.spawnAlien();
+        this.alienSpawnTimer = 2.6;
+      }
+    }
+
+    const pWorld = P.root.position;
+    const lowSurface = !BODIES[P.ref]?.gasGiant && (P.agl !== undefined ? P.agl < 180 : P.alt < 180);
+    const minRelY = lowSurface ? Math.max(-Math.max(0, P.agl ?? P.alt) + 7, -12) : -35;
+
+    let nearestAlien = null;
+    let bestDist = Infinity;
+
+    for (const a of this.aliens) {
+      a.orbitAngle += a.orbitSpeed * dt;
+      a.hitFlash = Math.max(0, a.hitFlash - dt);
+      a.pushOffset.addScaledVector(a.vel, dt);
+      a.vel.multiplyScalar(Math.exp(-dt * 3.2));
+      a.pushOffset.multiplyScalar(Math.exp(-dt * 1.4));
+
+      const tx = Math.cos(a.orbitAngle) * a.orbitRadius + a.pushOffset.x;
+      const tz = Math.sin(a.orbitAngle) * a.orbitRadius + a.pushOffset.z;
+      const ty = Math.max(minRelY, a.baseY + Math.sin(this.time * 2.2 + a.bobPhase) * a.bobAmp + a.pushOffset.y);
+
+      a.relPos.set(tx, ty, tz);
+      a.mesh.position.copy(pWorld).add(a.relPos);
+      if (a.mesh.userData.animate) {
+        a.mesh.userData.animate(this.time, a.hitFlash, this.camera.quaternion);
+      }
+
+      const d = a.relPos.length();
+      if (d < bestDist) {
+        bestDist = d;
+        nearestAlien = a;
+      }
+    }
+
+    // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled
+    if (nearestAlien && this.rocket && this.rocket.weapons) {
+      for (const w of this.rocket.weapons) {
+        if (!w.turret || !P.owns(w.seg)) continue;
+        w.turret.rotation.z = Math.sin(this.time * 3.5) * 0.12;
+      }
+    }
+    if ((this.program || this.autoShootAliens) && nearestAlien && this.weaponCooldown <= 0) {
+      this.fireWeapons(nearestAlien);
+    }
+
+    // Update active laser & 1,000,000 PSI water beams
+    for (let i = this.weaponBeams.length - 1; i >= 0; i--) {
+      const b = this.weaponBeams[i];
+      b.life -= dt;
+      if (b.life <= 0) {
+        if (b.mesh.parent) b.mesh.parent.remove(b.mesh);
+        if (b.mesh.userData.coreGeo) b.mesh.userData.coreGeo.dispose();
+        if (b.mesh.userData.outerGeo) b.mesh.userData.outerGeo.dispose();
+        this.weaponBeams.splice(i, 1);
+      } else {
+        const f = b.life / b.maxLife;
+        const startW = pWorld.clone().add(b.relStart);
+        const endW = pWorld.clone().add(b.relEnd);
+        b.mesh.position.addVectors(startW, endW).multiplyScalar(0.5);
+        if (b.mesh.userData.coreMat) b.mesh.userData.coreMat.opacity = f;
+        if (b.mesh.userData.outerMat) b.mesh.userData.outerMat.opacity = f * 0.7;
+      }
+    }
+
+    // Update active 3D Supernova cataclysms
+    if (this.supernovas && this.supernovas.length) {
+      for (let i = this.supernovas.length - 1; i >= 0; i--) {
+        const sn = this.supernovas[i];
+        sn.age += dt;
+        if (sn.age >= sn.maxLife) {
+          if (sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
+          if (sn.mesh.userData.dispose) sn.mesh.userData.dispose();
+          this.supernovas.splice(i, 1);
+        } else {
+          sn.mesh.position.copy(pWorld).add(sn.relPos);
+          if (sn.mesh.userData.animate) {
+            sn.mesh.userData.animate(sn.age, sn.maxLife);
+          }
+        }
+      }
+    }
   }
 
   animateParts() {
@@ -2025,6 +2593,12 @@ export class LaunchScene {
     for (const d of this.debris) {
       proj(d.s.x, d.s.y, d.s.z, d.obj.position);
       d.obj.quaternion.setFromAxisAngle(this._zAxis || (this._zAxis = new THREE.Vector3(0, 0, 1)), phi - d.beta).multiply(d.q0);
+    }
+    if (this.player && this.aliens && this.aliens.length) {
+      const pPos = this.player.root.position;
+      for (const a of this.aliens) {
+        a.mesh.position.copy(pPos).add(a.relPos);
+      }
     }
     // sun in the focus frame
     this.sunDir.set(SUN_ECI.x * E.x + SUN_ECI.y * E.y, SUN_ECI.x * U.x + SUN_ECI.y * U.y, SUN_ECI.z).normalize();
@@ -2251,6 +2825,12 @@ export class LaunchScene {
           let ok = true;
           if (hasC && v.engMode === 'center') ok = !!nz.center;
           else if (hasC && v.engMode === 'three') ok = list.indexOf(p) < 3;
+          const stInfo = this.segInfo[nz.seg];
+          const isSciFiNz = nz.style === 'antigrav' || nz.style === 'laser';
+          if (stInfo) {
+            if (isSciFiNz && !stInfo.useBatteryFuel) ok = false;
+            else if (!isSciFiNz && !stInfo.useChemFuel) ok = false;
+          }
           on = ok ? v.throttle : 0;
         }
       }
@@ -2519,7 +3099,67 @@ export class LaunchScene {
         deletable: true,
       };
     });
-    const others = [...liveOthers, ...persistedOthers];
+
+    // Live Aliens near the player vessel (when in space or at another planet/moon)
+    const E = P.east, U = P.up;
+    const liveAlienMapObjs = (this.aliens || []).map((a, idx) => {
+      const rx = a.relPos.x, ry = a.relPos.y, rz = a.relPos.z;
+      const ax = P.s.x + E.x * rx + U.x * ry;
+      const ay = P.s.y + E.y * rx + U.y * ry;
+      const az = (P.s.z || 0) + rz;
+      const curHp = Math.max(0, Math.round(a.hp));
+      const aLabel = tr(a.labelVi || `UFO Alien #${idx + 1}`, a.labelEn || `Alien UFO #${idx + 1}`);
+      return {
+        id: a.id,
+        x: ax,
+        y: ay,
+        z: az,
+        alt: Math.max(0, P.alt + ry),
+        speedOrb: P.speedOrb,
+        beta: a.orbitAngle,
+        ref: P.ref || 'earth',
+        kind: 'alien',
+        name: `${aLabel} (${curHp}/${a.maxHp} HP)`,
+        color: a.mapColor || '#4ade80',
+        el: null,
+        deletable: false,
+      };
+    });
+
+    // Solar System Alien Patrols (stationed in outer space & around planets/moons; never on Earth's surface)
+    if (!this.mapAlienFleet) {
+      this.mapAlienFleet = [
+        { id: 'alien_space_leo', ref: 'earth', alt: 220e3, e: 0.01, argPe: 0.9, nu0: 1.2, hSign: 1, t0: 0, vi: 'UFO Alien · Vũ trụ', en: 'Alien UFO · Outer Space' },
+        { id: 'alien_moon', ref: 'moon', alt: 35e3, e: 0.02, argPe: 2.1, nu0: 0.5, hSign: 1, t0: 0, vi: 'UFO Alien · Mặt Trăng', en: 'Alien UFO · Moon' },
+        { id: 'alien_mars', ref: 'mars', alt: 48e3, e: 0.02, argPe: 1.4, nu0: 2.3, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Hỏa', en: 'Alien UFO · Mars' },
+        { id: 'alien_venus', ref: 'venus', alt: 75e3, e: 0.015, argPe: 0.4, nu0: 3.1, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Kim', en: 'Alien UFO · Venus' },
+        { id: 'alien_mercury', ref: 'mercury', alt: 28e3, e: 0.02, argPe: 2.8, nu0: 1.7, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Thủy', en: 'Alien UFO · Mercury' },
+        { id: 'alien_europa', ref: 'europa', alt: 22e3, e: 0.01, argPe: 1.1, nu0: 0.8, hSign: 1, t0: 0, vi: 'UFO Alien · Europa', en: 'Alien UFO · Europa' },
+        { id: 'alien_titan', ref: 'titan', alt: 55e3, e: 0.015, argPe: 2.5, nu0: 2.0, hSign: 1, t0: 0, vi: 'UFO Alien · Titan', en: 'Alien UFO · Titan' },
+        { id: 'alien_pluto', ref: 'pluto', alt: 20e3, e: 0.02, argPe: 0.7, nu0: 1.5, hSign: 1, t0: 0, vi: 'UFO Alien · Diêm Vương', en: 'Alien UFO · Pluto' },
+      ];
+    }
+    const patrolAlienObjs = this.mapAlienFleet.map((pat) => {
+      const B = BODIES[pat.ref] || BODIES.earth;
+      const st = this.evalSpaceObject({ ...pat, a: B.R + pat.alt }, t);
+      return {
+        id: pat.id,
+        x: st.x,
+        y: st.y,
+        z: st.z || 0,
+        alt: st.alt,
+        speedOrb: st.speedOrb,
+        beta: st.beta,
+        ref: pat.ref,
+        kind: 'alien',
+        name: tr(pat.vi, pat.en),
+        color: '#4ade80',
+        el: st.el,
+        deletable: false,
+      };
+    });
+
+    const others = [...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
     const info = [`Quanh ${refLabel} · độ cao ${fmt(P.alt / 1000, 1)} km`, `Vận tốc quỹ đạo ${fmt(P.speedOrb)} m/s`];
     if (pred && pred.bodyCA && P.ref === 'earth') {
@@ -2616,18 +3256,55 @@ export class LaunchScene {
     $('h-sas').textContent = this.sas ? tr('BẬT', 'ON') : tr('TẮT', 'OFF');
     $('h-sas').style.color = this.sas ? 'var(--ok)' : 'var(--danger)';
     $('h-sasmode').textContent = sasModes[this.sasMode];
-    $('h-ap').textContent = this.program ? tr('BẬT', 'ON') : tr('TẮT', 'OFF');
-    $('h-ap').style.color = this.program ? 'var(--ok)' : 'var(--muted)';
+    const isFreeMission = !this.mission || this.mission.id === 'free';
+    $('h-ap').textContent = isFreeMission
+      ? tr('KHÓA (Tự do)', 'LOCKED (Free)')
+      : this.program
+        ? tr('BẬT', 'ON')
+        : tr('TẮT', 'OFF');
+    $('h-ap').style.color = isFreeMission ? 'var(--danger)' : this.program ? 'var(--ok)' : 'var(--muted)';
     const btnAp = $('btn-autopilot');
     if (btnAp) {
-      btnAp.textContent = this.program
-        ? tr('🤖 ĐANG TỰ LÁI NHIỆM VỤ (G)', '🤖 AUTOPILOT ACTIVE (G)')
-        : tr('🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
-      btnAp.style.background = this.program ? 'rgba(74,222,128,0.32)' : 'rgba(74,222,128,0.16)';
-      btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.85)' : 'rgba(74,222,128,0.45)';
+      if (isFreeMission) {
+        btnAp.textContent = tr('🚫 TỰ LÁI BỊ KHÓA (BAY TỰ DO)', '🚫 AUTOPILOT LOCKED (FREE FLIGHT)');
+        btnAp.style.background = 'rgba(239,68,68,0.12)';
+        btnAp.style.borderColor = 'rgba(239,68,68,0.4)';
+        btnAp.style.color = '#f87171';
+        btnAp.style.opacity = '0.75';
+        btnAp.style.cursor = 'not-allowed';
+      } else {
+        btnAp.textContent = this.program
+          ? tr('🤖 ĐANG TỰ LÁI NHIỆM VỤ (G)', '🤖 AUTOPILOT ACTIVE (G)')
+          : tr('🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
+        btnAp.style.background = this.program ? 'rgba(74,222,128,0.32)' : 'rgba(74,222,128,0.16)';
+        btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.85)' : 'rgba(74,222,128,0.45)';
+        btnAp.style.color = '#86efac';
+        btnAp.style.opacity = '1';
+        btnAp.style.cursor = 'pointer';
+      }
     }
-    $('h-warp').textContent = this.warp + '×';
+    $('h-warp').textContent = fmt(this.warp) + '×';
     $('h-cam').textContent = camModes[this.camMode];
+    const killsEl = $('h-alien-kills');
+    if (killsEl) killsEl.textContent = String(this.aliensKilled || 0);
+    const btnFire = $('btn-fire-weapon');
+    if (btnFire) {
+      const activeWeapons = this.getActivePlayerWeapons();
+      const hasLaser = activeWeapons.some((w) => w.weaponType === 'laser');
+      const hasWater = activeWeapons.some((w) => w.weaponType === 'water');
+      const wTag = hasLaser && hasWater
+        ? tr('LAZER + NƯỚC 1M PSI', 'LASER + 1M PSI WATER')
+        : hasWater
+          ? tr('NƯỚC 1,000,000 PSI', '1,000,000 PSI WATER')
+          : hasLaser
+            ? tr('SÚNG LAZER', 'LASER GUN')
+            : tr('VŨ KHÍ DỰ PHÒNG', 'BACKUP WEAPON');
+      btnFire.textContent = `🔫 ${tr('BẮN ALIEN', 'FIRE AT ALIENS')}: ${wTag} (V)`;
+    }
+    const btnSn = $('btn-supernova');
+    if (btnSn) {
+      btnSn.textContent = tr('💥 VỤ NỔ SIÊU TÂN TINH (U)', '💥 SUPERNOVA EXPLOSION (U)');
+    }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);
     $('h-thr').style.width = thr * 100 + '%';
     $('h-thr-v').textContent = Math.round(thr * 100) + '%';

@@ -2,7 +2,7 @@
 // Attitude is a single in-plane angle `beta` (clockwise from ECI +Y); `ang` = beta − local-vertical angle.
 import * as THREE from 'three';
 import { PARTS, G0, R as CORE_R } from '../parts.js';
-import { rk4, gravity, refBody, bodyInfo, bodyState, bodyPos, bodyRotation, bodyOmega, angOf, wrapPi } from '../sim/orbit.js';
+import { rk4, keplerStep, coastStep, gravity, refBody, bodyInfo, bodyState, bodyPos, bodyRotation, bodyOmega, angOf, wrapPi } from '../sim/orbit.js';
 import { ATM_H, ATM_TOP, RHO0, EARTH_A, R_SUN } from '../sim/constants.js';
 
 const _g = { x: 0, y: 0, z: 0 };
@@ -76,13 +76,16 @@ export class Vessel {
   }
 
   updateMass() {
-    const { lay, segs, fuel, fuelMax, rocket } = this.ctx;
+    const { lay, segs, segInfo, fuel, fuelMax, rocket } = this.ctx;
     let m = 0, my = 0, minY = Infinity, maxY = -Infinity;
     for (const k of this.segIdx) {
       const frac = fuelMax[k] > 0 ? fuel[k] / fuelMax[k] : 0;
+      const stInfo = segInfo?.[k];
       for (const i of segs[k]) {
         const p = lay.parts[i];
-        const pm = p.def.dry + (p.def.fuel || 0) * frac;
+        const isBat = p.item.type === 'batteryPack' || p.def.isBattery;
+        const canBurn = stInfo ? (isBat ? stInfo.useBatteryFuel : stInfo.useChemFuel) : true;
+        const pm = p.def.dry + (p.def.fuel || 0) * (canBurn ? frac : 1);
         m += pm; my += pm * (p.y + p.def.height / 2);
         minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.def.height);
         for (const a of p.item.attach) {
@@ -90,7 +93,9 @@ export class Vessel {
           const ad = PARTS[a];
           if (!ad) continue;
           const cnt = ad.count || 2;
-          const am = (ad.dry + (ad.fuel || 0) * frac) * cnt;
+          const aBat = a === 'batteryPack' || ad.isBattery;
+          const aCanBurn = stInfo ? (aBat ? stInfo.useBatteryFuel : stInfo.useChemFuel) : true;
+          const am = (ad.dry + (ad.fuel || 0) * (aCanBurn ? frac : 1)) * cnt;
           const y = a === 'gridfins' ? p.y + p.def.height - 0.5 : a === 'legs' ? p.y + 1.0 : p.y + p.def.height * 0.5;
           m += am; my += am * y;
         }
@@ -223,13 +228,14 @@ export class Vessel {
     const engFrac = this.engMode === 'center' ? 1 / Math.max(1, info.engCount || 1) : this.engMode === 'three' ? Math.min(1, 3 / Math.max(1, info.engCount || 1)) : 1;
     this.coreFiring = this.engineOn && fuel[k] > 0 && info.tVac > 0 && thr > 0;
     if (this.coreFiring) {
-      const agVac = info.tAntiGrav || 0;
-      const agMdot = info.mdotAntiGrav || 0;
-      const lzVac = info.tLaser || 0;
-      const lzMdot = info.mdotLaser || 0;
-      const normVac = Math.max(0, info.tVac - agVac - lzVac);
-      const normSL = Math.max(0, info.tSL - agVac - lzVac);
-      const normMdot = Math.max(0, info.mdot - agMdot - lzMdot);
+      const hasBat = info.batteryCount > 0 && info.useBatteryFuel;
+      const agVac = hasBat ? (info.tAntiGrav || 0) : 0;
+      const agMdot = hasBat ? (info.mdotAntiGrav || 0) : 0;
+      const lzVac = hasBat ? (info.tLaser || 0) : 0;
+      const lzMdot = hasBat ? (info.mdotLaser || 0) : 0;
+      const normVac = info.useChemFuel ? Math.max(0, info.tChemVac || 0) : 0;
+      const normSL = info.useChemFuel ? Math.max(0, info.tChemSL || 0) : 0;
+      const normMdot = info.useChemFuel ? Math.max(0, info.mdotChem || 0) : 0;
       // Anti-gravity thrust scales directly with local gravity (stronger gravity -> faster, weaker gravity -> slower)
       // Laser thrust scales inversely with local brightness (brighter -> slower, darker -> faster)
       const curThrust = (normVac - (normVac - normSL) * pr) + (agVac * gRatio + lzVac * laserScale) * batBoost;
@@ -572,7 +578,16 @@ export class Vessel {
     // ---------- translate (local accel → ECI)
     const E = this.east, U = this.up;
     const axE = ae * E.x + au_ * U.x, ayE = ae * E.y + au_ * U.y;
-    rk4(this.s, t, h, axE, ayE, az);
+    const maxSafe = coastStep(this.s.x, this.s.y, this.s.z, t) * 4.5;
+    if (!inAtm && Math.abs(axE) < 1e-6 && Math.abs(ayE) < 1e-6 && Math.abs(az) < 1e-6 && h > maxSafe) {
+      if (!keplerStep(this.s, this.ref, t, h)) {
+        const nSub = Math.min(80, Math.ceil(h / maxSafe));
+        const hs = h / nSub;
+        for (let i = 0; i < nSub; i++) rk4(this.s, t + i * hs, hs, 0, 0, 0);
+      }
+    } else {
+      rk4(this.s, t, h, axE, ayE, az);
+    }
     this.updateFrame(t + h);
 
     // ---------- surface contact (gas giants Jupiter, Saturn, Uranus, Neptune have no solid surface and can be flown straight through)

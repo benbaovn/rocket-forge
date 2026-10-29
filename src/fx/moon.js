@@ -106,16 +106,55 @@ function layerH(x, y, z, L) {
   return H;
 }
 
+export const OLYMPUS_PSI = 0.855;
+export const OLYMPUS_DIR_X = Math.sin(OLYMPUS_PSI);
+export const OLYMPUS_DIR_Y = Math.cos(OLYMPUS_PSI);
+
+function sstep(e0, e1, x) {
+  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+}
+
 /**
- * Terrain height (metres, roughly within ±40 m) for a unit direction in Moon-fixed space.
- * Matches the vertex displacement of createMoonSurface() exactly (same integer hash + value noise).
+ * 3D elevation profile of Olympus Mons on Mars (shield volcano with basal cliff scarp,
+ * radial lava channels, raised summit rim at r ≈ 455 m, and nested summit caldera).
  */
-export function moonHeight(x, y, z) {
+export function olympusMonsDisp(nx, ny, nz) {
+  const dx = (nx - OLYMPUS_DIR_X) * R_MARS;
+  const dy = (ny - OLYMPUS_DIR_Y) * R_MARS;
+  const dz = nz * R_MARS;
+  const r = Math.hypot(dx, dy, dz);
+  if (r >= 2250.0) return { h: 0, dampen: 0, r };
+  const scarp = 265.0 * sstep(2200.0, 1840.0, r);
+  const tc = Math.max(0, Math.min(1, (1960.0 - r) / 1510.0));
+  const cone = (tc * tc * (3.0 - 2.0 * tc) * 0.52 + Math.pow(Math.max(tc, 1e-6), 1.32) * 0.48) * 1115.0;
+  const drRim = (r - 455.0) / 58.0;
+  const rim = 48.0 * Math.exp(-drRim * drRim);
+  const calOuter = -235.0 * sstep(435.0, 325.0, r);
+  const calInner = -65.0 * sstep(135.0, 62.0, r);
+  const u = dx * OLYMPUS_DIR_Y - dy * OLYMPUS_DIR_X;
+  const v = dz;
+  const flankMask = sstep(2160.0, 1720.0, r) * sstep(480.0, 660.0, r);
+  const ribs = (Math.sin(u * 0.011 + v * 0.008) * Math.cos(v * 0.013 - u * 0.007) + 0.45 * Math.sin(u * 0.025 - v * 0.021)) * 18.0 * flankMask;
+  const h = scarp + cone + rim + calOuter + calInner + ribs;
+  const dampen = 0.88 * sstep(2220.0, 1700.0, r);
+  return { h, dampen, r };
+}
+
+/**
+ * Terrain height (metres) for a unit direction in body-fixed space.
+ * Matches the vertex displacement of createMoonSurface() exactly (including Olympus Mons on Mars).
+ */
+export function moonHeight(x, y, z, body = 'moon') {
   const l = Math.hypot(x, y, z) || 1;
   x /= l; y /= l; z /= l;
   let H = 0;
   for (const N of DISP_NOISE) { const f = R_M / N.cell; H += N.amp * vnoise(x * f, y * f, z * f, N.seed); }
   for (const L of DISP_CRATERS) H += layerH(x, y, z, L);
+  if (body === 'mars') {
+    const om = olympusMonsDisp(x, y, z);
+    H = H * (1 - om.dampen) + om.h;
+  }
   return H;
 }
 
@@ -126,6 +165,28 @@ const fl = (v) => { const s = String(+v); return /[.e]/.test(s) ? s : s + '.0'; 
 
 const CORE_GLSL = /* glsl */`
 #define MOON_R ${fl(R_M)}
+#define MARS_R ${fl(R_MARS)}
+#define OLYMPUS_X ${fl(OLYMPUS_DIR_X)}
+#define OLYMPUS_Y ${fl(OLYMPUS_DIR_Y)}
+vec2 marsOlympusDisp(vec3 n) {
+  vec3 od = (n - vec3(OLYMPUS_X, OLYMPUS_Y, 0.0)) * MARS_R;
+  float r = length(od);
+  if (r >= 2250.0) return vec2(0.0, 0.0);
+  float scarp = 265.0 * smoothstep(2200.0, 1840.0, r);
+  float tc = clamp((1960.0 - r) / 1510.0, 0.0, 1.0);
+  float cone = (tc * tc * (3.0 - 2.0 * tc) * 0.52 + pow(max(tc, 1e-6), 1.32) * 0.48) * 1115.0;
+  float drRim = (r - 455.0) / 58.0;
+  float rim = 48.0 * exp(-drRim * drRim);
+  float calOuter = -235.0 * smoothstep(435.0, 325.0, r);
+  float calInner = -65.0 * smoothstep(135.0, 62.0, r);
+  float u = od.x * OLYMPUS_Y - od.y * OLYMPUS_X;
+  float v = od.z;
+  float flankMask = smoothstep(2160.0, 1720.0, r) * smoothstep(480.0, 660.0, r);
+  float ribs = (sin(u * 0.011 + v * 0.008) * cos(v * 0.013 - u * 0.007) + 0.45 * sin(u * 0.025 - v * 0.021)) * 18.0 * flankMask;
+  float h = scarp + cone + rim + calOuter + calInner + ribs;
+  float dampen = 0.88 * smoothstep(2220.0, 1700.0, r);
+  return vec2(h, dampen);
+}
 uint m_hash(ivec3 c, uint s) {
   uvec3 u = uvec3(c + 1048576);
   uint h = (u.x * 0x8da6b343u) ^ (u.y * 0xd8163841u) ^ (u.z * 0xcb1ab31fu) ^ (s * 0x9e3779b9u);
@@ -541,17 +602,40 @@ export function createPlanetSphere(name) {
         float ll = ${fl(2 * LL_K)} * mu0 / (mu0 + mu + 1e-4) + ${fl(1 - LL_K)} * mu0;
 
         if (uMode == 1) {
-          // MARS: Rusty iron-oxide deserts, dark basaltic plains, polar ice caps, dusty salmon limb
+          // MARS: Rusty iron-oxide deserts, dark basaltic plains, polar ice caps, dusty salmon limb + OLYMPUS MONS
           float desert = fbm3(n * 3.8 + vec3(4.2, 1.9, 7.3), 6);
           vec3 rustHigh = vec3(0.88, 0.36, 0.16);
           vec3 ochreMid = vec3(0.95, 0.52, 0.26);
           vec3 darkBasalt = vec3(0.36, 0.18, 0.11);
           vec3 mCol = mix(rustHigh, ochreMid, smoothstep(0.35, 0.72, desert));
           mCol = mix(mCol, darkBasalt, mare * 0.75);
+          // Planetary-scale Olympus Mons shield volcano & caldera visible from orbit
+          vec3 omVec = n - vec3(OLYMPUS_X, OLYMPUS_Y, 0.0);
+          float omAng = length(omVec);
+          float omGlow = 0.0;
+          if (omAng < 0.16) {
+            float aureole = smoothstep(0.155, 0.125, omAng) * smoothstep(0.095, 0.12, omAng);
+            float shield = smoothstep(0.13, 0.025, omAng);
+            float rimFrost = smoothstep(0.036, 0.025, omAng) * smoothstep(0.014, 0.022, omAng);
+            float caldera = smoothstep(0.022, 0.012, omAng);
+            float lavaDot = smoothstep(0.011, 0.003, omAng);
+            vec3 omDir = omVec / max(omAng, 1e-5);
+            float omSlope = (smoothstep(0.14, 0.11, omAng) * 0.45 + shield * 0.55 - caldera * 1.25);
+            vec3 NfOm = normalize(Nf + (omDir - n * dot(omDir, n)) * omSlope * 0.85);
+            vec3 NOm = normalize(m3 * NfOm);
+            float mu0Om = max(dot(NOm, uSun), 0.0);
+            ll = ${fl(2 * LL_K)} * mu0Om / (mu0Om + mu + 1e-4) + ${fl(1 - LL_K)} * mu0Om;
+            mCol = mix(mCol, vec3(1.08, 0.66, 0.36), aureole * 0.65);
+            mCol = mix(mCol, vec3(0.54, 0.20, 0.10), shield * 0.72);
+            mCol = mix(mCol, vec3(1.25, 1.15, 1.05), rimFrost * 0.85);
+            mCol = mix(mCol, vec3(0.22, 0.10, 0.07), caldera * 0.82);
+            omGlow = lavaDot;
+          }
           // Polar ice caps
           float pole = smoothstep(0.84, 0.93, abs(n.z) + 0.04 * (desert - 0.5));
           vec3 albedo = mix(mCol * (0.16 + 0.55 * alb), vec3(0.92, 0.90, 0.88) * 0.45, pole);
           vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
+          col += vec3(2.4, 0.65, 0.12) * omGlow;
           float rim = pow(1.0 - max(dot(Ng, V), 0.0), 3.4);
           col += vec3(0.95, 0.46, 0.24) * rim * max(dot(Ng, uSun) + 0.18, 0.0) * 0.75;
           gl_FragColor = vec4(col * uExposure, 1.0);
@@ -588,7 +672,7 @@ export function createPlanetSphere(name) {
 const PATCH_R = 25000;
 
 const PATCH_VERT_HEAD = /* glsl */`
-uniform vec3 uEast; uniform vec3 uUp; uniform vec3 uNorth; uniform float uBodyR;
+uniform vec3 uEast; uniform vec3 uUp; uniform vec3 uNorth; uniform float uBodyR; uniform float uIsMars;
 varying vec2 vLocal;
 varying vec3 vBX; varying vec3 vBY; varying vec3 vBZ;
 ${CORE_GLSL}
@@ -601,6 +685,10 @@ vec3 transformed;
   float Lm = sqrt(uBodyR * uBodyR + s2);
   vec3 fixedDir = (uBodyR * uUp + pl.x * uEast + pl.y * uNorth) / Lm;
   float hh = moonDisp(fixedDir);
+  if (uIsMars > 0.5) {
+    vec2 om = marsOlympusDisp(fixedDir);
+    hh = hh * (1.0 - om.y) + om.x;
+  }
   float kk = (uBodyR + hh) / Lm;
   float yv = uBodyR * (hh - s2 / (uBodyR + Lm)) / Lm;
   transformed = vec3(pl.x * kk, yv, pl.y * kk);
@@ -613,7 +701,7 @@ vec3 transformed;
 }
 `;
 const PATCH_FRAG_HEAD = /* glsl */`
-uniform vec3 uEast; uniform vec3 uUp; uniform vec3 uNorth; uniform float uRadius; uniform float uBump; uniform vec3 uTint; uniform float uBodyR;
+uniform vec3 uEast; uniform vec3 uUp; uniform vec3 uNorth; uniform float uRadius; uniform float uBump; uniform vec3 uTint; uniform float uBodyR; uniform float uIsMars;
 varying vec2 vLocal;
 varying vec3 vBX; varying vec3 vBY; varying vec3 vBZ;
 ${CORE_GLSL}
@@ -662,6 +750,39 @@ vec2 mGl = vec2(0.0); float mAm = 0.0;
 m_micro(vLocal, mFp, mGl, mAm);
 mG += mGl.x * uEast + mGl.y * uNorth;
 diffuseColor.rgb = m_tint(mMare) * uTint * mAlb * clamp(1.0 + mAm, 0.4, 1.8);
+if (uIsMars > 0.5) {
+  vec3 od = (mDir - vec3(OLYMPUS_X, OLYMPUS_Y, 0.0)) * MARS_R;
+  float omR = length(od);
+  if (omR < 2260.0) {
+    float eps = 2.0 / MARS_R;
+    float h0 = marsOlympusDisp(mDir).x;
+    float hx = marsOlympusDisp(normalize(mDir + uEast * eps)).x;
+    float hz = marsOlympusDisp(normalize(mDir + uNorth * eps)).x;
+    vec2 omSlope = vec2(hx - h0, hz - h0) * 0.5;
+    mG = mG * (1.0 - 0.82 * smoothstep(2220.0, 1700.0, omR)) + omSlope.x * uEast + omSlope.y * uNorth;
+    float shieldMask = smoothstep(2220.0, 1850.0, omR);
+    float scarpBand = smoothstep(2210.0, 2040.0, omR) * smoothstep(1770.0, 1950.0, omR);
+    float frostRim = smoothstep(565.0, 465.0, omR) * smoothstep(350.0, 435.0, omR);
+    float calWall = smoothstep(445.0, 380.0, omR) * smoothstep(260.0, 330.0, omR);
+    float calFloor = smoothstep(360.0, 275.0, omR);
+    float lavaCore = smoothstep(138.0, 42.0, omR);
+    float u = od.x * OLYMPUS_Y - od.y * OLYMPUS_X;
+    float v = od.z;
+    float lavaStreak = smoothstep(0.32, 0.85, sin(u * 0.015 + v * 0.011) * cos(v * 0.016 - u * 0.009));
+    vec3 colShield = mix(vec3(0.94, 0.36, 0.16), vec3(0.32, 0.14, 0.09), lavaStreak * 0.68);
+    float strata = 0.5 + 0.5 * sin(h0 * 0.18 + u * 0.006);
+    vec3 colScarp = mix(vec3(0.42, 0.17, 0.09), vec3(1.06, 0.52, 0.25), strata);
+    vec3 omCol = mix(diffuseColor.rgb, colShield * clamp(0.65 + 0.35 * mAlb * 3.2, 0.5, 1.3), shieldMask);
+    omCol = mix(omCol, colScarp, scarpBand * 0.88);
+    omCol = mix(omCol, vec3(1.22, 1.08, 0.98), frostRim * 0.72);
+    omCol = mix(omCol, vec3(0.26, 0.12, 0.08), calWall * 0.78);
+    omCol = mix(omCol, vec3(0.20, 0.10, 0.07), calFloor * 0.72);
+    float magmaCrack = smoothstep(0.22, 0.82, sin(u * 0.085 + v * 0.055) * cos(u * 0.065 - v * 0.095) + 0.5 * sin(omR * 0.12));
+    omCol = mix(omCol, vec3(1.45, 0.38, 0.06), lavaCore * (0.45 + 0.55 * magmaCrack));
+    diffuseColor.rgb = omCol;
+    totalEmissiveRadiance += vec3(3.2, 0.75, 0.08) * lavaCore * (0.35 + 0.65 * magmaCrack);
+  }
+}
 `;
 const PATCH_NORMAL = /* glsl */`
 {
@@ -696,8 +817,8 @@ function patchGeometry(R, NR, NA) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   g.setIndex(idx);
-  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, -800, 0), R * 1.01);
-  g.boundingBox = new THREE.Box3(new THREE.Vector3(-R, -1700, -R), new THREE.Vector3(R, 60, R));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, -400, 0), R * 1.08);
+  g.boundingBox = new THREE.Box3(new THREE.Vector3(-R, -1700, -R), new THREE.Vector3(R, 3200, R));
   return g;
 }
 
@@ -748,6 +869,7 @@ export function createMoonSurface() {
     uBump: { value: 1 },
     uTint: { value: new THREE.Vector3(1, 1, 1) },
     uBodyR: { value: R_M },
+    uIsMars: { value: 0 },
   };
   const geo = patchGeometry(PATCH_R, 420, 520);
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, envMapIntensity: 0 });
@@ -762,7 +884,7 @@ export function createMoonSurface() {
       .replace('#include <normal_fragment_maps>', PATCH_NORMAL)
       .replace('#include <lights_physical_pars_fragment>', lunarLightsChunk());
   };
-  mat.customProgramCacheKey = () => 'moon-patch-v1';
+  mat.customProgramCacheKey = () => 'moon-patch-v2';
 
   const depthMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
   depthMat.onBeforeCompile = (sh) => {
@@ -771,7 +893,7 @@ export function createMoonSurface() {
       .replace('#include <common>', `#include <common>\n#define DEPTH_ONLY\n${PATCH_VERT_HEAD}`)
       .replace('#include <begin_vertex>', PATCH_BEGIN);
   };
-  depthMat.customProgramCacheKey = () => 'moon-patch-depth-v1';
+  depthMat.customProgramCacheKey = () => 'moon-patch-depth-v2';
 
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'moonSurface';
@@ -784,10 +906,11 @@ export function createMoonSurface() {
   const localHeight = (x, z) => {
     const E = uniforms.uEast.value, U = uniforms.uUp.value, N = uniforms.uNorth.value;
     const Rb = uniforms.uBodyR.value || R_M;
+    const body = uniforms.uIsMars.value > 0.5 ? 'mars' : 'moon';
     const s2 = x * x + z * z;
     const L = Math.sqrt(Rb * Rb + s2);
     const dx = (Rb * U.x + x * E.x + z * N.x) / L, dy = (Rb * U.y + x * E.y + z * N.y) / L, dz = (Rb * U.z + x * E.z + z * N.z) / L;
-    const h = moonHeight(dx, dy, dz);
+    const h = moonHeight(dx, dy, dz, body);
     return Rb * (h - s2 / (Rb + L)) / L;
   };
   mesh.userData.localHeight = localHeight;
@@ -871,4 +994,233 @@ export function createMoonSurface() {
   };
   rebuildRocks();
   return mesh;
+}
+
+function makeMarsSignTexture(title, sub, badge, borderHex = '#f97316') {
+  const cv = document.createElement('canvas');
+  cv.width = 1024;
+  cv.height = 384;
+  const ctx = cv.getContext('2d');
+
+  const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+  g.addColorStop(0, '#1c100c');
+  g.addColorStop(0.5, '#2b140d');
+  g.addColorStop(1, '#140906');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  ctx.strokeStyle = borderHex;
+  ctx.lineWidth = 14;
+  ctx.strokeRect(14, 14, cv.width - 28, cv.height - 28);
+
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.45)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(28, 28, cv.width - 56, cv.height - 56);
+
+  ctx.fillStyle = '#fde047';
+  ctx.font = '900 66px system-ui, Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, cv.width / 2, 118);
+
+  ctx.fillStyle = '#fed7aa';
+  ctx.font = '700 36px system-ui, Segoe UI, sans-serif';
+  ctx.fillText(sub, cv.width / 2, 196);
+
+  ctx.fillStyle = 'rgba(249, 115, 22, 0.28)';
+  ctx.fillRect(90, 244, cv.width - 180, 82);
+  ctx.strokeStyle = '#fb923c';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(90, 244, cv.width - 180, 82);
+
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = '800 38px system-ui, Segoe UI, sans-serif';
+  ctx.fillText(badge, cv.width / 2, 298);
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * 3D landmarks for Olympus Mons on Mars:
+ * 1) Base Camp Overlook Signpost & Trailhead Beacons (near r = 2,225 m)
+ * 2) West Summit Caldera Rim Landing Pad & Obelisk Monument (at r = 455 m, h ≈ 1,428 m)
+ * 3) Central Caldera Molten Lava Lake & Fumarole Vents (at r = 0 m, h ≈ 1,080 m)
+ */
+export function createOlympusMonsLandmarks() {
+  const group = new THREE.Group();
+  group.name = 'olympusMonsLandmarks';
+  group.visible = false;
+
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.78, roughness: 0.32 });
+  const darkRockMat = new THREE.MeshStandardMaterial({ color: 0x3b1d14, roughness: 0.92, metalness: 0.08, flatShading: true });
+  const goldGlowMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xf97316, emissiveIntensity: 3.5, roughness: 0.25 });
+  const cyanGlowMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, emissiveIntensity: 3.8, roughness: 0.2 });
+
+  // ---- 1. Base Overlook Signboard & Trail Beacons
+  const basePsi = OLYMPUS_PSI - 2225 / R_MARS;
+  const baseZ = -16;
+  const baseH = moonHeight(Math.sin(basePsi), Math.cos(basePsi), baseZ / R_MARS, 'mars');
+  const baseNode = new THREE.Group();
+  group.add(baseNode);
+
+  const signGroup = new THREE.Group();
+  signGroup.rotation.y = -0.35;
+  baseNode.add(signGroup);
+
+  for (const sx of [-4.2, 4.2]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 6.2, 12), metalMat);
+    post.position.set(sx, 3.1, 0);
+    post.castShadow = true;
+    signGroup.add(post);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), goldGlowMat);
+    lamp.position.set(sx, 6.4, 0);
+    signGroup.add(lamp);
+  }
+  const boardTex = makeMarsSignTexture(
+    '🌋 NÚI LỬA OLYMPUS MONS',
+    'CAO 21,9 KM · RỘNG 600 KM · LỚN NHẤT HỆ MẶT TRỜI',
+    '⬆️ ĐƯỜNG LÊN ĐỈNH & MIỆNG NÚI LỬA CALDERA →',
+    '#f97316'
+  );
+  const boardMat = new THREE.MeshStandardMaterial({
+    map: boardTex,
+    emissive: 0xffffff,
+    emissiveMap: boardTex,
+    emissiveIntensity: 0.45,
+    roughness: 0.4,
+    metalness: 0.2,
+  });
+  const board = new THREE.Mesh(new THREE.BoxGeometry(10.4, 3.9, 0.32), [metalMat, metalMat, metalMat, metalMat, boardMat, boardMat]);
+  board.position.set(0, 4.2, 0);
+  board.castShadow = true;
+  signGroup.add(board);
+
+  // ---- 2. Summit Caldera Rim Landing Pad & Monument Obelisk (r = 455 m west of center)
+  const rimPsi = OLYMPUS_PSI - 455 / R_MARS;
+  const rimZ = 0;
+  const rimH = moonHeight(Math.sin(rimPsi), Math.cos(rimPsi), 0, 'mars');
+  const rimNode = new THREE.Group();
+  group.add(rimNode);
+
+  const padRing = new THREE.Mesh(
+    new THREE.RingGeometry(12.5, 14.2, 48),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+  );
+  padRing.rotation.x = -Math.PI / 2;
+  padRing.position.y = 0.25;
+  rimNode.add(padRing);
+
+  const padInnerRing = new THREE.Mesh(
+    new THREE.RingGeometry(6.2, 7.0, 36),
+    new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+  );
+  padInnerRing.rotation.x = -Math.PI / 2;
+  padInnerRing.position.y = 0.26;
+  rimNode.add(padInnerRing);
+
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 8), i % 2 === 0 ? cyanGlowMat : goldGlowMat);
+    led.position.set(Math.cos(a) * 14.2, 0.4, Math.sin(a) * 14.2);
+    rimNode.add(led);
+  }
+
+  // Summit Obelisk & Signboard at z = -19 m on the rim
+  const obeliskGroup = new THREE.Group();
+  obeliskGroup.position.set(0, 0, -19);
+  rimNode.add(obeliskGroup);
+
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.8, 3.6, 1.8, 8), darkRockMat);
+  plinth.position.y = 0.9;
+  obeliskGroup.add(plinth);
+
+  const obelisk = new THREE.Mesh(new THREE.ConeGeometry(1.45, 12.5, 4), metalMat);
+  obelisk.position.y = 8.0;
+  obelisk.castShadow = true;
+  obeliskGroup.add(obelisk);
+
+  const summitCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.35, 0), goldGlowMat);
+  summitCrystal.position.y = 15.6;
+  obeliskGroup.add(summitCrystal);
+
+  const rimTex = makeMarsSignTexture(
+    '🏆 ĐỈNH OLYMPUS MONS',
+    'ĐỘ CAO ĐỈNH: 21.900 M · MIỆNG NÚI LỬA CALDERA',
+    '🎯 BÃI ĐÁP ĐỈNH NÚI LỬA SAO HỎA',
+    '#eab308'
+  );
+  const rimBoardMat = new THREE.MeshStandardMaterial({
+    map: rimTex,
+    emissive: 0xffffff,
+    emissiveMap: rimTex,
+    emissiveIntensity: 0.5,
+    roughness: 0.35,
+    metalness: 0.25,
+  });
+  const rimBoard = new THREE.Mesh(new THREE.BoxGeometry(8.8, 3.3, 0.28), [metalMat, metalMat, metalMat, metalMat, rimBoardMat, rimBoardMat]);
+  rimBoard.position.set(0, 3.6, 3.2);
+  obeliskGroup.add(rimBoard);
+
+  // ---- 3. Central Caldera Molten Lava Lake & Volcanic Vents (at OLYMPUS_PSI)
+  const calPsi = OLYMPUS_PSI;
+  const calH = moonHeight(Math.sin(calPsi), Math.cos(calPsi), 0, 'mars');
+  const calNode = new THREE.Group();
+  group.add(calNode);
+
+  const lavaMat = new THREE.MeshBasicMaterial({
+    color: 0xff4500,
+    side: THREE.DoubleSide,
+  });
+  const lavaLake = new THREE.Mesh(new THREE.CircleGeometry(68, 48), lavaMat);
+  lavaLake.rotation.x = -Math.PI / 2;
+  lavaLake.position.y = 1.2;
+  calNode.add(lavaLake);
+
+  const lavaCoreMat = new THREE.MeshBasicMaterial({
+    color: 0xfef08a,
+    side: THREE.DoubleSide,
+  });
+  const lavaCore = new THREE.Mesh(new THREE.CircleGeometry(28, 36), lavaCoreMat);
+  lavaCore.rotation.x = -Math.PI / 2;
+  lavaCore.position.y = 1.45;
+  calNode.add(lavaCore);
+
+  const lavaRingMat = new THREE.MeshBasicMaterial({
+    color: 0xfacc15,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const lavaRing = new THREE.Mesh(new THREE.RingGeometry(42, 52, 48), lavaRingMat);
+  lavaRing.rotation.x = -Math.PI / 2;
+  lavaRing.position.y = 1.35;
+  calNode.add(lavaRing);
+
+  // Jagged volcanic fumarole cones around the lava lake
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    const rad = 64 + (i % 3) * 14;
+    const hSpire = 9 + (i % 4) * 5;
+    const spire = new THREE.Mesh(new THREE.ConeGeometry(4.5 + (i % 3) * 1.8, hSpire, 6), darkRockMat);
+    spire.position.set(Math.cos(a) * rad, hSpire * 0.42, Math.sin(a) * rad);
+    calNode.add(spire);
+  }
+
+  const spots = [
+    { id: 'base', psi: basePsi, z: baseZ, h: baseH, node: baseNode },
+    { id: 'rim', psi: rimPsi, z: rimZ, h: rimH, node: rimNode },
+    { id: 'caldera', psi: calPsi, z: 0, h: calH, node: calNode },
+  ];
+
+  const update = (t) => {
+    summitCrystal.rotation.y = t * 1.6;
+    summitCrystal.position.y = 15.6 + Math.sin(t * 2.5) * 0.45;
+    const pulse = 0.85 + 0.15 * Math.sin(t * 3.2);
+    lavaCore.scale.setScalar(0.92 + 0.12 * Math.sin(t * 2.4));
+    lavaRing.scale.setScalar(0.96 + 0.08 * Math.cos(t * 1.9));
+    lavaRingMat.opacity = 0.65 * pulse;
+  };
+
+  return { group, spots, update, rimPsi, rimH, calPsi, calH, basePsi, baseH };
 }

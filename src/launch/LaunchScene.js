@@ -19,7 +19,7 @@ import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
-import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight } from '../fx/moon.js';
+import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, OLYMPUS_PSI } from '../fx/moon.js';
 import { createAlienMesh, createBeamVisual, createSupernovaMesh } from '../fx/aliens.js';
 import { tr } from '../i18n.js';
 
@@ -641,7 +641,7 @@ export class LaunchScene {
       },
       {
         title: tr('☀️ Mặt Trời, Hành Tinh Đá & Hệ Sao Hỏa', '☀️ Sun, Inner Rocky Planets & Mars System'),
-        items: ['mercury', 'venus', 'mars', 'phobos', 'deimos', 'sun'],
+        items: ['mercury', 'venus', 'mars', 'olympus', 'phobos', 'deimos', 'sun'],
       },
       {
         title: tr('🟠 Hệ Sao Mộc & 4 Mặt Trăng Galilean', '🟠 Jupiter System & Galilean Moons'),
@@ -668,6 +668,13 @@ export class LaunchScene {
           return `<button type="button" class="tp-card-btn ${active}" data-tp="iss">
             <span class="tp-card-top">🛰️ ${tr('Trạm Vũ Trụ ISS', 'ISS Space Station')}</span>
             <span class="tp-card-sub">${tr('Quỹ đạo Trái Đất · 400 km', 'Earth Orbit · 400 km')}</span>
+          </button>`;
+        }
+        if (key === 'olympus') {
+          const active = curTarget === 'olympus' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="olympus">
+            <span class="tp-card-top">🌋 ${tr('Đỉnh Olympus Mons', 'Olympus Mons Summit')}</span>
+            <span class="tp-card-sub">${tr('Sao Hỏa · Đỉnh 21,9 km & Miệng núi lửa', 'Mars · 21.9 km Summit & Caldera')}</span>
           </button>`;
         }
         const B = BODIES[key] || BODIES.earth;
@@ -796,19 +803,24 @@ export class LaunchScene {
         'warn'
       );
     } else {
-      const B = BODIES[target] || BODIES.earth;
-      const isOrbit = mode === 'orbit' || !!B.gasGiant || target === 'sun';
+      const isOlympusSummit = target === 'olympus';
+      const bodyKey = isOlympusSummit ? 'mars' : target;
+      const B = BODIES[bodyKey] || BODIES.earth;
+      const isOrbit = !isOlympusSummit && (mode === 'orbit' || !!B.gasGiant || bodyKey === 'sun');
 
       if (isOrbit) {
-        const orbAlt = target === 'sun'
+        const orbAlt = bodyKey === 'sun'
           ? 2200e3
           : B.gasGiant
             ? 38e3
-            : target === 'earth'
+            : bodyKey === 'earth'
               ? 120e3
               : Math.max(25e3, (B.atm || 0) + 15e3);
+        if (bodyKey === 'mars') {
+          BODIES.mars.rot0 = wrapPi(sunPhi - OLYMPUS_PSI - BODIES.mars.omega * this.simT);
+        }
         const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
-        bodyState(target, this.simT, bp, bv);
+        bodyState(bodyKey, this.simT, bp, bv);
         const r = B.R + orbAlt;
         const vCirc = Math.sqrt(B.mu / r);
         const ux = Math.sin(sunPhi), uy = Math.cos(sunPhi);
@@ -834,16 +846,16 @@ export class LaunchScene {
         this.throttle = 0;
         P.throttle = 0;
         P.engineOn = false;
-        this.inAtmoBody = (target !== 'sun' && orbAlt < Math.max(B.atm || 0, ATM_TOP)) ? target : null;
+        this.inAtmoBody = (bodyKey !== 'sun' && orbAlt < Math.max(B.atm || 0, ATM_TOP)) ? bodyKey : null;
         this.moonPatchPsi = null;
         this.moonPatchBody = null;
         this.rocksFresh = false;
-        if (target === 'earth') {
+        if (bodyKey === 'earth') {
           this.setFlag('space');
           this.setFlag('orbit');
         } else {
-          this.setFlag(target + 'SOI');
-          this.setFlag(target === 'moon' ? 'lunarOrbit' : target + 'Orbit');
+          this.setFlag(bodyKey + 'SOI');
+          this.setFlag(bodyKey === 'moon' ? 'lunarOrbit' : bodyKey + 'Orbit');
         }
         const orbKm = fmt(orbAlt / 1000, 0);
         this.milestone(
@@ -871,7 +883,7 @@ export class LaunchScene {
             }
           }
         }
-        if (target === 'earth') {
+        if (bodyKey === 'earth') {
           const sx = P.isBoat ? (COAST_X + 160) : P.isRover ? 18 : 0;
           const baseH = P.isBoat ? (P.bottomOffset() - 0.35) : P.isRover ? (6 + P.bottomOffset()) : (PAD_TOP + P.bottomOffset());
           P.placeOnSurface('earth', sx, baseH, this.simT);
@@ -893,35 +905,43 @@ export class LaunchScene {
           this.startAlt = P.alt;
           this.inAtmoBody = 'earth';
         } else {
-          const phiRot = wrapPi(sunPhi - bodyRotation(target, this.simT));
+          let phiRot;
+          if (bodyKey === 'mars') {
+            const offsetM = isOlympusSummit ? 455 : 2260;
+            phiRot = OLYMPUS_PSI - offsetM / B.R;
+            BODIES.mars.rot0 = wrapPi(sunPhi - phiRot - BODIES.mars.omega * this.simT);
+          } else {
+            phiRot = wrapPi(sunPhi - bodyRotation(bodyKey, this.simT));
+          }
           const sx = phiRot * B.R;
-          const surfH = moonHeight(Math.sin(phiRot), Math.cos(phiRot), 0);
+          const surfH = moonHeight(Math.sin(phiRot), Math.cos(phiRot), 0, bodyKey);
           const h = surfH + P.bottomOffset();
-          P.placeOnSurface(target, sx, h, this.simT);
+          P.placeOnSurface(bodyKey, sx, h, this.simT);
           if (P.isPlane) {
             P.beta = P.phi + Math.PI / 2;
             P.updateFrame(this.simT);
             P.syncDir3DFromBeta();
           }
           P.clamped = false;
-          P.clampSpot = { body: target, sx, h };
+          P.clampSpot = { body: bodyKey, sx, h };
           P.landed = {
-            body: target,
+            body: bodyKey,
             sx,
             h,
-            site: target,
+            site: bodyKey,
             how: P.isRover ? 'rover' : P.isPlane ? 'plane' : 'legs',
           };
           P.landedLock = 0.6;
-          this.inAtmoBody = target;
+          this.inAtmoBody = bodyKey;
           this.moonPatchPsi = null;
           this.moonPatchBody = null;
           this.rocksFresh = false;
           this.flagSpot = null;
           this.flagObj.visible = false;
           this.moonLandT = this.simT - 2.5;
-          this.setFlag(target + 'SOI');
-          this.setFlag(target + 'Landed');
+          this.setFlag(bodyKey + 'SOI');
+          this.setFlag(bodyKey + 'Landed');
+          if (isOlympusSummit) this.flags.olympusSummit = true;
         }
         this.holdBeta = P.beta;
         if (P.holdDir3D && P.dir3D) P.holdDir3D.copy(P.dir3D);
@@ -932,20 +952,46 @@ export class LaunchScene {
         this.throttle = 0;
         P.throttle = 0;
         P.engineOn = false;
-        this.milestone(
-          `${B.icon} ${tr('ĐÃ ĐÁP XUỐNG', 'LANDED ON')} ${B.label.toUpperCase()}!`,
-          tr(
-            `Trọng lực bề mặt: ${B.g.toFixed(2)} m/s² · Nhấn Space / Z / Shift để cất cánh!`,
-            `Surface gravity: ${B.g.toFixed(2)} m/s² · Press Space / Z / Shift to lift off!`
-          )
-        );
-        this.event(
-          tr(
-            `⚡${B.icon} Đã dịch chuyển tức thời tới bề mặt ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Nhấn Space hoặc Z để phóng lên!`,
-            `⚡${B.icon} Teleported to the surface of ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Press Space or Z to launch!`
-          ),
-          'warn'
-        );
+        if (isOlympusSummit) {
+          this.milestone(
+            tr('🌋 ĐÃ ĐÁP LÊN ĐỈNH OLYMPUS MONS (21,9 KM)!', '🌋 LANDED ON OLYMPUS MONS SUMMIT (21.9 KM)!'),
+            tr('Đỉnh núi lửa cao nhất Hệ Mặt Trời trên Sao Hỏa · Miệng núi lửa Caldera rực lửa ngay phía trước!', 'Tallest volcano in the Solar System on Mars · Glowing Caldera crater right ahead!')
+          );
+          this.event(
+            tr('⚡🌋 Đã dịch chuyển trực tiếp lên Đỉnh núi lửa Olympus Mons (21,9 km) trên Sao Hỏa!', '⚡🌋 Teleported directly onto the Summit Rim of Olympus Mons (21.9 km) on Mars!'),
+            'warn'
+          );
+        } else if (bodyKey === 'mars') {
+          this.milestone(
+            `${B.icon} ${tr('ĐÃ ĐÁP XUỐNG SAO HỎA — CHÂN NÚI OLYMPUS MONS!', 'LANDED ON MARS — OLYMPUS MONS BASE!')}`,
+            tr(
+              `Núi lửa Olympus Mons (cao 21,9 km) sừng sững ngay phía trước · Nhấn Space / Z hoặc lái xe lên đỉnh!`,
+              `Olympus Mons volcano (21.9 km tall) towers right ahead · Press Space / Z or drive up to the summit!`
+            )
+          );
+          this.event(
+            tr(
+              `⚡🌋 Đã đáp xuống chân núi lửa Olympus Mons trên Sao Hỏa (g = ${B.g.toFixed(2)} m/s²)! Ngọn núi lửa lớn nhất Hệ Mặt Trời đang ở ngay trước mặt bạn!`,
+              `⚡🌋 Landed at the base of Olympus Mons on Mars (g = ${B.g.toFixed(2)} m/s²)! The Solar System's largest volcano towers right ahead!`
+            ),
+            'warn'
+          );
+        } else {
+          this.milestone(
+            `${B.icon} ${tr('ĐÃ ĐÁP XUỐNG', 'LANDED ON')} ${B.label.toUpperCase()}!`,
+            tr(
+              `Trọng lực bề mặt: ${B.g.toFixed(2)} m/s² · Nhấn Space / Z / Shift để cất cánh!`,
+              `Surface gravity: ${B.g.toFixed(2)} m/s² · Press Space / Z / Shift to lift off!`
+            )
+          );
+          this.event(
+            tr(
+              `⚡${B.icon} Đã dịch chuyển tức thời tới bề mặt ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Nhấn Space hoặc Z để phóng lên!`,
+              `⚡${B.icon} Teleported to the surface of ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Press Space or Z to launch!`
+            ),
+            'warn'
+          );
+        }
       }
     }
 
@@ -954,7 +1000,16 @@ export class LaunchScene {
     this.controls.enabled = true;
     this.camera.fov = 50;
     this.camera.updateProjectionMatrix();
-    if (P.isRover || P.isBoat) {
+    if ((target === 'mars' || target === 'olympus') && mode !== 'orbit') {
+      // Frame the vessel with Olympus Mons (or its Summit Caldera) towering in the +X background!
+      if (P.isRover || P.isBoat) {
+        this.camera.position.set(-14, 4.8, 3.5);
+      } else if (P.isPlane) {
+        this.camera.position.set(-18, 5.2, 8);
+      } else {
+        this.camera.position.set(-(rh * 0.85 + 16), 5.5, rh * 0.55 + 10);
+      }
+    } else if (P.isRover || P.isBoat) {
       this.camera.position.set(-13, 4.5, 0);
     } else if (P.isPlane) {
       this.camera.position.set(12, 4, 16);
@@ -1021,6 +1076,8 @@ export class LaunchScene {
     this.flagObj.visible = false;
     this.scene.add(this.flagObj);
     this.flagSpot = null;
+    this.olympusMons = createOlympusMonsLandmarks();
+    this.scene.add(this.olympusMons.group);
     this.issOrbit = new RailOrbit(ISS_R, -0.3);
     this.iss = createISS();
     this.iss.visible = false;
@@ -1633,7 +1690,12 @@ export class LaunchScene {
 
   // =================================================================== SURFACE MODEL
   surfaceAt(v) {
-    if (v.ref !== 'earth') return { h: moonHeight(Math.sin(v.phiRot), Math.cos(v.phiRot), 0), water: false, site: v.ref };
+    if (v.ref !== 'earth') {
+      const B = BODIES[v.ref] || BODIES.moon;
+      const psi = v.sx !== undefined ? (v.sx / B.R) : (v.phiRot || 0);
+      const uz = (v.s ? (v.s.z || 0) : 0) / B.R;
+      return { h: moonHeight(Math.sin(psi), Math.cos(psi), uz, v.ref), water: false, site: v.ref };
+    }
     const sx = v.sx, sz = v.s ? (v.s.z || 0) : 0;
     const dist = Math.hypot(sx, sz);
     if (!v.isRover && Math.abs(sx) < 7 && Math.abs(sz) < 7) return { h: PAD_TOP, water: false, site: 'pad' };
@@ -2438,9 +2500,26 @@ export class LaunchScene {
       if (this.moonLandT !== null && !this.flagSpot && this.simT - this.moonLandT > 4 && P.landed && P.ref !== 'earth') {
         const B = BODIES[P.ref] || BODIES.moon;
         const psi = P.phiRot + 14 / B.R;
-        this.flagSpot = { body: P.ref, psi, h: moonHeight(Math.sin(psi), Math.cos(psi), 0) };
+        const uz = (P.s?.z || 0) / B.R;
+        this.flagSpot = { body: P.ref, psi, h: moonHeight(Math.sin(psi), Math.cos(psi), uz, P.ref) };
         this.event('🇻🇳 Cắm cờ Việt Nam trên ' + B.label + '!');
         this.milestone('CẮM CỜ', 'Lá cờ Việt Nam đã tung bay trên ' + B.label);
+      }
+      if (P.ref === 'mars' && !this.flags.olympusSummit) {
+        const dxOm = wrapPi(P.phiRot - OLYMPUS_PSI) * BODIES.mars.R;
+        const dzOm = P.s?.z || 0;
+        const distOm = Math.hypot(dxOm, dzOm);
+        if (distOm < 560 && P.alt > 1020 && P.alt < 1750) {
+          this.flags.olympusSummit = true;
+          this.milestone(
+            tr('🌋 ĐỈNH OLYMPUS MONS (21,9 KM)!', '🌋 OLYMPUS MONS SUMMIT (21.9 KM)!'),
+            tr('Bạn đã chinh phục ngọn núi lửa lớn nhất Hệ Mặt Trời trên Sao Hỏa!', 'You have conquered the tallest volcano in the Solar System on Mars!')
+          );
+          this.event(
+            tr('🌋🏆 Chúc mừng! Tàu đã đặt chân lên Đỉnh & Miệng núi lửa Olympus Mons (21,9 km) trên Sao Hỏa!', '🌋🏆 Congratulations! Reached the Summit & Caldera of Olympus Mons (21.9 km) on Mars!'),
+            'warn'
+          );
+        }
       }
       this.checkObjectives();
     }
@@ -2476,6 +2555,29 @@ export class LaunchScene {
     this.beacons[0].material.emissiveIntensity = Math.sin(t * 3) > 0.6 ? 20 : 0.5;
     if (this.iss.userData.update) this.iss.userData.update(this.simT);
     if (this.ship.userData.update) this.ship.userData.update(t);
+    if (this.olympusMons && this.olympusMons.group.visible) {
+      this.olympusMons.update(t);
+      const calSx = OLYMPUS_PSI * BODIES.mars.R;
+      const dxCal = calSx - F.sx;
+      if (Math.abs(dxCal) < 6500 && F.alt < 18000 && Math.random() < 0.55) {
+        const curveDrop = (dxCal * dxCal) / (2 * BODIES.mars.R);
+        const ventY = this.olympusMons.calH - curveDrop + 2;
+        const jx = (Math.random() - 0.5) * 58;
+        const jz = (Math.random() - 0.5) * 58;
+        this.smoke.emit(
+          calSx + jx, ventY, jz,
+          (Math.random() - 0.5) * 8, 14 + Math.random() * 18, (Math.random() - 0.5) * 8,
+          { life: 6 + Math.random() * 5, size0: 12, size1: 55, alpha: 0.42, drag: 0.25, buoy: 2.2, color: [0.42, 0.26, 0.20], heat: 0.45 }
+        );
+        if (Math.random() < 0.45) {
+          this.fire.emit(
+            calSx + jx * 0.5, ventY, jz * 0.5,
+            (Math.random() - 0.5) * 16, 18 + Math.random() * 26, (Math.random() - 0.5) * 16,
+            { life: 1.2 + Math.random() * 1.4, size0: 6, size1: 22, alpha: 0.9, drag: 0.5, buoy: 1.5, color: [7.5, 2.4, 0.4] }
+          );
+        }
+      }
+    }
     if (this.flagObj.userData.update && this.flagObj.visible && Math.floor(t * 10) % 3 === 0) this.flagObj.userData.update(t);
     this.flash = Math.max(0, this.flash - dt * 1.5);
     this.flashLight.intensity = this.flash * 4e6;
@@ -2496,21 +2598,56 @@ export class LaunchScene {
     return this.rocket.weapons.filter((w) => this.player.owns(w.seg));
   }
 
+  /** Minimum allowed Y offset (relative to player root) at horizontal offset (tx, tz) so an Alien never clips into terrain */
+  alienFloorRelY(tx, tz, tier = 'warrior') {
+    const P = this.player;
+    if (!P || P.ref === 'sun' || BODIES[P.ref]?.gasGiant) return -35;
+    const B = BODIES[P.ref] || BODIES.moon;
+    const bodyR = B.R || R_M;
+    const s2 = tx * tx + tz * tz;
+    const curveDrop = s2 / (2 * bodyR);
+    let groundRelY;
+    if (P.ref === 'earth') {
+      const surfH = this.surfaceAt({ ref: 'earth', sx: (P.sx || 0) + tx, s: { z: (P.s?.z || 0) + tz } }).h;
+      groundRelY = (surfH - P.alt) - curveDrop;
+    } else {
+      const alienPsi = (P.phiRot || 0) + tx / bodyR;
+      const uz = ((P.s?.z || 0) + tz) / bodyR;
+      const surfH = moonHeight(Math.sin(alienPsi), Math.cos(alienPsi), uz, P.ref);
+      groundRelY = (surfH - P.alt) - curveDrop;
+      if (this.moonPatch && this.moonPatch.visible && this.moonPatch.userData?.localHeight) {
+        const pWorld = P.root ? P.root.position : { x: 0, y: 0, z: 0 };
+        const mpPos = this.moonPatch.position;
+        const th = -this.moonPatch.rotation.z;
+        const wx = pWorld.x + tx;
+        const wz = pWorld.z + tz;
+        const lx = (wx - mpPos.x) * Math.cos(th);
+        const lz = wz - mpPos.z;
+        const ly = this.moonPatch.userData.localHeight(lx, lz);
+        const patchWorldY = mpPos.y + ly * Math.cos(th) - lx * Math.sin(th);
+        groundRelY = Math.max(groundRelY, patchWorldY - pWorld.y);
+      }
+    }
+    const clearance = tier === 'boss' ? 10.5 : (tier === 'warrior' ? 8.0 : 6.5);
+    return Math.max(-35, groundRelY + clearance);
+  }
+
   spawnAlien() {
     if (!this.player || this.player.crashed) return;
     // Never spawn Aliens on Earth (only in outer space >= ATM_TOP or on other planets/moons)
     if (this.player.ref === 'earth' && this.player.alt < ATM_TOP) return;
     if (!this.aliens) this.aliens = [];
 
-    // Mix of low-HP Scout Aliens, medium-HP Warrior Aliens, and high-HP Boss Mothership Aliens
+    // Mix of low-HP peaceful Scout Aliens (do NOT fight), medium-HP Warrior Aliens, and high-HP Boss Mothership Aliens
     const roll = Math.random();
     let tier = 'scout';
     let maxHp = 45 + Math.floor(Math.random() * 20); // 45–64 HP (ít máu: 1–2 phát bắn)
     let speedMul = 1.35;
     let radiusBase = 22;
-    let labelVi = 'Alien Trinh Sát (Ít máu)';
-    let labelEn = 'Scout Alien (Low HP)';
+    let labelVi = 'Alien Trinh Sát (Ít máu · Không đánh lộn)';
+    let labelEn = 'Scout Alien (Low HP · Peaceful)';
     let mapColor = '#4ade80';
+    let canFight = false;
 
     if (roll > 0.72) {
       tier = 'boss';
@@ -2520,6 +2657,7 @@ export class LaunchScene {
       labelVi = 'Tàu Mẹ Alien Hạng Nặng (Nhiều máu)';
       labelEn = 'Heavy Boss Alien (High HP)';
       mapColor = '#fb7185';
+      canFight = true;
     } else if (roll > 0.36) {
       tier = 'warrior';
       maxHp = 115 + Math.floor(Math.random() * 45); // 115–160 HP (máu trung bình)
@@ -2528,6 +2666,7 @@ export class LaunchScene {
       labelVi = 'Alien Chiến Binh';
       labelEn = 'Warrior Alien';
       mapColor = '#c084fc';
+      canFight = true;
     }
 
     const mesh = createAlienMesh(tier);
@@ -2536,15 +2675,21 @@ export class LaunchScene {
     const orbitAngle = Math.random() * Math.PI * 2;
     const orbitRadius = radiusBase + Math.random() * 32;
     const orbitSpeed = (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.42) * speedMul;
-    const inSpace = this.player.ref !== 'earth' || this.player.alt > 25000;
-    const baseY = inSpace ? (-12 + Math.random() * 34) : (10 + Math.random() * 24);
-    const relPos = new THREE.Vector3(Math.cos(orbitAngle) * orbitRadius, baseY, Math.sin(orbitAngle) * orbitRadius);
+    const tx0 = Math.cos(orbitAngle) * orbitRadius;
+    const tz0 = Math.sin(orbitAngle) * orbitRadius;
+    const floorY = this.alienFloorRelY(tx0, tz0, tier);
+    const bobAmp = 3.5 + Math.random() * 5.5;
+    const rawBaseY = -10 + Math.random() * 34;
+    const baseY = Math.max(rawBaseY, floorY + bobAmp + 4.0);
+    const relPos = new THREE.Vector3(tx0, baseY, tz0);
     mesh.position.copy(this.player.root.position).add(relPos);
 
     const alien = {
       id: 'alien_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
       mesh,
       tier,
+      canFight,
+      fightCooldown: 1.5 + Math.random() * 1.8,
       labelVi,
       labelEn,
       mapColor,
@@ -2556,7 +2701,7 @@ export class LaunchScene {
       orbitSpeed,
       baseY,
       bobPhase: Math.random() * Math.PI * 2,
-      bobAmp: 3.5 + Math.random() * 5.5,
+      bobAmp,
       relPos,
       pushOffset: new THREE.Vector3(),
       vel: new THREE.Vector3(),
@@ -2569,13 +2714,22 @@ export class LaunchScene {
       const locText = this.player.alt > 40000
         ? tr(`ngoài không gian quanh ${bodyLabel}`, `in outer space near ${bodyLabel}`)
         : tr(`trên ${bodyLabel}`, `at ${bodyLabel}`);
-      this.event(
-        tr(
-          `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
-          `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
-        ),
-        'warn'
-      );
+      if (tier === 'scout') {
+        this.event(
+          tr(
+            `🛸 Phát hiện ${labelVi} (${maxHp} HP) bay qua ${locText} — chỉ quan sát hòa bình, không đánh lộn.`,
+            `🛸 ${labelEn} (${maxHp} HP) spotted ${locText} — peaceful observer, does not fight.`
+          )
+        );
+      } else {
+        this.event(
+          tr(
+            `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
+            `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
+          ),
+          'warn'
+        );
+      }
     }
   }
 
@@ -2604,13 +2758,21 @@ export class LaunchScene {
 
     this.weaponCooldown = 0.14;
 
-    // Pick target Alien (either clicked Alien, or closest Alien to player)
+    // Pick target Alien (either clicked Alien, or closest hostile Alien first, then any Alien)
     let tgt = targetAlien;
     if (!tgt && this.aliens && this.aliens.length) {
-      let bestD = Infinity;
+      let bestHostileD = Infinity;
       for (const a of this.aliens) {
+        if (!a.canFight) continue;
         const d = a.relPos.length();
-        if (d < bestD) { bestD = d; tgt = a; }
+        if (d < bestHostileD) { bestHostileD = d; tgt = a; }
+      }
+      if (!tgt) {
+        let bestD = Infinity;
+        for (const a of this.aliens) {
+          const d = a.relPos.length();
+          if (d < bestD) { bestD = d; tgt = a; }
+        }
       }
     }
 
@@ -2749,18 +2911,27 @@ export class LaunchScene {
     this.flash = Math.max(this.flash || 0, 0.55);
     this.flashPos = { x: hitX, y: hitY, z: hitZ };
 
-    const wLabel = weaponType === 'supernova'
-      ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
-      : weaponType === 'water'
-        ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
-        : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
     const aName = tr(alien.labelVi || 'UFO Alien', alien.labelEn || 'Alien UFO');
-    this.event(
-      tr(
-        `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
-        `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
-      )
-    );
+    if (weaponType === 'alienBrawl') {
+      this.event(
+        tr(
+          `👽⚔️ ${aName} (${alien.maxHp} HP) đã bị bắn nổ trong cuộc đánh lộn giữa các Alien!`,
+          `👽⚔️ ${aName} (${alien.maxHp} HP) was destroyed in a brawl between fighting Aliens!`
+        )
+      );
+    } else {
+      const wLabel = weaponType === 'supernova'
+        ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
+        : weaponType === 'water'
+          ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
+          : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
+      this.event(
+        tr(
+          `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
+          `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
+        )
+      );
+    }
     // Heavy Boss Alien core collapses into a mini Supernova on destruction (only in outer space, never on planets/moons)!
     const onPlanetOrMoon = !P || P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
     if (alien.tier === 'boss' && weaponType !== 'supernova' && !onPlanetOrMoon) {
@@ -2842,10 +3013,6 @@ export class LaunchScene {
     this.flashPos = { x: hitX, y: hitY, z: hitZ };
     this.shakeBoost = Math.max(this.shakeBoost || 0, isBossCollapse ? 2.5 : 4.5);
 
-    if (this.map && this.map.triggerSupernova) {
-      this.map.triggerSupernova(false);
-    }
-
     if (!isBossCollapse) {
       // Vaporize all live Aliens caught in the Supernova shockwave!
       const doomed = (this.aliens || []).slice();
@@ -2910,11 +3077,34 @@ export class LaunchScene {
     }
 
     const pWorld = P.root.position;
-    const lowSurface = !BODIES[P.ref]?.gasGiant && (P.agl !== undefined ? P.agl < 180 : P.alt < 180);
-    const minRelY = lowSurface ? Math.max(-Math.max(0, P.agl ?? P.alt) + 7, -12) : -35;
 
     let nearestAlien = null;
     let bestDist = Infinity;
+    let nearestHostileAlien = null;
+    let bestHostileDist = Infinity;
+
+    // Mutual separation: Scout Aliens actively steer clear of all other Aliens so they never collide or brawl
+    for (let i = 0; i < this.aliens.length; i++) {
+      const a = this.aliens[i];
+      for (let j = i + 1; j < this.aliens.length; j++) {
+        const b = this.aliens[j];
+        const diff = new THREE.Vector3().subVectors(a.relPos, b.relPos);
+        const dist = diff.length();
+        const minSep = (a.tier === 'scout' || b.tier === 'scout') ? 16.0 : 10.5;
+        if (dist > 0.01 && dist < minSep) {
+          const push = ((minSep - dist) / minSep) * 18 * dt;
+          diff.normalize();
+          if (a.tier === 'scout' && b.tier !== 'scout') {
+            a.vel.addScaledVector(diff, push * 1.8);
+          } else if (b.tier === 'scout' && a.tier !== 'scout') {
+            b.vel.addScaledVector(diff, -push * 1.8);
+          } else {
+            a.vel.addScaledVector(diff, push);
+            b.vel.addScaledVector(diff, -push);
+          }
+        }
+      }
+    }
 
     for (const a of this.aliens) {
       a.orbitAngle += a.orbitSpeed * dt;
@@ -2925,7 +3115,17 @@ export class LaunchScene {
 
       const tx = Math.cos(a.orbitAngle) * a.orbitRadius + a.pushOffset.x;
       const tz = Math.sin(a.orbitAngle) * a.orbitRadius + a.pushOffset.z;
-      const ty = Math.max(minRelY, a.baseY + Math.sin(this.time * 2.2 + a.bobPhase) * a.bobAmp + a.pushOffset.y);
+      const minRelY = this.alienFloorRelY(tx, tz, a.tier);
+      if (a.baseY - a.bobAmp < minRelY) {
+        a.baseY = minRelY + a.bobAmp + 1.5;
+      }
+      const bobY = Math.sin(this.time * 2.2 + a.bobPhase) * a.bobAmp;
+      let ty = a.baseY + bobY + a.pushOffset.y;
+      if (ty < minRelY) {
+        ty = minRelY;
+        a.pushOffset.y = Math.max(a.pushOffset.y, minRelY - (a.baseY + bobY));
+        if (a.vel.y < 0) a.vel.y = -a.vel.y * 0.35;
+      }
 
       a.relPos.set(tx, ty, tz);
       a.mesh.position.copy(pWorld).add(a.relPos);
@@ -2938,17 +3138,60 @@ export class LaunchScene {
         bestDist = d;
         nearestAlien = a;
       }
+      if (a.canFight && d < bestHostileDist) {
+        bestHostileDist = d;
+        nearestHostileAlien = a;
+      }
     }
 
-    // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled
+    // Alien brawling ("đánh lộn"): ONLY Warrior & Boss Aliens fight each other; Scout Aliens NEVER fight!
+    const fighters = this.aliens.filter((a) => a.canFight && a.tier !== 'scout' && !a.dead && a.hp > 0);
+    if (fighters.length >= 2) {
+      for (const attacker of fighters) {
+        if (attacker.dead || attacker.hp <= 0) continue;
+        attacker.fightCooldown = (attacker.fightCooldown ?? 1.8) - dt;
+        if (attacker.fightCooldown <= 0) {
+          const rivals = fighters.filter((r) => r !== attacker && !r.dead && r.hp > 0);
+          if (rivals.length) {
+            const target = rivals[Math.floor(Math.random() * rivals.length)];
+            attacker.fightCooldown = (attacker.tier === 'boss' ? 1.3 : 1.9) + Math.random() * 1.4;
+            const startPos = attacker.mesh.position.clone();
+            const endPos = target.mesh.position.clone();
+            const beam = createBeamVisual('alienLaser', startPos, endPos);
+            this.scene.add(beam);
+            this.weaponBeams.push({
+              mesh: beam,
+              relStart: startPos.clone().sub(pWorld),
+              relEnd: endPos.clone().sub(pWorld),
+              life: beam.userData.life,
+              maxLife: beam.userData.maxLife,
+            });
+            const dmg = attacker.tier === 'boss' ? 22 : 14;
+            target.hp -= dmg;
+            target.hitFlash = 0.15;
+            const knockDir = new THREE.Vector3().subVectors(endPos, startPos).normalize();
+            target.vel.addScaledVector(knockDir, 9);
+            const tFloor = this.alienFloorRelY(target.relPos.x, target.relPos.z, target.tier);
+            if (target.relPos.y <= tFloor + 1.5 && target.vel.y < 0) target.vel.y = 0;
+            target.mesh.userData.setHp(target.hp / target.maxHp);
+            audio.laserShot(0.16);
+            if (target.hp <= 0) {
+              this.destroyAlien(target, 'alienBrawl');
+            }
+          }
+        }
+      }
+    }
+
+    // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled (ignoring peaceful Scouts)
     if (nearestAlien && this.rocket && this.rocket.weapons) {
       for (const w of this.rocket.weapons) {
         if (!w.turret || !P.owns(w.seg)) continue;
         w.turret.rotation.z = Math.sin(this.time * 3.5) * 0.12;
       }
     }
-    if ((this.program || this.autoShootAliens) && nearestAlien && this.weaponCooldown <= 0) {
-      this.fireWeapons(nearestAlien);
+    if ((this.program || this.autoShootAliens) && nearestHostileAlien && this.weaponCooldown <= 0) {
+      this.fireWeapons(nearestHostileAlien);
     }
 
     // Update active laser & 1,000,000 PSI water beams
@@ -3205,6 +3448,7 @@ export class LaunchScene {
       const bodyR = (BODIES[F.ref] || BODIES.moon).R;
       const u = this.moonPatch.userData.uniforms;
       if (u.uBodyR) u.uBodyR.value = bodyR;
+      if (u.uIsMars) u.uIsMars.value = F.ref === 'mars' ? 1.0 : 0.0;
       if (u.uTint) {
         if (F.ref === 'mars') u.uTint.value.set(1.45, 0.58, 0.32);
         else if (F.ref === 'venus') u.uTint.value.set(1.32, 1.02, 0.52);
@@ -3222,13 +3466,30 @@ export class LaunchScene {
         u.uUp.value.set(Math.sin(snap), Math.cos(snap), 0);
         u.uEast.value.set(Math.cos(snap), -Math.sin(snap), 0);
         u.uNorth.value.set(0, 0, 1);
-        if (F.alt < 4000) { this.moonPatch.userData.rebuildRocks(); this.rocksFresh = true; } else this.rocksFresh = false;
-      } else if (F.alt < 4000 && !this.rocksFresh) { this.moonPatch.userData.rebuildRocks(); this.rocksFresh = true; }
-      for (const c of this.moonPatch.children) c.visible = F.alt < 4000;
+        if (F.alt < 6000) { this.moonPatch.userData.rebuildRocks(); this.rocksFresh = true; } else this.rocksFresh = false;
+      } else if (F.alt < 6000 && !this.rocksFresh) { this.moonPatch.userData.rebuildRocks(); this.rocksFresh = true; }
+      for (const c of this.moonPatch.children) c.visible = F.alt < 6000;
       const th = snap - psi;
       const bodyMesh = F.ref === 'moon' ? this.moon : (this.planets[F.ref] || this.moon);
       this.moonPatch.position.set(bodyMesh.position.x + bodyR * Math.sin(th), bodyMesh.position.y + bodyR * Math.cos(th), bodyMesh.position.z);
       this.moonPatch.rotation.set(0, 0, -th);
+    }
+    if (this.olympusMons) {
+      const showOm = F.ref === 'mars' && F.alt < 60e3 && this.planets.mars;
+      this.olympusMons.group.visible = !!showOm;
+      if (showOm) {
+        const marsMesh = this.planets.mars;
+        const mR = BODIES.mars.R;
+        for (const sp of this.olympusMons.spots) {
+          const th = wrapPi(sp.psi - F.phiRot);
+          sp.node.position.set(
+            marsMesh.position.x + (mR + sp.h) * Math.sin(th),
+            marsMesh.position.y + (mR + sp.h) * Math.cos(th),
+            marsMesh.position.z + sp.z
+          );
+          sp.node.rotation.set(0, 0, -th);
+        }
+      }
     }
     if (this.flagSpot) {
       const fBody = this.flagSpot.body || 'moon';

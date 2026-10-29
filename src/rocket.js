@@ -56,6 +56,7 @@ export const PRESETS = {
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+gunLaser+waterCannon+legs', 'engAntiGrav'],
 };
 
 export function ensureStackHasWeapons(stack) {
@@ -128,13 +129,13 @@ export function segmentInfo(stack, idx) {
     const d = PARTS[it.type];
     s.dry += d.dry;
     if (it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery) {
-      s.batteryCount += it.type === 'batteryPackL' ? 2 : 1;
+      s.batteryCount += (it.type === 'batteryPackL' || it.type === 'ufoSaucer') ? 2 : 1;
       s.batteryFuel += d.fuel || 0;
     } else {
       s.chemFuel += d.fuel || 0;
     }
     if (d.hasFins) s.fins = true;
-    if (it.type === 'engAntiGrav') {
+    if (it.type === 'engAntiGrav' || it.type === 'ufoSaucer') {
       s.antiGrav = true;
       s.tAntiGrav += d.thrustVac;
       s.mdotAntiGrav += d.thrustVac / (d.ispVac * G0);
@@ -354,7 +355,7 @@ export function buildRocket(stack) {
     segGroups[k].add(partContainer);
     partObjs.push({ index: p.index, obj, container: partContainer, seg: k, def: p.def, y: p.y });
     if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle });
-    if (p.item.type === 'capsule' || p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower') {
+    if (p.item.type === 'capsule' || p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'ufoSaucer') {
       if (p.index > 0 && obj.userData.tower) obj.userData.tower.visible = false; // something mounted above
       if (!capsule) capsule = { obj, seg: k };
     }
@@ -392,11 +393,15 @@ export function buildRocket(stack) {
         } else if (a === 'solarPanel') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.55; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gunLaser') {
+          const isUfo = p.item.type === 'ufoSaucer';
+          const effDist = isUfo ? 3.85 : pl.dist;
           const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower') ? 2.4 : p.def.height;
-          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + effH * 0.72; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 1.32) : (p.y + effH * 0.72); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
         } else if (a === 'waterCannon') {
+          const isUfo = p.item.type === 'ufoSaucer';
+          const effDist = isUfo ? 3.15 : pl.dist;
           const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower') ? 2.4 : p.def.height;
-          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + effH * 0.28; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.62) : (p.y + effH * 0.28); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {

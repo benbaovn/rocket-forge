@@ -61,6 +61,7 @@ export const PARTS = {
   n1BlockV: { name: 'Tầng 3 N1 (Block V) & Giàn Mắt Cáo Trên (Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', height: 9.6, dry: 2.4, fuel: 18.5, thrustSL: 560, thrustVac: 880, ispSL: 265, ispVac: 355, engines: 4, autoStage: true, desc: 'Tầng đẩy hình nón xám kim loại Block V với 8 ống dẫn khí động nổi, giàn mắt cáo 2 tầng và 4 động cơ NK-21' },
   n1BlockB: { name: 'Tầng 2 N1 (Block B) & Giàn Mắt Cáo Giữa (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 11.4, dry: 3.8, fuel: 36.0, thrustSL: 1450, thrustVac: 1880, ispSL: 275, ispVac: 340, engines: 8, autoStage: true, desc: 'Tầng 2 hình nón xám kim loại Block B kèm khung giàn mắt cáo rỗng 2 tầng lộ bồn cầu bên trong và 8 động cơ NK-15V' },
   n1BlockA: { name: 'Tầng 1 Siêu Nặng N1 (Block A · 30× NK-15) (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.4, dry: 6.8, fuel: 74.0, thrustSL: 5400, thrustVac: 6200, ispSL: 285, ispVac: 320, engines: 30, autoStage: true, hasFins: true, desc: 'Tầng 1 hình nón khổng lồ màu xám kim loại với 8 khối hộp khí động lớn, 4 cánh lưới chống ngang, váy đáy loe và vòng 30 động cơ NK-15' },
+  ufoSaucer: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 55.0, isBattery: true, thrustSL: 3200, thrustVac: 3600, ispSL: 6500, ispVac: 8000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
 };
 
 export const MAT = {};
@@ -647,6 +648,7 @@ const builders = {
   n1BlockV() { return buildN1BlockV(); },
   n1BlockB() { return buildN1BlockB(); },
   n1BlockA() { return buildN1BlockA(); },
+  ufoSaucer() { return buildUfoSaucer(); },
 };
 
 function tank(h, mat, decal) {
@@ -3481,6 +3483,104 @@ function buildN1BlockA() {
     g.add(mesh(new THREE.CylinderGeometry(0.30, 0.28, yNozzle * 0.38, 20), chromeMat, ex, yNozzle * 0.72, ez));
     addNozzle(g, ex, ez, 0.38, [mBell]);
   }
+
+  return g;
+}
+
+function buildUfoSaucer() {
+  const g = new THREE.Group();
+  const neonGreen = new THREE.MeshStandardMaterial({
+    color: 0x4ade80,
+    emissive: new THREE.Color(0x22c55e),
+    emissiveIntensity: 2.2,
+    roughness: 0.2,
+    metalness: 0.2,
+  });
+  const neonCyan = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: new THREE.Color(0x0284c7),
+    emissiveIntensity: 2.3,
+    roughness: 0.2,
+    metalness: 0.2,
+  });
+  const neonPurple = new THREE.MeshStandardMaterial({
+    color: 0xc084fc,
+    emissive: new THREE.Color(0x9333ea),
+    emissiveIntensity: 2.0,
+    roughness: 0.2,
+    metalness: 0.2,
+  });
+  const alienPilotSkin = new THREE.MeshStandardMaterial({
+    color: 0x4ade80,
+    emissive: new THREE.Color(0x15803d),
+    emissiveIntensity: 0.85,
+    roughness: 0.35,
+  });
+
+  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95)
+  g.add(mesh(new THREE.CylinderGeometry(1.5, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.22, 0.08, 12, 48).rotateX(Math.PI / 2), neonCyan, 0, 0.18, 0));
+  g.add(mesh(new THREE.CylinderGeometry(4.1, 1.5, 0.65, 64), MAT.silver, 0, 0.66, 0));
+
+  // Underbelly glowing anti-gravity concentric rings
+  g.add(mesh(new THREE.TorusGeometry(2.35, 0.07, 12, 56).rotateX(Math.PI / 2), neonCyan, 0, 0.45, 0));
+  g.add(mesh(new THREE.TorusGeometry(3.25, 0.06, 12, 64).rotateX(Math.PI / 2), neonPurple, 0, 0.68, 0));
+
+  // 2. Main Wide Flying Saucer Disc & Glowing Plasma Rim (y = 0.95 -> 1.85)
+  g.add(mesh(new THREE.CylinderGeometry(4.2, 4.1, 0.24, 64), MAT.darkMetal, 0, 1.10, 0));
+  g.add(mesh(new THREE.TorusGeometry(4.22, 0.16, 16, 64).rotateX(Math.PI / 2), neonGreen, 0, 1.10, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.85, 4.2, 0.68, 64), MAT.titanium, 0, 1.56, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.88, 0.07, 12, 48).rotateX(Math.PI / 2), neonCyan, 0, 1.90, 0));
+
+  // 12 Glowing Plasma Orbs & Radial Rib Panels around the Saucer Disc
+  const orbGeo = new THREE.SphereGeometry(0.24, 16, 12);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const mat = i % 3 === 0 ? neonCyan : (i % 2 === 0 ? neonGreen : neonPurple);
+    g.add(mesh(orbGeo, mat, Math.cos(a) * 4.20, 1.12, Math.sin(a) * 4.20));
+    const rib = mesh(new THREE.BoxGeometry(0.14, 0.12, 2.15), MAT.darkMetal, Math.cos(a) * 2.9, 1.58, Math.sin(a) * 2.9);
+    rib.rotation.y = -a + Math.PI / 2;
+    rib.rotation.x = 0.26;
+    g.add(rib);
+  }
+
+  // 3. Pilot & Holographic Console inside the UFO Cockpit (y = 1.85 -> 3.2)
+  g.add(mesh(new THREE.CylinderGeometry(1.65, 1.75, 0.18, 36), MAT.darkMetal, 0, 1.94, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.75, 0.35, 0.36), MAT.silver, 0, 2.15, 0.55));
+  g.add(mesh(new THREE.BoxGeometry(0.62, 0.22, 0.04), neonCyan, 0, 2.38, 0.52));
+
+  // Friendly Alien Pilot Commander inside the dome
+  g.add(mesh(new THREE.CylinderGeometry(0.32, 0.45, 0.65, 18), alienPilotSkin, 0, 2.25, -0.05));
+  const head = mesh(new THREE.SphereGeometry(0.58, 22, 16), alienPilotSkin, 0, 2.86, -0.02);
+  head.scale.set(1.06, 1.22, 0.96);
+  g.add(head);
+  for (const sgn of [-1, 1]) {
+    const eye = mesh(new THREE.SphereGeometry(0.19, 14, 12), MAT.black, sgn * 0.24, 2.92, 0.46);
+    eye.scale.set(1.15, 0.78, 0.65);
+    eye.rotation.z = -sgn * 0.32;
+    eye.rotation.y = sgn * 0.35;
+    g.add(eye);
+    const ant = mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.42, 8), alienPilotSkin, sgn * 0.28, 3.45, 0.02);
+    ant.rotation.z = -sgn * 0.35;
+    g.add(ant);
+    g.add(mesh(new THREE.SphereGeometry(0.08, 12, 10), neonCyan, sgn * 0.40, 3.65, 0.02));
+  }
+
+  // 4. Transparent Crystal Cockpit Dome (y = 1.90 -> 3.55)
+  const domeMat = new THREE.MeshPhysicalMaterial({
+    color: 0x7dd3fc,
+    transparent: true,
+    opacity: 0.42,
+    roughness: 0.06,
+    metalness: 0.1,
+    clearcoat: 1.0,
+  });
+  g.add(mesh(new THREE.SphereGeometry(1.78, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
+
+  // Built-in Parachutes & Anti-Gravity Propulsion Nozzle
+  addParachutes(g, 3.4);
+  const bellM = bellMaterial(true);
+  addNozzle(g, 0, 0, 0.95, [bellM], 'antigrav');
 
   return g;
 }

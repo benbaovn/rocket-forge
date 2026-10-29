@@ -297,6 +297,28 @@ export function createBeamVisual(type, startPos, endPos) {
     group.add(new THREE.Mesh(coreGeo, coreMat));
     group.add(new THREE.Mesh(outerGeo, outerMat));
     group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.18, maxLife: 0.18 };
+  } else if (type === 'alienLaser') {
+    // Alien Bio-Plasma Beam (neon green core + purple outer aura) for warrior/boss Alien brawls
+    const coreGeo = new THREE.CylinderGeometry(0.08, 0.08, len, 10, 1, true);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0x86efac,
+      transparent: true,
+      opacity: 0.96,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const outerGeo = new THREE.CylinderGeometry(0.24, 0.24, len, 12, 1, true);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0xa855f7,
+      transparent: true,
+      opacity: 0.68,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    group.add(new THREE.Mesh(coreGeo, coreMat));
+    group.add(new THREE.Mesh(outerGeo, outerMat));
+    group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.16, maxLife: 0.16 };
   } else {
     // High-Energy Plasma-Ruby Laser Beam
     const coreGeo = new THREE.CylinderGeometry(0.09, 0.09, len, 10, 1, true);

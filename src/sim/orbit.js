@@ -173,7 +173,7 @@ export function bodyState(name, t, p = { x: 0, y: 0, z: 0 }, v = { x: 0, y: 0, z
 export function bodyRotation(name, t) {
   const B = BODIES[name];
   if (!B || name === 'earth') return OMEGA_E * t;
-  if (name === 'mars' || name === 'sun') return B.omega * t;
+  if (name === 'mars' || name === 'sun') return (B.rot0 || 0) + B.omega * t;
   return bodyAngle(name, t);
 }
 export function bodyOmega(name) {

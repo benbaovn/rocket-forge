@@ -363,68 +363,6 @@ export class MapView {
 
     // Main Asteroid Belt between Mars (67,000 km) and Jupiter (115,000 km)
     this.initAsteroidBelt();
-
-    // 3D Map Supernova Shockwave & Remnant Nebula around the Sun
-    this.mapSupernovaGroup = new THREE.Group();
-    this.mapSupernovaGroup.visible = false;
-    this.sunGroup.add(this.mapSupernovaGroup);
-
-    const snShellMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const snShell = new THREE.Mesh(new THREE.SphereGeometry(sunR, 32, 24), snShellMat);
-    this.mapSupernovaGroup.add(snShell);
-
-    const snWebMat = new THREE.MeshBasicMaterial({
-      color: 0xf43f5e,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const snWeb = new THREE.Mesh(new THREE.IcosahedronGeometry(sunR * 1.15, 2), snWebMat);
-    this.mapSupernovaGroup.add(snWeb);
-
-    const snRing1Mat = new THREE.MeshBasicMaterial({
-      color: 0x7dd3fc,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const snRing1 = new THREE.Mesh(new THREE.RingGeometry(sunR * 0.82, sunR * 1.0, 64), snRing1Mat);
-    snRing1.rotation.x = Math.PI / 2;
-    this.mapSupernovaGroup.add(snRing1);
-
-    const snRing2Mat = new THREE.MeshBasicMaterial({
-      color: 0xfacc15,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const snRing2 = new THREE.Mesh(new THREE.RingGeometry(sunR * 0.85, sunR * 1.0, 64), snRing2Mat);
-    snRing2.rotation.set(Math.PI / 2 + 0.55, 0.35, 0);
-    this.mapSupernovaGroup.add(snRing2);
-
-    this.mapSupernovaParts = { snShell, snShellMat, snWeb, snWebMat, snRing1, snRing1Mat, snRing2, snRing2Mat };
-    this.supernovaStart = 0;
-  }
-
-  triggerSupernova(focusSun = false) {
-    this.supernovaStart = performance.now();
-    if (this.mapSupernovaGroup) this.mapSupernovaGroup.visible = true;
-    if (focusSun && this.visible) {
-      this.setFocus('sun');
-    }
   }
 
   initAsteroidBelt() {
@@ -682,8 +620,25 @@ export class MapView {
           data[idx + 3] = 255;
         } else if (name === 'mars') {
           const isPolar = Math.abs(lat) > 1.38;
+          const omDist = Math.hypot(lon - 0.855, lat - 0.0);
           if (isPolar) {
             data[idx] = 240; data[idx + 1] = 236; data[idx + 2] = 232; data[idx + 3] = 255;
+          } else if (omDist < 0.04) {
+            // Olympus Mons glowing caldera core
+            data[idx] = 255; data[idx + 1] = 185; data[idx + 2] = 65; data[idx + 3] = 255;
+          } else if (omDist < 0.075) {
+            // Olympus Mons high-altitude summit frost rim
+            data[idx] = 248; data[idx + 1] = 232; data[idx + 2] = 218; data[idx + 3] = 255;
+          } else if (omDist < 0.21) {
+            // Olympus Mons dark volcanic basalt shield cone
+            const s = (0.21 - omDist) / 0.135;
+            data[idx] = Math.round(145 - s * 42);
+            data[idx + 1] = Math.round(52 - s * 18);
+            data[idx + 2] = Math.round(28 - s * 10);
+            data[idx + 3] = 255;
+          } else if (omDist < 0.26) {
+            // Olympus Mons basal cliff scarp aureole
+            data[idx] = 242; data[idx + 1] = 148; data[idx + 2] = 88; data[idx + 3] = 255;
           } else if (n < -0.15) {
             data[idx] = 115; data[idx + 1] = 56; data[idx + 2] = 36; data[idx + 3] = 255;
           } else {
@@ -847,6 +802,31 @@ export class MapView {
       const mesh = new THREE.Mesh(geo, mat);
       if (name === 'phobos' || name === 'deimos') {
         mesh.scale.set(1.18, 0.88, 0.96);
+      }
+      if (name === 'mars') {
+        // 3D Olympus Mons Shield Volcano & Caldera on the Mars Map Globe
+        const omGroup = new THREE.Group();
+        const omAngle = 0.855;
+        omGroup.position.set(Math.sin(omAngle) * pR * 0.985, 0, Math.cos(omAngle) * pR * 0.985);
+        omGroup.lookAt(Math.sin(omAngle) * pR * 2, 0, Math.cos(omAngle) * pR * 2);
+        const coneGeo = new THREE.CylinderGeometry(pR * 0.065, pR * 0.22, pR * 0.085, 32, 1);
+        coneGeo.rotateX(Math.PI / 2);
+        coneGeo.translate(0, 0, pR * 0.035);
+        const coneMat = new THREE.MeshStandardMaterial({
+          color: 0x9a3412,
+          emissive: 0x431407,
+          roughness: 0.75,
+        });
+        omGroup.add(new THREE.Mesh(coneGeo, coneMat));
+        const rimGeo = new THREE.RingGeometry(pR * 0.042, pR * 0.072, 32);
+        rimGeo.translate(0, 0, pR * 0.079);
+        const rimMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide });
+        omGroup.add(new THREE.Mesh(rimGeo, rimMat));
+        const lavaGeo = new THREE.CircleGeometry(pR * 0.04, 24);
+        lavaGeo.translate(0, 0, pR * 0.078);
+        const lavaMat = new THREE.MeshBasicMaterial({ color: 0xff4500, side: THREE.DoubleSide });
+        omGroup.add(new THREE.Mesh(lavaGeo, lavaMat));
+        mesh.add(omGroup);
       }
       g.add(mesh);
       this.planetMeshes[name] = mesh;
@@ -1380,33 +1360,6 @@ export class MapView {
     this.sunLight.position.set(0, 0, 0);
     if (this.asteroidBeltGroup) {
       this.asteroidBeltGroup.rotation.y = -t * 1.15e-5;
-    }
-    if (this.supernovaStart && this.mapSupernovaGroup && this.mapSupernovaParts) {
-      const age = (performance.now() - this.supernovaStart) / 1000;
-      const maxLife = 650.0; // 100x longer duration (6.5s * 100)
-      if (age >= maxLife) {
-        this.supernovaStart = 0;
-        this.mapSupernovaGroup.visible = false;
-      } else {
-        this.mapSupernovaGroup.visible = true;
-        const p = age / maxLife;
-        const burstP = Math.min(1, age / 6.5);
-        const expP = 0.65 * Math.pow(burstP, 0.52) + 0.35 * Math.pow(p, 0.7);
-        const fade = p < 0.75
-          ? 1.0 - p * 0.16
-          : Math.pow(Math.max(0, (1 - p) / 0.25), 1.25) * 0.88;
-        const P = this.mapSupernovaParts;
-        P.snShell.scale.setScalar(1.0 + Math.pow(expP, 0.55) * 28);
-        P.snShellMat.opacity = fade * 0.65;
-        P.snWeb.scale.setScalar(1.0 + Math.pow(expP, 0.6) * 36);
-        P.snWeb.rotation.y = age * 1.2;
-        P.snWeb.rotation.x = age * 0.7;
-        P.snWebMat.opacity = fade * 0.8;
-        P.snRing1.scale.setScalar(1.2 + Math.pow(expP, 0.48) * 55);
-        P.snRing1Mat.opacity = fade * 0.95;
-        P.snRing2.scale.setScalar(1.1 + Math.pow(expP, 0.52) * 44);
-        P.snRing2Mat.opacity = fade * 0.88;
-      }
     }
 
     // Earth position (around Sun) & rotation

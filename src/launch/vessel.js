@@ -426,8 +426,10 @@ export class Vessel {
         const newSx = this.sx + this.groundSpeed * cosH * h;
         const newZ = (this.s.z || 0) - this.groundSpeed * sinH * h;
         const surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
+        const surfAhead = env.surface({ ...this, sx: newSx + 2.5 * cosH, s: { ...this.s, z: newZ - 2.5 * sinH } });
+        const slopePitch = Math.atan2(surfAhead.h - surf.h, 2.5);
         const targetH = surf.h + this.bottomOffset();
-        const pitchUp = THREE.MathUtils.clamp(drive * 0.025, -0.04, 0.04);
+        const pitchUp = THREE.MathUtils.clamp(slopePitch + drive * 0.025, -0.65, 0.65);
         const targetBeta = this.phi + pitchUp;
         this.beta = targetBeta;
         this.omega = 0;
@@ -437,7 +439,7 @@ export class Vessel {
         this.s.vx += this.groundSpeed * cosH * this.east.x;
         this.s.vy += this.groundSpeed * cosH * this.east.y;
         this.updateFrame(t + h);
-        this.landed = { body: this.ref, sx: newSx, h: targetH, site: surf.site, how: 'rover' };
+        this.landed = { body: this.ref, sx: newSx, sz: newZ, h: targetH, site: surf.site, how: 'rover' };
         this.landedLock = 0.2;
         return;
       }
@@ -555,7 +557,13 @@ export class Vessel {
         this.landedLock = Math.max(0, (this.landedLock || 0) - h);
         // stay on the rotating surface
         const L = this.landed || this.clampSpot;
-        if (L) this.placeOnSurface(L.body, L.sx, L.h, t + h, this.beta + bodyOmega(L.body) * h);
+        if (L) {
+          this.placeOnSurface(L.body, L.sx, L.h, t + h, this.beta + bodyOmega(L.body) * h);
+          if (L.sz !== undefined) {
+            this.s.z = L.sz;
+            this.updateFrame(t + h);
+          }
+        }
         // settle upright
         if (this.landed && !this.clamped) { this.beta += wrapPi(this.phi - this.beta) * Math.min(1, h * 2); this.omega = 0; }
         return;
@@ -651,10 +659,15 @@ export class Vessel {
 
   settle(surf, t, how) {
     const targetBeta = this.isPlane ? (this.phi + Math.PI / 2) : this.beta;
-    this.landed = { body: this.ref, sx: this.sx, h: surf.h + this.bottomOffset(), site: surf.site, how };
+    const keepZ = this.s.z || 0;
+    this.landed = { body: this.ref, sx: this.sx, sz: keepZ, h: surf.h + this.bottomOffset(), site: surf.site, how };
     this.landedLock = 1.0;
     this.omega = 0;
     this.placeOnSurface(this.ref, this.sx, this.landed.h, t, targetBeta);
+    if (keepZ) {
+      this.s.z = keepZ;
+      this.updateFrame(t);
+    }
     this.events.push(['landed', how, surf.site]);
   }
 

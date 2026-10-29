@@ -238,6 +238,10 @@ const PART_I18N = {
     vi: { name: 'Tầng 1 Siêu Nặng N1 (Block A · 30× NK-15) (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 hình nón khổng lồ màu xám kim loại với 8 khối hộp khí động lớn, 4 cánh lưới chống ngang, váy đáy loe và vòng 30 động cơ NK-15' },
     en: { name: 'N1 Block A Super-Heavy First Stage · 30× NK-15 (Stage 1)', cat: 'Engines', desc: 'Giant conical metallic-grey Block A stage with 8 large faceted blisters, 4 strut-braced fins, flared base skirt & 30 NK-15 engines' },
   },
+  ufoSaucer: {
+    vi: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
+    en: { name: 'Quantum UFO Flying Saucer', cat: 'Command & Nose', desc: 'Alien UFO flying saucer with crystal pilot dome, glowing plasma rim, 55-ton quantum battery, parachutes & anti-gravity core' },
+  },
 };
 
 export const PRESET_LABELS = {
@@ -271,6 +275,7 @@ export const PRESET_LABELS = {
   'Tàu Phản Trọng Lực Lượng Tử': { vi: '🛸 Tàu Phản Trọng Lực Lượng Tử', en: '🛸 Quantum Anti-Gravity Ship' },
   'Tàu Chiến Lazer Liên Hành Tinh': { vi: '⚡ Tàu Chiến Lazer Liên Hành Tinh', en: '⚡ Interplanetary Laser Cruiser' },
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': { vi: '👽 Chiến Hạm Diệt Alien (Lazer + Nước 1,000,000 PSI)', en: '👽 Alien Hunter Warship (Laser + 1M PSI Water)' },
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': { vi: '🛸 Đĩa Bay UFO Siêu Cấp (Alien Saucer)', en: '🛸 Super Alien UFO Flying Saucer' },
 };
 
 const MISSION_I18N = {

@@ -1371,24 +1371,28 @@ export class MapView {
     }
     if (this.supernovaStart && this.mapSupernovaGroup && this.mapSupernovaParts) {
       const age = (performance.now() - this.supernovaStart) / 1000;
-      const maxLife = 6.5;
+      const maxLife = 650.0; // 100x longer duration (6.5s * 100)
       if (age >= maxLife) {
         this.supernovaStart = 0;
         this.mapSupernovaGroup.visible = false;
       } else {
         this.mapSupernovaGroup.visible = true;
         const p = age / maxLife;
-        const fade = Math.pow(Math.max(0, 1 - p), 1.25);
+        const burstP = Math.min(1, age / 6.5);
+        const expP = 0.65 * Math.pow(burstP, 0.52) + 0.35 * Math.pow(p, 0.7);
+        const fade = p < 0.75
+          ? 1.0 - p * 0.16
+          : Math.pow(Math.max(0, (1 - p) / 0.25), 1.25) * 0.88;
         const P = this.mapSupernovaParts;
-        P.snShell.scale.setScalar(1.0 + Math.pow(p, 0.55) * 28);
+        P.snShell.scale.setScalar(1.0 + Math.pow(expP, 0.55) * 28);
         P.snShellMat.opacity = fade * 0.65;
-        P.snWeb.scale.setScalar(1.0 + Math.pow(p, 0.6) * 36);
+        P.snWeb.scale.setScalar(1.0 + Math.pow(expP, 0.6) * 36);
         P.snWeb.rotation.y = age * 1.2;
         P.snWeb.rotation.x = age * 0.7;
         P.snWebMat.opacity = fade * 0.8;
-        P.snRing1.scale.setScalar(1.2 + Math.pow(p, 0.48) * 55);
+        P.snRing1.scale.setScalar(1.2 + Math.pow(expP, 0.48) * 55);
         P.snRing1Mat.opacity = fade * 0.95;
-        P.snRing2.scale.setScalar(1.1 + Math.pow(p, 0.52) * 44);
+        P.snRing2.scale.setScalar(1.1 + Math.pow(expP, 0.52) * 44);
         P.snRing2Mat.opacity = fade * 0.88;
       }
     }
@@ -1855,7 +1859,7 @@ export class MapView {
 
   drawBadge(ctx, x, y, text, color, active = false, subtitle = null, avoidOverlap = false) {
     ctx.save();
-    ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+    ctx.font = '700 11.5px "Orbitron", "Tektur", sans-serif';
 
     const textWidth = ctx.measureText(text).width;
     const subWidth = subtitle ? ctx.measureText(subtitle).width : 0;
@@ -1914,7 +1918,7 @@ export class MapView {
     ctx.fillText(text, bx + 10, by + (subtitle ? 15 : 15));
 
     if (subtitle) {
-      ctx.font = '500 10.5px "JetBrains Mono", monospace';
+      ctx.font = '700 10px "Orbitron", "Tektur", sans-serif';
       ctx.fillStyle = '#94a3b8';
       ctx.fillText(subtitle, bx + 10, by + 28);
     }

@@ -279,10 +279,10 @@ export function flagDecal() {
   }
   ctx.closePath(); ctx.fill();
   ctx.fillStyle = '#1a1a1a';
-  ctx.font = 'bold 74px "Be Vietnam Pro", Arial, sans-serif';
+  ctx.font = '900 72px "Orbitron", "Tektur", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('VIỆT NAM', 256, 350);
-  ctx.font = 'bold 44px Orbitron, Arial, sans-serif';
+  ctx.font = '900 44px "Orbitron", "Tektur", sans-serif';
   ctx.fillText('ROCKET FORGE', 256, 420);
   const t = toTexture(c, { srgb: true, repeat: false });
   cache.flag = t;

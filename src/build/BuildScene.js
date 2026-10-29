@@ -314,8 +314,16 @@ export class BuildScene {
     // mission picker
     this.missionId = 'free';
     this.renderMissionCards();
+    const closeMissionModal = () => {
+      $('mission-modal').classList.add('hidden');
+      audio.click();
+    };
     $('btn-mission').onclick = () => $('mission-modal').classList.remove('hidden');
-    $('btn-mission-close').onclick = () => $('mission-modal').classList.add('hidden');
+    $('btn-mission-close').onclick = closeMissionModal;
+    if ($('btn-mission-x')) $('btn-mission-x').onclick = closeMissionModal;
+    $('mission-modal').addEventListener('click', (e) => {
+      if (e.target === $('mission-modal')) closeMissionModal();
+    });
 
     window.addEventListener('pointermove', (e) => this.onDragMove(e));
     window.addEventListener('pointerup', (e) => this.onDragEnd(e));
@@ -329,7 +337,13 @@ export class BuildScene {
       if (!this.active) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.selection) { this.deleteSelection(); e.preventDefault(); }
       if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey)) { this.undo(); e.preventDefault(); return; }
-      if (e.key === 'Escape') this.select(null);
+      if (e.key === 'Escape') {
+        if (!$('mission-modal').classList.contains('hidden')) {
+          $('mission-modal').classList.add('hidden');
+          return;
+        }
+        this.select(null);
+      }
 
       // 3-axis rotation shortcuts
       const k = e.key.toLowerCase();

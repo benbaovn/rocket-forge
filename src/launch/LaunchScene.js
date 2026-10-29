@@ -489,7 +489,6 @@ export class LaunchScene {
       if (k === 'b') this.toggleBoosterFocus();
       if (k === 'p') this.toggleDeploy();
       if (k === 'v' || e.key === 'Enter') { e.preventDefault(); audio.init(); this.fireWeapons(); }
-      if (k === 'u') { e.preventDefault(); audio.init(); this.triggerSupernova(); }
       if (k === 'z' && !this.docked) this.throttle = 1;
       if (k === 'x') this.throttle = 0;
       if (k === '.') this.setWarp(1);
@@ -514,20 +513,6 @@ export class LaunchScene {
         this.fireWeapons();
       });
       window.addEventListener('pointerup', () => { this.firingHeld = false; });
-    }
-    const btnSn = $('btn-supernova');
-    if (btnSn) {
-      btnSn.onclick = () => {
-        audio.init();
-        this.triggerSupernova();
-      };
-    }
-    const btnMapSn = $('btn-map-supernova');
-    if (btnMapSn) {
-      btnMapSn.onclick = () => {
-        audio.init();
-        this.triggerSupernova();
-      };
     }
     this.app.canvas.addEventListener('pointerdown', (e) => {
       if (!this.active || this.map.visible || !this.aliens.length) return;
@@ -782,6 +767,10 @@ export class LaunchScene {
     }
     this.aliens = []; this.weaponBeams = []; this.supernovas = [];
     this.alienSpawnTimer = 1.0; this.weaponCooldown = 0; this.firingHeld = false;
+    this.supernovaSpawnTimer = 18 + Math.random() * 14;
+    this.supernovaDistAcc = 0;
+    this.supernovaDistNext = 2400 + Math.random() * 2800;
+    this.lastSupernovaRef = 'earth';
     this.debris = []; this.vessels = [];
     this.smoke.clear(); this.fire.clear();
     $('events').innerHTML = '';
@@ -2328,7 +2317,7 @@ export class LaunchScene {
         relPos = this.aliens[0].relPos.clone();
       } else {
         const fwd = (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
-        relPos = new THREE.Vector3(18, 28, -22).addScaledVector(fwd, 32);
+        relPos = new THREE.Vector3(24, 34, -28).addScaledVector(fwd, 38);
       }
     }
 
@@ -2336,19 +2325,33 @@ export class LaunchScene {
     mesh.position.copy(pWorld).add(relPos);
     this.scene.add(mesh);
 
-    const maxLife = isBossCollapse ? 3.8 : 5.6;
-    this.supernovas.push({
-      mesh,
-      relPos,
-      age: 0,
-      maxLife,
-    });
-
+    // 100x longer duration than original (3.8s -> 380s, 5.6s -> 560s)
+    const maxLife = (isBossCollapse ? 3.8 : 5.6) * 100;
+    const E = P.east || { x: 1, y: 0 };
+    const U = P.up || { x: 0, y: 1 };
+    const worldS = {
+      x: P.s.x + relPos.x * E.x + relPos.y * U.x,
+      y: P.s.y + relPos.x * E.y + relPos.y * U.y,
+      z: (P.s.z || 0) + relPos.z,
+    };
     const hitX = (P.sx || 0) + relPos.x;
     const hitY = (P.alt || 0) + relPos.y;
     const hitZ = (P.s?.z || 0) + relPos.z;
 
-    // Multi-chromatic Supernova plasma ejecta (cyan, magenta, solar gold, pure white)
+    this.supernovas.push({
+      mesh,
+      worldS,
+      hitX,
+      hitY,
+      hitZ,
+      phi0: P.phi || 0,
+      scale,
+      emberTimer: 0,
+      age: 0,
+      maxLife,
+    });
+
+    // Multi-chromatic Supernova plasma ejecta fixed at the explosion site (does not follow player velocity)
     const snPalette = [
       [1.5, 5.5, 9.0],
       [8.5, 1.4, 5.2],
@@ -2363,8 +2366,8 @@ export class LaunchScene {
       const col = snPalette[i % snPalette.length];
       this.fire.emit(
         hitX, hitY, hitZ,
-        (P.vSurf?.e || 0) + d.x, (P.vSurf?.u || 0) + d.y, d.z,
-        { life: 0.9 + Math.random() * 1.4, size0: 4.5 * scale, size1: (22 + Math.random() * 18) * scale, alpha: 1.0, drag: 0.75, buoy: 0.2, color: col }
+        d.x, d.y, d.z,
+        { life: 2.2 + Math.random() * 3.5, size0: 4.5 * scale, size1: (22 + Math.random() * 18) * scale, alpha: 1.0, drag: 0.75, buoy: 0.2, color: col }
       );
     }
 
@@ -2374,7 +2377,7 @@ export class LaunchScene {
     this.shakeBoost = Math.max(this.shakeBoost || 0, isBossCollapse ? 2.5 : 4.5);
 
     if (this.map && this.map.triggerSupernova) {
-      this.map.triggerSupernova(this.map.visible && !isBossCollapse);
+      this.map.triggerSupernova(false);
     }
 
     if (!isBossCollapse) {
@@ -2383,16 +2386,21 @@ export class LaunchScene {
       for (const a of doomed) {
         this.destroyAlien(a, 'supernova');
       }
+      const starNames = [
+        'Betelgeuse-IX', 'Eta Carinae', 'Cygnus X-3', 'Vega Prime',
+        'Antares-B', 'Kepler-1604', 'Rigel Hypergiant', 'Pulsar Vela-VII',
+      ];
+      const starName = starNames[Math.floor(Math.random() * starNames.length)];
       this.milestone(
-        tr('💥 VỤ NỔ SIÊU TÂN TINH!', '💥 SUPERNOVA CATACLYSM!'),
+        tr('💥 SIÊU TÂN TINH BÙNG NỔ!', '💥 SUPERNOVA ERUPTION!'),
         doomed.length
-          ? tr(`Sóng xung kích Siêu Tân Tinh đã quét sạch ${doomed.length} UFO Alien!`, `Supernova shockwave vaporized ${doomed.length} Alien UFOs!`)
-          : tr('Sóng xung kích lượng tử & chớp tia Gamma giải phóng toàn vũ trụ!', 'Relativistic shockwave & Gamma-Ray Burst unleashed across space!')
+          ? tr(`Tên lửa bay ngang qua vùng sao bất ổn — Sóng xung kích quét sạch ${doomed.length} UFO Alien!`, `Rocket passed an unstable star — Supernova shockwave vaporized ${doomed.length} Alien UFOs!`)
+          : tr(`Tên lửa vừa bay ngang qua sao ${starName} đúng lúc nó phát nổ Siêu Tân Tinh!`, `Rocket flew past ${starName} just as it erupted into a Supernova!`)
       );
       this.event(
         tr(
-          `💥🌟 KÍCH HOẠT VỤ NỔ SIÊU TÂN TINH! Sóng xung kích đa tầng & chớp tia Gamma bùng nổ${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
-          `💥🌟 SUPERNOVA EXPLOSION TRIGGERED! Multi-ring shockwave & Gamma-Ray Burst erupted${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
+          `💥🌟 Khi tên lửa bay ngang qua vùng không gian gần ${starName}, một Vụ Nổ Siêu Tân Tinh tự nhiên bất ngờ bùng nổ${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
+          `💥🌟 As the rocket passed through space near ${starName}, a natural Supernova suddenly erupted${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
         ),
         'warn'
       );
@@ -2496,8 +2504,53 @@ export class LaunchScene {
       }
     }
 
-    // Update active 3D Supernova cataclysms
+    // Spontaneous Supernova when the rocket flies past a cosmic sector in space / high flight
+    if (this.phase === 'flight' && !P.clamped && !P.landed) {
+      const spd = P.speed || Math.hypot(P.vSurf?.e || 0, P.vSurf?.u || 0);
+      const inFlightRegion = P.ref !== 'earth' || P.alt > 1200 || spd > 45;
+      if (this.lastSupernovaRef && this.lastSupernovaRef !== P.ref) {
+        this.lastSupernovaRef = P.ref;
+        this.supernovaSpawnTimer = Math.min(this.supernovaSpawnTimer ?? 15, 6 + Math.random() * 6);
+        this.supernovaDistAcc = Math.max(this.supernovaDistAcc || 0, this.supernovaDistNext || 2500);
+      } else {
+        this.lastSupernovaRef = P.ref;
+      }
+      if (inFlightRegion) {
+        this.supernovaDistAcc = (this.supernovaDistAcc || 0) + spd * dt;
+        this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 22) - dt;
+        if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -12)) {
+          const vxScene = P.vSurf?.e || 0;
+          const vyScene = P.vSurf?.u || 0;
+          const vzScene = P.s?.vz || 0;
+          const vMag = Math.hypot(vxScene, vyScene, vzScene);
+          const moveDir = vMag > 5
+            ? new THREE.Vector3(vxScene / vMag, vyScene / vMag, vzScene / vMag)
+            : (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
+          const distAhead = THREE.MathUtils.clamp(vMag * 2.2, 85, 2200);
+          const rSide = Math.max(38, distAhead * 0.38);
+          const az = Math.random() * Math.PI * 2;
+          const flybyPos = new THREE.Vector3(
+            Math.cos(az) * rSide,
+            18 + Math.random() * 26,
+            Math.sin(az) * rSide
+          ).addScaledVector(moveDir, distAhead);
+          const snScale = THREE.MathUtils.clamp(distAhead / 55, 1.25, 36);
+          this.triggerSupernova(flybyPos, snScale, false);
+          this.supernovaSpawnTimer = 55 + Math.random() * 45;
+          this.supernovaDistAcc = 0;
+          this.supernovaDistNext = 6500 + Math.random() * 8500;
+        }
+      }
+    }
+
+    // Update active 3D Supernova cataclysms (stationary in world space, 100x longer duration)
     if (this.supernovas && this.supernovas.length) {
+      const snPalette = [
+        [1.5, 5.5, 9.0],
+        [8.5, 1.4, 5.2],
+        [9.0, 6.2, 1.2],
+        [7.5, 7.5, 9.5],
+      ];
       for (let i = this.supernovas.length - 1; i >= 0; i--) {
         const sn = this.supernovas[i];
         sn.age += dt;
@@ -2506,9 +2559,25 @@ export class LaunchScene {
           if (sn.mesh.userData.dispose) sn.mesh.userData.dispose();
           this.supernovas.splice(i, 1);
         } else {
-          sn.mesh.position.copy(pWorld).add(sn.relPos);
+          if (this._proj && sn.worldS) {
+            this._proj(sn.worldS.x, sn.worldS.y, sn.worldS.z, sn.mesh.position);
+          }
           if (sn.mesh.userData.animate) {
             sn.mesh.userData.animate(sn.age, sn.maxLife);
+          }
+          sn.emberTimer = (sn.emberTimer || 0) - dt;
+          if (sn.emberTimer <= 0 && sn.mesh.position.lengthSq() < 2.25e8) {
+            sn.emberTimer = 0.28;
+            const sc = sn.scale || 1.0;
+            const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+              .normalize()
+              .multiplyScalar((14 + Math.random() * 48) * sc);
+            const col = snPalette[Math.floor(Math.random() * snPalette.length)];
+            this.fire.emit(
+              sn.hitX, sn.hitY, sn.hitZ,
+              d.x, d.y, d.z,
+              { life: 1.2 + Math.random() * 1.6, size0: 3.5 * sc, size1: 16 * sc, alpha: 0.85, drag: 0.7, buoy: 0.1, color: col }
+            );
           }
         }
       }
@@ -2593,6 +2662,13 @@ export class LaunchScene {
     for (const d of this.debris) {
       proj(d.s.x, d.s.y, d.s.z, d.obj.position);
       d.obj.quaternion.setFromAxisAngle(this._zAxis || (this._zAxis = new THREE.Vector3(0, 0, 1)), phi - d.beta).multiply(d.q0);
+    }
+    if (this.supernovas && this.supernovas.length) {
+      for (const sn of this.supernovas) {
+        if (sn.worldS && sn.mesh) {
+          proj(sn.worldS.x, sn.worldS.y, sn.worldS.z, sn.mesh.position);
+        }
+      }
     }
     if (this.player && this.aliens && this.aliens.length) {
       const pPos = this.player.root.position;
@@ -3300,10 +3376,6 @@ export class LaunchScene {
             ? tr('SÚNG LAZER', 'LASER GUN')
             : tr('VŨ KHÍ DỰ PHÒNG', 'BACKUP WEAPON');
       btnFire.textContent = `🔫 ${tr('BẮN ALIEN', 'FIRE AT ALIENS')}: ${wTag} (V)`;
-    }
-    const btnSn = $('btn-supernova');
-    if (btnSn) {
-      btnSn.textContent = tr('💥 VỤ NỔ SIÊU TÂN TINH (U)', '💥 SUPERNOVA EXPLOSION (U)');
     }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);
     $('h-thr').style.width = thr * 100 + '%';

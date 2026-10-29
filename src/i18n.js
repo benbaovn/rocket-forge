@@ -946,6 +946,7 @@ export function applyLanguage(lang, app) {
   // Modals: Mission, Pause (#menu), Settings (#settings), Result (#result)
   setTxt('#mission-modal h2', 'Chọn nhiệm vụ', 'Select Mission');
   setTxt('#btn-mission-close', 'Đóng', 'Close');
+  setAttr('#btn-mission-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
 
   setTxt('#menu h2', 'Tạm dừng', 'Paused');
   setTxt('#menu [data-act="resume"]', 'Tiếp tục', 'Resume');

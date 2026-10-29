@@ -441,21 +441,27 @@ export function createSupernovaMesh(scale = 1.0) {
   root.userData = {
     animate(age, maxLife) {
       const p = Math.min(1, Math.max(0, age / maxLife));
-      const fade = Math.pow(Math.max(0, 1 - p), 1.35);
+      // Rapid initial cataclysmic burst over the first ~6s, followed by sustained long-duration cosmic expansion (100x lifetime)
+      const burstP = Math.min(1, Math.max(0, age / 6.0));
+      const expP = 0.65 * Math.pow(burstP, 0.5) + 0.35 * Math.pow(p, 0.7);
+      const pulse = 0.92 + 0.08 * Math.sin(age * 3.2);
+      const fade = (p < 0.75
+        ? 1.0 - p * 0.16
+        : Math.pow(Math.max(0, (1 - p) / 0.25), 1.35) * 0.88) * pulse;
 
-      // Core implosion in first 8% of life, then violent rebound & pulsar spin
-      const coreScale = p < 0.08
-        ? 2.8 - (p / 0.08) * 1.8
+      // Core implosion in first 0.45s, then violent rebound & pulsar spin
+      const coreScale = age < 0.45
+        ? 2.8 - (age / 0.45) * 1.8
         : 1.2 + Math.sin(age * 28) * 0.25 + (1 - p) * 2.4;
       coreMesh.scale.setScalar(Math.max(0.4, coreScale));
       coreMat.opacity = Math.min(1, fade * 1.35);
 
       // Expanding inner plasma fireball & outer nebula shell
-      const rInner = 1.5 + Math.pow(p, 0.52) * 38;
+      const rInner = 1.5 + Math.pow(expP, 0.52) * 38;
       innerShell.scale.setScalar(rInner);
-      innerMat.opacity = Math.max(0, (1 - p * 1.15) * 0.78);
+      innerMat.opacity = Math.max(0, fade * 0.78);
 
-      const rOuter = 2.0 + Math.pow(p, 0.6) * 58;
+      const rOuter = 2.0 + Math.pow(expP, 0.6) * 58;
       outerShell.scale.setScalar(rOuter);
       outerMat.opacity = Math.max(0, fade * 0.48);
 
@@ -465,24 +471,24 @@ export function createSupernovaMesh(scale = 1.0) {
       webMat.opacity = Math.max(0, fade * 0.62);
 
       // Relativistic shockwave rings
-      const rRing1 = 2.5 + Math.pow(p, 0.48) * 92;
+      const rRing1 = 2.5 + Math.pow(expP, 0.48) * 92;
       ring1.scale.setScalar(rRing1);
       ring1.rotation.z = age * 1.6;
       ring1Mat.opacity = Math.max(0, fade * 0.92);
 
-      const rRing2 = 2.0 + Math.pow(p, 0.54) * 76;
+      const rRing2 = 2.0 + Math.pow(expP, 0.54) * 76;
       ring2.scale.setScalar(rRing2);
       ring2.rotation.z = -age * 1.2;
       ring2Mat.opacity = Math.max(0, fade * 0.85);
 
-      const rRing3 = 1.8 + Math.pow(p, 0.58) * 66;
+      const rRing3 = 1.8 + Math.pow(expP, 0.58) * 66;
       ring3.scale.setScalar(rRing3);
       ring3.rotation.z = age * 1.0;
       ring3Mat.opacity = Math.max(0, fade * 0.8);
 
       // Gamma-Ray Burst polar jets
-      const jetLen = 4 + Math.pow(p, 0.42) * 125;
-      const jetRad = 2.5 + p * 14;
+      const jetLen = 4 + Math.pow(expP, 0.42) * 125;
+      const jetRad = 2.5 + expP * 14;
       jetTop.scale.set(jetRad, jetLen, jetRad);
       jetTop.position.y = jetLen * 0.5;
       jetBot.scale.set(jetRad, jetLen, jetRad);
@@ -491,8 +497,9 @@ export function createSupernovaMesh(scale = 1.0) {
       grbMat.opacity = Math.max(0, fade * 0.75);
 
       // Stellar ejecta shards
+      const ejectaProgress = 3.85 * Math.pow(expP, 0.78);
       for (const ej of ejecta) {
-        const dist = ej.speed * Math.pow(age, 0.78);
+        const dist = ej.speed * ejectaProgress;
         ej.mesh.position.copy(ej.dir).multiplyScalar(dist);
         ej.mesh.rotation.x += ej.rotSpd * 0.016;
         ej.mesh.rotation.y += ej.rotSpd * 0.022;

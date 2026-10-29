@@ -6,7 +6,7 @@
   <title>Rocket Forge – Lắp ráp & Phóng tên lửa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;600;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Tektur:wght@500;700;800;900&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/style.css" />
   <script type="importmap">
   {
@@ -141,7 +141,6 @@
       </div>
       <div id="h-prog" class="prog hidden"></div>
       <button id="btn-fire-weapon" class="btn" style="width: 100%; margin-top: 8px; font-weight: 700; background: rgba(244,63,94,0.22); border-color: rgba(244,63,94,0.65); color: #fda4af; padding: 7px 10px;">🔫 BẮN VŨ KHÍ DIỆT ALIEN (V)</button>
-      <button id="btn-supernova" class="btn" style="width: 100%; margin-top: 6px; font-weight: 700; background: linear-gradient(90deg, rgba(168,85,247,0.28), rgba(245,158,11,0.28)); border-color: rgba(250,204,21,0.75); color: #fde047; padding: 7px 10px;">💥 VỤ NỔ SIÊU TÂN TINH (U)</button>
       <button id="btn-autopilot" class="btn" style="width: 100%; margin-top: 6px; font-weight: 700; background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.45); color: #86efac; padding: 7px 10px;">🤖 TỰ LÁI NHIỆM VỤ (G)</button>
       <button id="btn-toggle-map" class="btn" style="width: 100%; margin-top: 6px; font-weight: 700; background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.5); color: #7dd3fc; padding: 7px 10px;">🌐 BẢN ĐỒ QUỸ ĐẠO 3D (M)</button>
       <button id="gpu-launch-badge" class="gpu-badge gpu-launch" type="button" title="Đồ họa GPU & FPS (O)">
@@ -172,7 +171,6 @@
       <canvas id="map-hud"></canvas>
       <div id="map-focus-bar" class="glass">
         <button type="button" class="map-fbtn active" data-focus="vessel">🚀 Tàu</button>
-        <button type="button" id="btn-map-supernova" class="map-fbtn" style="border-color:rgba(250,204,21,0.75);color:#fde047;background:rgba(168,85,247,0.25);">💥 Siêu Tân Tinh (U)</button>
         <button type="button" class="map-fbtn" data-focus="sun">☀️ Mặt Trời</button>
         <button type="button" class="map-fbtn" data-focus="mercury">⚪ Sao Thủy</button>
         <button type="button" class="map-fbtn" data-focus="venus">🟡 Sao Kim</button>
@@ -240,7 +238,6 @@
         <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> lái 3D theo camera</span>
         <span><kbd>Space</kbd> tách tầng</span>
         <span><kbd>V</kbd> bắn Alien</span>
-        <span><kbd>U</kbd> siêu tân tinh</span>
         <span><kbd>T</kbd> SAS</span>
         <span><kbd>F</kbd> chế độ SAS</span>
         <span><kbd>G</kbd> tự lái</span>
@@ -259,7 +256,14 @@
     <button id="btn-back" class="btn back">← Về xưởng</button>
   </div>
 
-  <div id="mission-modal" class="modal hidden"><div class="modal-card glass wide-card"><h2>Chọn nhiệm vụ</h2><div id="mission-cards"></div><button class="btn wide" id="btn-mission-close">Đóng</button></div></div>
+  <div id="mission-modal" class="modal hidden">
+    <div class="modal-card glass wide-card">
+      <button type="button" id="btn-mission-x" class="modal-close-x" title="Đóng (Esc)">✕</button>
+      <h2>Chọn nhiệm vụ</h2>
+      <div id="mission-cards"></div>
+      <button class="btn wide" id="btn-mission-close">Đóng</button>
+    </div>
+  </div>
 
   <!-- ================= MODALS ================= -->
   <div id="menu" class="modal hidden">

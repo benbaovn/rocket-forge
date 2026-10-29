@@ -17,7 +17,7 @@ export function createLandingZone() {
     c.strokeStyle = '#f2f2ee'; c.lineWidth = 26; c.beginPath(); c.arc(w / 2, w / 2, w * 0.42, 0, Math.PI * 2); c.stroke();
     c.lineWidth = 40; c.lineCap = 'butt';
     c.beginPath(); c.moveTo(w * 0.3, w * 0.3); c.lineTo(w * 0.7, w * 0.7); c.moveTo(w * 0.7, w * 0.3); c.lineTo(w * 0.3, w * 0.7); c.stroke();
-    c.fillStyle = '#f2f2ee'; c.font = 'bold 90px sans-serif'; c.textAlign = 'center'; c.fillText('LZ-1', w / 2, w * 0.2);
+    c.fillStyle = '#f2f2ee'; c.font = '900 90px "Orbitron", "Tektur", sans-serif'; c.textAlign = 'center'; c.fillText('LZ-1', w / 2, w * 0.2);
   });
   const top = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(45, 47, 0.3, 96), [new THREE.MeshStandardMaterial({ color: 0x8c8a84, roughness: 0.9 }), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }), new THREE.MeshStandardMaterial({ color: 0x8c8a84 })]));
   top.position.y = 0.15; g.add(top);
@@ -41,7 +41,7 @@ export function createDroneShip() {
     for (let i = 0; i < 3000; i++) { c.fillStyle = `rgba(255,255,255,${Math.random() * 0.03})`; c.fillRect(Math.random() * w, Math.random() * h, 4, 2); }
     c.strokeStyle = '#eeeeea'; c.lineWidth = 12; c.beginPath(); c.arc(w / 2, h / 2, h * 0.36, 0, Math.PI * 2); c.stroke();
     c.lineWidth = 22; c.beginPath(); c.moveTo(w / 2 - 90, h / 2 - 90); c.lineTo(w / 2 + 90, h / 2 + 90); c.moveTo(w / 2 + 90, h / 2 - 90); c.lineTo(w / 2 - 90, h / 2 + 90); c.stroke();
-    c.fillStyle = '#eeeeea'; c.font = 'bold 34px sans-serif'; c.textAlign = 'center'; c.fillText('Dĩ nhiên tôi vẫn yêu bạn', w * 0.22, h * 0.9);
+    c.fillStyle = '#eeeeea'; c.font = '900 32px "Orbitron", "Tektur", sans-serif'; c.textAlign = 'center'; c.fillText('Dĩ nhiên tôi vẫn yêu bạn', w * 0.22, h * 0.9);
   });
   const hullM = new THREE.MeshStandardMaterial({ color: 0x1c1d20, roughness: 0.7, metalness: 0.4 });
   const hull = shadowed(new THREE.Mesh(new THREE.BoxGeometry(91, 9, 52), [hullM, hullM, new THREE.MeshStandardMaterial({ map: deckTex, roughness: 0.8 }), hullM, hullM, hullM]));

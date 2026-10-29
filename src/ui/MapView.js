@@ -192,10 +192,12 @@ export class MapView {
       this.mopName = this.container.querySelector('#mop-name');
       this.mopMeta = this.container.querySelector('#mop-meta');
       this.btnDeleteObj = this.container.querySelector('#btn-map-delete');
+      this.btnMapTeleport = this.container.querySelector('#btn-map-teleport');
       this.closeBtn = this.container.querySelector('#map-close-btn');
     }
     this.selectedObjectId = null;
     this.onDeleteObject = null;
+    this.onTeleport = null;
     this.otherPool = [];
 
     if (!this.hudCanvas) {
@@ -1147,6 +1149,16 @@ export class MapView {
       });
     }
 
+    // Teleport button in map telemetry card
+    if (this.btnMapTeleport) {
+      this.btnMapTeleport.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.onTeleport && (this.focus === 'iss' || BODIES[this.focus])) {
+          this.onTeleport(this.focus);
+        }
+      });
+    }
+
     // Delete button in popup
     if (this.btnDeleteObj) {
       this.btnDeleteObj.addEventListener('click', (e) => {
@@ -2023,6 +2035,19 @@ export class MapView {
       html += `<div class="tel-row"><span>${r.label}</span><b>${r.val}</b></div>`;
     }
     this.telemetryBox.innerHTML = html;
+
+    if (this.btnMapTeleport) {
+      if (this.focus === 'iss') {
+        this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới Trạm ISS', '⚡ Teleport Craft to ISS');
+        this.btnMapTeleport.classList.remove('hidden');
+      } else if (BODIES[this.focus]) {
+        const fB = BODIES[this.focus];
+        this.btnMapTeleport.textContent = `⚡ ${tr('Dịch chuyển tàu tới', 'Teleport Craft to')} ${fB.icon} ${fB.label}`;
+        this.btnMapTeleport.classList.remove('hidden');
+      } else {
+        this.btnMapTeleport.classList.add('hidden');
+      }
+    }
 
     // Render list of persistent/active space objects in the telemetry card
     if (this.objListBox) {

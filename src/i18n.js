@@ -871,6 +871,51 @@ export function applyLanguage(lang, app) {
   }
   setTxt('#btn-autopilot', '🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
   setTxt('#btn-toggle-map', '🌐 BẢN ĐỒ QUỸ ĐẠO 3D (M)', '🌐 3D ORBITAL MAP (M)');
+  setTxt('#btn-teleport', '🪐 DỊCH CHUYỂN HÀNH TINH / MẶT TRĂNG (Y)', '🪐 TELEPORT PLANETS / MOONS (Y)');
+
+  // Teleport Quick-Bar & Modal
+  setTxt('#tp-bar-title', '🪐 DỊCH CHUYỂN:', '🪐 TELEPORT:');
+  setTxt('#btn-tp-expand', '📋 Mở bảng (Y)', '📋 All Bodies (Y)');
+  setAttr('#btn-tp-mode', 'title', 'Đổi chế độ dịch chuyển: Đáp bề mặt hoặc Vào quỹ đạo', 'Switch teleport mode: Land on Surface or Enter Orbit');
+  setAttr('#btn-tp-expand', 'title', 'Mở bảng dịch chuyển chi tiết (Y)', 'Open full teleport panel (Y)');
+  setTxt('#tp-bar-btns [data-tp="earth"]', '🌍 Trái Đất', '🌍 Earth');
+  setTxt('#tp-bar-btns [data-tp="iss"]', '🛰️ ISS', '🛰️ ISS');
+  setTxt('#tp-bar-btns [data-tp="moon"]', '🌕 Mặt Trăng', '🌕 Moon');
+  setTxt('#tp-bar-btns [data-tp="mercury"]', '⚪ Sao Thủy', '⚪ Mercury');
+  setTxt('#tp-bar-btns [data-tp="venus"]', '🟡 Sao Kim', '🟡 Venus');
+  setTxt('#tp-bar-btns [data-tp="mars"]', '🔴 Sao Hỏa', '🔴 Mars');
+  setTxt('#tp-bar-btns [data-tp="phobos"]', '🪨 Phobos', '🪨 Phobos');
+  setTxt('#tp-bar-btns [data-tp="deimos"]', '🪨 Deimos', '🪨 Deimos');
+  setTxt('#tp-bar-btns [data-tp="jupiter"]', '🟠 Sao Mộc', '🟠 Jupiter');
+  setTxt('#tp-bar-btns [data-tp="io"]', '🌋 Io', '🌋 Io');
+  setTxt('#tp-bar-btns [data-tp="europa"]', '🧊 Europa', '🧊 Europa');
+  setTxt('#tp-bar-btns [data-tp="ganymede"]', '🌕 Ganymede', '🌕 Ganymede');
+  setTxt('#tp-bar-btns [data-tp="callisto"]', '🪨 Callisto', '🪨 Callisto');
+  setTxt('#tp-bar-btns [data-tp="saturn"]', '🪐 Sao Thổ', '🪐 Saturn');
+  setTxt('#tp-bar-btns [data-tp="mimas"]', '🪨 Mimas', '🪨 Mimas');
+  setTxt('#tp-bar-btns [data-tp="enceladus"]', '❄️ Enceladus', '❄️ Enceladus');
+  setTxt('#tp-bar-btns [data-tp="tethys"]', '🧊 Tethys', '🧊 Tethys');
+  setTxt('#tp-bar-btns [data-tp="dione"]', '🌕 Dione', '🌕 Dione');
+  setTxt('#tp-bar-btns [data-tp="rhea"]', '🌕 Rhea', '🌕 Rhea');
+  setTxt('#tp-bar-btns [data-tp="titan"]', '🟠 Titan', '🟠 Titan');
+  setTxt('#tp-bar-btns [data-tp="iapetus"]', '🌓 Iapetus', '🌓 Iapetus');
+  setTxt('#tp-bar-btns [data-tp="uranus"]', '🩵 Thiên Vương', '🩵 Uranus');
+  setTxt('#tp-bar-btns [data-tp="miranda"]', '🪨 Miranda', '🪨 Miranda');
+  setTxt('#tp-bar-btns [data-tp="ariel"]', '🧊 Ariel', '🧊 Ariel');
+  setTxt('#tp-bar-btns [data-tp="umbriel"]', '🌑 Umbriel', '🌑 Umbriel');
+  setTxt('#tp-bar-btns [data-tp="titania"]', '🌕 Titania', '🌕 Titania');
+  setTxt('#tp-bar-btns [data-tp="oberon"]', '🪨 Oberon', '🪨 Oberon');
+  setTxt('#tp-bar-btns [data-tp="neptune"]', '🔵 Hải Vương', '🔵 Neptune');
+  setTxt('#tp-bar-btns [data-tp="triton"]', '❄️ Triton', '❄️ Triton');
+  setTxt('#tp-bar-btns [data-tp="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
+  setTxt('#tp-bar-btns [data-tp="sun"]', '☀️ Mặt Trời', '☀️ Sun');
+
+  setTxt('#tp-modal-title', '🪐 Dịch chuyển tới Hành Tinh & Mặt Trăng', '🪐 Teleport to Planets & Moons');
+  setTxt('#tp-mode-lbl', 'Chế độ điểm đến:', 'Destination Mode:');
+  setTxt('#btn-tpmode-surf', '🛬 Đáp Bề Mặt (Surface)', '🛬 Land on Surface');
+  setTxt('#btn-tpmode-orb', '🛰️ Vào Quỹ Đạo (Orbit)', '🛰️ Enter Orbit');
+  setTxt('#btn-teleport-close', 'Đóng', 'Close');
+  setAttr('#btn-teleport-x', 'title', 'Đóng (Esc / Y)', 'Close (Esc / Y)');
 
   // Map UI
   setTxt('#map-focus-bar [data-focus="vessel"]', '🚀 Tàu', '🚀 Craft');
@@ -912,6 +957,8 @@ export function applyLanguage(lang, app) {
      <span><kbd>Z</kbd>/<kbd>X</kbd> max/tắt</span>
      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> lái 3D theo camera</span>
      <span><kbd>Space</kbd> tách tầng</span>
+     <span><kbd>V</kbd> bắn Alien</span>
+     <span><kbd>Y</kbd> dịch chuyển</span>
      <span><kbd>T</kbd> SAS</span>
      <span><kbd>F</kbd> chế độ SAS</span>
      <span><kbd>G</kbd> tự lái</span>
@@ -927,6 +974,8 @@ export function applyLanguage(lang, app) {
      <span><kbd>Z</kbd>/<kbd>X</kbd> max/cut</span>
      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 3D steer</span>
      <span><kbd>Space</kbd> stage</span>
+     <span><kbd>V</kbd> fire</span>
+     <span><kbd>Y</kbd> teleport</span>
      <span><kbd>T</kbd> SAS</span>
      <span><kbd>F</kbd> SAS mode</span>
      <span><kbd>G</kbd> autopilot</span>

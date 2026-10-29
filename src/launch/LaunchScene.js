@@ -76,6 +76,8 @@ export class LaunchScene {
     }
     this.map = new MapView($('map'), $('map-legend'));
     this.map.onDeleteObject = (id) => this.deleteSpaceObject(id);
+    this.map.onTeleport = (target) => this.teleportToBody(target, this.teleportMode);
+    this.teleportMode = 'surface';
     this.sasMode = 0;
     this.warp = 1; this.autoWarp = 1;
 
@@ -89,6 +91,7 @@ export class LaunchScene {
 
   refreshLanguage() {
     this.camModes = tr(CAM_MODES_VI, CAM_MODES_EN);
+    this.setTeleportMode(this.teleportMode || 'surface');
 
     if (this.player) {
       this.renderMissionPanel(true);
@@ -474,7 +477,21 @@ export class LaunchScene {
       if (!this.active) return;
       const k = e.key.toLowerCase();
       this.keys[k] = true;
-      if (e.code === 'Space') { e.preventDefault(); if (this.phase === 'ready') this.startCountdown(); else this.stage(); }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (this.phase === 'ready') {
+          this.startCountdown();
+        } else if (this.player && this.player.landed && (!this.player.engineOn || this.throttle <= 0.01)) {
+          audio.init();
+          this.ignited = true;
+          this.throttle = 1;
+          this.player.throttle = 1;
+          this.player.engineOn = true;
+          this.event(tr('🔥 Đánh lửa động cơ cất cánh!', '🔥 Main engine ignited for liftoff!'), 'warn');
+        } else {
+          this.stage();
+        }
+      }
       if (k === 't') { this.sas = !this.sas; if (this.player) this.holdAttitude(); }
       if (k === 'f') {
         const sasModes = tr(SAS_MODES_VI, SAS_MODES_EN);
@@ -485,6 +502,7 @@ export class LaunchScene {
       if (k === 'g') this.toggleAutopilot();
       if (k === 'c') this.cycleCam();
       if (k === 'm') this.map.toggle();
+      if (k === 'y') { e.preventDefault(); audio.init(); this.toggleTeleportModal(); }
       if (k === 'tab') { e.preventDefault(); this.map.cycleFocus(); }
       if (k === 'b') this.toggleBoosterFocus();
       if (k === 'p') this.toggleDeploy();
@@ -493,7 +511,14 @@ export class LaunchScene {
       if (k === 'x') this.throttle = 0;
       if (k === '.') this.setWarp(1);
       if (k === ',') this.setWarp(-1);
-      if (e.key === 'Escape' && $('settings').classList.contains('hidden')) this.app.toggleMenu();
+      if (e.key === 'Escape') {
+        const tpModal = $('teleport-modal');
+        if (tpModal && !tpModal.classList.contains('hidden')) {
+          this.toggleTeleportModal(false);
+        } else if ($('settings').classList.contains('hidden')) {
+          this.app.toggleMenu();
+        }
+      }
       if (e.key === 'Shift' || e.key === 'Control') e.preventDefault();
     });
     window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
@@ -504,6 +529,49 @@ export class LaunchScene {
     if (btnAp) btnAp.onclick = () => { audio.init(); this.toggleAutopilot(); };
     const btnMap = $('btn-toggle-map');
     if (btnMap) btnMap.onclick = () => this.map.toggle();
+    const btnTp = $('btn-teleport');
+    if (btnTp) btnTp.onclick = () => { audio.init(); this.toggleTeleportModal(); };
+    const btnTpExpand = $('btn-tp-expand');
+    if (btnTpExpand) btnTpExpand.onclick = () => { audio.init(); this.toggleTeleportModal(true); };
+    const btnTpMode = $('btn-tp-mode');
+    if (btnTpMode) {
+      btnTpMode.onclick = () => {
+        audio.init();
+        audio.click();
+        this.setTeleportMode(this.teleportMode === 'orbit' ? 'surface' : 'orbit');
+      };
+    }
+    const tpBarBtns = $('tp-bar-btns');
+    if (tpBarBtns) {
+      tpBarBtns.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-tp]');
+        if (!btn) return;
+        this.teleportToBody(btn.dataset.tp, this.teleportMode);
+      });
+    }
+    const btnTpX = $('btn-teleport-x');
+    if (btnTpX) btnTpX.onclick = () => { audio.click(); this.toggleTeleportModal(false); };
+    const btnTpClose = $('btn-teleport-close');
+    if (btnTpClose) btnTpClose.onclick = () => { audio.click(); this.toggleTeleportModal(false); };
+    const tpModal = $('teleport-modal');
+    if (tpModal) {
+      tpModal.addEventListener('click', (e) => {
+        if (e.target === tpModal) {
+          audio.click();
+          this.toggleTeleportModal(false);
+        }
+      });
+    }
+    const tpModeSeg = $('tp-mode-seg');
+    if (tpModeSeg) {
+      tpModeSeg.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-tpmode]');
+        if (!btn) return;
+        audio.click();
+        this.setTeleportMode(btn.dataset.tpmode);
+      });
+    }
+    this.setTeleportMode('surface');
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       btnFire.addEventListener('pointerdown', (e) => {
@@ -532,6 +600,371 @@ export class LaunchScene {
         }
       }
     });
+  }
+
+  setTeleportMode(mode) {
+    this.teleportMode = mode === 'orbit' ? 'orbit' : 'surface';
+    const isOrb = this.teleportMode === 'orbit';
+    const btnTpMode = $('btn-tp-mode');
+    if (btnTpMode) {
+      btnTpMode.textContent = isOrb
+        ? tr('🛰️ Vào Quỹ Đạo', '🛰️ Orbit')
+        : tr('🛬 Đáp Bề Mặt', '🛬 Surface');
+    }
+    const surfBtn = $('btn-tpmode-surf');
+    const orbBtn = $('btn-tpmode-orb');
+    if (surfBtn) surfBtn.classList.toggle('on', !isOrb);
+    if (orbBtn) orbBtn.classList.toggle('on', isOrb);
+    const tpModal = $('teleport-modal');
+    if (tpModal && !tpModal.classList.contains('hidden')) {
+      this.renderTeleportModal();
+    }
+  }
+
+  toggleTeleportModal(force) {
+    const m = $('teleport-modal');
+    if (!m) return;
+    const show = force !== undefined ? force : m.classList.contains('hidden');
+    if (show) this.renderTeleportModal();
+    m.classList.toggle('hidden', !show);
+  }
+
+  renderTeleportModal() {
+    const box = $('teleport-groups');
+    if (!box) return;
+    const isOrb = this.teleportMode === 'orbit';
+    const curTarget = this.currentTeleportTarget || (this.player ? this.player.ref : 'earth');
+    const groups = [
+      {
+        title: tr('🌍 Hệ Trái Đất & Trạm Vũ Trụ', '🌍 Earth System & Space Station'),
+        items: ['earth', 'iss', 'moon'],
+      },
+      {
+        title: tr('☀️ Mặt Trời, Hành Tinh Đá & Hệ Sao Hỏa', '☀️ Sun, Inner Rocky Planets & Mars System'),
+        items: ['mercury', 'venus', 'mars', 'phobos', 'deimos', 'sun'],
+      },
+      {
+        title: tr('🟠 Hệ Sao Mộc & 4 Mặt Trăng Galilean', '🟠 Jupiter System & Galilean Moons'),
+        items: ['jupiter', 'io', 'europa', 'ganymede', 'callisto'],
+      },
+      {
+        title: tr('🪐 Hệ Sao Thổ & 7 Mặt Trăng Lớn', '🪐 Saturn System & Major Moons'),
+        items: ['saturn', 'mimas', 'enceladus', 'tethys', 'dione', 'rhea', 'titan', 'iapetus'],
+      },
+      {
+        title: tr('🩵 Hệ Sao Thiên Vương & 5 Mặt Trăng', '🩵 Uranus System & Major Moons'),
+        items: ['uranus', 'miranda', 'ariel', 'umbriel', 'titania', 'oberon'],
+      },
+      {
+        title: tr('🔵 Hệ Sao Hải Vương & Sao Diêm Vương', '🔵 Neptune, Triton & Pluto'),
+        items: ['neptune', 'triton', 'pluto'],
+      },
+    ];
+
+    box.innerHTML = groups.map((g) => {
+      const cards = g.items.map((key) => {
+        if (key === 'iss') {
+          const active = curTarget === 'iss' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="iss">
+            <span class="tp-card-top">🛰️ ${tr('Trạm Vũ Trụ ISS', 'ISS Space Station')}</span>
+            <span class="tp-card-sub">${tr('Quỹ đạo Trái Đất · 400 km', 'Earth Orbit · 400 km')}</span>
+          </button>`;
+        }
+        const B = BODIES[key] || BODIES.earth;
+        const active = curTarget === key ? 'active' : '';
+        const forceOrb = isOrb || !!B.gasGiant || key === 'sun';
+        const modeDesc = forceOrb
+          ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit')
+          : tr('🛬 Đáp bề mặt', '🛬 Land on Surface');
+        return `<button type="button" class="tp-card-btn ${active}" data-tp="${key}">
+          <span class="tp-card-top">${B.icon} ${B.label}</span>
+          <span class="tp-card-sub">${modeDesc} · g = ${B.g.toFixed(2)} m/s²</span>
+        </button>`;
+      }).join('');
+      return `<div class="tp-group"><div class="tp-group-title">${g.title}</div><div class="tp-group-grid">${cards}</div></div>`;
+    }).join('');
+
+    box.querySelectorAll('button[data-tp]').forEach((btn) => {
+      btn.onclick = () => {
+        this.teleportToBody(btn.dataset.tp, this.teleportMode);
+      };
+    });
+  }
+
+  updateTeleportActiveButtons(activeTarget) {
+    this.currentTeleportTarget = activeTarget;
+    document.querySelectorAll('#tp-bar-btns .tp-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.tp === activeTarget);
+    });
+    document.querySelectorAll('#teleport-groups .tp-card-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.tp === activeTarget);
+    });
+  }
+
+  teleportToBody(target, mode = this.teleportMode) {
+    if (!target) return;
+    audio.init();
+    audio.click();
+
+    if (!this.player || this.player.crashed || this.player.dead || this.phase === 'crashed') {
+      this.setup(this.stack, this.mission?.id || 'free');
+    }
+
+    const P = this.player;
+    if (!P) return;
+
+    // Refill all stages & boosters so the rocket can freely launch from the destination
+    for (let k = 0; k < this.fuel.length; k++) this.fuel[k] = this.fuelMax[k];
+    for (const b of this.rocket.boosters) b.fuel = b.fuelMax;
+    P.updateMass();
+
+    // Reset flight & mission UI states
+    this.program = null;
+    this.programDone = false;
+    this.docked = null;
+    clearTimeout(this.completeTimer);
+    this.completeTimer = null;
+    this.resultShown = false;
+    $('result').classList.add('hidden');
+    $('countdown').textContent = '';
+    $('btn-go').classList.add('hidden');
+    this.toggleTeleportModal(false);
+    if (this.map && this.map.visible) this.map.toggle(false);
+
+    this.warp = 1;
+    this.userWarp = 1;
+    this.reqWarpNext = null;
+    this.reqWarpPrev = 1;
+    this.smoke.clear();
+    this.fire.clear();
+
+    // Clear active aliens & supernovas from previous location
+    for (const a of (this.aliens || [])) {
+      if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
+    }
+    this.aliens = [];
+    this.alienSpawnTimer = 1.2;
+    for (const sn of (this.supernovas || [])) {
+      if (sn.mesh && sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
+      if (sn.mesh?.userData?.dispose) sn.mesh.userData.dispose();
+    }
+    this.supernovas = [];
+
+    this.arms.forEach((a) => { a.target = 1; a.pivot.rotation.y = 1.3; });
+    this.clamps.forEach((c) => { c.visible = false; });
+    this.focus = P;
+    P.crashed = false;
+    P.dead = false;
+    if (P.root) P.root.visible = true;
+
+    const sunPhi = Math.atan2(SUN_ECI.x, SUN_ECI.y) - 0.35;
+
+    if (target === 'iss') {
+      const d = this.dockGeometry();
+      const backDist = 42;
+      P.s.x = d.portS.x + d.axisS.x * (d.L + backDist);
+      P.s.y = d.portS.y + d.axisS.y * (d.L + backDist);
+      P.s.z = d.portS.z || 0;
+      P.s.vx = d.velS.x;
+      P.s.vy = d.velS.y;
+      P.s.vz = d.velS.z || 0;
+      P.beta = d.beta;
+      P.omega = 0;
+      P.clamped = false;
+      P.landed = null;
+      P.updateFrame(this.simT);
+      P.syncDir3DFromBeta();
+      if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+      this.holdBeta = P.beta;
+      this.phase = 'flight';
+      this.ignited = true;
+      this.released = true;
+      this.lifted = true;
+      this.throttle = 0;
+      P.throttle = 0;
+      P.engineOn = false;
+      this.inAtmoBody = null;
+      this.setFlag('space');
+      this.setFlag('orbit');
+      this.setFlag('near');
+      this.milestone(
+        tr('🛰️ ĐÃ DỊCH CHUYỂN TỚI TRẠM ISS!', '🛰️ TELEPORTED TO ISS!'),
+        tr('Cách cổng ghép nối ISS ~42 m · Dùng phím I/K/J/L/H/N (RCS) để ghép nối', '~42 m from ISS docking port · Use RCS (I/K/J/L/H/N) to dock')
+      );
+      this.event(
+        tr('⚡🛰️ Đã dịch chuyển tức thời tới Trạm Vũ Trụ Quốc Tế (ISS)!', '⚡🛰️ Teleported directly to the International Space Station (ISS)!'),
+        'warn'
+      );
+    } else {
+      const B = BODIES[target] || BODIES.earth;
+      const isOrbit = mode === 'orbit' || !!B.gasGiant || target === 'sun';
+
+      if (isOrbit) {
+        const orbAlt = target === 'sun'
+          ? 2200e3
+          : B.gasGiant
+            ? 38e3
+            : target === 'earth'
+              ? 120e3
+              : Math.max(25e3, (B.atm || 0) + 15e3);
+        const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+        bodyState(target, this.simT, bp, bv);
+        const r = B.R + orbAlt;
+        const vCirc = Math.sqrt(B.mu / r);
+        const ux = Math.sin(sunPhi), uy = Math.cos(sunPhi);
+        const ex = uy, ey = -ux;
+        P.s.x = bp.x + ux * r;
+        P.s.y = bp.y + uy * r;
+        P.s.z = bp.z || 0;
+        P.s.vx = bv.x + ex * vCirc;
+        P.s.vy = bv.y + ey * vCirc;
+        P.s.vz = bv.z || 0;
+        P.beta = wrapPi(sunPhi + Math.PI / 2);
+        P.omega = 0;
+        P.clamped = false;
+        P.landed = null;
+        P.updateFrame(this.simT);
+        P.syncDir3DFromBeta();
+        if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+        this.holdBeta = P.beta;
+        this.phase = 'flight';
+        this.ignited = true;
+        this.released = true;
+        this.lifted = true;
+        this.throttle = 0;
+        P.throttle = 0;
+        P.engineOn = false;
+        this.inAtmoBody = (target !== 'sun' && orbAlt < Math.max(B.atm || 0, ATM_TOP)) ? target : null;
+        this.moonPatchPsi = null;
+        this.moonPatchBody = null;
+        this.rocksFresh = false;
+        if (target === 'earth') {
+          this.setFlag('space');
+          this.setFlag('orbit');
+        } else {
+          this.setFlag(target + 'SOI');
+          this.setFlag(target === 'moon' ? 'lunarOrbit' : target + 'Orbit');
+        }
+        const orbKm = fmt(orbAlt / 1000, 0);
+        this.milestone(
+          `${B.icon} ${tr('ĐÃ DỊCH CHUYỂN TỚI', 'TELEPORTED TO')} ${B.label.toUpperCase()}!`,
+          tr(
+            `Đang bay trên quỹ đạo ${B.label} (Độ cao ${orbKm} km · Vận tốc ${fmt(vCirc, 0)} m/s)`,
+            `In orbit around ${B.label} (Altitude ${orbKm} km · Speed ${fmt(vCirc, 0)} m/s)`
+          )
+        );
+        this.event(
+          tr(
+            `⚡${B.icon} Đã dịch chuyển tức thời vào quỹ đạo ${B.label} ở độ cao ${orbKm} km!`,
+            `⚡${B.icon} Teleported into ${B.label} orbit at ${orbKm} km altitude!`
+          ),
+          'warn'
+        );
+      } else {
+        if (P.hasLegs()) {
+          P.legsT = 1;
+          P.legsTarget = 1;
+          P.updateMass();
+          for (const d of this.rocket.deployables) {
+            if (d.type === 'legs') {
+              for (const o of d.objs) if (o.userData.setDeploy) o.userData.setDeploy(1);
+            }
+          }
+        }
+        if (target === 'earth') {
+          const sx = P.isBoat ? (COAST_X + 160) : P.isRover ? 18 : 0;
+          const baseH = P.isBoat ? (P.bottomOffset() - 0.35) : P.isRover ? (6 + P.bottomOffset()) : (PAD_TOP + P.bottomOffset());
+          P.placeOnSurface('earth', sx, baseH, this.simT);
+          if (P.isPlane) {
+            P.beta = P.phi + Math.PI / 2;
+            P.updateFrame(this.simT);
+            P.syncDir3DFromBeta();
+          }
+          P.clamped = false;
+          P.clampSpot = { body: 'earth', sx, h: baseH };
+          P.landed = {
+            body: 'earth',
+            sx,
+            h: baseH,
+            site: P.isBoat ? 'sea' : 'pad',
+            how: P.isBoat ? 'boat' : P.isRover ? 'rover' : P.isPlane ? 'plane' : 'pad',
+          };
+          P.landedLock = 0.5;
+          this.startAlt = P.alt;
+          this.inAtmoBody = 'earth';
+        } else {
+          const phiRot = wrapPi(sunPhi - bodyRotation(target, this.simT));
+          const sx = phiRot * B.R;
+          const surfH = moonHeight(Math.sin(phiRot), Math.cos(phiRot), 0);
+          const h = surfH + P.bottomOffset();
+          P.placeOnSurface(target, sx, h, this.simT);
+          if (P.isPlane) {
+            P.beta = P.phi + Math.PI / 2;
+            P.updateFrame(this.simT);
+            P.syncDir3DFromBeta();
+          }
+          P.clamped = false;
+          P.clampSpot = { body: target, sx, h };
+          P.landed = {
+            body: target,
+            sx,
+            h,
+            site: target,
+            how: P.isRover ? 'rover' : P.isPlane ? 'plane' : 'legs',
+          };
+          P.landedLock = 0.6;
+          this.inAtmoBody = target;
+          this.moonPatchPsi = null;
+          this.moonPatchBody = null;
+          this.rocksFresh = false;
+          this.flagSpot = null;
+          this.flagObj.visible = false;
+          this.moonLandT = this.simT - 2.5;
+          this.setFlag(target + 'SOI');
+          this.setFlag(target + 'Landed');
+        }
+        this.holdBeta = P.beta;
+        if (P.holdDir3D && P.dir3D) P.holdDir3D.copy(P.dir3D);
+        this.phase = 'flight';
+        this.ignited = true;
+        this.released = true;
+        this.lifted = true;
+        this.throttle = 0;
+        P.throttle = 0;
+        P.engineOn = false;
+        this.milestone(
+          `${B.icon} ${tr('ĐÃ ĐÁP XUỐNG', 'LANDED ON')} ${B.label.toUpperCase()}!`,
+          tr(
+            `Trọng lực bề mặt: ${B.g.toFixed(2)} m/s² · Nhấn Space / Z / Shift để cất cánh!`,
+            `Surface gravity: ${B.g.toFixed(2)} m/s² · Press Space / Z / Shift to lift off!`
+          )
+        );
+        this.event(
+          tr(
+            `⚡${B.icon} Đã dịch chuyển tức thời tới bề mặt ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Nhấn Space hoặc Z để phóng lên!`,
+            `⚡${B.icon} Teleported to the surface of ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Press Space or Z to launch!`
+          ),
+          'warn'
+        );
+      }
+    }
+
+    const rh = this.rocketHeight || 20;
+    this.camMode = 0;
+    this.controls.enabled = true;
+    this.camera.fov = 50;
+    this.camera.updateProjectionMatrix();
+    if (P.isRover || P.isBoat) {
+      this.camera.position.set(-13, 4.5, 0);
+    } else if (P.isPlane) {
+      this.camera.position.set(12, 4, 16);
+    } else {
+      this.camera.position.set(rh * 0.68 + 12, 3.5, rh * 1.18 + 20);
+    }
+    this.controls.target.set(0, 1.5, 0);
+    this.controls.update();
+    this.mapT = 0;
+    this.updateTeleportActiveButtons(target);
   }
 
   setWarp(d) {
@@ -771,6 +1204,7 @@ export class LaunchScene {
     this.supernovaDistAcc = 0;
     this.supernovaDistNext = 2400 + Math.random() * 2800;
     this.lastSupernovaRef = 'earth';
+    this.inAtmoBody = 'earth';
     this.debris = []; this.vessels = [];
     this.smoke.clear(); this.fire.clear();
     $('events').innerHTML = '';
@@ -886,6 +1320,8 @@ export class LaunchScene {
     this.clamps.forEach((c) => { c.rotation.set(0, 0, 0); });
     this.ship.visible = false; this.shipX = null;
     this.map.toggle(false);
+    this.toggleTeleportModal(false);
+    this.updateTeleportActiveButtons('earth');
     if (isSpecial) {
       $('btn-go').classList.add('hidden');
     } else {
@@ -1327,6 +1763,7 @@ export class LaunchScene {
     this.controls.enabled = false;
     $('launch-ui').classList.add('hidden');
     $('result').classList.add('hidden');
+    this.toggleTeleportModal(false);
     this.map.toggle(false);
     audio.silenceEngine();
     clearTimeout(this.completeTimer);
@@ -1965,13 +2402,38 @@ export class LaunchScene {
       this.maxG = Math.max(this.maxG, P.accelNow || 1);
       if (P.qNow > this.maxQ) this.maxQ = P.qNow;
       else if (!this.maxQPassed && this.maxQ > 8000 && P.qNow < this.maxQ * 0.9) { this.maxQPassed = true; this.event(`Vượt Max Q (${fmt(this.maxQ / 1000, 1)} kPa).`); }
-      const ms = [[1000, '1 km', null], [10000, '10 km', 'Vượt tầng đối lưu'], [30000, '30 km', 'Bầu trời tối dần'], [70000, 'ĐƯỜNG KÁRMÁN', 'Chào mừng đến với không gian! 70 km']];
+      const ms = [[1000, '1 km', null], [10000, '10 km', 'Vượt tầng đối lưu'], [30000, '30 km', 'Bầu trời tối dần']];
       for (const [hh, big, small] of ms) {
-        if (alt >= hh && !this.flags['alt' + hh]) {
+        if (P.ref === 'earth' && alt >= hh && !this.flags['alt' + hh]) {
           this.flags['alt' + hh] = true;
-          this.event(`Đạt độ cao ${big === 'ĐƯỜNG KÁRMÁN' ? '70 km' : big}.`);
+          this.event(`Đạt độ cao ${big}.`);
           if (small) this.milestone(big, small);
         }
+      }
+      // Notify whenever the rocket completely exits the atmosphere / low-altitude zone of any planet or moon
+      const curB = BODIES[P.ref] || BODIES.earth;
+      const atmLimit = Math.max(curB.atm || 0, ATM_TOP);
+      if (P.ref !== 'sun' && (P.clamped || P.landed || P.alt < atmLimit - 1500)) {
+        this.inAtmoBody = P.ref;
+      } else if (this.inAtmoBody && (P.ref === 'sun' || P.alt >= atmLimit)) {
+        const exitBody = BODIES[this.inAtmoBody] || curB;
+        const exitKm = fmt(Math.max(exitBody.atm || 0, ATM_TOP) / 1000, 0);
+        if (this.inAtmoBody === 'earth') this.flags.alt70000 = true;
+        this.inAtmoBody = null;
+        this.milestone(
+          tr('🌌 ĐÃ THOÁT KHỎI KHÍ QUYỂN!', '🌌 ATMOSPHERE EXITED!'),
+          tr(
+            `Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (${exitKm} km) — Tiến vào không gian vũ trụ!`,
+            `Rocket has completely exited ${exitBody.label}'s atmosphere (${exitKm} km) — Entering outer space!`
+          )
+        );
+        this.event(
+          tr(
+            `🚀🌌 Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (vượt mốc ${exitKm} km) — Đã ra ngoài không gian vũ trụ!`,
+            `🚀🌌 Rocket has completely exited ${exitBody.label}'s atmosphere (above ${exitKm} km) — Now in deep outer space!`
+          ),
+          'warn'
+        );
       }
       if (this.moonLandT !== null && !this.flagSpot && this.simT - this.moonLandT > 4 && P.landed && P.ref !== 'earth') {
         const B = BODIES[P.ref] || BODIES.moon;
@@ -2299,8 +2761,9 @@ export class LaunchScene {
         `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
       )
     );
-    // Heavy Boss Alien core collapses into a mini Supernova on destruction!
-    if (alien.tier === 'boss' && weaponType !== 'supernova') {
+    // Heavy Boss Alien core collapses into a mini Supernova on destruction (only in outer space, never on planets/moons)!
+    const onPlanetOrMoon = !P || P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
+    if (alien.tier === 'boss' && weaponType !== 'supernova' && !onPlanetOrMoon) {
       this.triggerSupernova(alien.relPos ? alien.relPos.clone() : null, 0.58, true);
     }
   }
@@ -2308,6 +2771,9 @@ export class LaunchScene {
   triggerSupernova(originRel = null, scale = 1.15, isBossCollapse = false) {
     const P = this.player;
     if (!P) return;
+    // Never allow Supernova on or near any planet or moon (only in outer space >= ATM_TOP or interplanetary space)
+    const onPlanetOrMoon = P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
+    if (onPlanetOrMoon) return;
     if (!this.supernovas) this.supernovas = [];
 
     const pWorld = P.root ? P.root.position : new THREE.Vector3();
@@ -2504,10 +2970,18 @@ export class LaunchScene {
       }
     }
 
-    // Spontaneous Supernova when the rocket flies past a cosmic sector in space / high flight
-    if (this.phase === 'flight' && !P.clamped && !P.landed) {
+    // Spontaneous Supernova ONLY in outer space (never on any planet or moon)
+    const onPlanetOrMoon = P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
+    if (onPlanetOrMoon) {
+      if (this.supernovas && this.supernovas.length) {
+        for (const sn of this.supernovas) {
+          if (sn.mesh && sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
+          if (sn.mesh?.userData?.dispose) sn.mesh.userData.dispose();
+        }
+        this.supernovas = [];
+      }
+    } else if (this.phase === 'flight') {
       const spd = P.speed || Math.hypot(P.vSurf?.e || 0, P.vSurf?.u || 0);
-      const inFlightRegion = P.ref !== 'earth' || P.alt > 1200 || spd > 45;
       if (this.lastSupernovaRef && this.lastSupernovaRef !== P.ref) {
         this.lastSupernovaRef = P.ref;
         this.supernovaSpawnTimer = Math.min(this.supernovaSpawnTimer ?? 15, 6 + Math.random() * 6);
@@ -2515,31 +2989,29 @@ export class LaunchScene {
       } else {
         this.lastSupernovaRef = P.ref;
       }
-      if (inFlightRegion) {
-        this.supernovaDistAcc = (this.supernovaDistAcc || 0) + spd * dt;
-        this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 22) - dt;
-        if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -12)) {
-          const vxScene = P.vSurf?.e || 0;
-          const vyScene = P.vSurf?.u || 0;
-          const vzScene = P.s?.vz || 0;
-          const vMag = Math.hypot(vxScene, vyScene, vzScene);
-          const moveDir = vMag > 5
-            ? new THREE.Vector3(vxScene / vMag, vyScene / vMag, vzScene / vMag)
-            : (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
-          const distAhead = THREE.MathUtils.clamp(vMag * 2.2, 85, 2200);
-          const rSide = Math.max(38, distAhead * 0.38);
-          const az = Math.random() * Math.PI * 2;
-          const flybyPos = new THREE.Vector3(
-            Math.cos(az) * rSide,
-            18 + Math.random() * 26,
-            Math.sin(az) * rSide
-          ).addScaledVector(moveDir, distAhead);
-          const snScale = THREE.MathUtils.clamp(distAhead / 55, 1.25, 36);
-          this.triggerSupernova(flybyPos, snScale, false);
-          this.supernovaSpawnTimer = 55 + Math.random() * 45;
-          this.supernovaDistAcc = 0;
-          this.supernovaDistNext = 6500 + Math.random() * 8500;
-        }
+      this.supernovaDistAcc = (this.supernovaDistAcc || 0) + spd * dt;
+      this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 22) - dt;
+      if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -12)) {
+        const vxScene = P.vSurf?.e || 0;
+        const vyScene = P.vSurf?.u || 0;
+        const vzScene = P.s?.vz || 0;
+        const vMag = Math.hypot(vxScene, vyScene, vzScene);
+        const moveDir = vMag > 5
+          ? new THREE.Vector3(vxScene / vMag, vyScene / vMag, vzScene / vMag)
+          : (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
+        const distAhead = THREE.MathUtils.clamp(vMag * 2.2, 85, 2200);
+        const rSide = Math.max(38, distAhead * 0.38);
+        const az = Math.random() * Math.PI * 2;
+        const flybyPos = new THREE.Vector3(
+          Math.cos(az) * rSide,
+          18 + Math.random() * 26,
+          Math.sin(az) * rSide
+        ).addScaledVector(moveDir, distAhead);
+        const snScale = THREE.MathUtils.clamp(distAhead / 55, 1.25, 36);
+        this.triggerSupernova(flybyPos, snScale, false);
+        this.supernovaSpawnTimer = 55 + Math.random() * 45;
+        this.supernovaDistAcc = 0;
+        this.supernovaDistNext = 6500 + Math.random() * 8500;
       }
     }
 
@@ -2810,13 +3282,13 @@ export class LaunchScene {
   spaceLighting() {
     this.sun.color.setRGB(1, 0.98, 0.94);
     this.sun.intensity = 7.5;
-    this.hemi.color.setRGB(0.25, 0.3, 0.4); this.hemi.groundColor.setRGB(0.12, 0.1, 0.08);
-    this.hemi.intensity = 0.12;
+    this.hemi.color.setRGB(0.28, 0.34, 0.44); this.hemi.groundColor.setRGB(0.16, 0.14, 0.12);
+    this.hemi.intensity = 0.28;
     this.scene.fog.density = 0;
     const sm = this.smoke.material.uniforms;
     sm.uSunColor.value.setRGB(1, 0.98, 0.94); sm.uAmbient.value.setRGB(0.05, 0.05, 0.06); sm.uFogDensity.value = 0;
     this.fire.material.uniforms.uFogDensity.value = 0;
-    this.scene.environmentIntensity = 0.06;
+    this.scene.environmentIntensity = 0.18;
   }
 
   /** dual-layer render: far pass (sky, stars, planets) then near pass (ground, vessels) */

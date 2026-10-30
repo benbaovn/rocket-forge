@@ -80,6 +80,10 @@ export class LaunchScene {
     this.teleportMode = 'surface';
     this.sasMode = 0;
     this.warp = 1; this.autoWarp = 1;
+    this.astronautsAboard = 0;
+    this.maxAstronauts = 10;
+    this.deployedAstronauts = [];
+    this.padAstronautMeshes = [];
 
     this.initSky();
     this.initGround();
@@ -94,6 +98,19 @@ export class LaunchScene {
     this.setTeleportMode(this.teleportMode || 'surface');
 
     if (this.player) {
+      if (this.program && this.mission) {
+        this.program.label = `${this.mission.icon} ${this.mission.name}`;
+      }
+      if (this.phase === 'ready') {
+        const isSpecial = this.player.isBoat || this.player.isRover || this.player.isPlane;
+        if (!isSpecial) {
+          $('events').innerHTML = '';
+          this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
+          if (this.mission && this.mission.id !== 'free') {
+            this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
+          }
+        }
+      }
       this.renderMissionPanel(true);
       this.hudTimer = 0;
       this.updateHUD(0);
@@ -573,6 +590,24 @@ export class LaunchScene {
       });
     }
     this.setTeleportMode('surface');
+    const astroPadBtns = $('astro-pad-btns');
+    if (astroPadBtns) {
+      astroPadBtns.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-add-astro]');
+        if (!btn) return;
+        audio.init();
+        audio.click();
+        this.addAstronauts(Number(btn.dataset.addAstro) || 1);
+      });
+    }
+    const btnAstroDeploy = $('btn-astro-deploy');
+    if (btnAstroDeploy) {
+      btnAstroDeploy.addEventListener('click', () => {
+        audio.init();
+        audio.click();
+        this.deployAstronauts();
+      });
+    }
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       btnFire.addEventListener('pointerdown', (e) => {
@@ -684,9 +719,11 @@ export class LaunchScene {
         const modeDesc = forceOrb
           ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit')
           : tr('🛬 Đáp bề mặt', '🛬 Land on Surface');
+        const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
+        const parentTag = parentB ? `${tr('Thân chủ', 'Parent')}: ${parentB.label} · ` : '';
         return `<button type="button" class="tp-card-btn ${active}" data-tp="${key}">
           <span class="tp-card-top">${B.icon} ${B.label}</span>
-          <span class="tp-card-sub">${modeDesc} · g = ${B.g.toFixed(2)} m/s²</span>
+          <span class="tp-card-sub">${parentTag}${modeDesc} · g = ${B.g.toFixed(2)} m/s²</span>
         </button>`;
       }).join('');
       return `<div class="tp-group"><div class="tp-group-title">${g.title}</div><div class="tp-group-grid">${cards}</div></div>`;
@@ -707,6 +744,244 @@ export class LaunchScene {
     document.querySelectorAll('#teleport-groups .tp-card-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.tp === activeTarget);
     });
+  }
+
+  createAstronautMesh(index = 0) {
+    const g = new THREE.Group();
+    const suitColors = [0xf8fafc, 0xf1f5f9, 0xeff6ff, 0xfefce8, 0xf0fdf4];
+    const stripeColors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0xa855f7];
+    const suitMat = new THREE.MeshStandardMaterial({ color: suitColors[index % suitColors.length], roughness: 0.45, metalness: 0.1 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6, metalness: 0.3 });
+    const stripeMat = new THREE.MeshStandardMaterial({ color: stripeColors[index % stripeColors.length], roughness: 0.4, metalness: 0.2 });
+    const visorMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.12, metalness: 0.92, emissive: 0x78350f, emissiveIntensity: 0.25 });
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    // Left & Right Legs (pivoted at hip y = 0.95)
+    const leftLeg = new THREE.Group();
+    leftLeg.position.set(-0.16, 0.95, 0);
+    const lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.10, 0.72, 12), suitMat);
+    lThigh.position.y = -0.36;
+    const lBoot = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.34), darkMat);
+    lBoot.position.set(0, -0.80, 0.05);
+    leftLeg.add(lThigh, lBoot);
+
+    const rightLeg = new THREE.Group();
+    rightLeg.position.set(0.16, 0.95, 0);
+    const rThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.10, 0.72, 12), suitMat);
+    rThigh.position.y = -0.36;
+    const rBoot = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.34), darkMat);
+    rBoot.position.set(0, -0.80, 0.05);
+    rightLeg.add(rThigh, rBoot);
+    g.add(leftLeg, rightLeg);
+
+    // Torso & Commander Stripe
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.25, 0.85, 16), suitMat);
+    torso.position.y = 1.35;
+    const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.265, 0.265, 0.10, 16), stripeMat);
+    belt.position.y = 1.02;
+    const chestBox = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.26, 0.14), darkMat);
+    chestBox.position.set(0, 1.38, 0.24);
+    const chestLed = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.03), ledMat);
+    chestLed.position.set(0, 1.40, 0.315);
+    g.add(torso, belt, chestBox, chestLed);
+
+    // PLSS Life-Support Backpack
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.68, 0.26), suitMat);
+    pack.position.set(0, 1.42, -0.28);
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8), darkMat);
+    antenna.position.set(0.16, 1.95, -0.28);
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), ledMat);
+    beacon.position.set(0.16, 2.18, -0.28);
+    g.add(pack, antenna, beacon);
+
+    // Helmet & Gold Visor
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 16), suitMat);
+    helmet.position.y = 2.04;
+    const visor = new THREE.Mesh(new THREE.SphereGeometry(0.275, 18, 14), visorMat);
+    visor.position.set(0, 2.04, 0.09);
+    g.add(helmet, visor);
+
+    // Left & Right Arms (pivoted at shoulder y = 1.68)
+    const leftArm = new THREE.Group();
+    leftArm.position.set(-0.36, 1.68, 0);
+    const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.085, 0.62, 12), suitMat);
+    lSleeve.position.y = -0.28;
+    const lGlove = new THREE.Mesh(new THREE.SphereGeometry(0.10, 10, 10), darkMat);
+    lGlove.position.y = -0.62;
+    leftArm.add(lSleeve, lGlove);
+    leftArm.rotation.z = 0.22;
+
+    const rightArm = new THREE.Group();
+    rightArm.position.set(0.36, 1.68, 0);
+    const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.085, 0.62, 12), suitMat);
+    rSleeve.position.y = -0.28;
+    const rBand = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.08, 12), stripeMat);
+    rBand.position.y = -0.22;
+    const rGlove = new THREE.Mesh(new THREE.SphereGeometry(0.10, 10, 10), darkMat);
+    rGlove.position.y = -0.62;
+    rightArm.add(rSleeve, rBand, rGlove);
+    rightArm.rotation.z = -2.35;
+    g.add(leftArm, rightArm);
+
+    g.scale.setScalar(1.15);
+    g.userData = { leftLeg, rightLeg, leftArm, rightArm, phaseOffset: index * 1.17 };
+    return g;
+  }
+
+  ensurePadAstronautMeshes() {
+    while (this.padAstronautMeshes.length < this.maxAstronauts) {
+      const idx = this.padAstronautMeshes.length;
+      const mesh = this.createAstronautMesh(idx);
+      const side = idx % 2 === 0 ? 1 : -1;
+      const rank = Math.floor(idx / 2);
+      const x = side * (4.8 + rank * 1.85);
+      const z = 5.5 + (rank % 2) * 1.6;
+      mesh.position.set(x, PAD_TOP, z);
+      mesh.rotation.y = -side * 0.25;
+      mesh.visible = false;
+      this.world.add(mesh);
+      this.padAstronautMeshes.push(mesh);
+    }
+  }
+
+  addAstronauts(count) {
+    const P = this.player;
+    const isOnLaunchpad = this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
+    if (!isOnLaunchpad) {
+      this.event(
+        tr('⚠️ Chỉ có thể thêm phi hành gia vào tàu khi đang ở ngoài bệ phóng!', '⚠️ Astronauts can only board the craft while on the launchpad!'),
+        'warn'
+      );
+      return;
+    }
+    const max = this.maxAstronauts || 10;
+    if (this.astronautsAboard >= max) {
+      this.event(
+        tr(`⚠️ Tàu đã đạt giới hạn tối đa ${max} phi hành gia!`, `⚠️ Craft has reached the maximum limit of ${max} astronauts!`),
+        'warn'
+      );
+      return;
+    }
+    const added = Math.min(count, max - this.astronautsAboard);
+    this.astronautsAboard += added;
+    this.ensurePadAstronautMeshes();
+    this.hudTimer = 0;
+    this.updateHUD(0);
+    this.milestone(
+      `👨‍🚀 +${added} ${tr('PHI HÀNH GIA LÊN TÀU', 'ASTRONAUT(S) ABOARD')}`,
+      tr(
+        `Phi hành đoàn trên tàu: ${this.astronautsAboard} / ${max} phi hành gia sẵn sàng làm nhiệm vụ!`,
+        `Crew aboard: ${this.astronautsAboard} / ${max} astronauts ready for the mission!`
+      )
+    );
+    this.event(
+      tr(
+        `👨‍🚀 Đã thêm ${added} phi hành gia vào tàu! (Hiện có: ${this.astronautsAboard}/${max})`,
+        `👨‍🚀 Added ${added} astronaut(s) to the craft! (Aboard: ${this.astronautsAboard}/${max})`
+      ),
+      'warn'
+    );
+  }
+
+  clearDeployedAstronauts(boardBack = false) {
+    if (this.deployedAstronauts && this.deployedAstronauts.length) {
+      if (boardBack) {
+        this.astronautsAboard = Math.min(this.maxAstronauts || 10, this.astronautsAboard + this.deployedAstronauts.length);
+      }
+      for (const a of this.deployedAstronauts) {
+        if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
+      }
+    }
+    this.deployedAstronauts = [];
+  }
+
+  deployAstronauts() {
+    const P = this.player;
+    if (!P || P.crashed) return;
+    const max = this.maxAstronauts || 10;
+    const B = BODIES[P.ref] || BODIES.earth;
+    const alreadyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P.ref).length;
+
+    const canDeploy = this.astronautsAboard > 0
+      ? Math.min(this.astronautsAboard, max - alreadyDeployed)
+      : Math.min(1, max - alreadyDeployed);
+    if (canDeploy <= 0) {
+      this.event(
+        tr(`⚠️ Số lượng phi hành gia trên ${B.label} đã đạt giới hạn tối đa ${max}!`, `⚠️ Astronaut count on ${B.label} has reached the maximum limit of ${max}!`),
+        'warn'
+      );
+      return;
+    }
+
+    this.astronautsAboard = Math.max(0, this.astronautsAboard - canDeploy);
+    const isSurface = !!P.landed || (!B.gasGiant && P.ref !== 'sun' && (P.agl ?? P.alt) < 400);
+
+    for (let i = 0; i < canDeploy; i++) {
+      const idx = alreadyDeployed + i;
+      const mesh = this.createAstronautMesh(idx);
+      this.scene.add(mesh);
+      const side = idx % 2 === 0 ? 1 : -1;
+      const rank = Math.floor(idx / 2);
+      const offsetX = side * (5.5 + rank * 3.2);
+      const offsetZ = 3.2 + (idx % 3) * 1.8;
+
+      if (P.ref === 'earth') {
+        const surf = this.surfaceAt(P);
+        this.deployedAstronauts.push({
+          idx,
+          body: 'earth',
+          mode: isSurface ? 'surface' : 'eva',
+          sx: P.sx + offsetX,
+          z: (P.s.z || 0) + offsetZ,
+          h: surf.h,
+          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 2)) : 0,
+          relX: offsetX,
+          relY: (idx % 3 - 1) * 3.0,
+          relZ: offsetZ,
+          mesh,
+        });
+      } else {
+        const psi = P.phiRot + offsetX / B.R;
+        const z = (P.s.z || 0) + offsetZ;
+        const surfH = moonHeight(Math.sin(psi), Math.cos(psi), z / B.R, P.ref);
+        this.deployedAstronauts.push({
+          idx,
+          body: P.ref,
+          mode: isSurface ? 'surface' : 'eva',
+          basePsi: psi,
+          psi,
+          z,
+          h: surfH,
+          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 2)) : 0,
+          relX: offsetX,
+          relY: (idx % 3 - 1) * 3.0,
+          relZ: offsetZ,
+          mesh,
+        });
+      }
+    }
+
+    const totalNow = alreadyDeployed + canDeploy;
+    const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
+    const bodyDescVi = parentB ? `${B.label} (Thân chủ: ${parentB.label})` : B.label;
+    const bodyDescEn = parentB ? `${B.label} (Parent: ${parentB.label})` : B.label;
+
+    this.hudTimer = 0;
+    this.updateHUD(0);
+    this.milestone(
+      `👨‍🚀 ${tr('ĐÃ THẢ', 'DEPLOYED')} ${canDeploy} ${tr('PHI HÀNH GIA XUỐNG', 'ASTRONAUT(S) ON')} ${B.label.toUpperCase()}!`,
+      tr(
+        `Đã thả ${totalNow}/${max} phi hành gia xuống ${bodyDescVi} · Còn trên tàu: ${this.astronautsAboard}/${max}`,
+        `Deployed ${totalNow}/${max} astronauts on ${bodyDescEn} · Remaining aboard: ${this.astronautsAboard}/${max}`
+      )
+    );
+    this.event(
+      tr(
+        `👨‍🚀🏳️ Đã thả ${canDeploy} phi hành gia xuống ${bodyDescVi}! (Đã thả: ${totalNow}/${max} · Trên tàu: ${this.astronautsAboard}/${max})`,
+        `👨‍🚀🏳️ Deployed ${canDeploy} astronaut(s) onto ${bodyDescEn}! (Deployed: ${totalNow}/${max} · Aboard: ${this.astronautsAboard}/${max})`
+      ),
+      'warn'
+    );
   }
 
   teleportToBody(target, mode = this.teleportMode) {
@@ -746,7 +1021,8 @@ export class LaunchScene {
     this.smoke.clear();
     this.fire.clear();
 
-    // Clear active aliens & supernovas from previous location
+    // Clear active aliens & supernovas from previous location, and bring deployed astronauts back aboard
+    this.clearDeployedAstronauts(true);
     for (const a of (this.aliens || [])) {
       if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
     }
@@ -859,17 +1135,20 @@ export class LaunchScene {
           this.setFlag(bodyKey === 'moon' ? 'lunarOrbit' : bodyKey + 'Orbit');
         }
         const orbKm = fmt(orbAlt / 1000, 0);
+        const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
+        const parentNoteVi = parentB ? ` · Thân chủ: ${parentB.label}` : '';
+        const parentNoteEn = parentB ? ` · Parent: ${parentB.label}` : '';
         this.milestone(
           `${B.icon} ${tr('ĐÃ DỊCH CHUYỂN TỚI', 'TELEPORTED TO')} ${B.label.toUpperCase()}!`,
           tr(
-            `Đang bay trên quỹ đạo ${B.label} (Độ cao ${orbKm} km · Vận tốc ${fmt(vCirc, 0)} m/s)`,
-            `In orbit around ${B.label} (Altitude ${orbKm} km · Speed ${fmt(vCirc, 0)} m/s)`
+            `Đang bay trên quỹ đạo ${B.label}${parentNoteVi} (Độ cao ${orbKm} km · Vận tốc ${fmt(vCirc, 0)} m/s)`,
+            `In orbit around ${B.label}${parentNoteEn} (Altitude ${orbKm} km · Speed ${fmt(vCirc, 0)} m/s)`
           )
         );
         this.event(
           tr(
-            `⚡${B.icon} Đã dịch chuyển tức thời vào quỹ đạo ${B.label} ở độ cao ${orbKm} km!`,
-            `⚡${B.icon} Teleported into ${B.label} orbit at ${orbKm} km altitude!`
+            `⚡${B.icon} Đã dịch chuyển tức thời vào quỹ đạo ${B.label}${parentNoteVi} ở độ cao ${orbKm} km!`,
+            `⚡${B.icon} Teleported into ${B.label} orbit${parentNoteEn} at ${orbKm} km altitude!`
           ),
           'warn'
         );
@@ -978,17 +1257,20 @@ export class LaunchScene {
             'warn'
           );
         } else {
+          const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
+          const parentNoteVi = parentB ? `Thân chủ: ${parentB.label} · ` : '';
+          const parentNoteEn = parentB ? `Parent: ${parentB.label} · ` : '';
           this.milestone(
             `${B.icon} ${tr('ĐÃ ĐÁP XUỐNG', 'LANDED ON')} ${B.label.toUpperCase()}!`,
             tr(
-              `Trọng lực bề mặt: ${B.g.toFixed(2)} m/s² · Nhấn Space / Z / Shift để cất cánh!`,
-              `Surface gravity: ${B.g.toFixed(2)} m/s² · Press Space / Z / Shift to lift off!`
+              `${parentNoteVi}Trọng lực bề mặt: ${B.g.toFixed(2)} m/s² · Nhấn Space / Z / Shift để cất cánh!`,
+              `${parentNoteEn}Surface gravity: ${B.g.toFixed(2)} m/s² · Press Space / Z / Shift to lift off!`
             )
           );
           this.event(
             tr(
-              `⚡${B.icon} Đã dịch chuyển tức thời tới bề mặt ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Nhấn Space hoặc Z để phóng lên!`,
-              `⚡${B.icon} Teleported to the surface of ${B.label} (g = ${B.g.toFixed(2)} m/s²)! Press Space or Z to launch!`
+              `⚡${B.icon} Đã dịch chuyển tức thời tới bề mặt ${B.label} (${parentNoteVi}g = ${B.g.toFixed(2)} m/s²)! Nhấn Space hoặc Z để phóng lên!`,
+              `⚡${B.icon} Teleported to the surface of ${B.label} (${parentNoteEn}g = ${B.g.toFixed(2)} m/s²)! Press Space or Z to launch!`
             ),
             'warn'
           );
@@ -1153,7 +1435,7 @@ export class LaunchScene {
       const el = vesselElements(v);
       const isPlayer = v === this.player;
       if (isPlayer) this.launchCounter = (this.launchCounter || 0) + 1;
-      const name = v.label || (isPlayer ? `Tên lửa #${this.launchCounter}` : `Tầng tách #${++this.stageCounter}`);
+      const name = v.label || (isPlayer ? tr(`Tên lửa #${this.launchCounter}`, `Rocket #${this.launchCounter}`) : tr(`Tầng tách #${++this.stageCounter}`, `Separated Stage #${++this.stageCounter}`));
       this.spaceObjects.push({
         id: v.mapId || ('pers_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
         name,
@@ -1211,7 +1493,7 @@ export class LaunchScene {
     if (idx !== -1) {
       const [removed] = this.spaceObjects.splice(idx, 1);
       this.saveSpaceObjects();
-      this.event(`🗑️ Đã xóa "${removed.name}" khỏi vũ trụ.`);
+      this.event(tr(`🗑️ Đã xóa "${removed.name}" khỏi vũ trụ.`, `🗑️ Deleted "${removed.name}" from space.`));
       if (this.map.visible) this.updateMap();
       return;
     }
@@ -1222,13 +1504,13 @@ export class LaunchScene {
       if (v.root && v.root.parent) v.root.parent.remove(v.root);
       this.vessels = this.vessels.filter((vv) => vv !== v);
       if (this.focus === v) this.focus = this.player;
-      this.event(`🗑️ Đã xóa "${v.label || 'Tầng tách'}" khỏi vũ trụ.`);
+      this.event(tr(`🗑️ Đã xóa "${v.label || tr('Tầng tách', 'Separated Stage')}" khỏi vũ trụ.`, `🗑️ Deleted "${v.label || 'Separated Stage'}" from space.`));
       if (this.map.visible) this.updateMap();
       return;
     }
     if (id === 'vessel' && this.player && !this.player.clamped) {
       this.player.archived = true;
-      this.event('🗑️ Đã xóa tên lửa hiện tại khỏi vũ trụ.');
+      this.event(tr('🗑️ Đã xóa tên lửa hiện tại khỏi vũ trụ.', '🗑️ Deleted current rocket from space.'));
       this.map.toggle(false);
       this.app.goBuild();
     }
@@ -1302,7 +1584,7 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event('🛥️ Canô đã hạ thủy ra biển! Nhấn W/S hoặc tăng ga để lướt sóng, A/D bẻ lái.');
+      this.event(tr('🛥️ Canô đã hạ thủy ra biển! Nhấn W/S hoặc tăng ga để lướt sóng, A/D bẻ lái.', '🛥️ Speedboat launched at sea! Press W/S or throttle up to ride the waves, A/D to steer.'));
     } else if (this.player.isRover) {
       const roverX = 18;
       const surfH = 6 + this.player.bottomOffset();
@@ -1314,7 +1596,7 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event('🚙 Xe Rover đã sẵn sàng! Nhấn W/S để chạy tiến/lùi, A/D để quẹo trái/phải.');
+      this.event(tr('🚙 Xe Rover đã sẵn sàng! Nhấn W/S để chạy tiến/lùi, A/D để quẹo trái/phải.', '🚙 Planetary Rover ready! Press W/S to drive forward/reverse, A/D to steer left/right.'));
     } else if (this.player.isPlane) {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.beta = this.player.phi + Math.PI / 2;
@@ -1327,7 +1609,7 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event('✈️ Tiêm kích phản lực đã vào đường băng! Tăng ga bằng Shift / Z để chạy đà, nhấn S để ngóc mũi cất cánh.');
+      this.event(tr('✈️ Tiêm kích phản lực đã vào đường băng! Tăng ga bằng Shift / Z để chạy đà, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the runway! Throttle up with Shift / Z to roll, press S to pitch up for takeoff.'));
     } else {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.clamped = true;
@@ -1359,6 +1641,8 @@ export class LaunchScene {
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
+    this.clearDeployedAstronauts(false);
+    this.ensurePadAstronautMeshes();
     this.camMode = 0; this.controls.enabled = true;
     this.camera.fov = 50; this.camera.updateProjectionMatrix();
     const isSpecial = this.player.isBoat || this.player.isRover || this.player.isPlane;
@@ -1386,13 +1670,13 @@ export class LaunchScene {
       $('btn-go').classList.add('hidden');
     } else {
       $('btn-go').classList.remove('hidden');
-      this.event('Tên lửa đã lên bệ phóng. Sẵn sàng!');
+      this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
     }
     $('countdown').textContent = '';
     $('mission-panel').classList.toggle('hidden', !this.mission.objectives.length);
     this.renderMissionPanel(true);
     this.sc = this.makeContext();
-    if (this.mission.id !== 'free' && !isSpecial) this.event('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.');
+    if (this.mission.id !== 'free' && !isSpecial) this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
   }
 
   /** guidance context (see sim/guidance.js) */
@@ -1468,7 +1752,7 @@ export class LaunchScene {
     this.met = -10;
     this.lastCount = 11;
     $('btn-go').classList.add('hidden');
-    this.event('Bắt đầu đếm ngược!');
+    this.event(tr('Bắt đầu đếm ngược!', 'Countdown started!'));
   }
 
   holdAttitude() {
@@ -1516,7 +1800,7 @@ export class LaunchScene {
     const b = this.vessels.find((v) => v.kind === 'booster' && !v.crashed && !v.dead);
     if (!b) return;
     this.focus = this.focus === b ? this.player : b;
-    this.event(this.focus === b ? 'Camera: tầng 1.' : 'Camera: tàu chính.');
+    this.event(this.focus === b ? tr('Camera: tầng 1.', 'Camera: Stage 1.') : tr('Camera: tàu chính.', 'Camera: Main Craft.'));
   }
 
   toggleDeploy() {
@@ -1526,7 +1810,7 @@ export class LaunchScene {
     if (v.hasLegs()) v.legsTarget = on ? 1 : 0;
     if (v.hasGridFins()) v.finsTarget = on ? 1 : 0;
     if (v.capsule()) v.chuteTarget = on ? 1 : 0;
-    this.event(on ? 'Bung chân / cánh / dù.' : 'Thu chân / cánh / dù.');
+    this.event(on ? tr('Bung chân / cánh / dù.', 'Deploying legs / fins / chutes.') : tr('Thu chân / cánh / dù.', 'Retracting legs / fins / chutes.'));
   }
 
   stage() {
@@ -1563,7 +1847,7 @@ export class LaunchScene {
     nv.ctl.targetBeta = null;
     this.stageCounter = (this.stageCounter || 0) + 1;
     nv.mapId = `stage_${Date.now()}_${this.stageCounter}`;
-    nv.label = `Tầng ${this.segs.length - k} (#${this.stageCounter})`;
+    nv.label = tr(`Tầng ${this.segs.length - k} (#${this.stageCounter})`, `Stage ${this.segs.length - k} (#${this.stageCounter})`);
     const nvEl = vesselElements(nv);
     const inSpaceNow = nv.ref !== 'earth' || nv.alt >= 45000;
     const goingToSpace = inSpaceNow || nv.alt >= 30000 || (nvEl && nvEl.ap > R_E + 65000);
@@ -1573,7 +1857,7 @@ export class LaunchScene {
       nv.rec = new BoosterRecovery(nv, this.sc);
       this.boosterReleased = true;
       this.setFlag('sep');
-      this.event('Tách tầng 1 – bắt đầu quy trình thu hồi.', 'warn');
+      this.event(tr('Tách tầng 1 – bắt đầu quy trình thu hồi.', 'Stage 1 separated – starting booster recovery sequence.'), 'warn');
     } else {
       nv.kind = 'stage';
       if (goingToSpace) {
@@ -1582,9 +1866,9 @@ export class LaunchScene {
           this.stabilizeSpaceVessel(nv);
           nv.orbitStabilized = true;
         }
-        this.event(`Tách ${nv.label} – tiếp tục bay theo quỹ đạo vũ trụ!`, 'warn');
+        this.event(tr(`Tách ${nv.label} – tiếp tục bay theo quỹ đạo vũ trụ!`, `${nv.label} separated – continuing in space orbit!`), 'warn');
       } else {
-        this.event(`Tách tầng ${this.segs.length - k}!`, 'warn');
+        this.event(tr(`Tách tầng ${this.segs.length - k}!`, `Stage ${this.segs.length - k} separated!`), 'warn');
       }
     }
     this.vessels.push(nv);
@@ -1624,7 +1908,7 @@ export class LaunchScene {
     v.updateMass();
     v.s.x += ax.x * (v.com.y - oldCom); v.s.y += ax.y * (v.com.y - oldCom);
     audio.thunk(0.6);
-    if (v === this.player) this.event('Tên lửa đẩy phụ cháy hết – tách ra!', 'warn');
+    if (v === this.player) this.event(tr('Tên lửa đẩy phụ cháy hết – tách ra!', 'Solid rocket boosters depleted – jettisoned!'), 'warn');
   }
 
   burstAt(v, n, size) {
@@ -1662,7 +1946,7 @@ export class LaunchScene {
       this.program = null;
     }
     v.crashed = true; v.engineOn = false;
-    this.event('💥 ' + (isPlayer ? '' : (v.kind === 'booster' ? 'Tầng 1: ' : 'Tầng bỏ: ')) + reason, 'bad');
+    this.event('💥 ' + (isPlayer ? '' : (v.kind === 'booster' ? tr('Tầng 1: ', 'Stage 1: ') : tr('Tầng bỏ: ', 'Spent Stage: '))) + reason, 'bad');
     const big = isPlayer || v.kind === 'booster';
     if (v.ref === 'earth' || v.ref === 'moon') {
       const x = v.sx, y = Math.max(v.alt, 1), z = v.s.z;
@@ -1730,15 +2014,18 @@ export class LaunchScene {
       const el = vesselElements(v);
       if (el.e < 1 && el.pe - R_E > ATM_TOP) {
         this.setFlag('orbit');
-        this.milestone('VÀO QUỸ ĐẠO!', `Cận điểm ${fmt((el.pe - R_E) / 1000)} km · viễn điểm ${fmt((el.ap - R_E) / 1000)} km`);
-        this.event('🛰 Đã vào quỹ đạo ổn định!');
+        this.milestone(
+          tr('VÀO QUỸ ĐẠO!', 'ORBIT ACHIEVED!'),
+          tr(`Cận điểm ${fmt((el.pe - R_E) / 1000)} km · viễn điểm ${fmt((el.ap - R_E) / 1000)} km`, `Periapsis ${fmt((el.pe - R_E) / 1000)} km · Apoapsis ${fmt((el.ap - R_E) / 1000)} km`)
+        );
+        this.event(tr('🛰 Đã vào quỹ đạo ổn định!', '🛰 Stable orbit achieved!'));
       }
     }
     if (v.ref !== 'earth') {
       const B = BODIES[v.ref] || BODIES.moon;
       const soiKey = v.ref + 'SOI';
       const orbKey = v.ref === 'moon' ? 'lunarOrbit' : v.ref + 'Orbit';
-      if (!F[soiKey]) { this.setFlag(soiKey); this.milestone(B.label.toUpperCase(), 'Đã vào vùng hấp dẫn của ' + B.label); }
+      if (!F[soiKey]) { this.setFlag(soiKey); this.milestone(B.label.toUpperCase(), tr('Đã vào vùng hấp dẫn của ' + B.label, 'Entered ' + B.label + ' Sphere of Influence')); }
       if (!F[orbKey] && v.alt > Math.max(10e3, B.atm)) {
         const el = vesselElements(v);
         if (el.e < 1 && el.pe - B.R > Math.max(8e3, B.atm)) this.setFlag(orbKey);
@@ -1746,17 +2033,17 @@ export class LaunchScene {
     }
     if (this.iss.visible || this.mission.id === 'iss') {
       const d = this.issDistance();
-      if (d < 1000 && !F.near) { this.setFlag('near'); this.event('Đã tiếp cận ISS (< 1 km).'); }
+      if (d < 1000 && !F.near) { this.setFlag('near'); this.event(tr('Đã tiếp cận ISS (< 1 km).', 'Approached ISS (< 1 km).')); }
     }
     // mission completion
     const objs = this.mission.objectives;
     if (objs.length && objs.every((o) => F[o.id]) && !this.completeTimer && !this.resultShown) {
-      this.completeTimer = setTimeout(() => this.showResult(true, 'Hoàn thành nhiệm vụ: ' + this.mission.name + '!'), 4500);
-      this.milestone('NHIỆM VỤ HOÀN THÀNH', this.mission.name);
+      this.completeTimer = setTimeout(() => this.showResult(true, tr('Hoàn thành nhiệm vụ: ' + this.mission.name + '!', 'Mission accomplished: ' + this.mission.name + '!')), 4500);
+      this.milestone(tr('NHIỆM VỤ HOÀN THÀNH', 'MISSION COMPLETE'), this.mission.name);
     }
     if (!objs.length && F.orbit && !this._freeOrbitNotified) {
       this._freeOrbitNotified = true;
-      this.event('🛰 Chúc mừng! Bạn có thể tự do điều khiển tàu trong quỹ đạo hoặc bấm menu để về xưởng.');
+      this.event(tr('🛰 Chúc mừng! Bạn có thể tự do điều khiển tàu trong quỹ đạo hoặc bấm menu để về xưởng.', '🛰 Congratulations! You can fly freely in orbit or open the menu to return to the VAB.'));
     }
   }
 
@@ -1808,10 +2095,10 @@ export class LaunchScene {
       }
       this.applyDockLock();
       this.setFlag('docked');
-      this.event('🛰 GHÉP NỐI THÀNH CÔNG! Tên lửa đã khóa chặt vào cổng ISS và bay cùng trạm.', '');
-      this.milestone('GHÉP NỐI THÀNH CÔNG', 'Tên lửa đã gắn vào ISS và bay cùng quỹ đạo trạm');
+      this.event(tr('🛰 GHÉP NỐI THÀNH CÔNG! Tên lửa đã khóa chặt vào cổng ISS và bay cùng trạm.', '🛰 DOCKING SUCCESSFUL! Hard-docked with the ISS and orbiting together.'), '');
+      this.milestone(tr('GHÉP NỐI THÀNH CÔNG', 'DOCKING SUCCESSFUL'), tr('Tên lửa đã gắn vào ISS và bay cùng quỹ đạo trạm', 'Docked with the ISS and flying in station orbit'));
       audio.thunk(0.5);
-    } else if (e < 0.95 && !this.dockWarned) { this.dockWarned = true; this.event('Cổng đã chạm nhưng sai tư thế/vận tốc – giảm tốc độ!', 'warn'); }
+    } else if (e < 0.95 && !this.dockWarned) { this.dockWarned = true; this.event(tr('Cổng đã chạm nhưng sai tư thế/vận tốc – giảm tốc độ!', 'Docking port touched at wrong angle/speed – slow down!'), 'warn'); }
     else if (e > 1.5) this.dockWarned = false;
   }
 
@@ -1874,7 +2161,7 @@ export class LaunchScene {
       return reasons;
     }
 
-    if (snap && (sub?.includes('áp suất khí động') || sub?.includes('lật nhào'))) {
+    if (snap && (sub?.includes('áp suất khí động') || sub?.includes('lật nhào') || sub?.includes('dynamic pressure') || sub?.includes('tumbled'))) {
       reasons.push(tr(
         `Áp suất khí động đạt ${(snap.qNow / 1000).toFixed(1)} kPa kết hợp góc lệch hướng bay lớn (${snap.offDeg}°) vượt ngưỡng chịu lực làm gãy thân tên lửa.`,
         `High dynamic pressure (${(snap.qNow / 1000).toFixed(1)} kPa) combined with a large angle of attack (${snap.offDeg}°) exceeded structural limits.`
@@ -2169,7 +2456,7 @@ export class LaunchScene {
         const reserve = this.segInfo[k].dry * (Math.exp(600 / 2900) - 1);
         if (this.fuel[k] <= reserve + 1e-3) {
           on = false;
-          if (!this.mecoWarned) { this.mecoWarned = true; this.event('Tầng 1 dừng ở mức nhiên liệu dự trữ để hạ cánh – nhấn SPACE để tách tầng.', 'warn'); }
+          if (!this.mecoWarned) { this.mecoWarned = true; this.event(tr('Tầng 1 dừng ở mức nhiên liệu dự trữ để hạ cánh – nhấn SPACE để tách tầng.', 'Stage 1 cutoff at landing fuel reserve – press SPACE to stage.'), 'warn'); }
         }
       }
       v.engineOn = on;
@@ -2198,15 +2485,15 @@ export class LaunchScene {
         if (v === this.player) {
           if (!this.fuelNote?.[e[1]]) {
             (this.fuelNote ||= {})[e[1]] = true;
-            this.event(`Tầng ${this.segs.length - e[1]} hết nhiên liệu.`, 'warn');
+            this.event(tr(`Tầng ${this.segs.length - e[1]} hết nhiên liệu.`, `Stage ${this.segs.length - e[1]} out of fuel.`), 'warn');
           }
           if (this.program) this.checkAutoStage(v);
         }
       } else if (type === 'boosterOut') this.jettisonBooster(v, e[1]);
       else if (type === 'liftoff') {
         if (v === this.player) {
-          if (!this.lifted) { this.lifted = true; this.event('🚀 CẤT CÁNH!'); }
-          else if (v.ref === 'moon' && this.flags.moonLanded) { this.setFlag('moonLeft'); this.event('Cất cánh khỏi Mặt Trăng!'); }
+          if (!this.lifted) { this.lifted = true; this.event(tr('🚀 CẤT CÁNH!', '🚀 LIFTOFF!')); }
+          else if (v.ref === 'moon' && this.flags.moonLanded) { this.setFlag('moonLeft'); this.event(tr('Cất cánh khỏi Mặt Trăng!', 'Liftoff from the Moon!')); }
         }
       } else if (type === 'landed') this.onLanded(v, e[1], e[2]);
       else if (type === 'crash') this.explode(v, e[1]);
@@ -2217,20 +2504,20 @@ export class LaunchScene {
     if (v === this.player) {
       if (v.ref !== 'earth') {
         const B = BODIES[v.ref] || BODIES.moon;
-        this.event('Hạ cánh xuống ' + B.label + ' an toàn!');
+        this.event(tr('Hạ cánh xuống ' + B.label + ' an toàn!', 'Landed safely on ' + B.label + '!'));
         this.setFlag(v.ref + 'Landed');
-        this.milestone('MỘT BƯỚC NHỎ', 'Hạ cánh thành công xuống ' + B.label + '!');
+        this.milestone(tr('MỘT BƯỚC NHỎ', 'ONE SMALL STEP'), tr('Hạ cánh thành công xuống ' + B.label + '!', 'Successfully landed on ' + B.label + '!'));
         this.moonLandT = this.simT;
       } else if (this.lifted && this.simT - (this.launchT || 0) > 30) {
-        this.event(how === 'splash' ? 'Hạ thủy an toàn!' : 'Hạ cánh an toàn!');
-        if (this.mission.id === 'moon' && this.flags.moonLeft) { this.setFlag('home'); this.milestone('VỀ NHÀ', 'Trở về Trái Đất an toàn!'); }
-        else if (this.mission.id === 'orbit' && !v.isPlane && !v.isRover && !v.isBoat) setTimeout(() => this.showResult(this.maxAlt > 1000, 'Tên lửa đã hạ xuống an toàn.'), 2500);
+        this.event(how === 'splash' ? tr('Hạ thủy an toàn!', 'Safe splashdown!') : tr('Hạ cánh an toàn!', 'Safe touchdown!'));
+        if (this.mission.id === 'moon' && this.flags.moonLeft) { this.setFlag('home'); this.milestone(tr('VỀ NHÀ', 'WELCOME HOME'), tr('Trở về Trái Đất an toàn!', 'Returned safely to Earth!')); }
+        else if (this.mission.id === 'orbit' && !v.isPlane && !v.isRover && !v.isBoat) setTimeout(() => this.showResult(this.maxAlt > 1000, tr('Tên lửa đã hạ xuống an toàn.', 'Rocket has landed safely.')), 2500);
       }
     } else if (v.kind === 'booster') {
       this.setFlag('boosterLanded');
       this.pipKeep = 9;
-      this.event(site === 'ship' ? '🚢 Tầng 1 hạ cánh trên sà lan!' : site === 'lz' ? '🎯 Tầng 1 hạ cánh trên bãi đáp LZ-1!' : 'Tầng 1 hạ cánh (ngoài bãi đáp).');
-      this.milestone('TẦNG 1 ĐÃ HẠ CÁNH', site === 'ship' ? 'Sà lan "Dĩ nhiên tôi vẫn yêu bạn"' : 'Sẵn sàng tái sử dụng!');
+      this.event(site === 'ship' ? tr('🚢 Tầng 1 hạ cánh trên sà lan!', '🚢 Stage 1 landed on the drone ship!') : site === 'lz' ? tr('🎯 Tầng 1 hạ cánh trên bãi đáp LZ-1!', '🎯 Stage 1 landed at LZ-1!') : tr('Tầng 1 hạ cánh (ngoài bãi đáp).', 'Stage 1 landed (off-pad).'));
+      this.milestone(tr('TẦNG 1 ĐÃ HẠ CÁNH', 'STAGE 1 LANDED'), site === 'ship' ? tr('Sà lan "Dĩ nhiên tôi vẫn yêu bạn"', 'Drone Ship "Of Course I Still Love You"') : tr('Sẵn sàng tái sử dụng!', 'Ready for reuse!'));
     }
   }
 
@@ -2384,20 +2671,20 @@ export class LaunchScene {
       if (n !== this.lastCount && n >= 0) {
         this.lastCount = n;
         const cd = $('countdown');
-        cd.textContent = n > 0 ? n : 'PHÓNG!';
+        cd.textContent = n > 0 ? n : tr('PHÓNG!', 'LIFTOFF!');
         cd.classList.remove('pop'); void cd.offsetWidth; cd.classList.add('pop');
         audio.beep(n > 0 ? 880 : 1320, n > 0 ? 0.12 : 0.5, 0.25);
-        if (n === 8) { this.event('Thu cần tiếp nhiên liệu.'); this.arms.forEach((a) => (a.target = 1)); }
-        if (n === 6) this.event('Hệ thống phun nước giảm thanh kích hoạt.');
+        if (n === 8) { this.event(tr('Thu cần tiếp nhiên liệu.', 'Retracting umbilical swing arms.')); this.arms.forEach((a) => (a.target = 1)); }
+        if (n === 6) this.event(tr('Hệ thống phun nước giảm thanh kích hoạt.', 'Sound suppression water deluge activated.'));
       }
       if (this.met >= -3 && !this.ignited) {
         const st = this.segInfo[P.activeSeg];
-        if (st.tVac > 0 || this.rocket.boosters.some((b) => b.seg === P.activeSeg)) { this.ignited = true; P.engineOn = true; P.throttle = this.throttle; this.event('Đánh lửa động cơ chính!', 'warn'); }
+        if (st.tVac > 0 || this.rocket.boosters.some((b) => b.seg === P.activeSeg)) { this.ignited = true; P.engineOn = true; P.throttle = this.throttle; this.event(tr('Đánh lửa động cơ chính!', 'Main engine ignition!'), 'warn'); }
         else if (!this.flags.noEngine) {
           this.flags.noEngine = true;
-          if (st.needsBattery) this.event('Động cơ Lazer / Phản Trọng Lực cần Cục Pin Năng Lượng (không dùng nhiên liệu thường)!', 'bad');
-          else if (st.needsChemFuel) this.event('Động cơ thường cần Bồn nhiên liệu (không chạy bằng Pin)!', 'bad');
-          else this.event('Không có động cơ hoặc nhiên liệu ở tầng 1!', 'bad');
+          if (st.needsBattery) this.event(tr('Động cơ Lazer / Phản Trọng Lực cần Cục Pin Năng Lượng (không dùng nhiên liệu thường)!', 'Laser / Anti-Gravity Engine requires a Quantum Energy Battery!'), 'bad');
+          else if (st.needsChemFuel) this.event(tr('Động cơ thường cần Bồn nhiên liệu (không chạy bằng Pin)!', 'Regular engines require a Fuel Tank (cannot run on Battery)!'), 'bad');
+          else this.event(tr('Không có động cơ hoặc nhiên liệu ở tầng 1!', 'No engine or fuel on Stage 1!'), 'bad');
         }
       }
       if (this.met >= 0) {
@@ -2405,10 +2692,10 @@ export class LaunchScene {
         P.clamped = false;
         P.landed = { body: 'earth', sx: 0, h: P.clampSpot.h, site: 'pad', how: 'pad' }; P.landedLock = 0;
         this.clamps.forEach((c, i) => { c.rotation.z = (i % 2 ? 1 : -1) * 0.9; });
-        this.event('Nhả kẹp giữ!');
+        this.event(tr('Nhả kẹp giữ!', 'Hold-down clamps released!'));
         setTimeout(() => { $('countdown').textContent = ''; }, 900);
         const w = this.thrustTotalSL() / (P.com.mass * G_E);
-        if (w < 1) this.event('Lực đẩy không đủ để cất cánh (TWR < 1)!', 'bad');
+        if (w < 1) this.event(tr('Lực đẩy không đủ để cất cánh (TWR < 1)!', 'Insufficient thrust for liftoff (TWR < 1)!'), 'bad');
       }
     }
 
@@ -2444,11 +2731,11 @@ export class LaunchScene {
     for (const v of this.vessels) {
       if (v.dead || v.crashed || v.chuteT > 0.05 || v.ref !== 'earth' || v.isPlane || v.isRover || v.isBoat) continue;
       const a = Math.abs(v.aoa || 0), off = Math.min(a, Math.PI - a);
-      if (v.qNow > 50000 && off > 0.75) this.explode(v, 'Vỡ cấu trúc do bẻ lái gắt ở áp suất khí động cao!');
-      else if (v.qNow > 18000 && off > 1.4) this.explode(v, 'Tên lửa lật nhào và vỡ tung!');
+      if (v.qNow > 50000 && off > 0.75) this.explode(v, tr('Vỡ cấu trúc do bẻ lái gắt ở áp suất khí động cao!', 'Structural failure from high angle of attack at high dynamic pressure!'));
+      else if (v.qNow > 18000 && off > 1.4) this.explode(v, tr('Tên lửa lật nhào và vỡ tung!', 'Rocket tumbled and broke apart!'));
       else if (v.qNow > 22000 && off > 0.45 && !this._qWarn) {
         this._qWarn = true;
-        this.event('⚠️ CẢNH BÁO: Áp suất khí động cao (Max-Q), hãy giữ hướng ổn định!', 'warn');
+        this.event(tr('⚠️ CẢNH BÁO: Áp suất khí động cao (Max-Q), hãy giữ hướng ổn định!', '⚠️ WARNING: High dynamic pressure (Max-Q), hold attitude steady!'), 'warn');
         setTimeout(() => { this._qWarn = false; }, 3500);
       }
     }
@@ -2456,7 +2743,7 @@ export class LaunchScene {
     if (!this.towerGone && this.rocket.capsule && P.owns(this.rocket.capsule.seg) && P.alt > 25000 && this.rocket.capsule.obj.userData.tower && this.rocket.capsule.obj.userData.tower.visible) {
       this.towerGone = true;
       this.makeDebris(P, this.rocket.capsule.obj.userData.tower, 8, 1);
-      this.event('Thả tháp thoát hiểm.');
+      this.event(tr('Thả tháp thoát hiểm.', 'Launch escape tower jettisoned.'));
     }
 
     // statistics
@@ -2466,12 +2753,12 @@ export class LaunchScene {
       this.maxVel = Math.max(this.maxVel, P.speedOrb);
       this.maxG = Math.max(this.maxG, P.accelNow || 1);
       if (P.qNow > this.maxQ) this.maxQ = P.qNow;
-      else if (!this.maxQPassed && this.maxQ > 8000 && P.qNow < this.maxQ * 0.9) { this.maxQPassed = true; this.event(`Vượt Max Q (${fmt(this.maxQ / 1000, 1)} kPa).`); }
-      const ms = [[1000, '1 km', null], [10000, '10 km', 'Vượt tầng đối lưu'], [30000, '30 km', 'Bầu trời tối dần']];
+      else if (!this.maxQPassed && this.maxQ > 8000 && P.qNow < this.maxQ * 0.9) { this.maxQPassed = true; this.event(tr(`Vượt Max Q (${fmt(this.maxQ / 1000, 1)} kPa).`, `Passed Max-Q (${fmt(this.maxQ / 1000, 1)} kPa).`)); }
+      const ms = [[1000, '1 km', null], [10000, '10 km', tr('Vượt tầng đối lưu', 'Leaving the troposphere')], [30000, '30 km', tr('Bầu trời tối dần', 'Sky darkening into space')]];
       for (const [hh, big, small] of ms) {
         if (P.ref === 'earth' && alt >= hh && !this.flags['alt' + hh]) {
           this.flags['alt' + hh] = true;
-          this.event(`Đạt độ cao ${big}.`);
+          this.event(tr(`Đạt độ cao ${big}.`, `Reached ${big} altitude.`));
           if (small) this.milestone(big, small);
         }
       }
@@ -2505,8 +2792,8 @@ export class LaunchScene {
         const psi = P.phiRot + 14 / B.R;
         const uz = (P.s?.z || 0) / B.R;
         this.flagSpot = { body: P.ref, psi, h: moonHeight(Math.sin(psi), Math.cos(psi), uz, P.ref) };
-        this.event('🇻🇳 Cắm cờ Việt Nam trên ' + B.label + '!');
-        this.milestone('CẮM CỜ', 'Lá cờ Việt Nam đã tung bay trên ' + B.label);
+        this.event(tr('🇻🇳 Cắm cờ Việt Nam trên ' + B.label + '!', '🇻🇳 Planted flag on ' + B.label + '!'));
+        this.milestone(tr('CẮM CỜ', 'FLAG PLANTED'), tr('Lá cờ Việt Nam đã tung bay trên ' + B.label, 'Flag is flying proudly on ' + B.label));
       }
       if (P.ref === 'mars' && !this.flags.olympusSummit) {
         const dxOm = wrapPi(P.phiRot - OLYMPUS_PSI) * BODIES.mars.R;
@@ -2528,11 +2815,11 @@ export class LaunchScene {
     }
     if (this.phase === 'flight' && !this.lifted && this.met > 8 && !this._padWarn && !P.crashed && !P.isRover && !P.isBoat && !P.isPlane) {
       this._padWarn = true;
-      this.event('⚠️ Tên lửa chưa rời bệ: Bấm Shift để tăng ga hoặc kiểm tra lực đẩy động cơ!', 'warn');
+      this.event(tr('⚠️ Tên lửa chưa rời bệ: Bấm Shift để tăng ga hoặc kiểm tra lực đẩy động cơ!', '⚠️ Rocket has not lifted off: Press Shift to throttle up or check engine thrust!'), 'warn');
     }
     if (this.phase === 'flight' && !this.lifted && this.met > 40 && !this.resultShown && !P.crashed && !P.isRover && !P.isBoat && !P.isPlane) {
       P.engineOn = false;
-      this.showResult(false, 'Tên lửa không đủ lực đẩy để rời bệ phóng sau 40 giây.');
+      this.showResult(false, tr('Tên lửa không đủ lực đẩy để rời bệ phóng sau 40 giây.', 'Rocket lacked sufficient thrust to leave the launchpad after 40 seconds.'));
     }
     if (this.phase === 'crashed' && !this.resultShown && !this.flagSpot) { /* result scheduled by explode() */ }
 
@@ -3515,6 +3802,77 @@ export class LaunchScene {
         this.flagObj.rotation.set(0, 0, -th);
       }
     }
+    // Update Launchpad Astronauts (standing on the pad before liftoff)
+    if (this.padAstronautMeshes && this.padAstronautMeshes.length) {
+      const P = this.player;
+      const showOnPad = (this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')))) && F.ref === 'earth' && F.alt < 5000;
+      for (let i = 0; i < this.padAstronautMeshes.length; i++) {
+        const m = this.padAstronautMeshes[i];
+        const vis = !!(showOnPad && i < this.astronautsAboard);
+        m.visible = vis;
+        if (vis && m.userData) {
+          const ph = this.time * 5.2 + (m.userData.phaseOffset || 0);
+          if (m.userData.rightArm) m.userData.rightArm.rotation.z = -2.35 + Math.sin(ph) * 0.35;
+          if (m.userData.leftLeg) m.userData.leftLeg.rotation.x = Math.sin(ph * 0.5) * 0.12;
+          if (m.userData.rightLeg) m.userData.rightLeg.rotation.x = -Math.sin(ph * 0.5) * 0.12;
+        }
+      }
+    }
+    // Update Deployed Astronauts on Planets / Moons
+    if (this.deployedAstronauts && this.deployedAstronauts.length) {
+      for (const a of this.deployedAstronauts) {
+        const m = a.mesh;
+        if (!m) continue;
+        if (F.ref !== a.body) {
+          m.visible = false;
+          continue;
+        }
+        if (a.dropH > 0) {
+          a.dropH = Math.max(0, a.dropH - dt * 16);
+        }
+        const ph = this.time * 4.8 + (m.userData?.phaseOffset || 0);
+        const hopY = a.mode === 'surface' && a.dropH <= 0 ? Math.max(0, Math.sin(ph * 0.85)) * 0.45 : 0;
+        const walkX = a.mode === 'surface' && a.dropH <= 0 ? Math.sin(ph * 0.35) * 1.4 : 0;
+
+        if (m.userData) {
+          if (m.userData.rightArm) m.userData.rightArm.rotation.z = -2.35 + Math.sin(ph * 1.2) * 0.42;
+          if (m.userData.leftArm) m.userData.leftArm.rotation.x = Math.sin(ph * 0.85) * 0.35;
+          if (m.userData.leftLeg) m.userData.leftLeg.rotation.x = Math.sin(ph * 0.85) * 0.45;
+          if (m.userData.rightLeg) m.userData.rightLeg.rotation.x = -Math.sin(ph * 0.85) * 0.45;
+        }
+
+        if (a.mode === 'eva') {
+          m.visible = true;
+          const bobY = Math.sin(ph * 0.6) * 0.8;
+          m.position.set(a.relX + walkX * 0.4, a.relY + bobY, a.relZ);
+          m.rotation.set(Math.sin(ph * 0.3) * 0.15, Math.sin(ph * 0.25) * 0.4, 0);
+        } else if (a.body === 'earth') {
+          const ok = Math.abs(a.sx - F.sx) < 50000 && F.alt < 50000;
+          m.visible = ok;
+          if (ok) {
+            m.position.set((a.sx + walkX) - F.sx, (a.h + a.dropH + hopY) - F.alt, a.z - S.z);
+            m.rotation.set(0, Math.sin(ph * 0.3) * 0.35, 0);
+          }
+        } else {
+          const B = BODIES[a.body] || BODIES.moon;
+          const fR = B.R;
+          const bodyMesh = a.body === 'moon' ? this.moon : (this.planets[a.body] || this.moon);
+          const curPsi = a.basePsi + walkX / fR;
+          const th = curPsi - F.phiRot;
+          const ok = Math.abs(th) * fR < 120e3 && F.alt < 90e3;
+          m.visible = ok;
+          if (ok && bodyMesh) {
+            const rAlt = fR + a.h + a.dropH + hopY;
+            m.position.set(
+              bodyMesh.position.x + rAlt * Math.sin(th),
+              bodyMesh.position.y + rAlt * Math.cos(th),
+              bodyMesh.position.z + (a.z - S.z)
+            );
+            m.rotation.set(0, Math.sin(ph * 0.3) * 0.35, -th);
+          }
+        }
+      }
+    }
     // unrolled-surface world (ground, pad, sites, particles)
     this.world.position.set(-F.sx, -F.alt, -S.z);
     const near = F.ref === 'earth' && F.alt < 60000;
@@ -3897,7 +4255,7 @@ export class LaunchScene {
         beta: v.beta,
         ref: v.ref || 'earth',
         kind: v.kind === 'booster' ? 'booster' : 'stage',
-        name: v.label || (v.kind === 'booster' ? 'Tầng 1' : 'Tầng tách'),
+        name: v.label || (v.kind === 'booster' ? tr('Tầng 1', 'Stage 1') : tr('Tầng tách', 'Separated Stage')),
         color: '#ff7a3a',
         el: vesselElements(v),
         deletable: true,
@@ -3914,7 +4272,7 @@ export class LaunchScene {
         beta: st.beta,
         ref: obj.ref || 'earth',
         kind: obj.kind || 'vessel',
-        name: obj.name || 'Tên lửa vũ trụ',
+        name: obj.name || tr('Tên lửa vũ trụ', 'Spacecraft'),
         color: obj.kind === 'vessel' ? '#a78bfa' : '#ff7a3a',
         el: st.el,
         deletable: true,
@@ -3983,17 +4341,20 @@ export class LaunchScene {
 
     const others = [...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
-    const info = [`Quanh ${refLabel} · độ cao ${fmt(P.alt / 1000, 1)} km`, `Vận tốc quỹ đạo ${fmt(P.speedOrb)} m/s`];
+    const info = [
+      tr(`Quanh ${refLabel} · độ cao ${fmt(P.alt / 1000, 1)} km`, `Orbiting ${refLabel} · altitude ${fmt(P.alt / 1000, 1)} km`),
+      tr(`Vận tốc quỹ đạo ${fmt(P.speedOrb)} m/s`, `Orbital velocity ${fmt(P.speedOrb)} m/s`),
+    ];
     if (pred && pred.bodyCA && P.ref === 'earth') {
       for (const name of Object.keys(pred.bodyCA)) {
         if (name === 'sun') continue;
         const ca = pred.bodyCA[name];
         const B = BODIES[name];
-        if (B && ca && ca.d < B.soi * 2.5) info.push(`Tiếp cận ${B.label}: ${fmt((ca.d - B.R) / 1000, 0)} km (sau ${fmt((ca.t - t) / 3600, 1)} giờ)`);
+        if (B && ca && ca.d < B.soi * 2.5) info.push(tr(`Tiếp cận ${B.label}: ${fmt((ca.d - B.R) / 1000, 0)} km (sau ${fmt((ca.t - t) / 3600, 1)} giờ)`, `Closest approach ${B.label}: ${fmt((ca.d - B.R) / 1000, 0)} km (in ${fmt((ca.t - t) / 3600, 1)} h)`));
       }
     }
-    if (pred && pred.targetCA && pred.targetCA.d < 1e7 && this.mission.id === 'iss') info.push(`Tiếp cận ISS: ${fmt(pred.targetCA.d / 1000, 1)} km (sau ${fmt((pred.targetCA.t - t) / 60, 1)} phút)`);
-    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped }, beta: P.beta, name: 'Tàu hiện tại', ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
+    if (pred && pred.targetCA && pred.targetCA.d < 1e7 && this.mission.id === 'iss') info.push(tr(`Tiếp cận ISS: ${fmt(pred.targetCA.d / 1000, 1)} km (sau ${fmt((pred.targetCA.t - t) / 60, 1)} phút)`, `ISS approach: ${fmt(pred.targetCA.d / 1000, 1)} km (in ${fmt((pred.targetCA.t - t) / 60, 1)} min)`));
+    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped }, beta: P.beta, name: tr('Tàu hiện tại', 'Current Craft'), ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
   }
 
   fmtTime(sec) {
@@ -4020,7 +4381,7 @@ export class LaunchScene {
     if (this.hudTimer > 0) return;
     this.hudTimer = 0.066;
     if (showPip && b) {
-      $('pip-label').textContent = this.focus === b ? 'TÀU CHÍNH' : 'TẦNG 1';
+      $('pip-label').textContent = this.focus === b ? tr('TÀU CHÍNH', 'MAIN CRAFT') : tr('TẦNG 1', 'STAGE 1');
       const tgt = this.pipTarget;
       $('pip-status').textContent = `${b.rec ? b.rec.status() : ''} · ${tgt === b ? fmt(b.alt / 1000, 1) + ' km' : fmt(b.alt) + ' m'} · ${fmt(b.speedSurf)} m/s`;
     }
@@ -4043,7 +4404,9 @@ export class LaunchScene {
     $('h-met').textContent = `T${m < 0 ? '-' : '+'}${String(Math.floor(Math.abs(m) / 3600)).padStart(2, '0')}:${String(Math.floor(Math.abs(m) / 60) % 60).padStart(2, '0')}:${String(Math.floor(Math.abs(m)) % 60).padStart(2, '0')}`;
     // orbit
     const el = vesselElements(P), R = P.body.R;
-    $('h-body').textContent = (BODIES[P.ref] || BODIES.earth).label;
+    const curB = BODIES[P.ref] || BODIES.earth;
+    const curParent = curB.parent && curB.parent !== 'sun' ? BODIES[curB.parent] : null;
+    $('h-body').textContent = curParent ? `${curB.label} (${curParent.label})` : curB.label;
     $('h-ap-alt').textContent = el.e < 1 ? fmt((el.ap - R) / 1000, 1) + ' km' : '∞';
     $('h-pe-alt').textContent = (el.pe - R < 0 ? '−' : '') + fmt(Math.abs(el.pe - R) / 1000, 1) + ' km';
     $('h-period').textContent = el.e < 1 ? this.fmtTime(el.period) : '—';
@@ -4054,8 +4417,8 @@ export class LaunchScene {
       const ip = this.issOrbit.pos(this.simT), iv = this.issOrbit.vel(this.simT);
       const d = this.docked ? 0 : Math.hypot(ip.x - P.s.x, ip.y - P.s.y, P.s.z);
       const rv = this.docked ? 0 : Math.hypot(P.s.vx - iv.x, P.s.vy - iv.y, P.s.vz);
-      $('h-target-name').textContent = this.docked ? '🛰 ĐÃ GẮN VÀO ISS' : 'Mục tiêu · ISS';
-      $('h-tdist').textContent = this.docked ? '0.0 m (Đã khóa)' : (d >= 10000 ? fmt(d / 1000, 1) + ' km' : fmt(d, d < 100 ? 1 : 0) + ' m');
+      $('h-target-name').textContent = this.docked ? tr('🛰 ĐÃ GẮN VÀO ISS', '🛰 DOCKED WITH ISS') : tr('Mục tiêu · ISS', 'Target · ISS');
+      $('h-tdist').textContent = this.docked ? tr('0.0 m (Đã khóa)', '0.0 m (Locked)') : (d >= 10000 ? fmt(d / 1000, 1) + ' km' : fmt(d, d < 100 ? 1 : 0) + ' m');
       $('h-trel').textContent = fmt(rv, rv < 10 ? 2 : 0) + ' m/s';
     }
     // docking HUD
@@ -4070,7 +4433,7 @@ export class LaunchScene {
       const att = THREE.MathUtils.radToDeg(wrapPi(P.beta - g.beta));
       const sc = clamp(90 / Math.max(2, Math.abs(along), Math.abs(latY) * 3, Math.abs(ez) * 3), 0.5, 40);
       $('dk-dot').style.transform = `translate(${clamp(ez * sc, -90, 90)}px, ${clamp(-latY * sc, -90, 90)}px)`;
-      $('dk-info').innerHTML = this.docked ? '🛰 ĐÃ GHÉP NỐI · ĐANG BAY CÙNG ISS' : `Khoảng cách <b>${fmt(Math.max(0, along), 1)} m</b> · lệch <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · tốc độ <b>${fmt(rv, 2)} m/s</b> · góc <b>${fmt(att, 1)}°</b>`;
+      $('dk-info').innerHTML = this.docked ? tr('🛰 ĐÃ GHÉP NỐI · ĐANG BAY CÙNG ISS', '🛰 DOCKED · ORBITING WITH ISS') : tr(`Khoảng cách <b>${fmt(Math.max(0, along), 1)} m</b> · lệch <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · tốc độ <b>${fmt(rv, 2)} m/s</b> · góc <b>${fmt(att, 1)}°</b>`, `Distance <b>${fmt(Math.max(0, along), 1)} m</b> · offset <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · speed <b>${fmt(rv, 2)} m/s</b> · angle <b>${fmt(att, 1)}°</b>`);
     }
     // systems
     const sasModes = tr(SAS_MODES_VI, SAS_MODES_EN);
@@ -4109,6 +4472,44 @@ export class LaunchScene {
     $('h-cam').textContent = camModes[this.camMode];
     const killsEl = $('h-alien-kills');
     if (killsEl) killsEl.textContent = String(this.aliensKilled || 0);
+    const maxAstro = this.maxAstronauts || 10;
+    const isOnLaunchpad = this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
+    const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && (P.ref !== 'earth' || !!P.landed);
+    const curBodyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P?.ref).length;
+    const astroEl = $('h-astronauts');
+    if (astroEl) {
+      astroEl.textContent = curBodyDeployed > 0
+        ? `${this.astronautsAboard}/${maxAstro} (${tr('Đã thả', 'Out')}: ${curBodyDeployed})`
+        : `${this.astronautsAboard} / ${maxAstro}`;
+    }
+    const astroBadge = $('astro-count-badge');
+    if (astroBadge) {
+      astroBadge.textContent = curBodyDeployed > 0
+        ? `${this.astronautsAboard} / ${maxAstro} · ${tr('Đã thả', 'Deployed')}: ${curBodyDeployed}/${maxAstro}`
+        : `${this.astronautsAboard} / ${maxAstro}`;
+    }
+    const astroPadBox = $('astro-pad-btns');
+    if (astroPadBox) {
+      astroPadBox.classList.toggle('hidden', !isOnLaunchpad);
+      astroPadBox.querySelectorAll('button[data-add-astro]').forEach((btn) => {
+        btn.disabled = this.astronautsAboard >= maxAstro;
+      });
+    }
+    const astroDeployBox = $('astro-deploy-btns');
+    if (astroDeployBox) {
+      astroDeployBox.classList.toggle('hidden', !canShowDeploy);
+    }
+    const btnAstroDeploy = $('btn-astro-deploy');
+    if (btnAstroDeploy && canShowDeploy) {
+      const bLabel = (BODIES[P.ref] || BODIES.earth).label;
+      if (this.astronautsAboard > 0) {
+        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Thả phi hành gia xuống ${bLabel} (${this.astronautsAboard})`, `Deploy Astronauts on ${bLabel} (${this.astronautsAboard})`)}`;
+      } else if (curBodyDeployed < maxAstro) {
+        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Thả phi hành gia xuống ${bLabel} (${curBodyDeployed}/${maxAstro})`, `Deploy Astronaut on ${bLabel} (${curBodyDeployed}/${maxAstro})`)}`;
+      } else {
+        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Đã thả đủ ${maxAstro}/${maxAstro} phi hành gia trên ${bLabel}`, `All ${maxAstro}/${maxAstro} Astronauts Deployed on ${bLabel}`)}`;
+      }
+    }
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       const activeWeapons = this.getActivePlayerWeapons();

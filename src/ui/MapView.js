@@ -1739,7 +1739,8 @@ export class MapView {
     // Moon badge
     const moonP = this.projectToScreen(moonV3, W, H);
     if (moonP) {
-      const br = this.drawBadge(ctx, moonP.x, moonP.y, `🌕 ${BODIES.moon.label}`, '#f1f5f9', this.focus === 'moon');
+      const moonSub = `${tr('Thân chủ', 'Parent')}: ${BODIES.earth.label}`;
+      const br = this.drawBadge(ctx, moonP.x, moonP.y, `🌕 ${BODIES.moon.label}`, '#f1f5f9', this.focus === 'moon', moonSub);
       this.hudTargets.push({ x: moonP.x, y: moonP.y, ...br, focus: 'moon' });
     }
 
@@ -1748,9 +1749,9 @@ export class MapView {
     for (const name of NON_EARTH_BODIES) {
       const B = BODIES[name];
       const isMoon = B.parent && B.parent !== 'sun';
+      const parentB = isMoon ? BODIES[B.parent] : null;
       if (isMoon) {
         const parentV3 = planetV3s[B.parent];
-        const parentB = BODIES[B.parent];
         const camToParent = parentV3 ? this.camera.position.distanceTo(parentV3) : Infinity;
         const showMoon = this.focus === name || this.focus === B.parent || focusParent === B.parent || camToParent < (parentB ? parentB.soi * SCALE * 3.2 : 45000);
         if (!showMoon) continue;
@@ -1759,7 +1760,8 @@ export class MapView {
       if (!pv3) continue;
       const pp = this.projectToScreen(pv3, W, H);
       if (pp) {
-        const br = this.drawBadge(ctx, pp.x, pp.y, `${B.icon} ${B.label}`, B.color, this.focus === name);
+        const sub = isMoon && parentB ? `${tr('Thân chủ', 'Parent')}: ${parentB.label}` : null;
+        const br = this.drawBadge(ctx, pp.x, pp.y, `${B.icon} ${B.label}`, B.color, this.focus === name, sub);
         this.hudTargets.push({ x: pp.x, y: pp.y, ...br, focus: name });
       }
     }
@@ -1815,7 +1817,7 @@ export class MapView {
     if (vesselP) {
       const vAltKm = S.vessel.alt ? (S.vessel.alt / 1000).toFixed(1) : null;
       const sub = vAltKm ? `${vAltKm} km` : null;
-      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, '🚀 ' + (S.name || 'Tàu vũ trụ'), '#38bdf8', this.focus === 'vessel', sub, true);
+      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, '🚀 ' + (S.name || tr('Tàu vũ trụ', 'Spacecraft')), '#38bdf8', this.focus === 'vessel', sub, true);
       this.hudTargets.push({
         x: vesselP.x,
         y: vesselP.y,
@@ -1844,7 +1846,7 @@ export class MapView {
       const impP = this.projectToScreen(this.impactMarker.position, W, H);
       if (impP) {
         const impLabel = (BODIES[S.pred.impact.body] || BODIES.earth).label;
-        this.drawBadge(ctx, impP.x, impP.y, '⚠️ Va chạm (' + impLabel + ')', '#ef4444', false);
+        this.drawBadge(ctx, impP.x, impP.y, tr('⚠️ Va chạm (' + impLabel + ')', '⚠️ Impact (' + impLabel + ')'), '#ef4444', false);
       }
     }
 
@@ -1963,26 +1965,48 @@ export class MapView {
     const el = S.el;
     const pred = S.pred;
     const refB = BODIES[S.ref] || BODIES.earth;
+    const focusB = BODIES[this.focus] || null;
+    const targetB = focusB || refB;
+    const isTargetMoon = !!(targetB.parent && targetB.parent !== 'sun');
+    const parentB = targetB.parent ? BODIES[targetB.parent] : null;
 
-    const rows = [
-      { label: tr('Thân chủ', 'Reference Body'), val: refB.label },
-      { label: tr('Độ cao', 'Altitude'), val: P.alt !== undefined ? fmt(P.alt / 1000, 1) + ' km' : '—' },
-      { label: tr('Vận tốc QĐ', 'Orbital Speed'), val: P.speedOrb !== undefined ? fmt(P.speedOrb, 0) + ' m/s' : '—' },
-    ];
+    const rows = [];
+    if (isTargetMoon && parentB) {
+      rows.push({ label: tr('Mặt trăng', 'Moon'), val: `${targetB.icon} ${targetB.label}` });
+      rows.push({ label: tr('Thân chủ', 'Parent Body'), val: `${parentB.icon} ${parentB.label}` });
+    } else if (targetB.parent === 'sun' && parentB) {
+      rows.push({ label: tr('Hành tinh', 'Planet'), val: `${targetB.icon} ${targetB.label}` });
+      rows.push({ label: tr('Thân chủ', 'Parent Body'), val: `${parentB.icon} ${parentB.label}` });
+    } else {
+      rows.push({ label: tr('Ngôi sao trung tâm', 'Central Star'), val: `${targetB.icon} ${targetB.label}` });
+    }
 
-    if (el) {
-      if (el.e < 1) {
-        const R = refB.R;
-        rows.push({ label: tr('Viễn điểm (Ap)', 'Apoapsis (Ap)'), val: fmt((el.ap - R) / 1000, 0) + ' km' });
-        rows.push({ label: tr('Cận điểm (Pe)', 'Periapsis (Pe)'), val: fmt((el.pe - R) / 1000, 0) + ' km' });
-        rows.push({ label: tr('Độ dẹt (e)', 'Eccentricity (e)'), val: el.e.toFixed(4) });
-        if (el.period && isFinite(el.period)) {
-          const min = Math.floor(el.period / 60);
-          rows.push({ label: tr('Chu kỳ', 'Period'), val: min >= 60 ? (min / 60).toFixed(1) + tr(' giờ', ' hr') : min + tr(' phút', ' min') });
+    if (focusB && focusB.name !== S.ref) {
+      if (isTargetMoon && parentB) {
+        rows.push({ label: tr('Độ cao QĐ', 'Orbit Altitude'), val: fmt((targetB.a - parentB.R) / 1000, 0) + ' km' });
+        rows.push({ label: tr('Vận tốc QĐ', 'Orbital Speed'), val: fmt(targetB.a * targetB.n, 0) + ' m/s' });
+      }
+      rows.push({ label: tr('Bán kính', 'Radius'), val: fmt(targetB.R / 1000, 0) + ' km' });
+      rows.push({ label: tr('Trọng lực (g)', 'Surface Gravity'), val: targetB.g.toFixed(2) + ' m/s²' });
+      rows.push({ label: tr('Vị trí tàu', 'Craft Location'), val: `${refB.icon} ${refB.label}` });
+    } else {
+      rows.push({ label: tr('Độ cao', 'Altitude'), val: P.alt !== undefined ? fmt(P.alt / 1000, 1) + ' km' : '—' });
+      rows.push({ label: tr('Vận tốc QĐ', 'Orbital Speed'), val: P.speedOrb !== undefined ? fmt(P.speedOrb, 0) + ' m/s' : '—' });
+
+      if (el) {
+        if (el.e < 1) {
+          const R = refB.R;
+          rows.push({ label: tr('Viễn điểm (Ap)', 'Apoapsis (Ap)'), val: fmt((el.ap - R) / 1000, 0) + ' km' });
+          rows.push({ label: tr('Cận điểm (Pe)', 'Periapsis (Pe)'), val: fmt((el.pe - R) / 1000, 0) + ' km' });
+          rows.push({ label: tr('Độ dẹt (e)', 'Eccentricity (e)'), val: el.e.toFixed(4) });
+          if (el.period && isFinite(el.period)) {
+            const min = Math.floor(el.period / 60);
+            rows.push({ label: tr('Chu kỳ', 'Period'), val: min >= 60 ? (min / 60).toFixed(1) + tr(' giờ', ' hr') : min + tr(' phút', ' min') });
+          }
+        } else {
+          rows.push({ label: tr('Quỹ đạo', 'Trajectory'), val: tr('Thoát ly (Hyperbolic)', 'Escape (Hyperbolic)') });
+          rows.push({ label: tr('Độ dẹt (e)', 'Eccentricity (e)'), val: el.e.toFixed(3) });
         }
-      } else {
-        rows.push({ label: tr('Quỹ đạo', 'Trajectory'), val: tr('Thoát ly (Hyperbolic)', 'Escape (Hyperbolic)') });
-        rows.push({ label: tr('Độ dẹt (e)', 'Eccentricity (e)'), val: el.e.toFixed(3) });
       }
     }
 

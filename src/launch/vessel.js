@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { PARTS, G0, R as CORE_R } from '../parts.js';
 import { rk4, keplerStep, coastStep, gravity, refBody, bodyInfo, bodyState, bodyPos, bodyRotation, bodyOmega, angOf, wrapPi } from '../sim/orbit.js';
 import { ATM_H, ATM_TOP, RHO0, EARTH_A, R_SUN } from '../sim/constants.js';
+import { tr } from '../i18n.js';
 
 const _g = { x: 0, y: 0, z: 0 };
 const _bp = { x: 0, y: 0, z: 0 }, _bv = { x: 0, y: 0, z: 0 }, _sp = { x: 0, y: 0, z: 0 };
@@ -631,15 +632,15 @@ export class Vessel {
           return;
         }
         if (chuteOk && sp < 16) this.settle(surf, t, 'splash');
-        else this.crash(sp > 40 ? 'Lao xuống biển!' : 'Rơi xuống biển!', 'water', details);
+        else this.crash(sp > 40 ? tr('Lao xuống biển!', 'Plunged into the ocean!') : tr('Rơi xuống biển!', 'Crashed into the ocean!'), 'water', details);
       } else if (this.isRover) {
         if (sp < 55 && tilt < 0.7) {
           this.groundSpeed = vs.e;
           this.settle(surf, t, 'rover');
-        } else this.crash(sp > 60 ? 'Lao xuống mặt đất!' : 'Va chạm mạnh khi tiếp đất!', 'ground', details);
+        } else this.crash(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground', details);
       } else if (this.isBoat) {
         if (sp < 7) this.settle(surf, t, 'beached');
-        else this.crash('Tàu va vào bờ đá!', 'ground', details);
+        else this.crash(tr('Tàu va vào bờ đá!', 'Boat crashed into rocky shore!'), 'ground', details);
       } else if (this.isPlane) {
         if (vs.u > 0) return; // Climbing/taking off
         const vertRate = Math.abs(vs.u);
@@ -648,12 +649,12 @@ export class Vessel {
           this.planeRollSpeed = Math.max(0, vs.e);
           this.settle(surf, t, 'landed');
         } else if (surf.water) {
-          this.crash('Máy bay rơi xuống biển!', 'water', details);
+          this.crash(tr('Máy bay rơi xuống biển!', 'Aircraft crashed into the ocean!'), 'water', details);
         } else {
-          this.crash(vertRate > 30 ? 'Lao máy bay xuống mặt đất!' : 'Va chạm mạnh khi hạ cánh!', 'ground', details);
+          this.crash(vertRate > 30 ? tr('Lao máy bay xuống mặt đất!', 'Aircraft slammed into the ground!') : tr('Va chạm mạnh khi hạ cánh!', 'Hard impact on landing!'), 'ground', details);
         }
       } else if (sp < vLim && Math.abs(vs.e) < 4 && tilt < (legsOk ? 0.3 : 0.45)) this.settle(surf, t, 'landed');
-      else this.crash(sp > 60 ? 'Lao xuống mặt đất!' : 'Va chạm mạnh khi tiếp đất!', 'ground', details);
+      else this.crash(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground', details);
     }
   }
 

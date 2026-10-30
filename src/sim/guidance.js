@@ -1,6 +1,7 @@
 // Autopilot programs: ascent to orbit, booster recovery, ISS rendezvous & docking, lunar/planetary mission legs.
 import { elements, angOf, wrapPi, predict, moonPos, moonVel, bodyPos, bodyVel, bodyInfo } from './orbit.js';
 import { MU_E, MU_M, R_E, R_M, MOON_A, MOON_N, ATM_TOP, ATM_H, RHO0, G0, LZ_X, BODIES } from './constants.js';
+import { tr } from '../i18n.js';
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const D2R = Math.PI / 180;
@@ -107,9 +108,16 @@ export function poweredDescent(v, o = {}) {
 export class AscentProgram {
   constructor(targetAlt, body = 'earth') {
     this.targetAlt = targetAlt; this.body = body; this.phase = 'ascent';
-    this.label = 'Bay lên quỹ đạo';
+    this.label = tr('Bay lên quỹ đạo', 'Ascent to Orbit');
   }
-  status() { return { ascent: 'Quay trọng lực', coast: 'Bay quán tính tới viễn điểm', circ: 'Đốt tròn hoá quỹ đạo', done: 'Đã vào quỹ đạo' }[this.phase]; }
+  status() {
+    return {
+      ascent: tr('Quay trọng lực', 'Gravity turn'),
+      coast: tr('Bay quán tính tới viễn điểm', 'Coasting to apoapsis'),
+      circ: tr('Đốt tròn hoá quỹ đạo', 'Circularization burn'),
+      done: tr('Đã vào quỹ đạo', 'In orbit'),
+    }[this.phase];
+  }
   update(v, sc) {
     const B = bodyInfo(this.body);
     const el = vesselElements(v);
@@ -133,7 +141,7 @@ export class AscentProgram {
           sc.autoStage(v, 'recover');
         }
       }
-      if (apAlt >= this.targetAlt) { v.engineOn = false; this.phase = 'coast'; sc.event('Tắt động cơ – viễn điểm đạt ' + Math.round(apAlt / 1000) + ' km.'); }
+      if (apAlt >= this.targetAlt) { v.engineOn = false; this.phase = 'coast'; sc.event(tr('Tắt động cơ – viễn điểm đạt ' + Math.round(apAlt / 1000) + ' km.', 'MECO – apoapsis reached ' + Math.round(apAlt / 1000) + ' km.')); }
     } else if (this.phase === 'coast') {
       v.engineOn = false;
       v.ctl.targetBeta = betaFromAng(v, 90 * D2R);
@@ -145,7 +153,7 @@ export class AscentProgram {
       const burnT = (vCirc - vAp) / a;
       const ready = v.alt > (B.atm || 0) && el.tAp < burnT / 2 + 3;
       sc.requestWarp(ready || el.tAp < burnT / 2 + 25 ? 1 : v.alt > (B.atm || 0) ? 50 : 4);
-      if (ready || (v.vOrb.u < -5 && v.alt > (B.atm || 0))) { this.phase = 'circ'; sc.event('Bắt đầu đốt tròn hoá quỹ đạo.'); }
+      if (ready || (v.vOrb.u < -5 && v.alt > (B.atm || 0))) { this.phase = 'circ'; sc.event(tr('Bắt đầu đốt tròn hoá quỹ đạo.', 'Starting circularization burn.')); }
     } else if (this.phase === 'circ') {
       // horizontal burn, pitch up a little if we are falling
       const pitch = clamp(-v.vOrb.u * 0.02, -0.25, 0.35);
@@ -174,7 +182,17 @@ export class BoosterRecovery {
     v.ctl.targetBeta = v.beta;
   }
   status() {
-    return { coast: 'Tách tầng', flip: 'Lật đầu', boostback: 'Đốt quay về', fall: 'Rơi tự do – bung cánh lưới', entry: 'Đốt khi vào khí quyển', glide: 'Lướt bằng cánh lưới', landing: 'Đốt hạ cánh', done: 'Đã hạ cánh', lost: 'Mất tầng đẩy' }[this.phase];
+    return {
+      coast: tr('Tách tầng', 'Stage sep'),
+      flip: tr('Lật đầu', 'Flip maneuver'),
+      boostback: tr('Đốt quay về', 'Boostback burn'),
+      fall: tr('Rơi tự do – bung cánh lưới', 'Freefall – grid fins deployed'),
+      entry: tr('Đốt khi vào khí quyển', 'Entry burn'),
+      glide: tr('Lướt bằng cánh lưới', 'Grid fin glide'),
+      landing: tr('Đốt hạ cánh', 'Landing burn'),
+      done: tr('Đã hạ cánh', 'Landed'),
+      lost: tr('Mất tầng đẩy', 'Booster lost'),
+    }[this.phase];
   }
   update(dt) {
     const v = this.v, sc = this.sc;
@@ -195,7 +213,7 @@ export class BoosterRecovery {
         if (sc.recoveryMode !== 'asds' && (dvAvail > dvBack + 450 || !shipOK)) { this.site = 'lz'; this.targetX = LZ_X; }
         else { this.site = 'ship'; this.targetX = imp.x; sc.placeDroneShip(imp.x); }
         v.finsTarget = 1;
-        sc.event(this.site === 'lz' ? 'Tầng 1: quay về bãi đáp LZ-1.' : 'Tầng 1: hạ cánh trên sà lan ngoài biển.', '');
+        sc.event(this.site === 'lz' ? tr('Tầng 1: quay về bãi đáp LZ-1.', 'Stage 1: returning to LZ-1.') : tr('Tầng 1: hạ cánh trên sà lan ngoài biển.', 'Stage 1: landing on offshore drone ship.'), '');
       }
     } else if (this.phase === 'flip') {
       v.engineOn = false;
@@ -207,14 +225,14 @@ export class BoosterRecovery {
       v.engMode = 'three'; v.throttle = 1; v.engineOn = true;
       const imp = predictImpact(v, 9);
       const aim = this.site === 'lz' ? this.targetX - 1635 : this.targetX;
-      if (imp.x <= aim || v.fuelTotal() <= 0.2) { v.engineOn = false; this.phase = 'fall'; this.t = 0; sc.event('Tầng 1: kết thúc đốt quay về.'); }
+      if (imp.x <= aim || v.fuelTotal() <= 0.2) { v.engineOn = false; this.phase = 'fall'; this.t = 0; sc.event(tr('Tầng 1: kết thúc đốt quay về.', 'Stage 1: boostback burn complete.')); }
     } else if (this.phase === 'fall') {
       v.engineOn = false;
       v.ctl.targetBeta = retro; v.ctl.kp = 2.0; v.ctl.kd = 2.5;
       const needEntry = this.site === 'ship' ? (v.speedSurf > 360 || v.alt < 28000) : (v.speedSurf > 680);
       if (v.alt < 42000 && v.alt > 18000 && v.vSurf.u < -150 && needEntry) {
         this.phase = 'entry';
-        sc.event('Tầng 1: đốt khi vào lại khí quyển.', 'warn');
+        sc.event(tr('Tầng 1: đốt khi vào lại khí quyển.', 'Stage 1: entry burn startup.'), 'warn');
       } else if (v.alt < 20000 && v.vSurf.u < 0) {
         this.phase = 'glide';
       }
@@ -243,7 +261,7 @@ export class BoosterRecovery {
       v.ctl.targetBeta = retro + steer;
       v.ctl.kp = 2.0; v.ctl.kd = 2.5;
       const started = poweredDescent(v, { multi: true, targetX: this.targetX, legsAt: 450 });
-      if (started) { this.phase = 'landing'; sc.event('Tầng 1: đốt hạ cánh!', 'warn'); }
+      if (started) { this.phase = 'landing'; sc.event(tr('Tầng 1: đốt hạ cánh!', 'Stage 1: landing burn!'), 'warn'); }
     } else if (this.phase === 'landing') {
       poweredDescent(v, { multi: true, targetX: this.targetX, legsAt: 450 });
       if (v.agl < 450) v.legsTarget = 1;
@@ -259,12 +277,18 @@ export class RendezvousProgram {
     this.target = target; this.parkAlt = parkAlt;
     this.phase = 'ascent';
     this.ascent = new AscentProgram(parkAlt, 'earth');
-    this.label = 'Ghép nối ISS';
+    this.label = tr('Ghép nối ISS', 'ISS Docking');
   }
   status() {
     return {
-      ascent: 'Lên quỹ đạo chờ – ' + this.ascent.status(), phasing: 'Chờ góc pha để chuyển quỹ đạo', transfer: 'Đốt chuyển quỹ đạo Hohmann',
-      coastT: 'Bay tới điểm gặp', brake: 'Phanh – khớp vận tốc', approach: 'Tiếp cận bằng RCS', final: 'Tiếp cận cuối – căn tâm cổng', docked: 'Đã ghép nối',
+      ascent: tr('Lên quỹ đạo chờ – ', 'Parking orbit ascent – ') + this.ascent.status(),
+      phasing: tr('Chờ góc pha để chuyển quỹ đạo', 'Phasing for orbital transfer'),
+      transfer: tr('Đốt chuyển quỹ đạo Hohmann', 'Hohmann transfer burn'),
+      coastT: tr('Bay tới điểm gặp', 'Coasting to intercept'),
+      brake: tr('Phanh – khớp vận tốc', 'Braking – velocity match'),
+      approach: tr('Tiếp cận bằng RCS', 'RCS approach'),
+      final: tr('Tiếp cận cuối – căn tâm cổng', 'Final approach – port alignment'),
+      docked: tr('Đã ghép nối', 'Docked'),
     }[this.phase];
   }
   update(v, sc, dt) {
@@ -277,7 +301,7 @@ export class RendezvousProgram {
     const T = this.target, t = sc.simT;
     if (v.ctx.fuel[v.activeSeg] <= 0 && this.phase !== 'approach' && this.phase !== 'final') sc.autoStage(v);
     if (this.phase === 'ascent') {
-      if (this.ascent.update(v, sc) === 'done') { this.phase = 'phasing'; sc.event('Vào quỹ đạo chờ. Đang chờ góc pha tới ISS.'); }
+      if (this.ascent.update(v, sc) === 'done') { this.phase = 'phasing'; sc.event(tr('Vào quỹ đạo chờ. Đang chờ góc pha tới ISS.', 'In parking orbit. Waiting for phase angle to ISS.')); }
       return;
     }
     const el = vesselElements(v);
@@ -298,7 +322,7 @@ export class RendezvousProgram {
       const wait = err > 0 ? err / rate : (err + 2 * Math.PI) / rate;
       sc.requestWarp(wait > 600 ? 1000 : wait > 120 ? 100 : wait > 25 ? 10 : 1);
       this.wait = wait;
-      if (Math.abs(err) < 0.004 || (err < 0 && err > -0.02)) { this.phase = 'transfer'; sc.event('Đốt chuyển quỹ đạo tới ISS.'); }
+      if (Math.abs(err) < 0.004 || (err < 0 && err > -0.02)) { this.phase = 'transfer'; sc.event(tr('Đốt chuyển quỹ đạo tới ISS.', 'Transfer burn to ISS.')); }
     } else if (this.phase === 'transfer') {
       v.ctl.targetBeta = progradeBeta(v);
       v.engineOn = true;
@@ -310,7 +334,7 @@ export class RendezvousProgram {
       v.engineOn = false;
       v.ctl.targetBeta = progradeBeta(v);
       sc.requestWarp(dist > 150e3 ? 100 : dist > 50e3 ? 50 : dist > 15e3 ? 10 : 1);
-      if (dist < 12000 || (el.tAp < 25 && el.tAp < el.period / 2)) { this.phase = 'brake'; sc.event('Gần ISS – khớp vận tốc.'); }
+      if (dist < 12000 || (el.tAp < 25 && el.tAp < el.period / 2)) { this.phase = 'brake'; sc.event(tr('Gần ISS – khớp vận tốc.', 'Near ISS – matching velocity.')); }
     } else if (this.phase === 'brake') {
       const rvx = v.s.vx - tv.x, rvy = v.s.vy - tv.y;
       const rv = Math.hypot(rvx, rvy);
@@ -323,12 +347,12 @@ export class RendezvousProgram {
       const a = maxAccel(v) || 1;
       v.engineOn = aligned && dv > 1.5;
       v.throttle = clamp(dv / a / 1.2, 0.02, 1);
-      if ((dv < 2 && dist < 2500) || dist < 400) { v.engineOn = false; this.phase = 'approach'; sc.event('Chuyển sang RCS – tiếp cận ISS.'); }
+      if ((dv < 2 && dist < 2500) || dist < 400) { v.engineOn = false; this.phase = 'approach'; sc.event(tr('Chuyển sang RCS – tiếp cận ISS.', 'Switching to RCS – approaching ISS.')); }
       this.rv = rv;
     } else if (this.phase === 'approach' || this.phase === 'final') {
       v.engineOn = false;
       const res = dockingGuidance(v, sc, this.phase === 'final');
-      if (this.phase === 'approach' && res.standDist < 3 && res.relSpeed < 0.4) { this.phase = 'final'; sc.event('Tiếp cận cuối cùng.'); }
+      if (this.phase === 'approach' && res.standDist < 3 && res.relSpeed < 0.4) { this.phase = 'final'; sc.event(tr('Tiếp cận cuối cùng.', 'Final approach.')); }
     }
   }
 }
@@ -376,16 +400,27 @@ export class MoonProgram {
     this.B = BODIES[targetBody] || BODIES.moon;
     this.phase = 'ascent';
     this.ascent = new AscentProgram(85e3, 'earth');
-    this.label = 'Bay tới ' + this.B.label;
+    this.label = tr('Bay tới ', 'Flight to ') + this.B.label;
     this.predT = 0;
   }
   status() {
     const nm = this.B.label;
     return {
-      ascent: 'Quỹ đạo chờ – ' + this.ascent.status(), tliWait: 'Chờ cửa sổ phóng tới ' + nm, tli: 'Đốt chuyển quỹ đạo tới ' + nm,
-      cruise: 'Bay tới ' + nm, capture: 'Đốt hãm – vào quỹ đạo ' + nm, deorbit: 'Rời quỹ đạo – chuẩn bị hạ cánh', descent: 'Hạ cánh tự động xuống ' + nm,
-      surface: 'Trên bề mặt ' + nm, lunarAscent: 'Cất cánh khỏi ' + nm + ' – ' + (this.lAscent ? this.lAscent.status() : ''), teiWait: 'Chờ thời điểm quay về',
-      tei: 'Đốt quay về Trái Đất', returnCruise: 'Bay về Trái Đất', reentry: 'Vào lại khí quyển', chutes: 'Hạ dù', done: 'Hoàn thành',
+      ascent: tr('Quỹ đạo chờ – ', 'Parking orbit – ') + this.ascent.status(),
+      tliWait: tr('Chờ cửa sổ phóng tới ', 'Waiting for transfer window to ') + nm,
+      tli: tr('Đốt chuyển quỹ đạo tới ', 'Transfer burn to ') + nm,
+      cruise: tr('Bay tới ', 'Cruising to ') + nm,
+      capture: tr('Đốt hãm – vào quỹ đạo ', 'Capture burn – entering orbit of ') + nm,
+      deorbit: tr('Rời quỹ đạo – chuẩn bị hạ cánh', 'Deorbit burn – preparing to land'),
+      descent: tr('Hạ cánh tự động xuống ', 'Powered descent to ') + nm,
+      surface: tr('Trên bề mặt ', 'On the surface of ') + nm,
+      lunarAscent: tr('Cất cánh khỏi ', 'Ascent from ') + nm + ' – ' + (this.lAscent ? this.lAscent.status() : ''),
+      teiWait: tr('Chờ thời điểm quay về', 'Waiting for return window'),
+      tei: tr('Đốt quay về Trái Đất', 'Trans-Earth injection burn'),
+      returnCruise: tr('Bay về Trái Đất', 'Coasting back to Earth'),
+      reentry: tr('Vào lại khí quyển', 'Atmospheric reentry'),
+      chutes: tr('Hạ dù', 'Parachute descent'),
+      done: tr('Hoàn thành', 'Completed'),
     }[this.phase];
   }
   update(v, sc, dt) {
@@ -393,7 +428,7 @@ export class MoonProgram {
     const TB = this.B;
     if (this.phase !== 'reentry' && this.phase !== 'chutes' && v.ctx.fuel[v.activeSeg] <= 0) sc.autoStage(v);
     if (this.phase === 'ascent') {
-      if (this.ascent.update(v, sc) === 'done') { this.phase = 'tliWait'; sc.event('Vào quỹ đạo chờ quanh Trái Đất.'); }
+      if (this.ascent.update(v, sc) === 'done') { this.phase = 'tliWait'; sc.event(tr('Vào quỹ đạo chờ quanh Trái Đất.', 'Entered Earth parking orbit.')); }
       return;
     }
     const el = vesselElements(v);
@@ -413,7 +448,7 @@ export class MoonProgram {
       if (err < 0.008 && err > -0.035) {
         this.phase = 'tli';
         this.rT = Math.hypot(bpFuture.x, bpFuture.y) || rT;
-        sc.event('Đốt chuyển quỹ đạo tới ' + TB.label + '!', 'warn');
+        sc.event(tr('Đốt chuyển quỹ đạo tới ' + TB.label + '!', 'Transfer burn to ' + TB.label + '!'), 'warn');
       }
     } else if (this.phase === 'tli') {
       v.ctl.targetBeta = progradeBeta(v); v.engineOn = true; v.throttle = 1;
@@ -429,7 +464,7 @@ export class MoonProgram {
           const ca = p.bodyCA && p.bodyCA[this.targetBody] ? p.bodyCA[this.targetBody].d : p.moonCA.d;
           this.ca = ca;
           if (ca < TB.R + Math.max(40e3, TB.atm + 30e3) || el.ap > rT * 1.05 || v.fuelTotal() <= 0) {
-            v.engineOn = false; this.phase = 'cruise'; sc.event('Kết thúc đốt – đang bay tới ' + TB.label + '.');
+            v.engineOn = false; this.phase = 'cruise'; sc.event(tr('Kết thúc đốt – đang bay tới ' + TB.label + '.', 'Burn complete – cruising to ' + TB.label + '.'));
           }
         }
       }
@@ -480,7 +515,7 @@ export class MoonProgram {
         const tPe = isFinite(el.tPe) ? el.tPe : 0;
         sc.requestWarp(tPe > burnT / 2 + 600 ? 1000 : tPe > burnT / 2 + 60 ? 50 : tPe > burnT / 2 + 8 ? 4 : 1);
         if (tPe < burnT / 2 + 4 || (el.pe - TB.R < Math.max(12e3, (TB.atm || 0) + 8e3) && v.alt < Math.max(60e3, (TB.atm || 0) + 25e3))) {
-          this.phase = 'capture'; sc.event('Đốt hãm vào quỹ đạo ' + TB.label + '.', 'warn');
+          this.phase = 'capture'; sc.event(tr('Đốt hãm vào quỹ đạo ' + TB.label + '.', 'Capture burn into ' + TB.label + ' orbit.'), 'warn');
         }
       }
     } else if (this.phase === 'capture') {
@@ -497,7 +532,7 @@ export class MoonProgram {
       const dv = Math.max(10, v.speedOrb - Math.sqrt(TB.mu / v.rRel.r));
       v.throttle = clamp(dv / a, 0.08, 1);
       if ((el.e < 0.12 && el.pe - TB.R > Math.max(8e3, TB.atm || 0)) || (el.e < 0.65 && el.ap - TB.R < Math.max(120e3, (TB.atm || 0) + 60e3) && el.pe - TB.R > Math.max(8e3, TB.atm || 0))) {
-        v.engineOn = false; this.phase = 'deorbit'; this.t = 0; sc.event('Đã vào quỹ đạo ' + TB.label + '!');
+        v.engineOn = false; this.phase = 'deorbit'; this.t = 0; sc.event(tr('Đã vào quỹ đạo ' + TB.label + '!', 'Entered ' + TB.label + ' orbit!'));
         sc.flag(this.targetBody === 'moon' ? 'lunarOrbit' : this.targetBody + 'Orbit');
       }
       if (v.ctx.fuel[v.activeSeg] <= 0) sc.autoStage(v);
@@ -511,7 +546,7 @@ export class MoonProgram {
       v.ctl.targetBeta = progradeBeta(v) + Math.PI;
       const aligned = Math.abs(wrapPi(v.ctl.targetBeta - v.beta)) < 0.1;
       v.engineOn = aligned && this.t > 3; v.throttle = 0.5;
-      if (el.pe - TB.R < 4000) { v.engineOn = false; this.phase = 'descent'; v._descBurn = false; sc.event('Bắt đầu hạ cánh xuống ' + TB.label + '.'); }
+      if (el.pe - TB.R < 4000) { v.engineOn = false; this.phase = 'descent'; v._descBurn = false; sc.event(tr('Bắt đầu hạ cánh xuống ' + TB.label + '.', 'Beginning descent to ' + TB.label + '.')); }
       if (v.ctx.fuel[v.activeSeg] <= 0) sc.autoStage(v);
     } else if (this.phase === 'descent') {
       sc.requestWarp(v.alt > Math.max(25000, TB.atm) && !v._descBurn ? 10 : 1);
@@ -525,9 +560,9 @@ export class MoonProgram {
       }
     } else if (this.phase === 'surface') {
       this.t += dt; v.engineOn = false;
-      if (this.t > 12) { this.phase = 'lunarAscent'; this.lAscent = new AscentProgram(25e3, 'moon'); sc.event('Cất cánh khỏi Mặt Trăng!', 'warn'); }
+      if (this.t > 12) { this.phase = 'lunarAscent'; this.lAscent = new AscentProgram(25e3, 'moon'); sc.event(tr('Cất cánh khỏi Mặt Trăng!', 'Liftoff from the Moon!'), 'warn'); }
     } else if (this.phase === 'lunarAscent') {
-      if (this.lAscent.update(v, sc) === 'done') { this.phase = 'teiWait'; sc.event('Vào quỹ đạo Mặt Trăng – chờ quay về.'); }
+      if (this.lAscent.update(v, sc) === 'done') { this.phase = 'teiWait'; sc.event(tr('Vào quỹ đạo Mặt Trăng – chờ quay về.', 'In lunar orbit – waiting for Earth return window.')); }
     } else if (this.phase === 'teiWait') {
       v.engineOn = false; v.ctl.targetBeta = progradeBeta(v);
       const vr = Math.hypot(v.vRel.x, v.vRel.y) || 1;
@@ -539,7 +574,7 @@ export class MoonProgram {
         this.predT = 0.05;
         const p = predict(v.s.x, v.s.y, v.s.z, v.s.vx + dvT * v.vRel.x / vr, v.s.vy + dvT * v.vRel.y / vr, v.s.vz, t, { maxTime: 90000, maxSteps: 2000, earthStopAlt: 30e3 });
         this.earthPe = p.earthPe;
-        if (p.earthPe < R_E + 40e3) { this.phase = 'tei'; sc.event('Đốt quay về Trái Đất!', 'warn'); }
+        if (p.earthPe < R_E + 40e3) { this.phase = 'tei'; sc.event(tr('Đốt quay về Trái Đất!', 'Trans-Earth injection burn!'), 'warn'); }
       }
     } else if (this.phase === 'tei') {
       v.ctl.targetBeta = progradeBeta(v); v.engineOn = true;
@@ -549,7 +584,7 @@ export class MoonProgram {
         this.predT = 0.15;
         const p = predict(v.s.x, v.s.y, v.s.z, v.s.vx, v.s.vy, v.s.vz, t, { maxTime: 90000, maxSteps: 2000, earthStopAlt: 30e3 });
         this.earthPe = p.earthPe;
-        if (p.earthPe < R_E + 40e3) { v.engineOn = false; this.phase = 'returnCruise'; sc.event('Quỹ đạo quay về Trái Đất đã khớp.'); }
+        if (p.earthPe < R_E + 40e3) { v.engineOn = false; this.phase = 'returnCruise'; sc.event(tr('Quỹ đạo quay về Trái Đất đã khớp.', 'Earth return trajectory locked.')); }
       }
       if (v.ctx.fuel[v.activeSeg] <= 0) { if (!sc.autoStage(v)) { v.engineOn = false; this.phase = 'returnCruise'; } }
     } else if (this.phase === 'returnCruise') {
@@ -558,12 +593,12 @@ export class MoonProgram {
       if (v.ref === 'earth' && v.alt < 90e3) {
         this.phase = 'reentry';
         sc.jettisonToCapsule(v);
-        sc.event('Tách khoang – chuẩn bị vào lại khí quyển.', 'warn');
+        sc.event(tr('Tách khoang – chuẩn bị vào lại khí quyển.', 'Capsule separated – preparing for atmospheric reentry.'), 'warn');
       }
     } else if (this.phase === 'reentry') {
       v.engineOn = false;
       v.ctl.targetBeta = v.phi + Math.atan2(-v.vSurf.e, -v.vSurf.u); // nose retrograde → heat shield first
-      if (v.alt < 7000 && v.speedSurf < 320) { v.chuteTarget = 1; this.phase = 'chutes'; sc.event('Bung dù!', ''); }
+      if (v.alt < 7000 && v.speedSurf < 320) { v.chuteTarget = 1; this.phase = 'chutes'; sc.event(tr('Bung dù!', 'Parachutes deployed!'), ''); }
     } else if (this.phase === 'chutes') {
       v.ctl.targetBeta = null;
       if (v.landed) this.phase = 'done';

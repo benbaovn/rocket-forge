@@ -184,7 +184,7 @@ const PART_I18N = {
   },
   saturnS4BInter: {
     vi: { name: 'Cổ Côn Chuyển Tầng S-IVB / S-II (Tầng 4)', cat: 'Cấu trúc', desc: 'Cổ côn chuyển tầng sơn khối đen-trắng lệch bậc đặc trưng của Saturn V' },
-    en: { name: 'S-IVB / S-II Conical Interstage (Stage 4)', cat: 'Structure & Aero', desc: 'Tapered aft interstage frustum with stepped black-and-white roll pattern' },
+    en: { name: 'S-IVB / S-II Conical Interstage (Stage 4)', cat: 'Structural', desc: 'Tapered aft interstage frustum with stepped black-and-white roll pattern' },
   },
   saturnS2: {
     vi: { name: 'Tầng Đẩy S-II · 5× J-2 (Tầng 3)', cat: 'Nhiên liệu', desc: 'Tầng đẩy S-II sơn trắng in chữ dọc UNITED STATES cùng cụm 5 động cơ J-2' },
@@ -192,7 +192,7 @@ const PART_I18N = {
   },
   saturnS2Inter: {
     vi: { name: 'Vòng Chuyển Tầng S-II / S-IC (Tầng 2)', cat: 'Cấu trúc', desc: 'Vòng chuyển tầng S-II/S-IC kẻ sọc dọc đen-trắng kèm 8 động cơ đẩy Ullage' },
-    en: { name: 'S-II / S-IC Roll-Striped Interstage (Stage 2)', cat: 'Structure & Aero', desc: 'Black-and-white vertical roll-striped interstage with 8 ullage motors' },
+    en: { name: 'S-II / S-IC Roll-Striped Interstage (Stage 2)', cat: 'Structural', desc: 'Black-and-white vertical roll-striped interstage with 8 ullage motors' },
   },
   saturnS1: {
     vi: { name: 'Tầng Đẩy S-IC · 5× F-1 (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 S-IC khổng lồ in cờ Mỹ, chữ USA đỏ, 4 cánh đuôi trắng và 5 siêu động cơ F-1' },
@@ -865,6 +865,10 @@ export function applyLanguage(lang, app) {
   setTxt('#btn-rot-y', '🟢 Xoay Y (90°)', '🟢 Rotate Y (90°)');
   setTxt('#btn-rot-z', '🔵 Xoay Z (90°)', '🔵 Rotate Z (90°)');
   setTxt('#btn-rot-reset', '↺ Đặt lại', '↺ Reset');
+  setAttr('#btn-rot-x', 'title', 'Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X', 'Rotate around X axis (Pitch 90°) · Key 1 or X');
+  setAttr('#btn-rot-y', 'title', 'Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y', 'Rotate around Y axis (Yaw 90°) · Key 2 or Y');
+  setAttr('#btn-rot-z', 'title', 'Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z', 'Rotate around Z axis (Roll 90°) · Key 3 or Z');
+  setAttr('#btn-rot-reset', 'title', 'Đặt lại góc xoay ban đầu (0°)', 'Reset rotation angles (0°)');
   setTxt('#btn-side-toggle', '↔ Gắn sang 2 bên', '↔ Attach to Both Sides');
   setTxt('#btn-del', 'Xóa linh kiện (Del)', 'Delete Part (Del)');
 
@@ -872,6 +876,10 @@ export function applyLanguage(lang, app) {
   setTxt('#bar-rot-x', '🔴 Trục X (90°)', '🔴 X Axis (90°)');
   setTxt('#bar-rot-y', '🟢 Trục Y (90°)', '🟢 Y Axis (90°)');
   setTxt('#bar-rot-z', '🔵 Trục Z (90°)', '🔵 Z Axis (90°)');
+  setAttr('#bar-rot-x', 'title', 'Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X', 'Rotate around X axis (Pitch 90°) · Key 1 or X');
+  setAttr('#bar-rot-y', 'title', 'Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y', 'Rotate around Y axis (Yaw 90°) · Key 2 or Y');
+  setAttr('#bar-rot-z', 'title', 'Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z', 'Rotate around Z axis (Roll 90°) · Key 3 or Z');
+  setAttr('#bar-rot-reset', 'title', 'Đặt lại góc xoay ban đầu (0°)', 'Reset rotation angles (0°)');
 
   setHtml(
     '#build-ui .hint',
@@ -885,7 +893,8 @@ export function applyLanguage(lang, app) {
   if (leftReadouts.length >= 1) leftReadouts[0].textContent = tr('ĐỘ CAO', 'ALTITUDE');
   setTxt('#h-vel-l', 'VẬN TỐC', 'VELOCITY');
 
-  const leftSpans = document.querySelectorAll('#launch-ui .hud-left > .rows:nth-of-type(1) div span');
+  const leftRowGroups = document.querySelectorAll('#launch-ui .hud-left > .rows');
+  const leftSpans = leftRowGroups[0] ? leftRowGroups[0].querySelectorAll('div span') : [];
   if (leftSpans.length >= 7) {
     leftSpans[0].textContent = tr('Vận tốc đứng', 'Vertical Speed');
     leftSpans[1].textContent = tr('Vận tốc ngang', 'Horizontal Speed');
@@ -901,7 +910,7 @@ export function applyLanguage(lang, app) {
     const curBody = bodySpan ? bodySpan.textContent : tr('Trái Đất', 'Earth');
     orbitHeader.innerHTML = `${tr('Quỹ đạo', 'Orbit')} · <span id="h-body">${curBody}</span>`;
   }
-  const orbitSpans = document.querySelectorAll('#launch-ui .hud-left > .rows:nth-of-type(2) div span');
+  const orbitSpans = leftRowGroups[1] ? leftRowGroups[1].querySelectorAll('div span') : [];
   if (orbitSpans.length >= 3) {
     orbitSpans[0].textContent = tr('Viễn điểm (Ap)', 'Apoapsis (Ap)');
     orbitSpans[1].textContent = tr('Cận điểm (Pe)', 'Periapsis (Pe)');
@@ -921,7 +930,16 @@ export function applyLanguage(lang, app) {
     rightSpans[2].textContent = tr('Lái tự động', 'Autopilot');
     rightSpans[3].textContent = tr('Tua nhanh', 'Time Warp');
     rightSpans[4].textContent = 'Camera';
+    if (rightSpans[5]) rightSpans[5].textContent = tr('👽 Alien đã diệt', '👽 Aliens Killed');
+    if (rightSpans[6]) rightSpans[6].textContent = tr('👨‍🚀 Phi hành gia', '👨‍🚀 Astronauts');
   }
+  setTxt('#astro-bar-title', '👨‍🚀 PHI HÀNH GIA:', '👨‍🚀 ASTRONAUTS:');
+  setTxt('#btn-astro-add-1', '👨‍🚀 +1 Phi hành gia', '👨‍🚀 +1 Astronaut');
+  setTxt('#btn-astro-add-2', '👨‍🚀 +2 Phi hành gia', '👨‍🚀 +2 Astronauts');
+  setTxt('#btn-astro-add-3', '👨‍🚀 +3 Phi hành gia', '👨‍🚀 +3 Astronauts');
+  setTxt('#btn-astro-add-4', '👨‍🚀 +4 Phi hành gia', '👨‍🚀 +4 Astronauts');
+  setTxt('#btn-astro-add-5', '👨‍🚀 +5 Phi hành gia', '👨‍🚀 +5 Astronauts');
+  setTxt('#btn-astro-deploy', '👨‍🚀 Thả phi hành gia xuống', '👨‍🚀 Deploy Astronauts');
   setTxt('#btn-autopilot', '🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
   setTxt('#btn-toggle-map', '🌐 BẢN ĐỒ QUỸ ĐẠO 3D (M)', '🌐 3D ORBITAL MAP (M)');
   setTxt('#btn-teleport', '🪐 DỊCH CHUYỂN HÀNH TINH / MẶT TRĂNG (Y)', '🪐 TELEPORT PLANETS / MOONS (Y)');
@@ -984,6 +1002,11 @@ export function applyLanguage(lang, app) {
   setTxt('#map-focus-bar [data-focus="phobos"]', '🪨 Phobos', '🪨 Phobos');
   setTxt('#map-focus-bar [data-focus="deimos"]', '🪨 Deimos', '🪨 Deimos');
   setTxt('#map-focus-bar [data-focus="ceres"]', '🪨 Ceres', '🪨 Ceres');
+  setTxt('#map-focus-bar [data-focus="jupiter"]', '🟠 Sao Mộc', '🟠 Jupiter');
+  setTxt('#map-focus-bar [data-focus="saturn"]', '🪐 Sao Thổ', '🪐 Saturn');
+  setTxt('#map-focus-bar [data-focus="uranus"]', '🩵 Thiên Vương', '🩵 Uranus');
+  setTxt('#map-focus-bar [data-focus="neptune"]', '🔵 Hải Vương', '🔵 Neptune');
+  setTxt('#map-focus-bar [data-focus="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
 
   setTxt('#map-telemetry h4', 'THÔNG SỐ QUỸ ĐẠO', 'ORBITAL TELEMETRY');
   setTxt('#btn-map-delete', '🗑️ Xóa vật thể', '🗑️ Delete Object');

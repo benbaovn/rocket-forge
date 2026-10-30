@@ -238,6 +238,30 @@ const PART_I18N = {
     vi: { name: 'Tầng 1 Siêu Nặng N1 (Block A · 30× NK-15) (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 hình nón khổng lồ màu xám kim loại với 8 khối hộp khí động lớn, 4 cánh lưới chống ngang, váy đáy loe và vòng 30 động cơ NK-15' },
     en: { name: 'N1 Block A Super-Heavy First Stage · 30× NK-15 (Stage 1)', cat: 'Engines', desc: 'Giant conical metallic-grey Block A stage with 8 large faceted blisters, 4 strut-braced fins, flared base skirt & 30 NK-15 engines' },
   },
+  buranNose: {
+    vi: { name: 'Chóp Mũi Buran-Energia & Đai Gân Caro (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động màu xám xanh của hệ Buran, bồn trắng trên và đai gân dọc in 2 ô vuông caro đen + dù hạ cánh' },
+    en: { name: 'Buran-Energia Nose Cone & Ribbed Checker Collar (Stage 3)', cat: 'Command & Nose', desc: 'Bluish-grey Energia aerodynamic nose cone, white upper tank & vertically ribbed interstage collar with 2 staggered black squares + parachutes' },
+  },
+  buranShuttle: {
+    vi: { name: 'Tàu Con Thoi Buran & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu vũ trụ con thoi Buran gắn lưng Energia với buồng lái kính đen 6 ô, 2 cửa sổ nóc, mũi gạch chịu nhiệt đen, cánh tam giác kép viền đen, đuôi đứng & dù hạ cánh' },
+    en: { name: 'Buran Space Shuttle Orbiter & Mid Energia Core (Stage 2)', cat: 'Fuel Tanks', desc: 'Piggyback Soviet Buran space shuttle orbiter with 6-pane black V-windshield, 2 overhead windows, black thermal nose cap, double-delta wings & vertical tail fin' },
+  },
+  buranEnergia: {
+    vi: { name: 'Tầng Đẩy Buran-Energia & 4 Booster Zenit (Tầng 1)', cat: 'Động cơ', desc: 'Thân dưới Energia kèm 4 tầng đẩy phụ Zenit (Block A) ốp sườn xám xanh, 4 siêu động cơ RD-0120 ở tâm và 4 cụm động cơ RD-170' },
+    en: { name: 'Buran-Energia Super-Heavy Core & 4× Zenit Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 strap-on Zenit (Block A) boosters in bluish-grey shrouds, 4 central RD-0120 cryogenic engines & 4 RD-170 clusters' },
+  },
+  energiaNose: {
+    vi: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },
+    en: { name: 'Energia White Nose Cone ("ЭНЕРГИЯ") & Checker Collar (Stage 3)', cat: 'Command & Nose', desc: 'White Energia nose cone with button tip, red ЭНЕРГИЯ markings, ribbed grey collar with 2 staggered black squares + parachutes' },
+  },
+  energiaPolyus: {
+    vi: { name: 'Trạm Vũ Trụ МИР-2 (Polyus) & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu/Trạm chiến đấu quỹ đạo Polyus (МИР-2) sơn đen tuyền gắn lưng Energia kèm 2 bình phụ bên hông, cổ tản nhiệt kẻ sọc bạc & dù hạ cánh' },
+    en: { name: 'Polyus ("МИР-2") Orbital Spacecraft & Mid Energia Core (Stage 2)', cat: 'Fuel Tanks', desc: 'Matte-black Polyus (МИР-2) spacecraft mounted piggyback on Energia with conical nose, white МИР-2 lettering, side pods & ribbed silver radiator' },
+  },
+  energiaCore: {
+    vi: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
+    en: { name: 'Energia ("Энергия") Super-Heavy Core & 4× Zenit Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 Zenit strap-on boosters in stone-grey fairings, 4 central RD-0120 engines with black bands & 4 RD-170 nozzles' },
+  },
   ufoSaucer: {
     vi: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
     en: { name: 'Quantum UFO Flying Saucer', cat: 'Command & Nose', desc: 'Alien UFO flying saucer with crystal pilot dome, glowing plasma rim, 55-ton quantum battery, parachutes & anti-gravity core' },
@@ -251,7 +275,8 @@ export const PRESET_LABELS = {
   'N1 Liên Xô (Mặt Trăng)': { vi: '🚀 N1 Liên Xô (Siêu tên lửa Mặt Trăng)', en: '🚀 Soviet N1 (Super Heavy Lunar)' },
   'Titan IV (Tàu Voyager)': { vi: '🚀 Titan IV (Tàu thăm dò Voyager)', en: '🚀 Titan IV (Voyager Probe)' },
   'Tàu con thoi Space Shuttle': { vi: '🚀 Tàu con thoi Space Shuttle (NASA)', en: '🚀 Space Shuttle (NASA)' },
-  'Energia – Buran': { vi: '🚀 Energia – Buran (Liên Xô)', en: '🚀 Energia – Buran (USSR)' },
+  'Energia – Buran': { vi: '🚀 Tàu con thoi Buran (Energia – Buran)', en: '🚀 Energia – Buran (Space Shuttle)' },
+  'Tên lửa Energia (Мир-2 / Polyus)': { vi: '🚀 Tên lửa Energia (Энергия – Мир-2)', en: '🚀 Energia – Polyus (Энергия – Мир-2)' },
   'Proton-M (Nga)': { vi: '🚀 Proton-M (Nga – Trạm vũ trụ)', en: '🚀 Proton-M (Russia)' },
   'Ariane 5 (James Webb)': { vi: '🚀 Ariane 5 (Kính James Webb – ESA)', en: '🚀 Ariane 5 (JWST – ESA)' },
   'Atlas V (Sao Hỏa)': { vi: '🚀 Atlas V (Thám hiểm Sao Hỏa)', en: '🚀 Atlas V (Mars Explorer)' },
@@ -460,6 +485,28 @@ const MISSION_I18N = {
         deimosSOI: 'Enter Deimos Sphere of Influence',
         deimosOrbit: 'Enter Deimos orbit',
         deimosLanded: 'Land safely on Deimos',
+      },
+    },
+  },
+  ceres: {
+    vi: {
+      name: 'Thám hiểm Tiểu hành tinh Ceres',
+      desc: 'Bay vào Vành đai Tiểu hành tinh chính giữa Sao Hỏa và Sao Mộc, vào quỹ đạo và đáp xuống tiểu hành tinh / hành tinh lùn Ceres với hố va chạm Occator sáng rực.',
+      objs: {
+        orbit: 'Vào quỹ đạo Trái Đất',
+        ceresSOI: 'Vào vùng hấp dẫn Ceres',
+        ceresOrbit: 'Vào quỹ đạo Ceres',
+        ceresLanded: 'Hạ cánh xuống Ceres',
+      },
+    },
+    en: {
+      name: 'Ceres Asteroid Expedition',
+      desc: 'Fly into the Main Asteroid Belt between Mars and Jupiter, enter orbit and land on the dwarf planet / asteroid Ceres and its bright Occator Crater.',
+      objs: {
+        orbit: 'Enter Earth orbit',
+        ceresSOI: 'Enter Ceres Sphere of Influence',
+        ceresOrbit: 'Enter Ceres orbit',
+        ceresLanded: 'Land safely on Ceres',
       },
     },
   },
@@ -712,6 +759,7 @@ const BODY_LABELS = {
   mars: { vi: 'Sao Hỏa', en: 'Mars' },
   phobos: { vi: 'Phobos', en: 'Phobos' },
   deimos: { vi: 'Deimos', en: 'Deimos' },
+  ceres: { vi: 'Ceres', en: 'Ceres' },
   jupiter: { vi: 'Sao Mộc', en: 'Jupiter' },
   io: { vi: 'Io', en: 'Io' },
   europa: { vi: 'Europa', en: 'Europa' },
@@ -889,8 +937,10 @@ export function applyLanguage(lang, app) {
   setTxt('#tp-bar-btns [data-tp="mercury"]', '⚪ Sao Thủy', '⚪ Mercury');
   setTxt('#tp-bar-btns [data-tp="venus"]', '🟡 Sao Kim', '🟡 Venus');
   setTxt('#tp-bar-btns [data-tp="mars"]', '🔴 Sao Hỏa', '🔴 Mars');
+  setTxt('#tp-bar-btns [data-tp="olympus"]', '🌋 Olympus Mons', '🌋 Olympus Mons');
   setTxt('#tp-bar-btns [data-tp="phobos"]', '🪨 Phobos', '🪨 Phobos');
   setTxt('#tp-bar-btns [data-tp="deimos"]', '🪨 Deimos', '🪨 Deimos');
+  setTxt('#tp-bar-btns [data-tp="ceres"]', '🪨 Ceres', '🪨 Ceres');
   setTxt('#tp-bar-btns [data-tp="jupiter"]', '🟠 Sao Mộc', '🟠 Jupiter');
   setTxt('#tp-bar-btns [data-tp="io"]', '🌋 Io', '🌋 Io');
   setTxt('#tp-bar-btns [data-tp="europa"]', '🧊 Europa', '🧊 Europa');
@@ -933,6 +983,7 @@ export function applyLanguage(lang, app) {
   setTxt('#map-focus-bar [data-focus="mars"]', '🔴 Sao Hỏa', '🔴 Mars');
   setTxt('#map-focus-bar [data-focus="phobos"]', '🪨 Phobos', '🪨 Phobos');
   setTxt('#map-focus-bar [data-focus="deimos"]', '🪨 Deimos', '🪨 Deimos');
+  setTxt('#map-focus-bar [data-focus="ceres"]', '🪨 Ceres', '🪨 Ceres');
 
   setTxt('#map-telemetry h4', 'THÔNG SỐ QUỸ ĐẠO', 'ORBITAL TELEMETRY');
   setTxt('#btn-map-delete', '🗑️ Xóa vật thể', '🗑️ Delete Object');

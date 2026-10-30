@@ -76,12 +76,12 @@ export function createEarth(sunDir) {
         vec3 V = normalize(vWorld - cameraPosition);
         float ndl = dot(N, uSun);
         float lit = smoothstep(-0.08, 0.25, ndl) * max(ndl, 0.0) * 0.8 + smoothstep(-0.1, 0.1, ndl) * 0.05;
-        vec3 surf = col * lit * 2.2;
+        vec3 surf = col * lit * 1.55;
         if (spec > 0.0) {
           vec3 Rf = reflect(V, N);
-          surf += vec3(1.0, 0.85, 0.6) * pow(max(dot(Rf, uSun), 0.0), 180.0) * 4.0 * (1.0 - cloud) * step(0.0, ndl);
+          surf += vec3(1.0, 0.85, 0.6) * pow(max(dot(Rf, uSun), 0.0), 180.0) * 1.8 * (1.0 - cloud) * step(0.0, ndl);
         }
-        surf = mix(surf, vec3(1.0) * lit * 2.6, cloud * 0.92);
+        surf = mix(surf, vec3(0.92) * lit * 1.45, cloud * 0.88);
         // city lights on night side
         float night = smoothstep(0.05, -0.15, ndl);
         if (h > 0.0) surf += vec3(1.0, 0.6, 0.25) * night * pow(fbm3(n * 300.0, 3), 6.0) * 2.0 * (1.0 - cloud);

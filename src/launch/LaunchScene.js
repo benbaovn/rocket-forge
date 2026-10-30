@@ -19,7 +19,7 @@ import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
-import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, OLYMPUS_PSI } from '../fx/moon.js';
+import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, OLYMPUS_PSI } from '../fx/moon.js';
 import { createAlienMesh, createBeamVisual, createSupernovaMesh } from '../fx/aliens.js';
 import { tr } from '../i18n.js';
 
@@ -441,7 +441,8 @@ export class LaunchScene {
     const isSaturn = this.stack && this.stack.some((s) => s.type.startsWith('saturn'));
     const isSoyuz = this.stack && this.stack.some((s) => s.type.startsWith('soyuz'));
     const isN1 = this.stack && this.stack.some((s) => s.type.startsWith('n1'));
-    const coreR = isN1 ? 3.05 : isSaturn ? CORE_R * 1.92 : isSoyuz ? 2.45 : CORE_R;
+    const isBuran = this.stack && this.stack.some((s) => s.type.startsWith('buran') || s.type.startsWith('energia'));
+    const coreR = isBuran ? 3.85 : isN1 ? 3.05 : isSaturn ? CORE_R * 1.92 : isSoyuz ? 2.45 : CORE_R;
     const reach = -this.towerX - 3 - coreR;
     for (const y of ys) {
       const pivot = new THREE.Group();
@@ -453,7 +454,7 @@ export class LaunchScene {
       this.pad.add(pivot);
       this.arms.push({ pivot, target: 0 });
     }
-    const clampR = isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
+    const clampR = isBuran ? 4.15 : isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
     this.clamps.forEach((c, i) => {
       const a = i * Math.PI / 2 + Math.PI / 4;
       c.position.set(Math.cos(a) * clampR, PAD_TOP + 0.6, Math.sin(a) * clampR);
@@ -640,8 +641,8 @@ export class LaunchScene {
         items: ['earth', 'iss', 'moon'],
       },
       {
-        title: tr('☀️ Mặt Trời, Hành Tinh Đá & Hệ Sao Hỏa', '☀️ Sun, Inner Rocky Planets & Mars System'),
-        items: ['mercury', 'venus', 'mars', 'olympus', 'phobos', 'deimos', 'sun'],
+        title: tr('☀️ Mặt Trời, Hành Tinh Đá, Hệ Sao Hỏa & Vành Đai Tiểu Hành Tinh', '☀️ Sun, Inner Rocky Planets, Mars System & Asteroid Belt'),
+        items: ['mercury', 'venus', 'mars', 'olympus', 'phobos', 'deimos', 'ceres', 'sun'],
       },
       {
         title: tr('🟠 Hệ Sao Mộc & 4 Mặt Trăng Galilean', '🟠 Jupiter System & Galilean Moons'),
@@ -1078,6 +1079,8 @@ export class LaunchScene {
     this.flagSpot = null;
     this.olympusMons = createOlympusMonsLandmarks();
     this.scene.add(this.olympusMons.group);
+    this.ceresBelt = createCeresAsteroidBelt();
+    this.scene.add(this.ceresBelt);
     this.issOrbit = new RailOrbit(ISS_R, -0.3);
     this.iss = createISS();
     this.iss.visible = false;
@@ -3403,7 +3406,7 @@ export class LaunchScene {
       proj(sp.x, sp.y, sp.z, this.sunSphere.position);
       this.sunSphere.rotation.set(0, 0, phi - bodyRotation('sun', t));
       if (this.sunSphere.userData.coreMat) this.sunSphere.userData.coreMat.uniforms.uTime.value = this.time;
-      if (this.sunSphere.userData.asteroidBelt) this.sunSphere.userData.asteroidBelt.visible = (F.ref === 'sun');
+      if (this.sunSphere.userData.asteroidBelt) this.sunSphere.userData.asteroidBelt.visible = (F.ref === 'sun' || F.ref === 'ceres');
     }
     proj(0, 0, 0, this.earth.position);
     this.earth.rotation.set(0, 0, phi - OMEGA_E * t);
@@ -3450,15 +3453,16 @@ export class LaunchScene {
       if (u.uBodyR) u.uBodyR.value = bodyR;
       if (u.uIsMars) u.uIsMars.value = F.ref === 'mars' ? 1.0 : 0.0;
       if (u.uTint) {
-        if (F.ref === 'mars') u.uTint.value.set(1.45, 0.58, 0.32);
-        else if (F.ref === 'venus') u.uTint.value.set(1.32, 1.02, 0.52);
-        else if (F.ref === 'mercury') u.uTint.value.set(1.05, 0.96, 0.86);
-        else if (F.ref === 'phobos') u.uTint.value.set(0.84, 0.75, 0.68);
-        else if (F.ref === 'deimos') u.uTint.value.set(0.95, 0.88, 0.78);
+        if (F.ref === 'mars') u.uTint.value.set(1.05, 0.44, 0.24);
+        else if (F.ref === 'venus') u.uTint.value.set(0.95, 0.74, 0.38);
+        else if (F.ref === 'mercury') u.uTint.value.set(0.82, 0.76, 0.68);
+        else if (F.ref === 'phobos') u.uTint.value.set(0.68, 0.60, 0.54);
+        else if (F.ref === 'deimos') u.uTint.value.set(0.76, 0.70, 0.62);
+        else if (F.ref === 'ceres') u.uTint.value.set(0.66, 0.69, 0.74);
         else if (F.ref !== 'moon' && BODIES[F.ref]?.hex) {
           const tc = new THREE.Color(BODIES[F.ref].hex);
-          u.uTint.value.set(tc.r * 1.15, tc.g * 1.15, tc.b * 1.15);
-        } else u.uTint.value.set(1.0, 1.0, 1.0);
+          u.uTint.value.set(tc.r * 0.80, tc.g * 0.80, tc.b * 0.80);
+        } else u.uTint.value.set(0.82, 0.82, 0.82);
       }
       if (this.moonPatchPsi !== snap || this.moonPatchBody !== F.ref) {
         this.moonPatchPsi = snap;
@@ -3489,6 +3493,14 @@ export class LaunchScene {
           );
           sp.node.rotation.set(0, 0, -th);
         }
+      }
+    }
+    if (this.ceresBelt) {
+      const showCeresBelt = F.ref === 'ceres' && F.alt < 70e3;
+      this.ceresBelt.visible = !!showCeresBelt;
+      if (showCeresBelt) {
+        const driftX = ((this.time * 18) % 8000) - 4000;
+        this.ceresBelt.position.set(driftX, -F.alt, -S.z);
       }
     }
     if (this.flagSpot) {
@@ -3542,9 +3554,9 @@ export class LaunchScene {
 
   spaceLighting() {
     this.sun.color.setRGB(1, 0.98, 0.94);
-    this.sun.intensity = 7.5;
+    this.sun.intensity = 4.6;
     this.hemi.color.setRGB(0.28, 0.34, 0.44); this.hemi.groundColor.setRGB(0.16, 0.14, 0.12);
-    this.hemi.intensity = 0.28;
+    this.hemi.intensity = 0.22;
     this.scene.fog.density = 0;
     const sm = this.smoke.material.uniforms;
     sm.uSunColor.value.setRGB(1, 0.98, 0.94); sm.uAmbient.value.setRGB(0.05, 0.05, 0.06); sm.uFogDensity.value = 0;
@@ -3943,6 +3955,7 @@ export class LaunchScene {
         { id: 'alien_mars', ref: 'mars', alt: 48e3, e: 0.02, argPe: 1.4, nu0: 2.3, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Hỏa', en: 'Alien UFO · Mars' },
         { id: 'alien_venus', ref: 'venus', alt: 75e3, e: 0.015, argPe: 0.4, nu0: 3.1, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Kim', en: 'Alien UFO · Venus' },
         { id: 'alien_mercury', ref: 'mercury', alt: 28e3, e: 0.02, argPe: 2.8, nu0: 1.7, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Thủy', en: 'Alien UFO · Mercury' },
+        { id: 'alien_ceres', ref: 'ceres', alt: 24e3, e: 0.015, argPe: 1.8, nu0: 0.9, hSign: 1, t0: 0, vi: 'UFO Alien · Ceres', en: 'Alien UFO · Ceres' },
         { id: 'alien_europa', ref: 'europa', alt: 22e3, e: 0.01, argPe: 1.1, nu0: 0.8, hSign: 1, t0: 0, vi: 'UFO Alien · Europa', en: 'Alien UFO · Europa' },
         { id: 'alien_titan', ref: 'titan', alt: 55e3, e: 0.015, argPe: 2.5, nu0: 2.0, hSign: 1, t0: 0, vi: 'UFO Alien · Titan', en: 'Alien UFO · Titan' },
         { id: 'alien_pluto', ref: 'pluto', alt: 20e3, e: 0.02, argPe: 0.7, nu0: 1.5, hSign: 1, t0: 0, vi: 'UFO Alien · Diêm Vương', en: 'Alien UFO · Pluto' },

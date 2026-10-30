@@ -77,6 +77,15 @@ export const DEIMOS_N = Math.sqrt(MU_MARS / DEIMOS_A ** 3);
 export const DEIMOS_SOI = 260e3;
 export const DEIMOS_PHASE0 = 3.65;
 
+// ---- Ceres (Tiểu hành tinh / hành tinh lùn lớn nhất Vành đai Tiểu hành tinh chính)
+export const R_CERES = 135e3;
+export const G_CERES = 0.28;
+export const MU_CERES = G_CERES * R_CERES * R_CERES;
+export const CERES_A = 112000e3;             // right inside the Main Asteroid Belt (98,000–126,000 km)
+export const CERES_N = Math.sqrt(MU_SUN / CERES_A ** 3);
+export const CERES_SOI = 3200e3;
+export const CERES_PHASE0 = 2.29;
+
 // ---- Jupiter (Sao Mộc - 5th planet around Sun) & Galilean Moons
 export const R_JUPITER = 1350e3;
 export const G_JUPITER = 24.79;
@@ -178,6 +187,12 @@ export const BODIES = {
     R: R_DEIMOS, g: G_DEIMOS, mu: MU_DEIMOS, a: DEIMOS_A, n: DEIMOS_N, phase0: DEIMOS_PHASE0, soi: DEIMOS_SOI,
     atm: 0, atmH: 1, rho0: 0, omega: DEIMOS_N,
   },
+  ceres: {
+    name: 'ceres', label: 'Ceres', icon: '🪨', color: '#cbd5e1', hex: 0x94a3b8,
+    parent: 'sun',
+    R: R_CERES, g: G_CERES, mu: MU_CERES, a: CERES_A, n: CERES_N, phase0: CERES_PHASE0, soi: CERES_SOI,
+    atm: 0, atmH: 1, rho0: 0, omega: CERES_N,
+  },
   jupiter: {
     name: 'jupiter', label: 'Sao Mộc', icon: '🟠', color: '#fb923c', hex: 0xfb923c,
     parent: 'sun', gasGiant: true,
@@ -231,7 +246,7 @@ export const BODIES = {
   },
 };
 
-export const PLANET_LIST = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+export const PLANET_LIST = ['mercury', 'venus', 'mars', 'ceres', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
 export const EXTRA_MOON_LIST = [
   'phobos', 'deimos',
   'io', 'europa', 'ganymede', 'callisto',

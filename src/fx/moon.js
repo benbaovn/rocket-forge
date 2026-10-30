@@ -329,11 +329,11 @@ export function createMoon() {
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uSun: { value: new THREE.Vector3(1, 0.3, 0.2).normalize() },
-      uExposure: { value: 1 },
-      uSunIntensity: { value: 7 },
+      uExposure: { value: 0.85 },
+      uSunIntensity: { value: 4.2 },
       uBump: { value: 1 },
       uHole: { value: new THREE.Vector4(0, 1, 0, 2) },
-      uEarthshine: { value: 0.004 },
+      uEarthshine: { value: 0.003 },
     },
     vertexShader: /* glsl */`
       #include <common>
@@ -521,7 +521,7 @@ export function createPlanetSphere(name) {
   const B = BODIES[name] || BODIES.mercury;
   const R = B.R || R_MERCURY;
   const isGasOrHaze = ['venus', 'jupiter', 'saturn', 'uranus', 'neptune', 'titan'].includes(name);
-  const pMode = name === 'mars' ? 1 : isGasOrHaze ? 2 : name === 'mercury' ? 3 : name === 'phobos' ? 4 : 5;
+  const pMode = name === 'mars' ? 1 : isGasOrHaze ? 2 : name === 'mercury' ? 3 : name === 'phobos' ? 4 : name === 'ceres' ? 6 : 5;
   const c1 = new THREE.Color(B.hex || 0xcbd5e1);
   const c2 = c1.clone().multiplyScalar(0.65);
   if (name === 'venus' || name === 'titan') { c1.setRGB(0.98, 0.86, 0.58); c2.setRGB(0.76, 0.52, 0.22); }
@@ -535,8 +535,8 @@ export function createPlanetSphere(name) {
     side: B.gasGiant ? THREE.DoubleSide : THREE.FrontSide,
     uniforms: {
       uSun: { value: new THREE.Vector3(1, 0.3, 0.2).normalize() },
-      uExposure: { value: 1 },
-      uSunIntensity: { value: 7 },
+      uExposure: { value: 0.85 },
+      uSunIntensity: { value: 4.2 },
       uTime: { value: 0 },
       uMode: { value: pMode },
       uPlanetR: { value: R },
@@ -579,13 +579,13 @@ export function createPlanetSphere(name) {
           float b1 = fbm3(q + vec3(1.2, 3.4, 5.6), 6);
           float b2 = sin(lat * 14.0 + b1 * 2.5) * 0.5 + 0.5;
           float swirl = smoothstep(0.2, 0.85, b1 * 0.55 + b2 * 0.45);
-          vec3 albedo = mix(uCol2, uCol1, swirl) * 0.42;
+          vec3 albedo = mix(uCol2, uCol1, swirl) * 0.34;
           float ndl = max(dot(Ng, uSun), 0.0);
           float term = smoothstep(-0.08, 0.15, dot(Ng, uSun));
-          float insideLight = gl_FrontFacing ? 0.0 : 0.32;
-          float rim = gl_FrontFacing ? pow(1.0 - max(dot(Ng, V), 0.0), 3.0) : 0.15;
+          float insideLight = gl_FrontFacing ? 0.0 : 0.25;
+          float rim = gl_FrontFacing ? pow(1.0 - max(dot(Ng, V), 0.0), 3.2) : 0.12;
           vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * max(0.75 * ndl + 0.25 * term, insideLight);
-          col += uCol1 * rim * max(dot(Ng, uSun) + 0.25, insideLight) * 1.25;
+          col += uCol1 * rim * max(dot(Ng, uSun) + 0.2, insideLight) * 0.38;
           gl_FragColor = vec4(col * uExposure, 1.0);
           return;
         }
@@ -633,29 +633,54 @@ export function createPlanetSphere(name) {
           }
           // Polar ice caps
           float pole = smoothstep(0.84, 0.93, abs(n.z) + 0.04 * (desert - 0.5));
-          vec3 albedo = mix(mCol * (0.16 + 0.55 * alb), vec3(0.92, 0.90, 0.88) * 0.45, pole);
+          vec3 albedo = mix(mCol * (0.14 + 0.44 * alb), vec3(0.85, 0.83, 0.80) * 0.32, pole);
           vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
-          col += vec3(2.4, 0.65, 0.12) * omGlow;
+          col += vec3(1.6, 0.45, 0.08) * omGlow;
           float rim = pow(1.0 - max(dot(Ng, V), 0.0), 3.4);
-          col += vec3(0.95, 0.46, 0.24) * rim * max(dot(Ng, uSun) + 0.18, 0.0) * 0.75;
+          col += vec3(0.85, 0.40, 0.20) * rim * max(dot(Ng, uSun) + 0.18, 0.0) * 0.32;
+          gl_FragColor = vec4(col * uExposure, 1.0);
+          return;
+        }
+
+        if (uMode == 6) {
+          // CERES: Dark carbonaceous chondrite regolith + bright sodium-carbonate salt deposits in Occator Crater (Cerealia & Vinalia Faculae)
+          vec3 cHigh = vec3(0.46, 0.48, 0.52);
+          vec3 cLow = vec3(0.26, 0.28, 0.32);
+          vec3 baseTint = mix(cHigh, cLow, mare);
+          vec3 albedo = baseTint * clamp(alb * 0.75, 0.04, 0.55);
+          // Occator Crater & bright salt spots (Cerealia Facula + Vinalia Faculae)
+          vec3 ocCenter = normalize(vec3(0.42, 0.88, 0.22));
+          float ocDist = length(n - ocCenter);
+          if (ocDist < 0.14) {
+            float craterFloor = smoothstep(0.095, 0.055, ocDist);
+            float craterRim = smoothstep(0.115, 0.092, ocDist) * smoothstep(0.068, 0.088, ocDist);
+            float cerealia = smoothstep(0.026, 0.004, ocDist);
+            vec3 vinDir = normalize(vec3(0.47, 0.85, 0.24));
+            float vinalia = smoothstep(0.032, 0.008, length(n - vinDir)) * (0.55 + 0.45 * sin(n.x * 180.0 + n.z * 160.0));
+            albedo = mix(albedo, vec3(0.12, 0.13, 0.16), craterFloor * 0.45);
+            albedo = mix(albedo, vec3(0.36, 0.39, 0.44), craterRim * 0.40);
+            albedo = mix(albedo, vec3(0.62, 0.66, 0.72), clamp(cerealia + vinalia * 0.75, 0.0, 1.0));
+          }
+          vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
+          col += albedo * 0.004 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
           gl_FragColor = vec4(col * uExposure, 1.0);
           return;
         }
 
         if (uMode == 4 || uMode == 5) {
-          // Moons & outer worlds with custom surface tint
-          float grooves = sin((n.x * 22.0 + n.y * 14.0 + fbm3(n * 6.0, 3) * 2.5)) * 0.08;
-          vec3 tint = mix(uCol1, uCol2, mare);
-          vec3 albedo = tint * clamp(alb + (uMode == 4 ? grooves : 0.0), 0.05, 0.95);
+          // Moons & outer worlds with custom surface tint (toned down so icy moons don't glare)
+          float grooves = sin((n.x * 22.0 + n.y * 14.0 + fbm3(n * 6.0, 3) * 2.5)) * 0.06;
+          vec3 tint = mix(uCol1, uCol2, mare) * 0.72;
+          vec3 albedo = tint * clamp(alb + (uMode == 4 ? grooves : 0.0), 0.04, 0.58);
           vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
-          col += albedo * 0.005 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
+          col += albedo * 0.004 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
           gl_FragColor = vec4(col * uExposure, 1.0);
           return;
         }
 
         // MERCURY: Heavily cratered slate-bronze regolith with high-contrast rayed basins
-        vec3 mercTint = mix(vec3(0.96, 0.90, 0.82), vec3(0.78, 0.75, 0.72), mare);
-        vec3 albedo = mercTint * alb * 0.95;
+        vec3 mercTint = mix(vec3(0.82, 0.77, 0.70), vec3(0.66, 0.63, 0.60), mare);
+        vec3 albedo = mercTint * alb * 0.72;
         vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
         col += albedo * 0.003 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
         gl_FragColor = vec4(col * uExposure, 1.0);
@@ -749,7 +774,7 @@ moonShade(mDir, mFp, mH, mG, mAlb, mMare);
 vec2 mGl = vec2(0.0); float mAm = 0.0;
 m_micro(vLocal, mFp, mGl, mAm);
 mG += mGl.x * uEast + mGl.y * uNorth;
-diffuseColor.rgb = m_tint(mMare) * uTint * mAlb * clamp(1.0 + mAm, 0.4, 1.8);
+diffuseColor.rgb = m_tint(mMare) * uTint * mAlb * clamp(1.0 + mAm, 0.45, 1.35) * 0.72;
 if (uIsMars > 0.5) {
   vec3 od = (mDir - vec3(OLYMPUS_X, OLYMPUS_Y, 0.0)) * MARS_R;
   float omR = length(od);
@@ -1223,4 +1248,57 @@ export function createOlympusMonsLandmarks() {
   };
 
   return { group, spots, update, rimPsi, rimH, calPsi, calH, basePsi, baseH };
+}
+
+/**
+ * 3D Overhead Asteroid Belt canopy for Ceres so Ceres sits directly underneath the rocky Asteroid Belt in 3D flight view.
+ */
+export function createCeresAsteroidBelt() {
+  const group = new THREE.Group();
+  group.name = 'ceresAsteroidBelt';
+  group.visible = false;
+
+  const rockMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.92,
+    metalness: 0.08,
+    flatShading: true,
+  });
+
+  const rnd = mulberry(98765);
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const N_PER_SHAPE = 180;
+
+  for (let sIdx = 0; sIdx < 3; sIdx++) {
+    const g = rockGeometry(1, 3.1 + sIdx * 2.7);
+    const im = new THREE.InstancedMesh(g, rockMat, N_PER_SHAPE);
+    im.frustumCulled = false;
+    for (let i = 0; i < N_PER_SHAPE; i++) {
+      const x = (rnd() - 0.5) * 32000;
+      const z = (rnd() - 0.5) * 18000;
+      const archDrop = (x * x) / (2 * 95000);
+      const y = 950 + Math.pow(rnd(), 1.35) * 6800 - archDrop;
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+      const sz = rnd() < 0.08 ? 85 + rnd() * 115 : 16 + Math.pow(rnd(), 1.8) * 64;
+      dummy.scale.set(
+        sz * (0.75 + rnd() * 0.55),
+        sz * (0.62 + rnd() * 0.45),
+        sz * (0.75 + rnd() * 0.55)
+      );
+      dummy.updateMatrix();
+      im.setMatrixAt(i, dummy.matrix);
+
+      const shade = 0.52 + rnd() * 0.42;
+      const warm = (rnd() - 0.3) * 0.08;
+      col.setRGB(shade + warm, shade + warm * 0.4, shade - warm * 0.3);
+      im.setColorAt(i, col);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    group.add(im);
+  }
+
+  return group;
 }

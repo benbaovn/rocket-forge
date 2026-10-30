@@ -84,6 +84,16 @@ export const MISSIONS = [
     ],
   },
   {
+    id: 'ceres', icon: '🪨', name: 'Thám hiểm Tiểu hành tinh Ceres', preset: 'Tàu Phản Trọng Lực Lượng Tử',
+    desc: 'Bay vào Vành đai Tiểu hành tinh chính giữa Sao Hỏa và Sao Mộc, vào quỹ đạo và đáp xuống tiểu hành tinh / hành tinh lùn Ceres với hố va chạm Occator sáng rực.',
+    objectives: [
+      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
+      { id: 'ceresSOI', text: 'Vào vùng hấp dẫn Ceres' },
+      { id: 'ceresOrbit', text: 'Vào quỹ đạo Ceres' },
+      { id: 'ceresLanded', text: 'Hạ cánh xuống Ceres' },
+    ],
+  },
+  {
     id: 'mercury', icon: '⚪', name: 'Hành trình Sao Thủy', preset: 'Apollo (Mặt Trăng)',
     desc: 'Bay xa tới Sao Thủy (Mercury), vào quỹ đạo và đáp xuống bề mặt đầy hố thiên thạch cổ đại.',
     objectives: [

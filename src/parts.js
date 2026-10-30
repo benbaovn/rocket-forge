@@ -61,6 +61,12 @@ export const PARTS = {
   n1BlockV: { name: 'Tầng 3 N1 (Block V) & Giàn Mắt Cáo Trên (Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', height: 9.6, dry: 2.4, fuel: 18.5, thrustSL: 560, thrustVac: 880, ispSL: 265, ispVac: 355, engines: 4, autoStage: true, desc: 'Tầng đẩy hình nón xám kim loại Block V với 8 ống dẫn khí động nổi, giàn mắt cáo 2 tầng và 4 động cơ NK-21' },
   n1BlockB: { name: 'Tầng 2 N1 (Block B) & Giàn Mắt Cáo Giữa (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 11.4, dry: 3.8, fuel: 36.0, thrustSL: 1450, thrustVac: 1880, ispSL: 275, ispVac: 340, engines: 8, autoStage: true, desc: 'Tầng 2 hình nón xám kim loại Block B kèm khung giàn mắt cáo rỗng 2 tầng lộ bồn cầu bên trong và 8 động cơ NK-15V' },
   n1BlockA: { name: 'Tầng 1 Siêu Nặng N1 (Block A · 30× NK-15) (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.4, dry: 6.8, fuel: 74.0, thrustSL: 5400, thrustVac: 6200, ispSL: 285, ispVac: 320, engines: 30, autoStage: true, hasFins: true, desc: 'Tầng 1 hình nón khổng lồ màu xám kim loại với 8 khối hộp khí động lớn, 4 cánh lưới chống ngang, váy đáy loe và vòng 30 động cơ NK-15' },
+  buranNose: { name: 'Chóp Mũi Buran-Energia & Đai Gân Caro (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 12.5, dry: 1.6, fuel: 9.5, thrustSL: 220, thrustVac: 380, ispSL: 260, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi khí động màu xám xanh của hệ Buran, bồn trắng trên và đai gân dọc in 2 ô vuông caro đen + dù hạ cánh' },
+  buranShuttle: { name: 'Tàu Con Thoi Buran & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 14.5, dry: 3.6, fuel: 34.0, thrustSL: 1350, thrustVac: 1820, ispSL: 280, ispVac: 365, engines: 4, autoStage: true, hasFins: true, desc: 'Tàu vũ trụ con thoi Buran gắn lưng Energia với buồng lái kính đen 6 ô, 2 cửa sổ nóc, mũi gạch chịu nhiệt đen, cánh tam giác kép viền đen, đuôi đứng & dù hạ cánh' },
+  buranEnergia: { name: 'Tầng Đẩy Buran-Energia & 4 Booster Zenit (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.0, dry: 6.4, fuel: 72.0, thrustSL: 5200, thrustVac: 6000, ispSL: 290, ispVac: 335, engines: 20, autoStage: true, hasFins: true, desc: 'Thân dưới Energia kèm 4 tầng đẩy phụ Zenit (Block A) ốp sườn xám xanh, 4 siêu động cơ RD-0120 ở tâm và 4 cụm động cơ RD-170' },
+  energiaNose: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 12.5, dry: 1.6, fuel: 9.5, thrustSL: 220, thrustVac: 380, ispSL: 260, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },
+  energiaPolyus: { name: 'Trạm Vũ Trụ МИР-2 (Polyus) & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 14.5, dry: 3.6, fuel: 34.0, thrustSL: 1350, thrustVac: 1820, ispSL: 280, ispVac: 365, engines: 4, autoStage: true, hasFins: true, desc: 'Tàu/Trạm chiến đấu quỹ đạo Polyus (МИР-2) sơn đen tuyền gắn lưng Energia kèm 2 bình phụ bên hông, cổ tản nhiệt kẻ sọc bạc & dù hạ cánh' },
+  energiaCore: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.0, dry: 6.4, fuel: 72.0, thrustSL: 5200, thrustVac: 6000, ispSL: 290, ispVac: 335, engines: 20, autoStage: true, hasFins: true, desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
   ufoSaucer: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 55.0, isBattery: true, thrustSL: 3200, thrustVac: 3600, ispSL: 6500, ispVac: 8000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
 };
 
@@ -648,6 +654,12 @@ const builders = {
   n1BlockV() { return buildN1BlockV(); },
   n1BlockB() { return buildN1BlockB(); },
   n1BlockA() { return buildN1BlockA(); },
+  buranNose() { return buildBuranNose(); },
+  buranShuttle() { return buildBuranShuttle(); },
+  buranEnergia() { return buildBuranEnergia(); },
+  energiaNose() { return buildEnergiaNose(); },
+  energiaPolyus() { return buildEnergiaPolyus(); },
+  energiaCore() { return buildEnergiaCore(); },
   ufoSaucer() { return buildUfoSaucer(); },
 };
 
@@ -3482,6 +3494,1310 @@ function buildN1BlockA() {
     g.add(mesh(bellGeometry(0.15, 0.35, yNozzle * 0.82, 24), bronzeMat, ex, 0, ez));
     g.add(mesh(new THREE.CylinderGeometry(0.30, 0.28, yNozzle * 0.38, 20), chromeMat, ex, yNozzle * 0.72, ez));
     addNozzle(g, ex, ez, 0.38, [mBell]);
+  }
+
+  return g;
+}
+
+// =========================================================================
+// SOVIET ENERGIA – BURAN SPACE SHUTTLE LAUNCH VEHICLE (3 STAGES)
+// =========================================================================
+let _buranMats = null;
+function getBuranMaterials() {
+  if (_buranMats) return _buranMats;
+  const panel = TX.panelTextures();
+  // Crisp off-white for the Energia core, Zenit booster bodies & Buran upper thermal blankets
+  const whiteMat = physical({
+    color: 0xc4c9d2,
+    roughness: 0.72,
+    normalMap: panel.normal,
+    normalScale: new THREE.Vector2(0.18, 0.18),
+    metalness: 0.04,
+    clearcoat: 0.08,
+    clearcoatRoughness: 0.38,
+  });
+  // Signature Soviet Energia cool steel blue-grey for nose cones & outer booster collars
+  const blueGreyMat = physical({
+    color: 0x7c8ea4,
+    roughness: 0.48,
+    normalMap: panel.normal,
+    normalScale: new THREE.Vector2(0.16, 0.16),
+    metalness: 0.16,
+    clearcoat: 0.18,
+    clearcoatRoughness: 0.30,
+  });
+  // Darker slate blue-grey for recessed collar steps, side tabs & structural seams
+  const darkBlueGreyMat = physical({
+    color: 0x5c6d82,
+    roughness: 0.54,
+    metalness: 0.22,
+    clearcoat: 0.12,
+  });
+  // Matte charcoal-black for Buran thermal protection tiles (nose cap, leading edges, elevon stripes, RCS & checker squares)
+  const blackTileMat = physical({
+    color: 0x12151a,
+    roughness: 0.78,
+    metalness: 0.08,
+    clearcoat: 0.05,
+  });
+  // Glossy dark aerospace glass for Buran's 6-pane V-windshield & 2 square overhead windows
+  const windshieldMat = physical({
+    color: 0x090c12,
+    roughness: 0.12,
+    metalness: 0.35,
+    clearcoat: 0.95,
+    clearcoatRoughness: 0.05,
+  });
+  // Metallic silver/steel for the upper powerheads/jackets of the 4 RD-0120 core engines
+  const silverBellMat = physical({
+    color: 0xa2a8b2,
+    roughness: 0.28,
+    metalness: 0.85,
+  });
+  // Dark gunmetal for the lower nozzle skirts & recessed mechanical bays
+  const darkNozzleMat = physical({
+    color: 0x1e2127,
+    roughness: 0.46,
+    metalness: 0.65,
+  });
+  _buranMats = {
+    whiteMat,
+    blueGreyMat,
+    darkBlueGreyMat,
+    blackTileMat,
+    windshieldMat,
+    silverBellMat,
+    darkNozzleMat,
+  };
+  return _buranMats;
+}
+
+const R_EN_CORE = 1.95;    // Energia central core radius
+const R_ZENIT_IN = 0.72;   // Inner-front Zenit strap-on booster radius
+const R_ZENIT_OUT = 0.74;  // Outer-rear Zenit strap-on booster radius
+const X_ZENIT_IN = 2.62;
+const Z_ZENIT_IN = 0.40;
+const X_ZENIT_OUT = 3.30;
+const Z_ZENIT_OUT = -0.22;
+
+/**
+ * Builds a slanted/sheared conical frustum from (xBot, zBot, rBot) at y=0 to (xTop, zTop, rTop) at y=h,
+ * with an ogive curve factor so the Zenit booster nose caps slope smoothly into the Energia core.
+ */
+function shearedBoosterConeGeo(rBot, rTop, xBot, xTop, zBot, zTop, h, curvePow = 0.78, segsR = 48, segsY = 20) {
+  const geo = new THREE.CylinderGeometry(1, 1, h, segsR, segsY, false);
+  geo.translate(0, h * 0.5, 0);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const vy = pos.getY(i);
+    const t = Math.max(0, Math.min(1, vy / h));
+    const rCurve = rBot + (rTop - rBot) * Math.pow(t, curvePow);
+    const cx = xBot + (xTop - xBot) * Math.pow(t, 0.92);
+    const cz = zBot + (zTop - zBot) * t;
+    const vx = pos.getX(i);
+    const vz = pos.getZ(i);
+    pos.setX(i, vx * rCurve + cx);
+    pos.setZ(i, vz * rCurve + cz);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
+ * Evaluates the 3D cross-section surface of the Buran Orbiter fuselage & nose cone.
+ * Local y spans from yMin = -11.80 (aft base) to yMax = +13.10 (nose tip).
+ */
+function buranFuselageProfile(y) {
+  const yShoulder = 6.00;
+  const yTip = 13.10;
+  let rx = 1.76;
+  let rzTop = 1.18;
+  let rzBot = 0.42;
+  let zCenter = 2.38;
+  if (y > yShoulder) {
+    const u = Math.max(0, Math.min(1, (y - yShoulder) / (yTip - yShoulder)));
+    const scale = Math.pow(Math.max(0.0005, 1 - Math.pow(u, 1.62)), 0.56);
+    rx *= scale;
+    rzTop *= Math.pow(scale, 0.92);
+    rzBot *= scale;
+    // Nose droops slightly toward the belly/center as it approaches the black nose cap
+    zCenter = 2.38 - 0.14 * Math.pow(u, 1.35);
+  }
+  return { rx, rzTop, rzBot, zCenter };
+}
+
+function buranSurfaceZ(x, y) {
+  const { rx, rzTop, zCenter } = buranFuselageProfile(y);
+  if (rx <= 0.001) return zCenter;
+  const nx = Math.max(-0.999, Math.min(0.999, x / rx));
+  const c = Math.sqrt(Math.max(0, 1 - nx * nx));
+  return zCenter + Math.pow(c, 0.82) * rzTop;
+}
+
+function buildBuranFuselageSectionGeo(yStart, yEnd, segsY = 32, segsTheta = 56) {
+  const geo = new THREE.CylinderGeometry(1, 1, yEnd - yStart, segsTheta, segsY, false);
+  geo.translate(0, yStart + (yEnd - yStart) * 0.5, 0);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const vy = pos.getY(i);
+    const vx = pos.getX(i);
+    const vz = pos.getZ(i);
+    const rad = Math.hypot(vx, vz);
+    const { rx, rzTop, rzBot, zCenter } = buranFuselageProfile(vy);
+    if (rad < 1e-4) {
+      // Endcap center vertex
+      pos.setX(i, 0);
+      pos.setZ(i, zCenter + rzTop * 0.15);
+    } else {
+      const s = vx / rad;
+      const c = vz / rad;
+      const px = s * rx * rad;
+      const pz = c >= 0
+        ? zCenter + Math.pow(c, 0.82) * rzTop * rad
+        : zCenter - Math.pow(-c, 0.72) * rzBot * rad;
+      pos.setX(i, px);
+      pos.setZ(i, pz);
+    }
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// Stage 3 (Top): Energia Upper Nose Cone, Forward LH2 Tank & Ribbed Checkerboard Interstage (H = 12.5m)
+function buildBuranNose() {
+  const g = new THREE.Group();
+  const H = PARTS.buranNose.height; // 12.5
+  const {
+    whiteMat,
+    blueGreyMat,
+    darkBlueGreyMat,
+    blackTileMat,
+    silverBellMat,
+    darkNozzleMat,
+  } = getBuranMaterials();
+
+  const yRibTop = 3.10;
+  const yWhiteTop = 6.35;
+  const yGreyCollarTop = 6.95;
+  const yOgiveTop = 11.88;
+
+  // 1. Lower Ribbed White Interstage Collar (y = 0.0 -> 3.10)
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.01, R_EN_CORE + 0.01, yRibTop, 64), whiteMat, 0, yRibTop * 0.5, 0));
+
+  // Horizontal structural rings on the ribbed collar (y = 0.06, 0.90, 3.05)
+  for (const ry of [0.06, 0.90, yRibTop - 0.05]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.032, R_EN_CORE + 0.032, 0.08, 64), whiteMat, 0, ry, 0));
+  }
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.025, R_EN_CORE + 0.025, 0.04, 64), darkBlueGreyMat, 0, yRibTop, 0));
+
+  // 72 fine vertical corrugation ribs around the interstage collar
+  for (let i = 0; i < 72; i++) {
+    const a = (i / 72) * Math.PI * 2;
+    const rx = Math.sin(a) * (R_EN_CORE + 0.018);
+    const rz = Math.cos(a) * (R_EN_CORE + 0.018);
+    const rib = mesh(new THREE.BoxGeometry(0.038, yRibTop - 0.14, 0.028), whiteMat, rx, yRibTop * 0.5, rz);
+    rib.rotation.y = a;
+    g.add(rib);
+  }
+
+  // Iconic 2 Staggered Black Checkerboard Squares on the front (+Z) of the ribbed band (matching photo!)
+  const sq1 = mesh(new THREE.BoxGeometry(0.45, 0.45, 0.04), blackTileMat, -0.22, 2.15, R_EN_CORE + 0.022);
+  sq1.rotation.y = -0.11;
+  g.add(sq1);
+  const sq2 = mesh(new THREE.BoxGeometry(0.45, 0.45, 0.04), blackTileMat, 0.22, 1.70, R_EN_CORE + 0.022);
+  sq2.rotation.y = 0.11;
+  g.add(sq2);
+
+  // Additional small black square marking on the left flank + vertical dark slots (visible in photo!)
+  const sqLeft = mesh(new THREE.BoxGeometry(0.04, 0.40, 0.36), blackTileMat, -(R_EN_CORE + 0.02), 1.92, 0.35);
+  g.add(sqLeft);
+  for (const sgn of [-1, 1]) {
+    const slot = mesh(new THREE.BoxGeometry(0.08, 0.34, 0.04), blackTileMat, sgn * 1.12, 1.32, Math.sqrt(R_EN_CORE * R_EN_CORE - 1.12 * 1.12) + 0.02);
+    slot.rotation.y = sgn * 0.62;
+    g.add(slot);
+    // Side umbilical brackets at the base of the ribbed collar where booster nose tips meet the core
+    g.add(mesh(new THREE.BoxGeometry(0.18, 0.65, 0.24), whiteMat, sgn * (R_EN_CORE + 0.05), 0.52, 0.12));
+    g.add(mesh(new THREE.BoxGeometry(0.22, 0.20, 0.26), blueGreyMat, sgn * (R_EN_CORE + 0.07), 0.16, 0.12));
+  }
+
+  // Upper start of the 2 front vertical Buran-mount fairings (y = 0.0 -> 0.90)
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.26, 0.90, 0.38), whiteMat, sgn * 0.88, 0.45, R_EN_CORE - 0.05));
+  }
+
+  // 2. Smooth White Upper Tank Cylinder (y = 3.10 -> 6.35)
+  const hWhite = yWhiteTop - yRibTop;
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, hWhite, 64), whiteMat, 0, yRibTop + hWhite * 0.5, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.018, R_EN_CORE + 0.018, 0.05, 64), darkBlueGreyMat, 0, yWhiteTop, 0));
+
+  // Ring of subtle dark rivet dots at y = 3.22 and y = 6.24
+  for (const ry of [3.22, 6.24]) {
+    for (let i = 0; i < 32; i++) {
+      const a = (i / 32) * Math.PI * 2;
+      g.add(mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), darkBlueGreyMat, Math.sin(a) * (R_EN_CORE + 0.01), ry, Math.cos(a) * (R_EN_CORE + 0.01)));
+    }
+  }
+
+  // 3. Bluish-Grey Ogive Nose Cone (y = 6.35 -> 12.50)
+  // Lower bluish-grey cylindrical collar (y = 6.35 -> 6.95)
+  const hCollar = yGreyCollarTop - yWhiteTop;
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.005, R_EN_CORE + 0.005, hCollar, 64), blueGreyMat, 0, yWhiteTop + hCollar * 0.5, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.016, R_EN_CORE + 0.016, 0.04, 64), darkBlueGreyMat, 0, yGreyCollarTop, 0));
+
+  // Smooth curved bluish-grey ogive dome (y = 6.95 -> 11.88)
+  const ogivePts = [];
+  const nOgive = 36;
+  for (let i = 0; i <= nOgive; i++) {
+    const t = i / nOgive;
+    const r = 0.21 + (R_EN_CORE + 0.005 - 0.21) * Math.pow(1 - Math.pow(t, 1.52), 0.66);
+    ogivePts.push(new THREE.Vector2(r, yGreyCollarTop + t * (yOgiveTop - yGreyCollarTop)));
+  }
+  g.add(mesh(new THREE.LatheGeometry(ogivePts, 64), blueGreyMat));
+
+  // Pointed aerodynamic nose tip probe/cap (y = 11.88 -> 12.50)
+  const hTip = H - yOgiveTop;
+  g.add(mesh(new THREE.CylinderGeometry(0.045, 0.21, hTip, 36), blueGreyMat, 0, yOgiveTop + hTip * 0.5, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.048, 16, 12), blueGreyMat, 0, H - 0.02, 0));
+
+  // Prominent vertical seam/cable rib on the left-front (-0.46 rad) running up the white tank & grey nose cone (visible in photo!)
+  const seamAng = -0.46;
+  const sxW = Math.sin(seamAng) * (R_EN_CORE + 0.022);
+  const szW = Math.cos(seamAng) * (R_EN_CORE + 0.022);
+  const whiteSeam = mesh(new THREE.BoxGeometry(0.055, yWhiteTop, 0.045), whiteMat, sxW, yWhiteTop * 0.5, szW);
+  whiteSeam.rotation.y = seamAng;
+  g.add(whiteSeam);
+  const whiteSeamLine = mesh(new THREE.BoxGeometry(0.022, yWhiteTop, 0.052), darkBlueGreyMat, sxW, yWhiteTop * 0.5, szW);
+  whiteSeamLine.rotation.y = seamAng;
+  g.add(whiteSeamLine);
+
+  // Curved seam rib along the bluish-grey ogive nose cone
+  for (let i = 0; i < 18; i++) {
+    const t0 = i / 18;
+    const t1 = (i + 1) / 18;
+    const tm = (t0 + t1) * 0.5;
+    const y0 = yWhiteTop + t0 * (yOgiveTop - yWhiteTop);
+    const y1 = yWhiteTop + t1 * (yOgiveTop - yWhiteTop);
+    const ym = (y0 + y1) * 0.5;
+    const rm = ym <= yGreyCollarTop
+      ? R_EN_CORE + 0.015
+      : 0.21 + (R_EN_CORE + 0.005 - 0.21) * Math.pow(1 - Math.pow((ym - yGreyCollarTop) / (yOgiveTop - yGreyCollarTop), 1.52), 0.66);
+    const seg = mesh(new THREE.BoxGeometry(0.042, (y1 - y0) * 1.08, 0.042), darkBlueGreyMat, Math.sin(seamAng) * (rm + 0.01), ym, Math.cos(seamAng) * (rm + 0.01));
+    seg.rotation.y = seamAng;
+    seg.rotation.x = 0.28 * tm;
+    g.add(seg);
+  }
+
+  // Internal orbital propulsion nozzle & landing parachutes
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE * 0.82, R_EN_CORE * 0.82, 0.14, 48), darkNozzleMat, 0, 0.07, 0));
+  const mBell = bellMaterial(true);
+  g.add(mesh(bellGeometry(0.16, 0.42, 0.58, 32), mBell, 0, 0, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.43, 0.40, 0.10, 24), silverBellMat, 0, 0.05, 0));
+  addNozzle(g, 0, 0, 0.42, [mBell]);
+  addParachutes(g, 11.6);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
+
+  return g;
+}
+
+// Stage 2 (Middle): Piggyback Buran Space Shuttle Orbiter + Upper Energia Core & Slanted Booster Fairings (H = 14.5m)
+function buildBuranShuttle() {
+  const g = new THREE.Group();
+  const H = PARTS.buranShuttle.height; // 14.5
+  const {
+    whiteMat,
+    blueGreyMat,
+    darkBlueGreyMat,
+    blackTileMat,
+    windshieldMat,
+    silverBellMat,
+    darkNozzleMat,
+  } = getBuranMaterials();
+
+  // =========================================================================
+  // 1. UPPER ENERGIA CENTRAL CORE (y = 0.0 -> 14.50, centered at x = 0, z = 0)
+  // =========================================================================
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, H, 64), whiteMat, 0, H * 0.5, 0));
+  for (const ry of [0.08, 4.80, 9.60, H - 0.08]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.016, R_EN_CORE + 0.016, 0.06, 64), whiteMat, 0, ry, 0));
+  }
+  // 2 front vertical structural fairings/columns cradling Buran's belly
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.26, H, 0.42), whiteMat, sgn * 0.88, H * 0.5, R_EN_CORE - 0.04));
+    // Structural attachment struts between Energia core and Buran Orbiter
+    for (const sy of [2.2, 8.8, 12.6]) {
+      g.add(mesh(new THREE.BoxGeometry(0.22, 0.32, 0.75), darkBlueGreyMat, sgn * 0.88, sy, R_EN_CORE + 0.22));
+    }
+  }
+
+  // =========================================================================
+  // 2. UPPER 4× STRAP-ON ZENIT BOOSTERS (Left sgn = -1 & Right sgn = +1)
+  // =========================================================================
+  const yInCylTop = 10.80;
+  const yOutWhiteTop = 6.75;
+  const yOutGreyTop = 11.05;
+  const yConeTop = 14.46;
+
+  for (const sgn of [-1, 1]) {
+    const xIn = sgn * X_ZENIT_IN;
+    const zIn = Z_ZENIT_IN;
+    const xOut = sgn * X_ZENIT_OUT;
+    const zOut = Z_ZENIT_OUT;
+
+    // A. Inner-Front White Booster Cylinder (y = 0.0 -> 10.80)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN, R_ZENIT_IN, yInCylTop, 48), whiteMat, xIn, yInCylTop * 0.5, zIn));
+    for (const ry of [2.60, 6.40, 9.95, yInCylTop - 0.06]) {
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.015, R_ZENIT_IN + 0.015, 0.06, 48), whiteMat, xIn, ry, zIn));
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.018, R_ZENIT_IN + 0.018, 0.03, 48), darkBlueGreyMat, xIn, ry + 0.04, zIn));
+    }
+    // Vertical row of black rivet dots on inner booster
+    for (let yd = 0.8; yd < yInCylTop - 0.5; yd += 0.95) {
+      g.add(mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), darkBlueGreyMat, xIn + sgn * 0.18, yd, zIn + R_ZENIT_IN));
+    }
+
+    // Upper mechanical attachment struts & shock-absorber collars on front of inner booster (y = 9.85 -> 12.85)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN * 0.92, R_ZENIT_IN, 0.65, 36), blueGreyMat, xIn, yInCylTop + 0.32, zIn));
+    g.add(mesh(new THREE.BoxGeometry(0.34, 2.55, 0.36), blueGreyMat, xIn - sgn * 0.16, 11.15, zIn + 0.52));
+    g.add(mesh(new THREE.BoxGeometry(0.56, 0.24, 0.44), darkBlueGreyMat, xIn - sgn * 0.12, 10.55, zIn + 0.54));
+    g.add(mesh(new THREE.BoxGeometry(0.52, 0.22, 0.42), darkBlueGreyMat, xIn - sgn * 0.14, 11.65, zIn + 0.52));
+    g.add(mesh(new THREE.CylinderGeometry(0.11, 0.11, 2.85, 16), whiteMat, xIn + sgn * 0.14, 11.20, zIn + 0.58));
+    g.add(mesh(new THREE.BoxGeometry(0.22, 1.45, 0.28), darkBlueGreyMat, sgn * (R_EN_CORE + 0.18), 11.80, zIn + 0.38));
+
+    // B. Outer-Rear Booster Cylinder: White lower section (y = 0.0 -> 6.75) + Bluish-Grey Upper Shroud (y = 6.75 -> 11.05)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT, R_ZENIT_OUT, yOutWhiteTop, 48), whiteMat, xOut, yOutWhiteTop * 0.5, zOut));
+    for (const ry of [1.80, 4.40]) {
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT + 0.015, R_ZENIT_OUT + 0.015, 0.06, 48), whiteMat, xOut, ry, zOut));
+    }
+    for (let yd = 0.6; yd < yOutWhiteTop - 0.3; yd += 0.85) {
+      g.add(mesh(new THREE.BoxGeometry(0.045, 0.045, 0.045), darkBlueGreyMat, xOut + sgn * 0.42, yd, zOut + R_ZENIT_OUT * 0.82));
+    }
+
+    // Prominent Bluish-Grey Upper Outer Collar/Shroud (y = 6.45 -> 11.05, r = 0.83) visible on left/right flanks in photo!
+    const rShroud = R_ZENIT_OUT + 0.09;
+    g.add(mesh(new THREE.CylinderGeometry(rShroud, R_ZENIT_OUT, 0.35, 48), darkBlueGreyMat, xOut, yOutWhiteTop - 0.17, zOut));
+    const hShroud = yOutGreyTop - yOutWhiteTop;
+    g.add(mesh(new THREE.CylinderGeometry(rShroud, rShroud, hShroud, 48), blueGreyMat, xOut, yOutWhiteTop + hShroud * 0.5, zOut));
+    g.add(mesh(new THREE.CylinderGeometry(rShroud + 0.014, rShroud + 0.014, 0.06, 48), darkBlueGreyMat, xOut, yOutWhiteTop + hShroud * 0.48, zOut));
+    // Vertical rectangular side pod on the bluish-grey collar
+    g.add(mesh(new THREE.BoxGeometry(0.24, hShroud * 0.88, 0.52), darkBlueGreyMat, xOut + sgn * (rShroud - 0.04), yOutWhiteTop + hShroud * 0.46, zOut + 0.12));
+
+    // C. Slanted Bluish-Grey Conical Booster Nose Cap sloping into the Energia Core (y = 10.80 -> 14.46)
+    const coneH = yConeTop - yInCylTop;
+    const coneGeo = shearedBoosterConeGeo(
+      1.04,
+      0.13,
+      sgn * 3.06,
+      sgn * (R_EN_CORE + 0.04),
+      0.04,
+      0.12,
+      coneH,
+      0.82,
+      48,
+      24
+    );
+    g.add(mesh(coneGeo, blueGreyMat, 0, yInCylTop, 0));
+  }
+
+  // =========================================================================
+  // 3. COMPLETE 3D BURAN SPACE SHUTTLE ORBITER (y = -11.80 -> +13.10 on +Z)
+  // =========================================================================
+  const orbiter = new THREE.Group();
+  g.add(orbiter);
+
+  const yFuseBot = -11.80;
+  const yBlackCapBot = 11.92;
+  const yNoseTip = 13.10;
+
+  // A. White Shuttle Fuselage & Forward Cabin (y = -11.80 -> +11.92) + Black Thermal Nose Cap (y = +11.92 -> +13.10)
+  orbiter.add(mesh(buildBuranFuselageSectionGeo(yFuseBot, yBlackCapBot, 40, 64), whiteMat));
+  orbiter.add(mesh(buildBuranFuselageSectionGeo(yBlackCapBot - 0.02, yNoseTip, 18, 48), blackTileMat));
+  // Rounded black thermal nose tip sphere
+  const tipProf = buranFuselageProfile(yNoseTip - 0.05);
+  const noseSphere = mesh(new THREE.SphereGeometry(0.22, 24, 16), blackTileMat, 0, yNoseTip - 0.08, tipProf.zCenter);
+  noseSphere.scale.set(1.05, 0.85, 0.95);
+  orbiter.add(noseSphere);
+
+  // Black thermal protection belly tile layer along the back/underbelly of the fuselage
+  orbiter.add(mesh(new THREE.BoxGeometry(3.25, 20.5, 0.16), blackTileMat, 0, -1.2, 1.88));
+
+  // B. Black RCS Thruster Dots on the Nose (just below the black nose cap, matching photo!)
+  for (const [rx, ry, rr] of [
+    [-0.22, 11.46, 0.068],
+    [0.0, 11.50, 0.072],
+    [0.22, 11.46, 0.068],
+    [-0.74, 10.85, 0.062],
+    [0.74, 10.85, 0.062],
+  ]) {
+    const rz = buranSurfaceZ(rx, ry);
+    const dot = mesh(new THREE.CylinderGeometry(rr, rr, 0.05, 16).rotateX(Math.PI * 0.5), blackTileMat, rx, ry, rz + 0.01);
+    dot.rotation.y = rx * 0.35;
+    dot.rotation.x = -0.32;
+    orbiter.add(dot);
+  }
+
+  // C. Iconic 6-Pane V-Shaped Black Cockpit Windshield (y = +8.55 -> +9.85)
+  // 3 angled black glass panes per side forming the signature Soviet Buran chevron windscreen
+  const windPanes = [
+    // [xCenter, yCenter, width, height, rotZ, rotY, rotX]
+    [0.27, 9.52, 0.38, 0.42, -0.46, 0.18, -0.26],
+    [0.70, 9.24, 0.44, 0.44, -0.58, 0.44, -0.22],
+    [1.12, 8.80, 0.42, 0.40, -0.68, 0.72, -0.16],
+  ];
+  for (const sgn of [-1, 1]) {
+    for (const [wx, wy, ww, wh, rz, ry, rx] of windPanes) {
+      const px = sgn * wx;
+      const pz = buranSurfaceZ(px, wy);
+      const pane = mesh(new THREE.BoxGeometry(ww, wh, 0.06), windshieldMat, px, wy, pz + 0.01);
+      pane.rotation.order = 'YXZ';
+      pane.rotation.y = sgn * ry;
+      pane.rotation.x = rx;
+      pane.rotation.z = sgn * rz;
+      orbiter.add(pane);
+    }
+  }
+
+  // D. 2 Square Black Overhead Cockpit Windows right behind the V-windshield (y = +7.92, x = +/-0.25)
+  for (const sgn of [-1, 1]) {
+    const ox = sgn * 0.25;
+    const oy = 7.92;
+    const oz = buranSurfaceZ(ox, oy);
+    const owin = mesh(new THREE.BoxGeometry(0.35, 0.36, 0.05), windshieldMat, ox, oy, oz + 0.012);
+    owin.rotation.x = -0.14;
+    owin.rotation.y = sgn * 0.12;
+    orbiter.add(owin);
+  }
+
+  // E. Crisp Black Payload Bay Panel Seam Lines on the White Upper Fuselage
+  // Centerline longitudinal seam (y = -6.20 -> +7.35)
+  const lenCenterSeam = 7.35 - (-6.20);
+  orbiter.add(mesh(new THREE.BoxGeometry(0.036, lenCenterSeam, 0.03), blackTileMat, 0, (-6.20 + 7.35) * 0.5, buranSurfaceZ(0, 0) + 0.012));
+
+  // Left & Right longitudinal payload bay hinge seams (x = +/-1.44, y = -8.40 -> +7.35)
+  const lenSideSeam = 7.35 - (-8.40);
+  for (const sgn of [-1, 1]) {
+    const sx = sgn * 1.44;
+    const sz = buranSurfaceZ(sx, 0);
+    orbiter.add(mesh(new THREE.BoxGeometry(0.035, lenSideSeam, 0.035), blackTileMat, sx, (-8.40 + 7.35) * 0.5, sz + 0.01));
+  }
+
+  // 5 Horizontal Black Panel Seam Rings across the white fuselage (y = +7.35, +3.35, -0.85, -5.05, -8.40)
+  for (const py of [7.35, 3.35, -0.85, -5.05, -8.40]) {
+    const nSeg = 24;
+    const { rx } = buranFuselageProfile(py);
+    for (let i = 0; i < nSeg; i++) {
+      const t0 = -0.92 + (1.84 * i) / nSeg;
+      const t1 = -0.92 + (1.84 * (i + 1)) / nSeg;
+      const xm = ((t0 + t1) * 0.5) * rx;
+      const zm = buranSurfaceZ(xm, py);
+      const dx = (t1 - t0) * rx;
+      const dz = buranSurfaceZ(t1 * rx, py) - buranSurfaceZ(t0 * rx, py);
+      const segLen = Math.hypot(dx, dz) * 1.08;
+      const bar = mesh(new THREE.BoxGeometry(segLen, 0.038, 0.032), blackTileMat, xm, py, zm + 0.012);
+      bar.rotation.y = -Math.atan2(dz, dx);
+      orbiter.add(bar);
+    }
+  }
+
+  // =========================================================================
+  // F. DOUBLE-DELTA WINGS WITH BLACK THERMAL LEADING EDGES & ELEVON STRIPES
+  // =========================================================================
+  for (const sgn of [-1, 1]) {
+    // 1. Full Wing Contour in Black Thermal Tile Material (forms black belly, black leading edge, wingtip, elevon hinge band & trailing lip)
+    const blackWingShape = new THREE.Shape();
+    blackWingShape.moveTo(sgn * 1.55, 4.55);
+    blackWingShape.lineTo(sgn * 1.82, 4.55);
+    blackWingShape.lineTo(sgn * 2.68, -1.55);   // Forward strake / chine kink
+    blackWingShape.lineTo(sgn * 7.36, -6.72);   // 45-deg main delta leading edge to outer tip
+    blackWingShape.lineTo(sgn * 7.64, -8.28);   // Curved/angled outer wingtip upper corner
+    blackWingShape.lineTo(sgn * 7.64, -9.62);   // Outer wingtip trailing corner
+    blackWingShape.lineTo(sgn * 1.55, -10.82);  // Trailing edge to fuselage root
+    blackWingShape.closePath();
+
+    const blackWingGeo = new THREE.ExtrudeGeometry(blackWingShape, {
+      depth: 0.24,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.02,
+      bevelSegments: 2,
+    });
+    orbiter.add(mesh(blackWingGeo, blackTileMat, 0, 0, 1.66));
+
+    // 2. White Upper Main Wing Surface (inset from the leading edge & wingtip so the bold black RCC border frames it cleanly, stopping at y = -8.20 above the black elevon band!)
+    const whiteWingShape = new THREE.Shape();
+    whiteWingShape.moveTo(sgn * 1.62, 3.05);
+    whiteWingShape.lineTo(sgn * 2.40, -1.78);   // Leaves crisp black strake border
+    whiteWingShape.lineTo(sgn * 7.04, -6.92);   // Leaves bold 0.36m black leading-edge band
+    whiteWingShape.lineTo(sgn * 7.42, -8.20);   // Leaves black wingtip border
+    whiteWingShape.lineTo(sgn * 1.62, -8.20);   // Top edge of the horizontal black elevon band
+    whiteWingShape.closePath();
+
+    const whiteWingGeo = new THREE.ExtrudeGeometry(whiteWingShape, {
+      depth: 0.14,
+      bevelEnabled: false,
+    });
+    orbiter.add(mesh(whiteWingGeo, whiteMat, 0, 0, 1.80));
+
+    // 3. White Inner & Outer Elevon Flaps below the horizontal black hinge band (y = -8.64 down to trailing edge, split by a vertical black seam at x = 4.66!)
+    const inElevShape = new THREE.Shape();
+    inElevShape.moveTo(sgn * 1.62, -8.64);
+    inElevShape.lineTo(sgn * 4.62, -8.64);
+    inElevShape.lineTo(sgn * 4.62, -10.14);
+    inElevShape.lineTo(sgn * 1.62, -10.72);
+    inElevShape.closePath();
+    orbiter.add(mesh(new THREE.ExtrudeGeometry(inElevShape, { depth: 0.14, bevelEnabled: false }), whiteMat, 0, 0, 1.80));
+
+    const outElevShape = new THREE.Shape();
+    outElevShape.moveTo(sgn * 4.70, -8.64);
+    outElevShape.lineTo(sgn * 7.46, -8.64);
+    outElevShape.lineTo(sgn * 7.46, -9.55);
+    outElevShape.lineTo(sgn * 4.70, -10.12);
+    outElevShape.closePath();
+    orbiter.add(mesh(new THREE.ExtrudeGeometry(outElevShape, { depth: 0.14, bevelEnabled: false }), whiteMat, 0, 0, 1.80));
+
+    // Subtle panel seam line across the white main wing at y = -5.10
+    orbiter.add(mesh(new THREE.BoxGeometry(3.85, 0.032, 0.03), blackTileMat, sgn * 3.60, -5.10, 1.95));
+  }
+
+  // =========================================================================
+  // G. CENTRAL VERTICAL TAIL FIN (STABILIZER) & REAR OMS / RCS PODS
+  // =========================================================================
+  // Swept vertical tail fin in the YZ plane at x = 0 (protruding in +Z from z = 3.20 to 5.25, y = -5.75 down to -13.15)
+  const tailBlackShape = new THREE.Shape();
+  tailBlackShape.moveTo(3.15, -5.75);
+  tailBlackShape.lineTo(3.62, -5.75);
+  tailBlackShape.lineTo(5.28, -12.65);
+  tailBlackShape.lineTo(5.05, -13.18);
+  tailBlackShape.lineTo(3.15, -11.75);
+  tailBlackShape.closePath();
+  const tailBlackGeo = new THREE.ExtrudeGeometry(tailBlackShape, {
+    depth: 0.16,
+    bevelEnabled: true,
+    bevelThickness: 0.02,
+    bevelSize: 0.015,
+    bevelSegments: 2,
+  });
+  tailBlackGeo.rotateY(-Math.PI * 0.5);
+  tailBlackGeo.translate(0.08, 0, 0);
+  orbiter.add(mesh(tailBlackGeo, blackTileMat));
+
+  // White side panels of the vertical tail fin (inset from the front edge so the black leading edge is visible!)
+  const tailWhiteShape = new THREE.Shape();
+  tailWhiteShape.moveTo(3.15, -6.10);
+  tailWhiteShape.lineTo(3.46, -6.10);
+  tailWhiteShape.lineTo(5.02, -12.72);
+  tailWhiteShape.lineTo(4.85, -13.08);
+  tailWhiteShape.lineTo(3.15, -11.65);
+  tailWhiteShape.closePath();
+  const tailWhiteGeo = new THREE.ExtrudeGeometry(tailWhiteShape, {
+    depth: 0.22,
+    bevelEnabled: false,
+  });
+  tailWhiteGeo.rotateY(-Math.PI * 0.5);
+  tailWhiteGeo.translate(0.11, 0, 0);
+  orbiter.add(mesh(tailWhiteGeo, whiteMat));
+
+  // Left & Right Rear OMS Pods with vertical columns of 4 black RCS thruster dots (y = -8.70 -> -11.80)
+  for (const sgn of [-1, 1]) {
+    // White OMS pod shoulder
+    const pod = mesh(new THREE.BoxGeometry(0.76, 3.05, 0.92), whiteMat, sgn * 1.35, -10.25, 2.95);
+    orbiter.add(pod);
+    // Vertical column of 4 black circular RCS dots on outer rear corner + 2 inner dots (matching photo!)
+    for (const dy of [-9.52, -9.86, -10.20, -10.54]) {
+      orbiter.add(mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.05, 14).rotateX(Math.PI * 0.5), blackTileMat, sgn * 1.48, dy, 3.40));
+    }
+    for (const dy of [-10.75, -11.02]) {
+      orbiter.add(mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.05, 12).rotateX(Math.PI * 0.5), blackTileMat, sgn * 1.24, dy, 3.40));
+    }
+  }
+
+  // Dark recessed aft engine bay between the left & right OMS pods (y = -9.15 -> -11.80)
+  orbiter.add(mesh(new THREE.BoxGeometry(1.90, 2.65, 0.95), darkNozzleMat, 0, -10.48, 2.85));
+  orbiter.add(mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.45, 24), silverBellMat, -0.45, -10.65, 2.65));
+  orbiter.add(mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.45, 24), silverBellMat, 0.45, -10.65, 2.65));
+
+  // Stage 2 Propulsion Nozzles & Parachutes
+  for (const [nx, nz] of [[-0.65, -0.55], [0.65, -0.55], [-0.65, 0.55], [0.65, 0.55]]) {
+    const mBell = bellMaterial(false);
+    g.add(mesh(bellGeometry(0.18, 0.44, 0.65, 28), mBell, nx, 0, nz));
+    addNozzle(g, nx, nz, 0.44, [mBell]);
+  }
+  addParachutes(g, 13.0);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
+
+  return g;
+}
+
+// Stage 1 (Bottom): Lower Energia Core, 4× Zenit Strap-on Boosters, 4× RD-0120 Core Nozzles & 4× RD-170 Booster Clusters (H = 15.0m)
+function buildBuranEnergia() {
+  const g = new THREE.Group();
+  const H = PARTS.buranEnergia.height; // 15.0
+  const {
+    whiteMat,
+    blueGreyMat,
+    darkBlueGreyMat,
+    blackTileMat,
+    silverBellMat,
+    darkNozzleMat,
+  } = getBuranMaterials();
+
+  const yCoreBot = 1.55;
+
+  // =========================================================================
+  // 1. LOWER ENERGIA CENTRAL CORE (y = 1.55 -> 15.00, r = R_EN_CORE = 1.95)
+  // =========================================================================
+  const hCore = H - yCoreBot;
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, hCore, 64), whiteMat, 0, yCoreBot + hCore * 0.5, 0));
+  for (const ry of [2.40, 6.50, 10.80, H - 0.06]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.016, R_EN_CORE + 0.016, 0.06, 64), whiteMat, 0, ry, 0));
+  }
+  // Dark metallic engine thrust frame at base of Energia core (y = 1.40 -> 2.40)
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE * 0.94, R_EN_CORE * 0.88, 1.0, 48), darkNozzleMat, 0, 1.90, 0));
+
+  // =========================================================================
+  // 2. 4× CENTRAL RD-0120 CRYOGENIC MAIN ENGINE BELLS (y = 0.0 -> 1.65)
+  // Visible at the bottom center of the reference photo with silver upper domes & dark flared bells!
+  // =========================================================================
+  const rd0120Coords = [
+    [-0.74, 0.58],
+    [0.74, 0.58],
+    [-0.74, -0.58],
+    [0.74, -0.58],
+  ];
+  for (const [ex, ez] of rd0120Coords) {
+    const mBell = bellMaterial(true);
+    // Lower dark flared nozzle bell (y = 0.0 -> 0.88)
+    g.add(mesh(bellGeometry(0.34, 0.58, 0.88, 36), mBell, ex, 0, ez));
+    g.add(mesh(bellGeometry(0.33, 0.57, 0.86, 36), darkNozzleMat, ex, 0.01, ez));
+    // Upper rounded metallic silver jacket / powerhead (y = 0.82 -> 1.68)
+    g.add(mesh(new THREE.CylinderGeometry(0.56, 0.44, 0.82, 36), silverBellMat, ex, 1.22, ez));
+    g.add(mesh(new THREE.SphereGeometry(0.56, 28, 16), silverBellMat, ex, 1.55, ez));
+    for (const ty of [0.88, 1.08, 1.28]) {
+      g.add(mesh(new THREE.TorusGeometry(0.50, 0.025, 10, 32).rotateX(Math.PI * 0.5), silverBellMat, ex, ty, ez));
+    }
+    addNozzle(g, ex, ez, 0.58, [mBell]);
+  }
+
+  // =========================================================================
+  // 3. LOWER 4× STRAP-ON ZENIT BOOSTERS (Left sgn = -1 & Right sgn = +1)
+  // =========================================================================
+  const yNozTop = 0.92;
+  const yInSkirtTop = 4.20;
+  const yOutGreyBot = 1.42;
+  const yOutGreyTop = 6.05;
+
+  for (const sgn of [-1, 1]) {
+    const xIn = sgn * X_ZENIT_IN;
+    const zIn = Z_ZENIT_IN;
+    const xOut = sgn * X_ZENIT_OUT;
+    const zOut = Z_ZENIT_OUT;
+
+    // A. Inner-Front Zenit Booster (y = 0.92 -> 15.00)
+    // Main white upper cylinder (y = 4.20 -> 15.00)
+    const hInWhite = H - yInSkirtTop;
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN, R_ZENIT_IN, hInWhite, 48), whiteMat, xIn, yInSkirtTop + hInWhite * 0.5, zIn));
+    for (const ry of [7.60, 11.20, 13.80, H - 0.05]) {
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.015, R_ZENIT_IN + 0.015, 0.06, 48), whiteMat, xIn, ry, zIn));
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.018, R_ZENIT_IN + 0.018, 0.03, 48), darkBlueGreyMat, xIn, ry + 0.04, zIn));
+    }
+    // Small black target/sensor dot at y = 13.15 (visible on the white booster tube just above the wing root in the photo!)
+    g.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.04, 16).rotateX(Math.PI * 0.5), blackTileMat, xIn, 13.15, zIn + R_ZENIT_IN));
+
+    // Stepped White Aft Skirt (y = 0.92 -> 4.20, r = 0.78) with 3 Vertical Ribbed Strakes (matching photo!)
+    const rSkirt = R_ZENIT_IN + 0.06;
+    const hSkirt = yInSkirtTop - yNozTop;
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN, rSkirt, 0.32, 48), whiteMat, xIn, yInSkirtTop - 0.16, zIn));
+    g.add(mesh(new THREE.CylinderGeometry(rSkirt, rSkirt, hSkirt - 0.32, 48), whiteMat, xIn, yNozTop + (hSkirt - 0.32) * 0.5, zIn));
+    g.add(mesh(new THREE.CylinderGeometry(rSkirt + 0.016, rSkirt + 0.016, 0.10, 48), darkBlueGreyMat, xIn, yNozTop + 0.06, zIn));
+    g.add(mesh(new THREE.CylinderGeometry(rSkirt + 0.014, rSkirt + 0.014, 0.05, 48), darkBlueGreyMat, xIn, 3.35, zIn));
+
+    // 3 vertical raised white strakes/ribs on the front of the inner booster aft skirt (y = 1.35 -> 3.15)
+    for (const dx of [-0.22, 0.0, 0.22]) {
+      g.add(mesh(new THREE.BoxGeometry(0.09, 1.75, 0.14), whiteMat, xIn + dx, 2.25, zIn + rSkirt - 0.02));
+      g.add(mesh(new THREE.BoxGeometry(0.11, 0.12, 0.16), darkBlueGreyMat, xIn + dx, 3.05, zIn + rSkirt - 0.01));
+      g.add(mesh(new THREE.BoxGeometry(0.11, 0.12, 0.16), darkBlueGreyMat, xIn + dx, 1.45, zIn + rSkirt - 0.01));
+    }
+
+    // B. Outer-Rear Zenit Booster (y = 0.92 -> 15.00)
+    // Upper white section (y = 6.05 -> 15.00)
+    const hOutWhite = H - yOutGreyTop;
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT, R_ZENIT_OUT, hOutWhite, 48), whiteMat, xOut, yOutGreyTop + hOutWhite * 0.5, zOut));
+    for (const ry of [9.50, 13.45]) {
+      g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT + 0.015, R_ZENIT_OUT + 0.015, 0.06, 48), whiteMat, xOut, ry, zOut));
+    }
+    for (let yd = 6.5; yd < H - 0.4; yd += 0.90) {
+      g.add(mesh(new THREE.BoxGeometry(0.045, 0.045, 0.045), darkBlueGreyMat, xOut + sgn * 0.42, yd, zOut + R_ZENIT_OUT * 0.82));
+    }
+
+    // Small Horizontal Bluish-Grey Side Tab sticking out at y = 13.45 just above the wing leading edge (visible in photo!)
+    g.add(mesh(new THREE.BoxGeometry(0.42, 0.22, 0.32), blueGreyMat, xOut + sgn * (R_ZENIT_OUT + 0.14), 13.45, zOut + 0.10));
+
+    // Lower Bluish-Grey Outer Shroud/Band below the wing trailing edge (y = 1.42 -> 6.05, r = 0.82)
+    const rLowShroud = R_ZENIT_OUT + 0.08;
+    const hLowShroud = yOutGreyTop - yOutGreyBot;
+    g.add(mesh(new THREE.CylinderGeometry(rLowShroud, rLowShroud, hLowShroud, 48), blueGreyMat, xOut, yOutGreyBot + hLowShroud * 0.5, zOut));
+    g.add(mesh(new THREE.BoxGeometry(0.24, hLowShroud * 0.92, 0.48), darkBlueGreyMat, xOut + sgn * (rLowShroud - 0.03), yOutGreyBot + hLowShroud * 0.5, zOut + 0.10));
+    // Stepped white/grey base ring below the bluish-grey band (y = 0.92 -> 1.42)
+    g.add(mesh(new THREE.CylinderGeometry(rLowShroud, R_ZENIT_OUT + 0.04, yOutGreyBot - yNozTop, 48), whiteMat, xOut, yNozTop + (yOutGreyBot - yNozTop) * 0.5, zOut));
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT + 0.06, R_ZENIT_OUT + 0.06, 0.10, 48), darkBlueGreyMat, xOut, yNozTop + 0.06, zOut));
+
+    // Lower structural attachment struts connecting the boosters to the Energia core
+    g.add(mesh(new THREE.BoxGeometry(1.10, 0.55, 0.55), darkBlueGreyMat, sgn * 2.15, 2.65, 0.10));
+
+    // C. RD-170 4-Chamber Engine Nozzle Clusters at the bottom of both Inner & Outer Boosters (y = 0.0 -> 0.92)
+    for (const [bx, bz] of [[xIn, zIn], [xOut, zOut]]) {
+      const mBell = bellMaterial(true);
+      // 4-chamber nozzle cluster per Zenit booster
+      for (const [dx, dz] of [[-0.24, -0.22], [0.24, -0.22], [-0.24, 0.22], [0.24, 0.22]]) {
+        g.add(mesh(bellGeometry(0.11, 0.25, yNozTop, 24), darkNozzleMat, bx + dx, 0, bz + dz));
+        g.add(mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.12, 20), silverBellMat, bx + dx, 0.08, bz + dz));
+      }
+      addNozzle(g, bx, bz, 0.50, [mBell]);
+    }
+  }
+
+  return g;
+}
+
+// =========================================================================
+// SOVIET ENERGIA – POLYUS ("ЭНЕРГИЯ – МИР-2") SUPER-HEAVY LAUNCH VEHICLE
+// =========================================================================
+let _energiaMats = null;
+function getEnergiaMaterials() {
+  if (_energiaMats) return _energiaMats;
+  const panel = TX.panelTextures();
+
+  const whiteMat = physical({
+    color: 0xc6cbd4,
+    roughness: 0.76,
+    normalMap: panel.normal,
+    normalScale: new THREE.Vector2(0.16, 0.16),
+    metalness: 0.04,
+    clearcoat: 0.06,
+    clearcoatRoughness: 0.40,
+  });
+  const lightGreyRibMat = physical({
+    color: 0xa6acb6,
+    roughness: 0.68,
+    metalness: 0.12,
+    clearcoat: 0.08,
+  });
+  // Warm stone-grey / taupe-grey for Zenit booster fairings, nose cones & pods (matching reference image!)
+  const warmGreyMat = physical({
+    color: 0x9b9990,
+    roughness: 0.60,
+    normalMap: panel.normal,
+    normalScale: new THREE.Vector2(0.14, 0.14),
+    metalness: 0.14,
+    clearcoat: 0.10,
+  });
+  const darkWarmGreyMat = physical({
+    color: 0x5c5b56,
+    roughness: 0.56,
+    metalness: 0.35,
+  });
+  // Deep matte charcoal-black for the Polyus ("МИР-2") orbital laser spacecraft
+  const polyusBlackMat = physical({
+    color: 0x1b1a19,
+    roughness: 0.80,
+    normalMap: panel.normal,
+    normalScale: new THREE.Vector2(0.14, 0.14),
+    metalness: 0.08,
+    clearcoat: 0.05,
+  });
+  const polyusSeamMat = physical({
+    color: 0x0e0d0c,
+    roughness: 0.85,
+    metalness: 0.05,
+  });
+
+  // Decal 1: Red Cyrillic "ЭНЕРГИЯ" on the upper white tank
+  const cEn = document.createElement('canvas');
+  cEn.width = 512;
+  cEn.height = 256;
+  const xEn = cEn.getContext('2d');
+  xEn.clearRect(0, 0, 512, 256);
+  xEn.fillStyle = '#c42b22';
+  xEn.font = 'bold 68px "Arial", "Segoe UI", sans-serif';
+  xEn.textAlign = 'center';
+  xEn.textBaseline = 'middle';
+  xEn.fillText('ЭНЕРГИЯ', 256, 128);
+  const texEn = new THREE.CanvasTexture(cEn);
+  texEn.colorSpace = THREE.SRGBColorSpace;
+  texEn.anisotropy = 8;
+  const energiaDecalMat = new THREE.MeshPhysicalMaterial({
+    map: texEn,
+    transparent: true,
+    roughness: 0.78,
+    metalness: 0.04,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    depthWrite: false,
+  });
+
+  // Decal 2: White Cyrillic "МИР-2" + Upper Grey "U U" Brackets on the black Polyus hull
+  const cMir = document.createElement('canvas');
+  cMir.width = 512;
+  cMir.height = 512;
+  const xMir = cMir.getContext('2d');
+  xMir.clearRect(0, 0, 512, 512);
+  // Draw the two grey "U" bracket markings on left & right in upper half
+  xMir.strokeStyle = '#787878';
+  xMir.lineWidth = 10;
+  for (const ux of [118, 394]) {
+    xMir.beginPath();
+    xMir.moveTo(ux - 22, 110);
+    xMir.lineTo(ux - 22, 178);
+    xMir.arc(ux, 178, 22, Math.PI, 0, true);
+    xMir.lineTo(ux + 22, 110);
+    xMir.stroke();
+  }
+  // Draw crisp white "МИР-2" in lower half
+  xMir.fillStyle = '#e8ecf2';
+  xMir.font = '900 84px "Arial Black", "Arial", sans-serif';
+  xMir.textAlign = 'center';
+  xMir.textBaseline = 'middle';
+  xMir.fillText('МИР-2', 256, 365);
+  const texMir = new THREE.CanvasTexture(cMir);
+  texMir.colorSpace = THREE.SRGBColorSpace;
+  texMir.anisotropy = 8;
+  const mir2DecalMat = new THREE.MeshPhysicalMaterial({
+    map: texMir,
+    transparent: true,
+    roughness: 0.78,
+    metalness: 0.05,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    depthWrite: false,
+  });
+
+  _energiaMats = {
+    whiteMat,
+    lightGreyRibMat,
+    warmGreyMat,
+    darkWarmGreyMat,
+    polyusBlackMat,
+    polyusSeamMat,
+    energiaDecalMat,
+    mir2DecalMat,
+  };
+  return _energiaMats;
+}
+
+// Stage 3 (Top): Energia White Nose Cone with Button Tip, Red "ЭНЕРГИЯ" Tank & Ribbed Checker Collar (H = 12.5m)
+function buildEnergiaNose() {
+  const g = new THREE.Group();
+  const H = PARTS.energiaNose.height; // 12.5
+  const {
+    whiteMat,
+    lightGreyRibMat,
+    warmGreyMat,
+    darkWarmGreyMat,
+    polyusBlackMat,
+    energiaDecalMat,
+  } = getEnergiaMaterials();
+
+  const yRibTop = 3.10;
+  const yWhiteTop = 6.60;
+  const yOgiveTop = 12.18;
+
+  // 1. Lower Ribbed Light-Grey Interstage Collar (y = 0.0 -> 3.10)
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.01, R_EN_CORE + 0.01, yRibTop, 64), lightGreyRibMat, 0, yRibTop * 0.5, 0));
+  for (const ry of [0.06, 0.36, yRibTop - 0.04]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.026, R_EN_CORE + 0.026, 0.07, 64), warmGreyMat, 0, ry, 0));
+  }
+
+  // 64 vertical ribs around the interstage collar
+  for (let i = 0; i < 64; i++) {
+    const a = (i / 64) * Math.PI * 2;
+    const rib = mesh(
+      new THREE.BoxGeometry(0.042, yRibTop - 0.44, 0.028),
+      whiteMat,
+      Math.sin(a) * (R_EN_CORE + 0.016),
+      0.38 + (yRibTop - 0.44) * 0.5,
+      Math.cos(a) * (R_EN_CORE + 0.016)
+    );
+    rib.rotation.y = a;
+    g.add(rib);
+  }
+
+  // Iconic 2 Staggered Black Checkerboard Squares in the center-front (+Z) right above the Polyus nose tip!
+  const sq1 = mesh(new THREE.BoxGeometry(0.45, 0.45, 0.04), polyusBlackMat, -0.22, 2.22, R_EN_CORE + 0.024);
+  sq1.rotation.y = -0.11;
+  g.add(sq1);
+  const sq2 = mesh(new THREE.BoxGeometry(0.45, 0.45, 0.04), polyusBlackMat, 0.22, 1.77, R_EN_CORE + 0.024);
+  sq2.rotation.y = 0.11;
+  g.add(sq2);
+
+  // 2 thin vertical grey structural pipes on the front (+Z) flanking the black Polyus nose cone (y = 0.0 -> 1.85)
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 1.85, 14), warmGreyMat, sgn * 0.88, 0.925, R_EN_CORE + 0.04));
+    // Protruding angled side ears on the outer left/right edges of the ribbed collar (y = 0.65 -> 1.35)
+    const ear = mesh(new THREE.BoxGeometry(0.18, 0.65, 0.24), lightGreyRibMat, sgn * (R_EN_CORE + 0.06), 0.98, 0.08);
+    ear.rotation.z = sgn * 0.18;
+    g.add(ear);
+  }
+
+  // 2. Middle White Cylindrical Tank with Red "ЭНЕРГИЯ" Lettering (y = 3.10 -> 6.60)
+  const hWhite = yWhiteTop - yRibTop;
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, hWhite, 64), whiteMat, 0, yRibTop + hWhite * 0.5, 0));
+  for (const ry of [3.52, 6.18, yWhiteTop]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.015, R_EN_CORE + 0.015, 0.045, 64), lightGreyRibMat, 0, ry, 0));
+  }
+
+  // Conformal decal arc on the front (+Z) with bold red "ЭНЕРГИЯ"
+  const decArc = 1.25;
+  const decGeo = new THREE.CylinderGeometry(R_EN_CORE + 0.02, R_EN_CORE + 0.02, 2.50, 32, 1, true, -decArc * 0.5, decArc);
+  g.add(mesh(decGeo, energiaDecalMat, 0, 4.85, 0));
+
+  // 3. Upper White Ogive Nose Cone with Button Tip (y = 6.60 -> 12.50)
+  const ogivePts = [];
+  const nOgive = 36;
+  for (let i = 0; i <= nOgive; i++) {
+    const t = i / nOgive;
+    const r = 0.18 + (R_EN_CORE - 0.18) * Math.pow(1 - Math.pow(t, 1.55), 0.65);
+    ogivePts.push(new THREE.Vector2(r, yWhiteTop + t * (yOgiveTop - yWhiteTop)));
+  }
+  g.add(mesh(new THREE.LatheGeometry(ogivePts, 64), whiteMat));
+
+  // Rounded white button cap at the apex (y = 12.18 -> 12.50, matching reference image!)
+  g.add(mesh(new THREE.CylinderGeometry(0.22, 0.18, 0.14, 32), whiteMat, 0, yOgiveTop + 0.07, 0));
+  const tipSphere = mesh(new THREE.SphereGeometry(0.22, 24, 16), whiteMat, 0, yOgiveTop + 0.16, 0);
+  tipSphere.scale.set(1.0, 0.75, 1.0);
+  g.add(tipSphere);
+
+  // Internal orbital propulsion nozzle & landing parachutes
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE * 0.82, R_EN_CORE * 0.82, 0.14, 48), darkWarmGreyMat, 0, 0.07, 0));
+  const mBell = bellMaterial(true);
+  g.add(mesh(bellGeometry(0.16, 0.42, 0.58, 32), mBell, 0, 0, 0));
+  addNozzle(g, 0, 0, 0.42, [mBell]);
+  addParachutes(g, 11.6);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
+
+  return g;
+}
+
+// Stage 2 (Middle): Piggyback Black Polyus ("МИР-2") Spacecraft + Upper Energia Core & Warm-Grey Booster Fairings (H = 14.5m)
+function buildEnergiaPolyus() {
+  const g = new THREE.Group();
+  const H = PARTS.energiaPolyus.height; // 14.5
+  const {
+    whiteMat,
+    lightGreyRibMat,
+    warmGreyMat,
+    darkWarmGreyMat,
+    polyusBlackMat,
+    polyusSeamMat,
+    mir2DecalMat,
+  } = getEnergiaMaterials();
+
+  // =========================================================================
+  // 1. UPPER ENERGIA CENTRAL CORE (y = 0.0 -> 14.50, r = R_EN_CORE = 1.95)
+  // =========================================================================
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, H, 64), whiteMat, 0, H * 0.5, 0));
+  for (const ry of [0.06, 6.20, 12.10, 13.95, H - 0.05]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.015, R_EN_CORE + 0.015, 0.05, 64), lightGreyRibMat, 0, ry, 0));
+  }
+  // Continuation of the 2 vertical grey front pipes down into the upper core (y = 11.5 -> 14.5)
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 3.0, 14), warmGreyMat, sgn * 0.88, 13.0, R_EN_CORE + 0.04));
+  }
+
+  // =========================================================================
+  // 2. UPPER 4× STRAP-ON ZENIT BOOSTERS WITH WARM-GREY FAIRINGS & PODS
+  // =========================================================================
+  const yInCylTop = 10.80;
+  const yConeTop = 14.42;
+
+  for (const sgn of [-1, 1]) {
+    const xIn = sgn * X_ZENIT_IN;
+    const zIn = Z_ZENIT_IN;
+    const xOut = sgn * X_ZENIT_OUT;
+    const zOut = Z_ZENIT_OUT;
+
+    // A. Inner-Front White Booster Cylinder (y = 0.0 -> 10.80)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN, R_ZENIT_IN, yInCylTop, 48), whiteMat, xIn, yInCylTop * 0.5, zIn));
+
+    // Vertical Warm-Grey Strut Post on the front of the inner booster (y = 6.80 -> 11.45, matching reference image!)
+    const hPost = 4.25;
+    g.add(mesh(new THREE.CylinderGeometry(0.16, 0.16, hPost, 24), warmGreyMat, xIn + sgn * 0.18, 6.85 + hPost * 0.5, zIn + 0.58));
+    g.add(mesh(new THREE.CylinderGeometry(0.02, 0.16, 0.45, 24), warmGreyMat, xIn + sgn * 0.18, 6.85 + hPost + 0.225, zIn + 0.58));
+    g.add(mesh(new THREE.CylinderGeometry(0.16, 0.05, 0.30, 24), warmGreyMat, xIn + sgn * 0.18, 6.70, zIn + 0.58));
+
+    // B. Outer-Rear White Booster Cylinder (y = 0.0 -> 10.80)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT, R_ZENIT_OUT, yInCylTop, 48), whiteMat, xOut, yInCylTop * 0.5, zOut));
+
+    // C. Slanted Warm-Grey Conical Booster Nose Cap (y = 10.80 -> 14.42)
+    const coneH = yConeTop - yInCylTop;
+    const coneGeo = shearedBoosterConeGeo(
+      1.04,
+      0.13,
+      sgn * 3.06,
+      sgn * (R_EN_CORE + 0.04),
+      0.04,
+      0.12,
+      coneH,
+      0.82,
+      48,
+      24
+    );
+    g.add(mesh(coneGeo, warmGreyMat, 0, yInCylTop, 0));
+
+    // Dark diagonal seam rings across the warm-grey nose cap (matching reference image!)
+    for (const yf of [11.20, 13.05]) {
+      const tf = (yf - yInCylTop) / coneH;
+      const rf = 1.04 + (0.13 - 1.04) * Math.pow(tf, 0.82) + 0.015;
+      const cxf = sgn * (3.06 + (R_EN_CORE + 0.04 - 3.06) * Math.pow(tf, 0.92));
+      const ring = mesh(new THREE.CylinderGeometry(rf, rf, 0.05, 36), darkWarmGreyMat, cxf, yf, 0.08);
+      ring.rotation.z = sgn * 0.32;
+      g.add(ring);
+    }
+
+    // D. Curved Warm-Grey Upper Outer Fairing Pod hanging down the outer flank (y = 3.85 -> 11.10) with tapered bottom tip!
+    const xPod = xOut + sgn * 0.22;
+    const rPod = 0.62;
+    const yPodBot = 4.55;
+    const yPodTop = 10.95;
+    const hPod = yPodTop - yPodBot;
+    g.add(mesh(new THREE.CylinderGeometry(rPod, rPod, hPod, 36), warmGreyMat, xPod, yPodBot + hPod * 0.5, zOut));
+    // Tapered conical bottom tip of the upper outer pod (y = 3.85 -> 4.55)
+    g.add(mesh(new THREE.CylinderGeometry(rPod, 0.26, 0.70, 36), warmGreyMat, xPod, yPodBot - 0.35, zOut));
+    // Rounded shoulder connecting the outer pod into the slanted nose cap (y = 10.85 -> 11.35)
+    const shoulder = mesh(new THREE.SphereGeometry(rPod, 28, 18), warmGreyMat, xPod, yPodTop, zOut);
+    shoulder.scale.set(1.0, 0.85, 1.0);
+    g.add(shoulder);
+    // Horizontal seam rings on the outer warm-grey pod
+    for (const py of [4.55, 8.95, 10.75]) {
+      g.add(mesh(new THREE.CylinderGeometry(rPod + 0.014, rPod + 0.014, 0.05, 36), darkWarmGreyMat, xPod, py, zOut));
+    }
+  }
+
+  // =========================================================================
+  // 3. COMPLETE PIGGYBACK BLACK POLYUS ("МИР-2") SPACECRAFT ON +Z
+  // Spans from local y = +16.05 (y_world = 31.05) down to y = -13.45 (y_world = 1.55)
+  // =========================================================================
+  const polyus = new THREE.Group();
+  const zPolyus = 2.48;
+  const rPolyus = 1.08;
+  g.add(polyus);
+
+  // Structural struts connecting Polyus to the Energia central core
+  for (const sy of [-9.5, -2.0, 5.5, 11.5]) {
+    for (const sgn of [-1, 1]) {
+      polyus.add(mesh(new THREE.BoxGeometry(0.20, 0.32, 0.70), darkWarmGreyMat, sgn * 0.62, sy, R_EN_CORE + 0.15));
+    }
+  }
+
+  // A. Sharp Pointed Black Conical Nose Cone (y = +12.60 -> +16.10, pointing right below the 2 checkerboard squares!)
+  const yNoseBot = 12.60;
+  const yNoseTip = 16.10;
+  const hNose = yNoseTip - yNoseBot;
+  polyus.add(mesh(new THREE.CylinderGeometry(0.02, rPolyus, hNose, 48), polyusBlackMat, 0, yNoseBot + hNose * 0.5, zPolyus));
+  polyus.add(mesh(new THREE.CylinderGeometry(rPolyus + 0.015, rPolyus + 0.015, 0.06, 48), polyusSeamMat, 0, yNoseBot, zPolyus));
+
+  // B. Main Charcoal-Black Cylindrical Hull (y = -10.10 -> +12.60, r = 1.08)
+  const yHullBot = -10.10;
+  const hHull = yNoseBot - yHullBot;
+  polyus.add(mesh(new THREE.CylinderGeometry(rPolyus, rPolyus, hHull, 56), polyusBlackMat, 0, yHullBot + hHull * 0.5, zPolyus));
+
+  // Horizontal dark panel seam rings along the black hull
+  for (const sy of [7.10, 6.50, 4.35, 2.65, 1.35, -0.75, -2.45, -3.15, -4.15, -5.80, -9.75]) {
+    polyus.add(mesh(new THREE.CylinderGeometry(rPolyus + 0.016, rPolyus + 0.016, 0.055, 56), polyusSeamMat, 0, sy, zPolyus));
+  }
+
+  // 3 Stepped Protruding Black Blister / Cheek Bands (with 45-deg beveled top & bottom shoulders, matching silhouette!)
+  const blisters = [
+    // [yBot, yTop, rBlister]
+    [1.35, 2.65, rPolyus + 0.13],     // Upper blister band above "U U"
+    [-2.45, -0.75, rPolyus + 0.15],   // Middle blister band with white "МИР-2"
+    [-4.15, -3.10, rPolyus + 0.12],   // Lower blister band
+  ];
+  for (const [yb, yt, rb] of blisters) {
+    const bev = 0.22;
+    const hm = (yt - yb) - bev * 2;
+    polyus.add(mesh(new THREE.CylinderGeometry(rb, rPolyus, bev, 48), polyusBlackMat, 0, yb + bev * 0.5, zPolyus));
+    polyus.add(mesh(new THREE.CylinderGeometry(rb, rb, hm, 48), polyusBlackMat, 0, (yb + yt) * 0.5, zPolyus));
+    polyus.add(mesh(new THREE.CylinderGeometry(rPolyus, rb, bev, 48), polyusBlackMat, 0, yt - bev * 0.5, zPolyus));
+  }
+
+  // Conformal decal on the front (+Z) of Polyus with the 2 grey "U U" brackets & bold white "МИР-2" lettering!
+  const mirArc = 1.45;
+  const mirGeo = new THREE.CylinderGeometry(rPolyus + 0.165, rPolyus + 0.165, 4.20, 36, 1, true, -mirArc * 0.5, mirArc);
+  polyus.add(mesh(mirGeo, mir2DecalMat, 0, -0.55, zPolyus));
+
+  // C. 2 Lower Black Side Pods / Aux Tanks on the Left & Right Flanks of Polyus (y = -10.10 -> -4.95)
+  const ySideBot = -10.10;
+  const ySideCylTop = -6.20;
+  const ySideConeTop = -4.95;
+  const rSidePod = 0.35;
+  for (const sgn of [-1, 1]) {
+    const sx = sgn * (rPolyus + 0.16);
+    const hSideCyl = ySideCylTop - ySideBot;
+    polyus.add(mesh(new THREE.CylinderGeometry(rSidePod, rSidePod, hSideCyl, 32), polyusBlackMat, sx, ySideBot + hSideCyl * 0.5, zPolyus));
+    // Slanted conical top cap sloping into the main black hull (y = -6.20 -> -4.95)
+    const sideCone = shearedBoosterConeGeo(
+      rSidePod,
+      0.06,
+      sx,
+      sgn * (rPolyus - 0.08),
+      zPolyus,
+      zPolyus,
+      ySideConeTop - ySideCylTop,
+      0.85,
+      32,
+      12
+    );
+    polyus.add(mesh(sideCone, polyusBlackMat, 0, ySideCylTop, 0));
+    // Crisp light-grey horizontal trim rings at top and bottom of each black side pod (matching reference image!)
+    polyus.add(mesh(new THREE.CylinderGeometry(rSidePod + 0.015, rSidePod + 0.015, 0.09, 32), lightGreyRibMat, sx, ySideCylTop - 0.06, zPolyus));
+    polyus.add(mesh(new THREE.CylinderGeometry(rSidePod + 0.015, rSidePod + 0.015, 0.10, 32), lightGreyRibMat, sx, ySideBot + 0.06, zPolyus));
+  }
+
+  // D. Bottom Vertically-Ribbed Silver/Grey Radiator Collar (y = -11.55 -> -9.85)
+  const yRadBot = -11.55;
+  const yRadTop = -9.85;
+  const hRad = yRadTop - yRadBot;
+  const rRad = 0.94;
+  polyus.add(mesh(new THREE.CylinderGeometry(rRad, rRad, hRad, 48), lightGreyRibMat, 0, yRadBot + hRad * 0.5, zPolyus));
+  // 20 vertical dark charcoal radiator slots around the silver-grey collar
+  for (let i = 0; i < 20; i++) {
+    const a = (i / 20) * Math.PI * 2;
+    const slot = mesh(
+      new THREE.BoxGeometry(0.085, hRad - 0.18, 0.04),
+      polyusBlackMat,
+      Math.sin(a) * (rRad + 0.01),
+      yRadBot + hRad * 0.5,
+      zPolyus + Math.cos(a) * (rRad + 0.01)
+    );
+    slot.rotation.y = a;
+    polyus.add(slot);
+  }
+
+  // E. Bottom Tapered Light-Grey Conical Skirt (y = -13.45 -> -11.55)
+  const ySkirtBot = -13.45;
+  const hSkirt = yRadBot - ySkirtBot;
+  polyus.add(mesh(new THREE.CylinderGeometry(rRad, 0.58, hSkirt, 48), lightGreyRibMat, 0, ySkirtBot + hSkirt * 0.5, zPolyus));
+  polyus.add(mesh(new THREE.CylinderGeometry(0.54, 0.50, 0.22, 36), warmGreyMat, 0, ySkirtBot - 0.08, zPolyus));
+
+  // Stage 2 Propulsion Nozzles & Parachutes
+  for (const [nx, nz] of [[-0.65, -0.55], [0.65, -0.55], [-0.65, 0.55], [0.65, 0.55]]) {
+    const mBell = bellMaterial(false);
+    g.add(mesh(bellGeometry(0.18, 0.44, 0.65, 28), mBell, nx, 0, nz));
+    addNozzle(g, nx, nz, 0.44, [mBell]);
+  }
+  addParachutes(g, 13.0);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
+
+  return g;
+}
+
+// Stage 1 (Bottom): Lower Energia Core, 4× Zenit Boosters with Warm-Grey Outer Pods & 4× RD-0120 / RD-170 Engines (H = 15.0m)
+function buildEnergiaCore() {
+  const g = new THREE.Group();
+  const H = PARTS.energiaCore.height; // 15.0
+  const {
+    whiteMat,
+    lightGreyRibMat,
+    warmGreyMat,
+    darkWarmGreyMat,
+    polyusBlackMat,
+  } = getEnergiaMaterials();
+
+  const yCoreBot = 2.75;
+
+  // =========================================================================
+  // 1. LOWER ENERGIA CENTRAL CORE (y = 2.75 -> 15.00, r = R_EN_CORE = 1.95)
+  // =========================================================================
+  const hCore = H - yCoreBot;
+  g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE, R_EN_CORE, hCore, 64), whiteMat, 0, yCoreBot + hCore * 0.5, 0));
+  for (const ry of [2.80, 8.80, H - 0.05]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_EN_CORE + 0.015, R_EN_CORE + 0.015, 0.05, 64), lightGreyRibMat, 0, ry, 0));
+  }
+
+  // =========================================================================
+  // 2. 4× CENTRAL RD-0120 ENGINE FAIRINGS (WITH BLACK BANDS) & NOZZLE BELLS (y = 0.0 -> 2.75)
+  // Matches the bottom center of the reference image!
+  // =========================================================================
+  const rd0120Coords = [
+    [-0.78, 0.55],
+    [0.78, 0.55],
+    [-0.78, -0.55],
+    [0.78, -0.55],
+  ];
+  for (const [ex, ez] of rd0120Coords) {
+    const mBell = bellMaterial(true);
+    // Upper cylindrical engine fairing (y = 1.80 -> 2.80, r = 0.58) with bold horizontal black band at y = 2.15!
+    g.add(mesh(new THREE.CylinderGeometry(0.58, 0.58, 1.00, 36), warmGreyMat, ex, 2.30, ez));
+    g.add(mesh(new THREE.CylinderGeometry(0.595, 0.595, 0.28, 36), polyusBlackMat, ex, 2.16, ez));
+    // Tapered warm-grey conical collar (y = 1.15 -> 1.80)
+    g.add(mesh(new THREE.CylinderGeometry(0.58, 0.40, 0.65, 36), warmGreyMat, ex, 1.475, ez));
+    g.add(mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.10, 36), polyusBlackMat, ex, 1.12, ez));
+    // Flared dark-grey RD-0120 nozzle bell (y = 0.0 -> 1.12)
+    g.add(mesh(new THREE.CylinderGeometry(0.38, 0.56, 1.12, 36), darkWarmGreyMat, ex, 0.56, ez));
+    g.add(mesh(bellGeometry(0.34, 0.55, 1.08, 36), mBell, ex, 0, ez));
+    g.add(mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.05, 36), polyusBlackMat, ex, 0.55, ez));
+    addNozzle(g, ex, ez, 0.56, [mBell]);
+  }
+
+  // =========================================================================
+  // 3. LOWER 4× STRAP-ON ZENIT BOOSTERS WITH LONG WARM-GREY OUTER PODS & SIDE BLOCKS
+  // =========================================================================
+  const yNozTop = 0.85;
+
+  for (const sgn of [-1, 1]) {
+    const xIn = sgn * X_ZENIT_IN;
+    const zIn = Z_ZENIT_IN;
+    const xOut = sgn * X_ZENIT_OUT;
+    const zOut = Z_ZENIT_OUT;
+
+    // A. Inner-Front White Booster Cylinder (y = 0.85 -> 15.00)
+    const hBoost = H - yNozTop;
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN, R_ZENIT_IN, hBoost, 48), whiteMat, xIn, yNozTop + hBoost * 0.5, zIn));
+    // Stepped white aft ring at bottom of inner booster (y = 0.85 -> 1.45)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.05, R_ZENIT_IN + 0.05, 0.60, 48), whiteMat, xIn, yNozTop + 0.30, zIn));
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_IN + 0.06, R_ZENIT_IN + 0.06, 0.06, 48), lightGreyRibMat, xIn, yNozTop + 0.60, zIn));
+
+    // B. Outer-Rear White Booster Cylinder (y = 0.85 -> 15.00)
+    g.add(mesh(new THREE.CylinderGeometry(R_ZENIT_OUT, R_ZENIT_OUT, hBoost, 48), whiteMat, xOut, yNozTop + hBoost * 0.5, zOut));
+
+    // C. Long Lower Outer Warm-Grey Fairing Pod (y = 0.85 -> 10.65) + Protruding Rectangular Side Block (y = 6.20 -> 8.45)
+    // Lower wider warm-grey pod section (y = 0.85 -> 5.95, r = 0.60)
+    const xPod = xOut + sgn * 0.22;
+    const rPodLow = 0.60;
+    const yPodMid = 5.95;
+    const hPodLow = yPodMid - yNozTop;
+    g.add(mesh(new THREE.CylinderGeometry(rPodLow, rPodLow, hPodLow, 36), warmGreyMat, xPod, yNozTop + hPodLow * 0.5, zOut));
+
+    // Tapered transition (y = 5.95 -> 6.45) to narrower upper warm-grey tube (y = 6.45 -> 9.85, r = 0.44)
+    const rPodUp = 0.44;
+    g.add(mesh(new THREE.CylinderGeometry(rPodUp, rPodLow, 0.50, 36), warmGreyMat, xPod, yPodMid + 0.25, zOut));
+    g.add(mesh(new THREE.CylinderGeometry(rPodUp, rPodUp, 3.40, 36), warmGreyMat, xPod, 6.45 + 1.70, zOut));
+    // Conical top cap of the lower warm-grey pod (y = 9.85 -> 10.65)
+    g.add(mesh(new THREE.CylinderGeometry(0.06, rPodUp, 0.80, 36), warmGreyMat, xPod, 9.85 + 0.40, zOut));
+
+    // Horizontal dark seam lines on the lower warm-grey pod
+    for (const py of [5.95, 8.85, 9.85]) {
+      const rp = py <= 6.0 ? rPodLow + 0.015 : rPodUp + 0.015;
+      g.add(mesh(new THREE.CylinderGeometry(rp, rp, 0.05, 36), darkWarmGreyMat, xPod, py, zOut));
+    }
+
+    // Protruding Warm-Grey Side Block sticking out on the outer silhouette at y = 6.20 -> 8.45 (matching reference image!)
+    const blockShape = new THREE.Shape();
+    blockShape.moveTo(0, 6.20);
+    blockShape.lineTo(sgn * 0.42, 6.45);
+    blockShape.lineTo(sgn * 0.42, 8.20);
+    blockShape.lineTo(0, 8.45);
+    blockShape.closePath();
+    const blockGeo = new THREE.ExtrudeGeometry(blockShape, { depth: 0.46, bevelEnabled: false });
+    blockGeo.translate(xPod + sgn * (rPodUp - 0.04), 0, zOut - 0.23);
+    g.add(mesh(blockGeo, warmGreyMat));
+
+    // D. Flared Dark-Grey RD-170 Booster Nozzles at the Base (y = 0.0 -> 0.85)
+    for (const [bx, bz] of [[xIn, zIn], [xOut, zOut]]) {
+      const mBell = bellMaterial(true);
+      g.add(mesh(new THREE.CylinderGeometry(0.56, 0.68, yNozTop, 36), darkWarmGreyMat, bx, yNozTop * 0.5, bz));
+      g.add(mesh(bellGeometry(0.36, 0.66, yNozTop * 0.95, 36), mBell, bx, 0, bz));
+      g.add(mesh(new THREE.CylinderGeometry(0.60, 0.60, 0.08, 36), polyusBlackMat, bx, yNozTop - 0.04, bz));
+      addNozzle(g, bx, bz, 0.66, [mBell]);
+    }
   }
 
   return g;

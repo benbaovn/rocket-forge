@@ -10,6 +10,7 @@ import { tr, getLang } from '../i18n.js';
 
 // 1 unit in 3D scene = 1 kilometre (1,000 metres)
 const SCALE = 0.001;
+const CERES_MAP_Y = -1400; // Ceres positioned underneath the Asteroid Belt (Vành đai đá) on the 3D Map
 const to3D = (x, y, z = 0, out = new THREE.Vector3()) => out.set(x * SCALE, (z || 0) * SCALE, -(y || 0) * SCALE);
 const fmtKm = (m) => (m >= 1e6 ? (m / 1e6).toFixed(2) + ' Mm' : m >= 1e4 ? (m / 1000).toFixed(0) + ' km' : (m / 1000).toFixed(1) + ' km');
 const fmt = (v, d = 0) => (typeof v === 'number' && isFinite(v) ? v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d }) : '—');
@@ -236,7 +237,7 @@ export class MapView {
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(1, 1, false);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 0.90;
 
     // Controls
     this.controls = new OrbitControls(this.camera, this.glCanvas);
@@ -248,14 +249,14 @@ export class MapView {
     this.controls.screenSpacePanning = true;
 
     // Lights
-    this.ambientLight = new THREE.AmbientLight(0x4b6584, 1.15);
+    this.ambientLight = new THREE.AmbientLight(0x4b6584, 0.85);
     this.scene.add(this.ambientLight);
 
-    this.sunLight = new THREE.PointLight(0xfff4d6, 3.2, 0, 0);
+    this.sunLight = new THREE.PointLight(0xfff4d6, 2.0, 0, 0);
     this.sunLight.position.set(0, 0, 0);
     this.scene.add(this.sunLight);
 
-    this.camLight = new THREE.DirectionalLight(0xe2e8f0, 1.1);
+    this.camLight = new THREE.DirectionalLight(0xe2e8f0, 0.65);
     this.scene.add(this.camLight);
 
     // Starfield
@@ -399,6 +400,7 @@ export class MapView {
       uv.setXY(i, u, 0.5);
     }
     bandGeo.rotateX(-Math.PI / 2);
+    bandGeo.translate(0, 550, 0);
     const bandMat = new THREE.MeshBasicMaterial({
       map: beltTex,
       side: THREE.DoubleSide,
@@ -452,7 +454,7 @@ export class MapView {
         // Concentrate slightly toward middle of belt with natural radial spread
         const u = 0.5 + (rnd() - 0.5) * 0.65 + (rnd() - 0.5) * 0.35;
         const r = rInner + Math.max(0.02, Math.min(0.98, u)) * (rOuter - rInner);
-        const ySpread = (rnd() - 0.5) * (rOuter - rInner) * 0.14;
+        const ySpread = 220 + rnd() * 2100;
         dummy.position.set(Math.cos(ang) * r, ySpread, Math.sin(ang) * r);
         dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
         // Power-law size distribution with a few large dwarf/Ceres-like boulders
@@ -620,25 +622,8 @@ export class MapView {
           data[idx + 3] = 255;
         } else if (name === 'mars') {
           const isPolar = Math.abs(lat) > 1.38;
-          const omDist = Math.hypot(lon - 0.855, lat - 0.0);
           if (isPolar) {
             data[idx] = 240; data[idx + 1] = 236; data[idx + 2] = 232; data[idx + 3] = 255;
-          } else if (omDist < 0.04) {
-            // Olympus Mons glowing caldera core
-            data[idx] = 255; data[idx + 1] = 185; data[idx + 2] = 65; data[idx + 3] = 255;
-          } else if (omDist < 0.075) {
-            // Olympus Mons high-altitude summit frost rim
-            data[idx] = 248; data[idx + 1] = 232; data[idx + 2] = 218; data[idx + 3] = 255;
-          } else if (omDist < 0.21) {
-            // Olympus Mons dark volcanic basalt shield cone
-            const s = (0.21 - omDist) / 0.135;
-            data[idx] = Math.round(145 - s * 42);
-            data[idx + 1] = Math.round(52 - s * 18);
-            data[idx + 2] = Math.round(28 - s * 10);
-            data[idx + 3] = 255;
-          } else if (omDist < 0.26) {
-            // Olympus Mons basal cliff scarp aureole
-            data[idx] = 242; data[idx + 1] = 148; data[idx + 2] = 88; data[idx + 3] = 255;
           } else if (n < -0.15) {
             data[idx] = 115; data[idx + 1] = 56; data[idx + 2] = 36; data[idx + 3] = 255;
           } else {
@@ -706,6 +691,24 @@ export class MapView {
             data[idx] = Math.round(145 + k * 68);
             data[idx + 1] = Math.round(105 + k * 56);
             data[idx + 2] = Math.round(78 + k * 46);
+          }
+          data[idx + 3] = 255;
+        } else if (name === 'ceres') {
+          // Ceres: dark carbonaceous surface + Occator Crater bright salt deposits (Cerealia & Vinalia Faculae)
+          const ocDist = Math.hypot((lon - 0.45) * 0.95, (lat - 0.22) * 1.25);
+          if (ocDist < 0.045) {
+            data[idx] = 248; data[idx + 1] = 252; data[idx + 2] = 255;
+          } else if (ocDist < 0.14) {
+            const rim = ocDist > 0.105 ? 18 : -16;
+            const v = Math.max(48, Math.min(210, 92 + n * 28 + rim));
+            data[idx] = Math.round(v * 0.96);
+            data[idx + 1] = Math.round(v * 0.98);
+            data[idx + 2] = Math.round(v * 1.04);
+          } else {
+            const v = Math.max(52, Math.min(185, 102 + n * 34));
+            data[idx] = Math.round(v * 0.95);
+            data[idx + 1] = Math.round(v * 0.98);
+            data[idx + 2] = Math.round(v * 1.04);
           }
           data[idx + 3] = 255;
         } else if (name === 'io') {
@@ -851,6 +854,7 @@ export class MapView {
 
       // Orbit ring around parent body (Sun for planets, parent planet for moons)
       const ring = createOrbitLine2(B.a * SCALE, B.hex, isMoon ? 1.6 : 2.2, isMoon ? 0.55 : 0.55, isMoon ? 128 : 240);
+      if (name === 'ceres') ring.position.y = CERES_MAP_Y;
       this.lineMaterials.push(ring.material);
       if (isMoon && this.planetGroups[B.parent]) {
         this.planetGroups[B.parent].add(ring);
@@ -1328,19 +1332,27 @@ export class MapView {
     if (focusName === 'sun') return new THREE.Vector3(0, 0, 0);
     if (BODIES[focusName]) {
       const hp = helioPos(focusName, t);
-      return to3D(hp.x, hp.y, hp.z);
+      const v = to3D(hp.x, hp.y, hp.z);
+      if (focusName === 'ceres') v.y += CERES_MAP_Y;
+      return v;
     }
     const ep = helioPos('earth', t);
     if (focusName && focusName.startsWith('obj:') && S && S.others) {
       const objId = focusName.slice(4);
       const found = S.others.find((o) => o.id === objId);
-      if (found) return to3D(found.x + ep.x, found.y + ep.y, found.z || 0);
+      if (found) {
+        const v = to3D(found.x + ep.x, found.y + ep.y, found.z || 0);
+        if (found.ref === 'ceres') v.y += CERES_MAP_Y;
+        return v;
+      }
     }
     if (focusName === 'iss' && S && S.iss) {
       return to3D(S.iss.x + ep.x, S.iss.y + ep.y, S.iss.z || 0);
     }
     if (focusName === 'vessel' && S && S.vessel) {
-      return to3D(S.vessel.x + ep.x, S.vessel.y + ep.y, S.vessel.z || 0);
+      const v = to3D(S.vessel.x + ep.x, S.vessel.y + ep.y, S.vessel.z || 0);
+      if (S.ref === 'ceres') v.y += CERES_MAP_Y;
+      return v;
     }
     return to3D(ep.x, ep.y, ep.z);
   }
@@ -1388,6 +1400,7 @@ export class MapView {
     for (const name of NON_EARTH_BODIES) {
       const hp = helioPos(name, t);
       const pv3 = to3D(hp.x, hp.y, hp.z);
+      if (name === 'ceres') pv3.y += CERES_MAP_Y;
       planetV3s[name] = pv3;
       if (this.planetGroups[name]) {
         this.planetGroups[name].position.copy(pv3);
@@ -1413,6 +1426,7 @@ export class MapView {
     // Vessel position & orientation
     const v = S.vessel;
     const vPos3D = to3D(v.x + ep.x, v.y + ep.y, v.z || 0);
+    if (S.ref === 'ceres') vPos3D.y += CERES_MAP_Y;
     this.vesselGroup.position.copy(vPos3D);
 
     // Adaptive scale so the rocket remains easily visible without dwarfing the planet
@@ -1432,6 +1446,7 @@ export class MapView {
       const o = others[i];
       const slot = this.ensureOtherSlot(i);
       const oPos = to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
+      if (o.ref === 'ceres') oPos.y += CERES_MAP_Y;
       slot.group.position.copy(oPos);
       const os = Math.max(0.55, Math.min(this.camera.position.distanceTo(oPos) * 0.00055, 14));
       slot.group.scale.set(os, os, os);
@@ -1464,6 +1479,7 @@ export class MapView {
           const nu = Math.atan2(sq * sinE, cosE - oEl.e);
           const th = (oEl.argPe || 0) + nu;
           to3D(hp.x + r * Math.sin(th), hp.y + r * Math.cos(th), hp.z || 0, tmpV3);
+          if (oRef === 'ceres') tmpV3.y += CERES_MAP_Y;
           pts.push(tmpV3.x, tmpV3.y, tmpV3.z);
         }
         slot.orbitGeo.setPositions(pts);
@@ -1553,6 +1569,7 @@ export class MapView {
         const sz = hp.z || 0;
 
         to3D(sx, sy, sz, v3);
+        if (S.ref === 'ceres') v3.y += CERES_MAP_Y;
         pts.push(v3.x, v3.y, v3.z);
         const d3 = v3.length();
         if (d3 > this.maxOrbitExtent) this.maxOrbitExtent = d3;
@@ -1580,6 +1597,7 @@ export class MapView {
         const sz = hp.z || 0;
 
         to3D(sx, sy, sz, v3);
+        if (S.ref === 'ceres') v3.y += CERES_MAP_Y;
         pts.push(v3.x, v3.y, v3.z);
         const d3 = v3.length();
         if (d3 > this.maxOrbitExtent) this.maxOrbitExtent = d3;
@@ -1631,6 +1649,7 @@ export class MapView {
         z = (p.z || 0) - (p.mz || 0) + (ch.z || 0);
       }
       to3D(x, y, z, v3);
+      if (p.ref === 'ceres' || (!p.ref && S.ref === 'ceres')) v3.y += CERES_MAP_Y;
       pos.push(v3.x, v3.y, v3.z);
       const d3 = v3.length();
       if (d3 > this.maxOrbitExtent) this.maxOrbitExtent = d3;
@@ -1666,9 +1685,11 @@ export class MapView {
         y = lastP.y - lastP.my + ch.y;
       }
       to3D(x, y, z, this.impactMarker.position);
+      if (impBody === 'ceres') this.impactMarker.position.y += CERES_MAP_Y;
       const center = curHelio[impBody]
         ? to3D(curHelio[impBody].x, curHelio[impBody].y, curHelio[impBody].z)
         : to3D(ep.x, ep.y, ep.z);
+      if (impBody === 'ceres') center.y += CERES_MAP_Y;
       this.impactMarker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.impactMarker.position.clone().sub(center).normalize());
       this.impactMarker.visible = true;
     } else {
@@ -1743,13 +1764,21 @@ export class MapView {
       }
     }
 
-    // Asteroid Belt label between Mars and Jupiter
+    // Asteroid Belt label right above Ceres so Ceres sits directly underneath the Asteroid Belt
+    const ceresV3 = planetV3s.ceres;
     const beltAngle = (S.t || 0) * 1.15e-5 + 0.85;
     const beltR = ((ASTEROID_BELT_INNER + ASTEROID_BELT_OUTER) * 0.5) * SCALE;
-    const beltV3 = new THREE.Vector3(Math.sin(beltAngle) * beltR, 0, Math.cos(beltAngle) * beltR);
+    const beltV3 = ceresV3
+      ? new THREE.Vector3(ceresV3.x, 1250, ceresV3.z)
+      : new THREE.Vector3(Math.sin(beltAngle) * beltR, 1250, Math.cos(beltAngle) * beltR);
     const beltP = this.projectToScreen(beltV3, W, H);
     if (beltP) {
-      this.drawBadge(ctx, beltP.x, beltP.y, tr('🪨 Vành đai đá (Tiểu hành tinh)', '🪨 Asteroid Belt'), '#d6d3d1', false);
+      let by = beltP.y;
+      if (ceresV3) {
+        const cp = this.projectToScreen(ceresV3, W, H);
+        if (cp && by > cp.y - 28) by = cp.y - 28;
+      }
+      this.drawBadge(ctx, beltP.x, by, tr('🪨 Vành đai đá (Tiểu hành tinh)', '🪨 Asteroid Belt'), '#d6d3d1', false);
     }
 
     if (issV3) {
@@ -1760,9 +1789,10 @@ export class MapView {
       }
     }
 
-    // Separated stages & persistent space objects badges
+    // Draw stage / object badges:
     for (const o of S.others || []) {
       const oV3 = to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
+      if (o.ref === 'ceres') oV3.y += CERES_MAP_Y;
       const op = this.projectToScreen(oV3, W, H);
       if (op) {
         const fKey = 'obj:' + o.id;
@@ -1801,6 +1831,7 @@ export class MapView {
     if (inFlight) {
       for (const m of S.markers || []) {
         const mPos = to3D(m.x + ep.x, m.y + ep.y, m.z || 0);
+        if (S.ref === 'ceres') mPos.y += CERES_MAP_Y;
         const mp = this.projectToScreen(mPos, W, H);
         if (mp) {
           this.drawBadge(ctx, mp.x, mp.y, m.text, m.color, false);

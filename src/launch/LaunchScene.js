@@ -13,7 +13,7 @@ import * as TX from '../textures.js';
 import { audio } from '../audio.js';
 import { Vessel } from './vessel.js';
 import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, angOf, predict, bodyRotation, bodyState, coastStep, rk4, refBody, bodyInfo } from '../sim/orbit.js';
-import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES } from '../sim/constants.js';
+import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI } from '../sim/constants.js';
 import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById } from '../missions.js';
@@ -107,7 +107,11 @@ export class LaunchScene {
           $('events').innerHTML = '';
           this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
           if (this.mission && this.mission.id !== 'free') {
-            this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
+            if (this.mission.noAutopilot) {
+              this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt 100 Alien!', 'Mission: ' + this.mission.name + ' – No Autopilot, fly manually and press V / click to destroy 100 Aliens!'));
+            } else {
+              this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
+            }
           }
         }
       }
@@ -695,6 +699,10 @@ export class LaunchScene {
         title: tr('🔵 Hệ Sao Hải Vương & Sao Diêm Vương', '🔵 Neptune, Triton & Pluto'),
         items: ['neptune', 'triton', 'pluto'],
       },
+      {
+        title: tr('🌌 Ngoài Hệ Mặt Trời · Không Gian Liên Sao', '🌌 Interstellar Space · Deep Space'),
+        items: ['interstellar'],
+      },
     ];
 
     box.innerHTML = groups.map((g) => {
@@ -711,6 +719,13 @@ export class LaunchScene {
           return `<button type="button" class="tp-card-btn ${active}" data-tp="olympus">
             <span class="tp-card-top">🌋 ${tr('Đỉnh Olympus Mons', 'Olympus Mons Summit')}</span>
             <span class="tp-card-sub">${tr('Sao Hỏa · Đỉnh 21,9 km & Miệng núi lửa', 'Mars · 21.9 km Summit & Caldera')}</span>
+          </button>`;
+        }
+        if (key === 'interstellar') {
+          const active = curTarget === 'interstellar' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="interstellar">
+            <span class="tp-card-top">🌌 ${tr('Không Gian Liên Sao', 'Interstellar Space')}</span>
+            <span class="tp-card-sub">${tr('Ngoài Hệ Mặt Trời (>830.000 km) · Siêu Tân Tinh (Supernova)', 'Beyond Solar System (>830,000 km) · Supernova Zone')}</span>
           </button>`;
         }
         const B = BODIES[key] || BODIES.earth;
@@ -842,14 +857,139 @@ export class LaunchScene {
       this.world.add(mesh);
       this.padAstronautMeshes.push(mesh);
     }
+    this.ensureBoardingHatchMesh();
+  }
+
+  getBoardingHatchZ() {
+    const P = this.player;
+    const activeItems = (P && P.ctx && P.segIdx && P.segIdx.length)
+      ? P.segIdx.flatMap((k) => (P.ctx.segs[k] || []).map((i) => P.ctx.stack[i]).filter(Boolean))
+      : (this.stack || []);
+    if (!activeItems.length) return 1.28;
+    if (activeItems.some((s) => s.type.startsWith('energia'))) return 3.45;
+    if (activeItems.some((s) => s.type.startsWith('buran'))) return 3.25;
+    if (activeItems.some((s) => s.type === 'n1BlockA')) return 4.05;
+    if (activeItems.some((s) => s.type === 'n1BlockB')) return 2.95;
+    if (activeItems.some((s) => s.type.startsWith('n1'))) return 2.20;
+    if (activeItems.some((s) => s.type === 'saturnS1C' || s.type === 'saturnSII')) return 2.42;
+    if (activeItems.some((s) => s.type.startsWith('saturn'))) return 1.65;
+    if (activeItems.some((s) => s.type.startsWith('soyuz')) && (!P || (P.boosters && P.boosters().length > 0))) return 2.30;
+    if (activeItems.some((s) => s.type === 'ufoSaucer')) return 2.95;
+    return 1.28;
+  }
+
+  ensureBoardingHatchMesh() {
+    if (this.boardingHatch) return this.boardingHatch;
+    const g = new THREE.Group();
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.42, metalness: 0.72 });
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.45 });
+    const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.38, metalness: 0.25 });
+    const darkRecessMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85, metalness: 0.2 });
+    const cabinGlowMat = new THREE.MeshStandardMaterial({
+      color: 0xbae6fd,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 1.65,
+      roughness: 0.2,
+    });
+    const greenLedMat = new THREE.MeshStandardMaterial({
+      color: 0x4ade80,
+      emissive: 0x22c55e,
+      emissiveIntensity: 2.2,
+      roughness: 0.2,
+    });
+    const visorMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.9,
+      roughness: 0.15,
+      metalness: 0.8,
+    });
+
+    // Armored Airlock Housing & Glowing Interior Cabin Bay
+    const housing = new THREE.Mesh(new THREE.BoxGeometry(2.36, 3.15, 0.75), frameMat);
+    housing.position.set(0, 1.58, -0.32);
+    const recess = new THREE.Mesh(new THREE.BoxGeometry(1.96, 2.76, 0.55), darkRecessMat);
+    recess.position.set(0, 1.54, -0.18);
+    const cabinBack = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.64), cabinGlowMat);
+    cabinBack.position.set(0, 1.54, -0.02);
+    g.add(housing, recess, cabinBack);
+
+    // Outer Frame Pillars, Header Arch & LED Strips
+    for (const sgn of [-1, 1]) {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.22, 2.96, 0.26), frameMat);
+      pillar.position.set(sgn * 1.06, 1.54, 0.04);
+      const ledStrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.60, 0.06), greenLedMat);
+      ledStrip.position.set(sgn * 1.06, 1.54, 0.18);
+      g.add(pillar, ledStrip);
+    }
+    const header = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.30, 0.32), frameMat);
+    header.position.set(0, 3.04, 0.06);
+    const beacon = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.12, 0.08), greenLedMat);
+    beacon.position.set(0, 3.04, 0.23);
+    const threshold = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.18, 0.34), frameMat);
+    threshold.position.set(0, 0.09, 0.06);
+    g.add(header, beacon, threshold);
+
+    // Hinged Left & Right Double Airlock Doors (swing outward when opening)
+    const leftDoorPivot = new THREE.Group();
+    leftDoorPivot.position.set(-0.95, 1.54, 0.08);
+    const lDoor = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.68, 0.10), doorMat);
+    lDoor.position.set(0.475, 0, 0);
+    const lWin = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.58, 0.12), visorMat);
+    lWin.position.set(0.48, 0.45, 0);
+    const lStripe = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.16, 0.11), stripeMat);
+    lStripe.position.set(0.475, -0.55, 0);
+    leftDoorPivot.add(lDoor, lWin, lStripe);
+
+    const rightDoorPivot = new THREE.Group();
+    rightDoorPivot.position.set(0.95, 1.54, 0.08);
+    const rDoor = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.68, 0.10), doorMat);
+    rDoor.position.set(-0.475, 0, 0);
+    const rWin = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.58, 0.12), visorMat);
+    rWin.position.set(-0.48, 0.45, 0);
+    const rStripe = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.16, 0.11), stripeMat);
+    rStripe.position.set(-0.475, -0.55, 0);
+    rightDoorPivot.add(rDoor, rWin, rStripe);
+    g.add(leftDoorPivot, rightDoorPivot);
+
+    // Fold-Down Boarding Ramp with Illuminated Side Handrails
+    const rampPivot = new THREE.Group();
+    rampPivot.position.set(0, 0.14, 0.14);
+    const rampLen = 2.40;
+    const rampPlate = new THREE.Mesh(new THREE.BoxGeometry(1.76, rampLen, 0.08), frameMat);
+    rampPlate.position.set(0, rampLen * 0.5, 0);
+    rampPivot.add(rampPlate);
+    for (let s = 1; s <= 5; s++) {
+      const step = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.07, 0.11), stripeMat);
+      step.position.set(0, (s / 6) * rampLen, 0.01);
+      rampPivot.add(step);
+    }
+    for (const sgn of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, rampLen, 0.24), greenLedMat);
+      rail.position.set(sgn * 0.86, rampLen * 0.5, 0.12);
+      rampPivot.add(rail);
+    }
+    g.add(rampPivot);
+
+    g.visible = false;
+    g.userData = { leftDoorPivot, rightDoorPivot, rampPivot };
+    this.scene.add(g);
+    this.boardingHatch = g;
+    return g;
   }
 
   addAstronauts(count) {
-    const P = this.player;
-    const isOnLaunchpad = this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
-    if (!isOnLaunchpad) {
+    if (this.phase === 'countdown') {
       this.event(
-        tr('⚠️ Chỉ có thể thêm phi hành gia vào tàu khi đang ở ngoài bệ phóng!', '⚠️ Astronauts can only board the craft while on the launchpad!'),
+        tr('⚠️ Tên lửa đang đếm ngược chuẩn bị phóng — Cổng tàu đã đóng, không thể thêm phi hành gia!', '⚠️ Countdown in progress — Airlock is sealed, cannot add more astronauts!'),
+        'warn'
+      );
+      return;
+    }
+    const isReadyOnLaunchpad = this.phase === 'ready' && !this.lifted;
+    if (!isReadyOnLaunchpad) {
+      this.event(
+        tr('⚠️ Chỉ có thể thêm phi hành gia vào tàu trước khi bắt đầu đếm ngược phóng!', '⚠️ Astronauts can only board the craft before launch countdown starts!'),
         'warn'
       );
       return;
@@ -862,9 +1002,37 @@ export class LaunchScene {
       );
       return;
     }
+    const prevAboard = this.astronautsAboard;
     const added = Math.min(count, max - this.astronautsAboard);
     this.astronautsAboard += added;
     this.ensurePadAstronautMeshes();
+    const hatchZ = this.getBoardingHatchZ();
+    const isAlreadyOpen = this.hatchCloseStartT && this.time < this.hatchCloseStartT + 0.30;
+    if (!isAlreadyOpen) {
+      this.hatchOpenStartT = this.time;
+    }
+    const firstWalkDelay = isAlreadyOpen ? 0.05 : 0.24;
+    const stagger = 0.20;
+    const boardDur = 1.22;
+    for (let i = 0; i < added; i++) {
+      const idx = prevAboard + i;
+      const m = this.padAstronautMeshes[idx];
+      if (!m || !m.userData) continue;
+      const side = idx % 2 === 0 ? 1 : -1;
+      const startX = side * (5.2 + i * 1.25);
+      const startZ = hatchZ + 4.4 + (i % 2) * 1.05;
+      m.userData.boarding = true;
+      m.userData.boardStartT = this.time + firstWalkDelay + i * stagger;
+      m.userData.boardDur = boardDur;
+      m.userData.startX = startX;
+      m.userData.startZ = startZ;
+      m.userData.hatchZ = hatchZ;
+      m.position.set(startX, PAD_TOP, startZ);
+      m.rotation.set(0, Math.atan2(-startX, (hatchZ + 2.35) - startZ), 0);
+      m.scale.setScalar(1.15);
+    }
+    this.hatchCloseStartT = this.time + firstWalkDelay + (added - 1) * stagger + boardDur + 0.12;
+    audio.thunk(0.55);
     this.hudTimer = 0;
     this.updateHUD(0);
     this.milestone(
@@ -900,6 +1068,7 @@ export class LaunchScene {
     if (!P || P.crashed) return;
     const max = this.maxAstronauts || 10;
     const B = BODIES[P.ref] || BODIES.earth;
+    if (B.gasGiant || P.ref === 'sun') return;
     const alreadyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P.ref).length;
 
     const canDeploy = this.astronautsAboard > 0
@@ -916,14 +1085,29 @@ export class LaunchScene {
     this.astronautsAboard = Math.max(0, this.astronautsAboard - canDeploy);
     const isSurface = !!P.landed || (!B.gasGiant && P.ref !== 'sun' && (P.agl ?? P.alt) < 400);
 
+    // Open the craft's 3D airlock gate & boarding ramp so the player sees astronauts walk out
+    this.ensureBoardingHatchMesh();
+    const hatchZ = this.getBoardingHatchZ();
+    const isAlreadyOpen = this.hatchCloseStartT && this.time < this.hatchCloseStartT + 0.30;
+    if (!isAlreadyOpen) {
+      this.hatchOpenStartT = this.time;
+    }
+    const firstExitDelay = isAlreadyOpen ? 0.05 : 0.24;
+    const stagger = 0.22;
+    const exitDur = 1.28;
+    this.hatchCloseStartT = this.time + firstExitDelay + (canDeploy - 1) * stagger + exitDur + 0.12;
+    audio.thunk(0.55);
+
     for (let i = 0; i < canDeploy; i++) {
       const idx = alreadyDeployed + i;
       const mesh = this.createAstronautMesh(idx);
+      mesh.visible = false;
       this.scene.add(mesh);
       const side = idx % 2 === 0 ? 1 : -1;
       const rank = Math.floor(idx / 2);
       const offsetX = side * (5.5 + rank * 3.2);
-      const offsetZ = 3.2 + (idx % 3) * 1.8;
+      const offsetZ = hatchZ + 3.2 + (idx % 3) * 1.8;
+      const exitStartT = this.time + firstExitDelay + i * stagger;
 
       if (P.ref === 'earth') {
         const surf = this.surfaceAt(P);
@@ -934,10 +1118,13 @@ export class LaunchScene {
           sx: P.sx + offsetX,
           z: (P.s.z || 0) + offsetZ,
           h: surf.h,
-          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 2)) : 0,
+          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 12)) : 0,
           relX: offsetX,
           relY: (idx % 3 - 1) * 3.0,
           relZ: offsetZ,
+          exitStartT,
+          exitDur,
+          hatchZ,
           mesh,
         });
       } else {
@@ -952,10 +1139,13 @@ export class LaunchScene {
           psi,
           z,
           h: surfH,
-          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 2)) : 0,
+          dropH: isSurface ? Math.max(0, Math.min(60, (P.agl ?? P.alt) - 12)) : 0,
           relX: offsetX,
           relY: (idx % 3 - 1) * 3.0,
           relZ: offsetZ,
+          exitStartT,
+          exitDur,
+          hatchZ,
           mesh,
         });
       }
@@ -1079,6 +1269,47 @@ export class LaunchScene {
         tr('⚡🛰️ Đã dịch chuyển tức thời tới Trạm Vũ Trụ Quốc Tế (ISS)!', '⚡🛰️ Teleported directly to the International Space Station (ISS)!'),
         'warn'
       );
+    } else if (target === 'interstellar') {
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState('sun', this.simT, bp, bv);
+      const r = SUN_SOI * 1.06;
+      const ux = Math.sin(sunPhi), uy = Math.cos(sunPhi);
+      const ex = uy, ey = -ux;
+      const vInter = 16000;
+      P.s.x = bp.x + ux * r;
+      P.s.y = bp.y + uy * r;
+      P.s.z = bp.z || 0;
+      P.s.vx = bv.x + ux * vInter + ex * 2500;
+      P.s.vy = bv.y + uy * vInter + ey * 2500;
+      P.s.vz = bp.z || 0;
+      P.beta = wrapPi(sunPhi);
+      P.omega = 0;
+      P.clamped = false;
+      P.landed = null;
+      P.updateFrame(this.simT);
+      P.syncDir3DFromBeta();
+      if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+      this.holdBeta = P.beta;
+      this.phase = 'flight';
+      this.ignited = true;
+      this.released = true;
+      this.lifted = true;
+      this.throttle = 0;
+      P.throttle = 0;
+      P.engineOn = false;
+      this.inAtmoBody = null;
+      this.setFlag('space');
+      this.setFlag('interstellarSpace');
+      this.milestone(
+        tr('🌌 TIẾN VÀO KHÔNG GIAN LIÊN SAO!', '🌌 ENTERED INTERSTELLAR SPACE!'),
+        tr('Tàu đã vượt qua rìa Hệ Mặt Trời (> 830.000 km) · Nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Solar System boundary (> 830,000 km) · Deep space where Supernovas erupt periodically!')
+      );
+      this.event(
+        tr('🌌✨ Tàu đã dịch chuyển tới Không gian Liên sao ngoài Hệ Mặt Trời!', '🌌✨ Teleported into Interstellar Space beyond the Solar System!'),
+        'warn'
+      );
+      this.supernovaSpawnTimer = 10 + Math.random() * 8;
+      this.supernovaDistAcc = 0;
     } else {
       const isOlympusSummit = target === 'olympus';
       const bodyKey = isOlympusSummit ? 'mars' : target;
@@ -1638,11 +1869,19 @@ export class LaunchScene {
     this.lifted = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500') this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
     this.clearDeployedAstronauts(false);
     this.ensurePadAstronautMeshes();
+    this.hatchOpenStartT = null;
+    this.hatchCloseStartT = null;
+    if (this.boardingHatch) this.boardingHatch.visible = false;
+    for (const m of this.padAstronautMeshes) {
+      m.visible = false;
+      if (m.userData) m.userData.boarding = false;
+    }
     this.camMode = 0; this.controls.enabled = true;
     this.camera.fov = 50; this.camera.updateProjectionMatrix();
     const isSpecial = this.player.isBoat || this.player.isRover || this.player.isPlane;
@@ -1676,7 +1915,13 @@ export class LaunchScene {
     $('mission-panel').classList.toggle('hidden', !this.mission.objectives.length);
     this.renderMissionPanel(true);
     this.sc = this.makeContext();
-    if (this.mission.id !== 'free' && !isSpecial) this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
+    if (this.mission.id !== 'free' && !isSpecial) {
+      if (this.mission.noAutopilot) {
+        this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt 100 Alien!', 'Mission: ' + this.mission.name + ' – No Autopilot, fly manually and press V / click to destroy 100 Aliens!'));
+      } else {
+        this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
+      }
+    }
   }
 
   /** guidance context (see sim/guidance.js) */
@@ -1752,6 +1997,8 @@ export class LaunchScene {
     this.met = -10;
     this.lastCount = 11;
     $('btn-go').classList.add('hidden');
+    this.hudTimer = 0;
+    this.updateHUD(0);
     this.event(tr('Bắt đầu đếm ngược!', 'Countdown started!'));
   }
 
@@ -1762,14 +2009,19 @@ export class LaunchScene {
 
   toggleAutopilot() {
     if (!this.player || this.player.crashed || this.docked) return;
-    if (!this.mission || this.mission.id === 'free') {
+    if (!this.mission || this.mission.id === 'free' || this.mission.noAutopilot) {
       this.program = null;
       this.autoShootAliens = false;
       this.event(
-        tr(
-          '🚫 Chế độ Bay tự do không cho phép dùng Lái tự động! Hãy tự điều khiển hoặc chọn một Nhiệm vụ cụ thể.',
-          '🚫 Autopilot is disabled in Free Flight mode! Fly manually or select a specific Mission.'
-        ),
+        this.mission?.noAutopilot
+          ? tr(
+            '🚫 Nhiệm vụ Tiêu diệt 100 Alien không có chế độ Lái tự động! Hãy tự điều khiển tàu và nhấn V / click chuột để bắn Alien.',
+            '🚫 Autopilot is disabled in the Eliminate 100 Aliens mission! Pilot the craft manually and press V / click to shoot Aliens.'
+          )
+          : tr(
+            '🚫 Chế độ Bay tự do không cho phép dùng Lái tự động! Hãy tự điều khiển hoặc chọn một Nhiệm vụ cụ thể.',
+            '🚫 Autopilot is disabled in Free Flight mode! Fly manually or select a specific Mission.'
+          ),
         'warn'
       );
       return;
@@ -1998,17 +2250,70 @@ export class LaunchScene {
   renderMissionPanel(force) {
     const objs = this.mission.objectives;
     if (!objs.length) return;
-    const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('');
+    const kills = this.aliensKilled || 0;
+    const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500';
+    const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('') + (isAlienMission ? `_${kills}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
     $('mp-title').textContent = this.mission.icon + ' ' + this.mission.name;
-    $('mp-list').innerHTML = objs.map((o) => `<div class="mp-row ${this.flags[o.id] ? 'done' : ''}"><i>${this.flags[o.id] ? '✔' : '○'}</i>${o.text}</div>`).join('');
+    $('mp-list').innerHTML = objs.map((o) => {
+      let label = o.text;
+      if (o.id === 'kill25') label = `${o.text} (${Math.min(25, kills)}/25)`;
+      else if (o.id === 'kill50') label = `${o.text} (${Math.min(50, kills)}/50)`;
+      else if (o.id === 'kill100') {
+        const targetKills = this.mission.id === 'alien500' ? 100 : 100;
+        label = `${o.text} (${Math.min(100, kills)}/100)`;
+      } else if (o.id === 'kill250') {
+        label = `${o.text} (${Math.min(250, kills)}/250)`;
+      } else if (o.id === 'kill500') {
+        label = `${o.text} (${Math.min(500, kills)}/500)`;
+      }
+      return `<div class="mp-row ${this.flags[o.id] ? 'done' : ''}"><i>${this.flags[o.id] ? '✔' : '○'}</i>${label}</div>`;
+    }).join('');
   }
 
   checkObjectives() {
     const v = this.player;
     if (!v || this.phase === 'crashed') return;
     const F = this.flags;
+    const kills = this.aliensKilled || 0;
+    if (kills >= 25 && !F.kill25) {
+      this.setFlag('kill25');
+      this.milestone(
+        tr('👽 ĐÃ DIỆT 25/100 ALIEN!', '👽 25/100 ALIENS ELIMINATED!'),
+        tr('Tiếp tục truy quét UFO Alien ngoài vũ trụ!', 'Keep hunting Alien UFOs across space!')
+      );
+    }
+    if (kills >= 50 && !F.kill50) {
+      this.setFlag('kill50');
+      this.milestone(
+        tr('👽 ĐÃ DIỆT 50/100 ALIEN!', '👽 50/100 ALIENS ELIMINATED!'),
+        tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
+      );
+    }
+    if (kills >= 100 && !F.kill100) {
+      this.setFlag('kill100');
+      this.milestone(
+        tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!'),
+        this.mission.id === 'alien500'
+          ? tr('Đạt cột mốc 100 Alien! Tiếp tục chiến dịch 500 Alien!', 'Reached 100 Aliens milestone! Keep fighting in the 500 Aliens war!')
+          : tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
+      );
+    }
+    if (kills >= 250 && !F.kill250) {
+      this.setFlag('kill250');
+      this.milestone(
+        tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
+        tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
+      );
+    }
+    if (kills >= 500 && !F.kill500) {
+      this.setFlag('kill500');
+      this.milestone(
+        tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
+        tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
+      );
+    }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.space) { this.setFlag('space'); this.setFlag('alt70'); }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.orbit) {
       const el = vesselElements(v);
@@ -3034,8 +3339,8 @@ export class LaunchScene {
         this._noWeaponWarned = true;
         this.event(
           tr(
-            '💡 Mẹo: Hãy gắn "Súng Lazer Siêu Hạng ×2" hoặc "Máy Phun Nước 1,000,000 PSI ×2" trong Xưởng để tăng hỏa lực! (Đang bắn pháo dự phòng)',
-            '💡 Tip: Attach "Twin Plasma Laser Turrets ×2" or "1,000,000 PSI Water Cannon ×2" in the VAB for maximum firepower!'
+            '💡 Mẹo: Hãy gắn "Súng Lazer", "Máy Phun Nước 1,000,000 PSI", "Súng Acid" hoặc "Súng Điện 1,000,000 WATT" trong Xưởng để tăng hỏa lực! (Đang bắn pháo dự phòng)',
+            '💡 Tip: Attach "Laser Turrets", "1,000,000 PSI Water Cannon", "Acid Cannon" or "1,000,000 WATT Electric Cannon" in the VAB for maximum firepower!'
           ),
           'warn'
         );
@@ -3068,6 +3373,8 @@ export class LaunchScene {
 
     let firedLaser = false;
     let firedWater = false;
+    let firedAcid = false;
+    let firedElectric = false;
     const pWorld = P.root.position;
     const wxOff = P.sx, wyOff = P.alt, wzOff = P.s.z || 0;
 
@@ -3141,6 +3448,80 @@ export class LaunchScene {
           tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
           if (tgt.hp <= 0) this.destroyAlien(tgt, 'water');
         }
+      } else if (w.weaponType === 'acid') {
+        firedAcid = true;
+        // Corrosive Acid stream droplets + toxic green fumes on impact
+        for (let i = 0; i < 14; i++) {
+          const sp = 42 + Math.random() * 68;
+          this.fire.emit(
+            muzX + dir.x * i * 1.4,
+            muzY + dir.y * i * 1.4,
+            muzZ + dir.z * i * 1.4,
+            P.vSurf.e + dir.x * sp + (Math.random() - 0.5) * 14,
+            P.vSurf.u + dir.y * sp + (Math.random() - 0.5) * 14,
+            dir.z * sp + (Math.random() - 0.5) * 14,
+            { life: 0.28 + Math.random() * 0.22, size0: 1.3, size1: 4.2, alpha: 0.92, drag: 1.3, buoy: -0.1, color: [1.8, 6.2, 0.75] }
+          );
+        }
+        for (let i = 0; i < 16; i++) {
+          const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(8 + Math.random() * 18);
+          this.smoke.emit(
+            hitX, hitY, hitZ,
+            P.vSurf.e + d.x, P.vSurf.u + d.y, d.z,
+            { life: 0.85 + Math.random() * 0.65, size0: 2.2, size1: 8.5, alpha: 0.78, drag: 0.6, buoy: 0.35, color: [0.42, 0.95, 0.32] }
+          );
+        }
+        if (tgt && tgt.hp > 0) {
+          tgt.hp -= 32;
+          tgt.acidTimer = 4.5; // Continuous acid corrosion DoT for 4.5 seconds
+          tgt.hitFlash = 0.18;
+          tgt.vel.addScaledVector(dir, 12);
+          tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
+          if (tgt.hp <= 0) this.destroyAlien(tgt, 'acid');
+        }
+      } else if (w.weaponType === 'electric') {
+        firedElectric = true;
+        // 1,000,000 WATT High-Voltage Tesla lightning discharge sparks
+        for (let i = 0; i < 20; i++) {
+          const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(18 + Math.random() * 42);
+          const col = i % 2 === 0 ? [1.2, 5.8, 8.5] : [8.5, 7.5, 1.4];
+          this.fire.emit(
+            hitX, hitY, hitZ,
+            P.vSurf.e + d.x, P.vSurf.u + d.y, d.z,
+            { life: 0.20 + Math.random() * 0.22, size0: 1.5, size1: 4.6, alpha: 0.98, drag: 1.6, buoy: 0, color: col }
+          );
+        }
+        if (tgt && tgt.hp > 0) {
+          tgt.hp -= 38;
+          tgt.hitFlash = 0.22;
+          tgt.vel.multiplyScalar(0.2); // High-voltage stun/shock impulse
+          tgt.vel.addScaledVector(dir, 10);
+          tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
+
+          // 1,000,000 WATT Chain Lightning: arcs to up to 2 nearby Aliens within 48m!
+          let chained = 0;
+          for (const other of this.aliens) {
+            if (other === tgt || other.dead || other.hp <= 0) continue;
+            if (other.mesh && tgt.mesh && other.mesh.position.distanceTo(tgt.mesh.position) < 48) {
+              const chainBeam = createBeamVisual('electric', tgt.mesh.position, other.mesh.position);
+              this.scene.add(chainBeam);
+              this.weaponBeams.push({
+                mesh: chainBeam,
+                relStart: tgt.mesh.position.clone().sub(pWorld),
+                relEnd: other.mesh.position.clone().sub(pWorld),
+                life: chainBeam.userData.life,
+                maxLife: chainBeam.userData.maxLife,
+              });
+              other.hp -= 22;
+              other.hitFlash = 0.20;
+              other.mesh.userData.setHp(other.hp / other.maxHp);
+              if (other.hp <= 0) this.destroyAlien(other, 'electric');
+              if (++chained >= 2) break;
+            }
+          }
+
+          if (tgt.hp <= 0) this.destroyAlien(tgt, 'electric');
+        }
       } else {
         firedLaser = true;
         // High-energy Laser impact plasma sparks
@@ -3164,6 +3545,8 @@ export class LaunchScene {
 
     if (firedLaser) audio.laserShot(0.32);
     if (firedWater) audio.waterBlast(0.38);
+    if (firedAcid) audio.acidSpray(0.36);
+    if (firedElectric) audio.electricZap(0.38);
   }
 
   destroyAlien(alien, weaponType) {
@@ -3197,6 +3580,10 @@ export class LaunchScene {
     if (alien.mesh && alien.mesh.parent) alien.mesh.parent.remove(alien.mesh);
     this.aliens = this.aliens.filter((a) => a !== alien);
     this.aliensKilled = (this.aliensKilled || 0) + 1;
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500') {
+      this.checkObjectives();
+      this.renderMissionPanel(false);
+    }
     audio.alienBoom(0.7);
     this.flash = Math.max(this.flash || 0, 0.55);
     this.flashPos = { x: hitX, y: hitY, z: hitZ };
@@ -3214,7 +3601,11 @@ export class LaunchScene {
         ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
         : weaponType === 'water'
           ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
-          : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
+          : weaponType === 'acid'
+            ? tr('Súng Acid Ăn Mòn', 'Corrosive Acid Cannon')
+            : weaponType === 'electric'
+              ? tr('Súng Điện 1,000,000 WATT', '1,000,000 WATT Electric Cannon')
+              : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
       this.event(
         tr(
           `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
@@ -3315,15 +3706,15 @@ export class LaunchScene {
       ];
       const starName = starNames[Math.floor(Math.random() * starNames.length)];
       this.milestone(
-        tr('💥 SIÊU TÂN TINH BÙNG NỔ!', '💥 SUPERNOVA ERUPTION!'),
+        tr('💥 SIÊU TÂN TINH LIÊN SAO BÙNG NỔ!', '💥 INTERSTELLAR SUPERNOVA ERUPTION!'),
         doomed.length
-          ? tr(`Tên lửa bay ngang qua vùng sao bất ổn — Sóng xung kích quét sạch ${doomed.length} UFO Alien!`, `Rocket passed an unstable star — Supernova shockwave vaporized ${doomed.length} Alien UFOs!`)
-          : tr(`Tên lửa vừa bay ngang qua sao ${starName} đúng lúc nó phát nổ Siêu Tân Tinh!`, `Rocket flew past ${starName} just as it erupted into a Supernova!`)
+          ? tr(`Ngoài Hệ Mặt Trời, sao ${starName} phát nổ Siêu Tân Tinh — Sóng xung kích quét sạch ${doomed.length} UFO Alien!`, `Beyond the Solar System, ${starName} erupted into a Supernova — shockwave vaporized ${doomed.length} Alien UFOs!`)
+          : tr(`Tên lửa đang bay trong Không gian Liên sao ngoài Hệ Mặt Trời thì sao ${starName} phát nổ Siêu Tân Tinh chói lọi!`, `Cruising in Interstellar Space beyond the Solar System, star ${starName} erupted into a brilliant Supernova!`)
       );
       this.event(
         tr(
-          `💥🌟 Khi tên lửa bay ngang qua vùng không gian gần ${starName}, một Vụ Nổ Siêu Tân Tinh tự nhiên bất ngờ bùng nổ${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
-          `💥🌟 As the rocket passed through space near ${starName}, a natural Supernova suddenly erupted${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
+          `💥🌟 [Không gian Liên sao] Vụ nổ Siêu Tân Tinh (${starName}) bùng phát rực rỡ ngoài Hệ Mặt Trời${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
+          `💥🌟 [Interstellar Space] Supernova explosion (${starName}) erupted brightly beyond the Solar System${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
         ),
         'warn'
       );
@@ -3360,9 +3751,11 @@ export class LaunchScene {
       }
     } else {
       this.alienSpawnTimer = (this.alienSpawnTimer || 0) - dt;
-      if (this.aliens.length < 4 && this.alienSpawnTimer <= 0) {
+      const maxConcurrentAliens = this.mission?.id === 'alien500' ? 8 : (this.mission?.id === 'alien100' ? 6 : 4);
+      const spawnInterval = this.mission?.id === 'alien500' ? 0.95 : (this.mission?.id === 'alien100' ? 1.35 : 2.6);
+      if (this.aliens.length < maxConcurrentAliens && this.alienSpawnTimer <= 0) {
         this.spawnAlien();
-        this.alienSpawnTimer = 2.6;
+        this.alienSpawnTimer = spawnInterval;
       }
     }
 
@@ -3421,6 +3814,31 @@ export class LaunchScene {
       a.mesh.position.copy(pWorld).add(a.relPos);
       if (a.mesh.userData.animate) {
         a.mesh.userData.animate(this.time, a.hitFlash, this.camera.quaternion);
+      }
+
+      // Continuous Acid Corrosion DoT when hit by gunAcid
+      if (a.acidTimer > 0 && !a.dead && a.hp > 0) {
+        a.acidTimer = Math.max(0, a.acidTimer - dt);
+        a.hp -= 18 * dt;
+        a.mesh.userData.setHp(a.hp / a.maxHp);
+        if (Math.random() < dt * 10) {
+          const hitX = P.sx + a.relPos.x;
+          const hitY = P.alt + a.relPos.y;
+          const hitZ = (P.s.z || 0) + a.relPos.z;
+          this.fire.emit(
+            hitX + (Math.random() - 0.5) * 2.2,
+            hitY + (Math.random() - 0.5) * 1.6,
+            hitZ + (Math.random() - 0.5) * 2.2,
+            (P.vSurf?.e || 0) + (Math.random() - 0.5) * 8,
+            (P.vSurf?.u || 0) + 3 + Math.random() * 8,
+            (Math.random() - 0.5) * 8,
+            { life: 0.35 + Math.random() * 0.25, size0: 1.1, size1: 3.8, alpha: 0.85, drag: 1.0, buoy: 0.4, color: [1.6, 5.8, 0.7] }
+          );
+        }
+        if (a.hp <= 0) {
+          this.destroyAlien(a, 'acid');
+          continue;
+        }
       }
 
       const d = a.relPos.length();
@@ -3503,28 +3921,49 @@ export class LaunchScene {
       }
     }
 
-    // Spontaneous Supernova ONLY in outer space (never on any planet or moon)
+    // Heliocentric distance to the Sun and Interstellar boundary check
+    const _sunPos = { x: 0, y: 0, z: 0 };
+    bodyPos('sun', this.simT, _sunPos);
+    const dxSun = P.s.x - _sunPos.x;
+    const dySun = P.s.y - _sunPos.y;
+    const dzSun = (P.s.z || 0) - (_sunPos.z || 0);
+    const rSun = Math.hypot(dxSun, dySun, dzSun);
+    const isOutsideSolarSystem = rSun >= SUN_SOI;
+
+    // Milestone & event when crossing the outer boundary of the Solar System
+    if (isOutsideSolarSystem && !this.flags.interstellarSpace && !P.clamped && !P.landed) {
+      this.setFlag('interstellarSpace');
+      this.milestone(
+        tr('🌌 TIẾN VÀO KHÔNG GIAN LIÊN SAO!', '🌌 ENTERED INTERSTELLAR SPACE!'),
+        tr('Tàu đã vượt qua ranh giới Hệ Mặt Trời (> 830.000 km) · Vùng không gian sâu thẳm nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Solar System boundary (> 830,000 km) · Deep space where Supernovas erupt periodically!')
+      );
+      this.event(
+        tr('🌌✨ Tàu đã chính thức rời khỏi Hệ Mặt Trời, tiến vào Không gian Liên sao rộng lớn!', '🌌✨ The craft has officially left the Solar System, venturing into deep Interstellar Space!'),
+        'warn'
+      );
+      if ((this.supernovaSpawnTimer ?? 999) > 16) {
+        this.supernovaSpawnTimer = 8 + Math.random() * 8;
+      }
+    }
+
+    // Spontaneous Supernova ONLY outside the Solar System in Interstellar Space
     const onPlanetOrMoon = P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
-    if (onPlanetOrMoon) {
-      if (this.supernovas && this.supernovas.length) {
+    if (!isOutsideSolarSystem || onPlanetOrMoon) {
+      // Inside solar system: clear any active supernovas if on/near body and do not spawn natural supernovas
+      if (onPlanetOrMoon && this.supernovas && this.supernovas.length) {
         for (const sn of this.supernovas) {
           if (sn.mesh && sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
           if (sn.mesh?.userData?.dispose) sn.mesh.userData.dispose();
         }
         this.supernovas = [];
       }
+      this.supernovaSpawnTimer = 35 + Math.random() * 25;
+      this.supernovaDistAcc = 0;
     } else if (this.phase === 'flight') {
       const spd = P.speed || Math.hypot(P.vSurf?.e || 0, P.vSurf?.u || 0);
-      if (this.lastSupernovaRef && this.lastSupernovaRef !== P.ref) {
-        this.lastSupernovaRef = P.ref;
-        this.supernovaSpawnTimer = Math.min(this.supernovaSpawnTimer ?? 15, 6 + Math.random() * 6);
-        this.supernovaDistAcc = Math.max(this.supernovaDistAcc || 0, this.supernovaDistNext || 2500);
-      } else {
-        this.lastSupernovaRef = P.ref;
-      }
       this.supernovaDistAcc = (this.supernovaDistAcc || 0) + spd * dt;
-      this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 22) - dt;
-      if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -12)) {
+      this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 45) - dt;
+      if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -10)) {
         const vxScene = P.vSurf?.e || 0;
         const vyScene = P.vSurf?.u || 0;
         const vzScene = P.s?.vz || 0;
@@ -3532,19 +3971,19 @@ export class LaunchScene {
         const moveDir = vMag > 5
           ? new THREE.Vector3(vxScene / vMag, vyScene / vMag, vzScene / vMag)
           : (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
-        const distAhead = THREE.MathUtils.clamp(vMag * 2.2, 85, 2200);
-        const rSide = Math.max(38, distAhead * 0.38);
+        const distAhead = THREE.MathUtils.clamp(vMag * 2.2, 110, 2400);
+        const rSide = Math.max(45, distAhead * 0.38);
         const az = Math.random() * Math.PI * 2;
         const flybyPos = new THREE.Vector3(
           Math.cos(az) * rSide,
-          18 + Math.random() * 26,
+          18 + Math.random() * 28,
           Math.sin(az) * rSide
         ).addScaledVector(moveDir, distAhead);
-        const snScale = THREE.MathUtils.clamp(distAhead / 55, 1.25, 36);
+        const snScale = THREE.MathUtils.clamp(distAhead / 52, 1.8, 38);
         this.triggerSupernova(flybyPos, snScale, false);
-        this.supernovaSpawnTimer = 55 + Math.random() * 45;
+        this.supernovaSpawnTimer = 45 + Math.random() * 45; // Spawns every 45-90 seconds in interstellar space
         this.supernovaDistAcc = 0;
-        this.supernovaDistNext = 6500 + Math.random() * 8500;
+        this.supernovaDistNext = 5000 + Math.random() * 8000;
       }
     }
 
@@ -3783,7 +4222,7 @@ export class LaunchScene {
       }
     }
     if (this.ceresBelt) {
-      const showCeresBelt = F.ref === 'ceres' && F.alt < 70e3;
+      const showCeresBelt = F.ref === 'ceres' && F.alt < 90e3;
       this.ceresBelt.visible = !!showCeresBelt;
       if (showCeresBelt) {
         const driftX = ((this.time * 18) % 8000) - 4000;
@@ -3802,24 +4241,102 @@ export class LaunchScene {
         this.flagObj.rotation.set(0, 0, -th);
       }
     }
-    // Update Launchpad Astronauts (standing on the pad before liftoff)
-    if (this.padAstronautMeshes && this.padAstronautMeshes.length) {
+    // Animate Rocket Airlock Gate (opens doors & unfolds ramp both when astronauts board on the launchpad AND when deployed on any planet/moon/orbit)
+    if (this.boardingHatch) {
       const P = this.player;
-      const showOnPad = (this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')))) && F.ref === 'earth' && F.alt < 5000;
-      for (let i = 0; i < this.padAstronautMeshes.length; i++) {
-        const m = this.padAstronautMeshes[i];
-        const vis = !!(showOnPad && i < this.astronautsAboard);
-        m.visible = vis;
-        if (vis && m.userData) {
-          const ph = this.time * 5.2 + (m.userData.phaseOffset || 0);
-          if (m.userData.rightArm) m.userData.rightArm.rotation.z = -2.35 + Math.sin(ph) * 0.35;
-          if (m.userData.leftLeg) m.userData.leftLeg.rotation.x = Math.sin(ph * 0.5) * 0.12;
-          if (m.userData.rightLeg) m.userData.rightLeg.rotation.x = -Math.sin(ph * 0.5) * 0.12;
+      const closeEnd = (this.hatchCloseStartT || 0) + 0.36;
+      if (!P || P.dead || P.crashed || F.ref !== P.ref || !this.hatchCloseStartT || this.time >= closeEnd) {
+        this.boardingHatch.visible = false;
+      } else {
+        this.boardingHatch.visible = true;
+        const hatchZ = this.getBoardingHatchZ();
+        const hatchOff = this._hatchOff || (this._hatchOff = new THREE.Vector3());
+        hatchOff.set(0, -P.bottomOffset() + 0.42, hatchZ).applyQuaternion(P.root.quaternion);
+        this.boardingHatch.position.copy(P.root.position).add(hatchOff);
+        this.boardingHatch.quaternion.copy(P.root.quaternion);
+
+        const openElapsed = Math.max(0, this.time - (this.hatchOpenStartT || 0));
+        const openProg = Math.min(1, openElapsed / 0.26);
+        const closeElapsed = Math.max(0, this.time - this.hatchCloseStartT);
+        const closeProg = Math.min(1, closeElapsed / 0.36);
+        const rawOpen = Math.min(openProg, 1 - closeProg);
+        const openAmt = rawOpen * rawOpen * (3 - 2 * rawOpen);
+        const hud = this.boardingHatch.userData;
+        if (hud) {
+          if (hud.leftDoorPivot) hud.leftDoorPivot.rotation.y = -openAmt * 1.98;
+          if (hud.rightDoorPivot) hud.rightDoorPivot.rotation.y = openAmt * 1.98;
+          if (hud.rampPivot) hud.rampPivot.rotation.x = 0.04 + openAmt * 1.32;
         }
       }
     }
-    // Update Deployed Astronauts on Planets / Moons
+
+    // Update Launchpad Boarding Astronauts
+    if (this.padAstronautMeshes && this.padAstronautMeshes.length) {
+      const P = this.player;
+      const showOnPad = (this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')))) && F.ref === 'earth' && F.alt < 5000;
+
+      for (let i = 0; i < this.padAstronautMeshes.length; i++) {
+        const m = this.padAstronautMeshes[i];
+        const ud = m.userData;
+        if (!showOnPad || !ud || !ud.boarding) {
+          m.visible = false;
+          if (ud) ud.boarding = false;
+          continue;
+        }
+        const elapsed = this.time - (ud.boardStartT || 0);
+        const dur = ud.boardDur || 1.22;
+        if (elapsed < 0) {
+          m.visible = false;
+          continue;
+        }
+        if (elapsed >= dur) {
+          ud.boarding = false;
+          m.visible = false;
+          continue;
+        }
+        const p = elapsed / dur;
+        const hatchZ = ud.hatchZ ?? 1.28;
+        const rampFootZ = hatchZ + 2.35;
+        const splitP = 0.58;
+        let curX = 0, curY = PAD_TOP, curZ = rampFootZ, rotY = Math.PI;
+        if (p < splitP) {
+          // Phase 1: Walk from launchpad to the foot of the boarding ramp
+          const t1 = p / splitP;
+          const e1 = t1 * t1 * (3 - 2 * t1);
+          curX = ud.startX * (1 - e1);
+          curZ = ud.startZ + (rampFootZ - ud.startZ) * e1;
+          curY = PAD_TOP;
+          rotY = Math.atan2(-ud.startX, rampFootZ - ud.startZ);
+        } else {
+          // Phase 2: Walk straight up the ramp and through the open airlock doors into the glowing cabin
+          const t2 = (p - splitP) / (1 - splitP);
+          curX = 0;
+          curZ = rampFootZ + ((hatchZ - 0.32) - rampFootZ) * t2;
+          curY = PAD_TOP + 0.62 * t2;
+          rotY = Math.PI;
+        }
+        const hop = Math.abs(Math.sin(elapsed * 16)) * 0.18 * (1 - p * 0.4);
+        m.position.set(curX, curY + hop, curZ);
+        m.rotation.set(0, rotY, 0);
+        const shrink = p > 0.78 ? Math.max(0.05, 1 - (p - 0.78) / 0.22) : 1;
+        m.scale.setScalar(1.15 * shrink);
+        m.visible = true;
+
+        const stride = elapsed * 16;
+        if (ud.leftLeg) ud.leftLeg.rotation.x = Math.sin(stride) * 0.65;
+        if (ud.rightLeg) ud.rightLeg.rotation.x = -Math.sin(stride) * 0.65;
+        if (ud.leftArm) ud.leftArm.rotation.x = -Math.sin(stride) * 0.50;
+        if (ud.rightArm) {
+          ud.rightArm.rotation.z = -0.22;
+          ud.rightArm.rotation.x = Math.sin(stride) * 0.50;
+        }
+      }
+    }
+    // Update Deployed Astronauts on Planets / Moons (including walking out of the open airlock gate)
+    const placeDt = Math.min(0.1, Math.max(0, this.time - (this._lastPlaceT ?? this.time)));
+    this._lastPlaceT = this.time;
     if (this.deployedAstronauts && this.deployedAstronauts.length) {
+      const P = this.player;
       for (const a of this.deployedAstronauts) {
         const m = a.mesh;
         if (!m) continue;
@@ -3827,8 +4344,89 @@ export class LaunchScene {
           m.visible = false;
           continue;
         }
+        const exitElapsed = this.time - (a.exitStartT ?? -999);
+        const exitDur = a.exitDur || 1.28;
+        if (exitElapsed < 0) {
+          m.visible = false;
+          continue;
+        }
+        if (exitElapsed < exitDur) {
+          // Walk out from inside the glowing airlock gate, down the ramp, and across the surface to the target spot
+          let targetX = 0, targetY = 0, targetZ = 0, surfTiltZ = 0;
+          if (a.mode === 'eva') {
+            targetX = a.relX;
+            targetY = a.relY;
+            targetZ = a.relZ;
+          } else if (a.body === 'earth') {
+            targetX = a.sx - F.sx;
+            targetY = (a.h + a.dropH) - F.alt;
+            targetZ = a.z - S.z;
+          } else {
+            const B = BODIES[a.body] || BODIES.moon;
+            const fR = B.R;
+            const bodyMesh = a.body === 'moon' ? this.moon : (this.planets[a.body] || this.moon);
+            const th = a.basePsi - F.phiRot;
+            const rAlt = fR + a.h + a.dropH;
+            if (bodyMesh) {
+              targetX = bodyMesh.position.x + rAlt * Math.sin(th);
+              targetY = bodyMesh.position.y + rAlt * Math.cos(th);
+              targetZ = bodyMesh.position.z + (a.z - S.z);
+            }
+            surfTiltZ = -th;
+          }
+
+          const pX = P ? P.root.position.x : 0;
+          const groundY = P ? (P.root.position.y - P.bottomOffset()) : targetY;
+          const pZ = P ? P.root.position.z : 0;
+          const hatchZ = a.hatchZ ?? 1.28;
+          const doorX = pX, doorY = groundY + 0.62, doorZ = pZ + hatchZ - 0.32;
+          const rampFootX = pX, rampFootY = groundY, rampFootZ = pZ + hatchZ + 2.35;
+
+          const p = exitElapsed / exitDur;
+          const splitP = 0.42;
+          let curX = 0, curY = groundY, curZ = rampFootZ, rotY = 0;
+          if (p < splitP) {
+            // Phase 1: Step out of the open airlock doors and walk down the boarding ramp
+            const t1 = p / splitP;
+            curX = doorX + (rampFootX - doorX) * t1;
+            curY = doorY + (rampFootY - doorY) * t1;
+            curZ = doorZ + (rampFootZ - doorZ) * t1;
+            rotY = 0;
+          } else {
+            // Phase 2: Walk from the foot of the ramp across the surface to the target spot
+            const t2 = (p - splitP) / (1 - splitP);
+            const e2 = t2 * t2 * (3 - 2 * t2);
+            curX = rampFootX + (targetX - rampFootX) * e2;
+            curY = rampFootY + (targetY - rampFootY) * e2;
+            curZ = rampFootZ + (targetZ - rampFootZ) * e2;
+            const walkDirY = Math.atan2(targetX - rampFootX, targetZ - rampFootZ);
+            rotY = walkDirY * (1 - t2 * 0.72);
+          }
+
+          const hop = Math.abs(Math.sin(exitElapsed * 16)) * 0.20;
+          const emerge = p < 0.22 ? (0.18 + 0.82 * (p / 0.22)) : 1.0;
+          m.scale.setScalar(1.35 * emerge);
+          m.position.set(curX, curY + hop, curZ);
+          m.rotation.set(0, rotY, surfTiltZ);
+          m.visible = true;
+
+          const ud = m.userData;
+          if (ud) {
+            const stride = exitElapsed * 16;
+            if (ud.leftLeg) ud.leftLeg.rotation.x = Math.sin(stride) * 0.65;
+            if (ud.rightLeg) ud.rightLeg.rotation.x = -Math.sin(stride) * 0.65;
+            if (ud.leftArm) ud.leftArm.rotation.x = -Math.sin(stride) * 0.50;
+            if (ud.rightArm) {
+              ud.rightArm.rotation.z = -0.22;
+              ud.rightArm.rotation.x = Math.sin(stride) * 0.50;
+            }
+          }
+          continue;
+        }
+
+        m.scale.setScalar(1.35);
         if (a.dropH > 0) {
-          a.dropH = Math.max(0, a.dropH - dt * 16);
+          a.dropH = Math.max(0, a.dropH - placeDt * 16);
         }
         const ph = this.time * 4.8 + (m.userData?.phaseOffset || 0);
         const hopY = a.mode === 'surface' && a.dropH <= 0 ? Math.max(0, Math.sin(ph * 0.85)) * 0.45 : 0;
@@ -4019,9 +4617,27 @@ export class LaunchScene {
       const flick = on > 0 ? 0.92 + Math.random() * 0.08 : 0;
       p.update(this.time, on * flick, expand);
       p.heat += ((on > 0 ? 0.5 + on * 0.5 : 0) - p.heat) * (1 - Math.exp(-dt * (on > 0 ? 0.6 : 0.15)));
-      for (const m of nz.bellMats) m.emissiveIntensity = Math.pow(p.heat, 2) * 2.5;
+
+      if (nz.style === 'antigrav') {
+        // Anti-gravity engine light & glow: Turn ON when engine opened, Turn OFF when engine shut off
+        const isFiring = on > 0.005;
+        const agIntensity = isFiring ? (2.8 * on + Math.sin(this.time * 24.0) * 0.4 * on) : 0;
+        const viIntensity = isFiring ? (2.2 * on + Math.cos(this.time * 20.0) * 0.3 * on) : 0;
+        if (nz.bellMats) {
+          for (const m of nz.bellMats) {
+            if (m === nz.violetGlow) m.emissiveIntensity = viIntensity;
+            else m.emissiveIntensity = agIntensity;
+          }
+        }
+        if (nz.agLight) {
+          nz.agLight.intensity = isFiring ? (2.8e4 * on * (0.92 + Math.random() * 0.16)) : 0;
+        }
+      } else {
+        for (const m of nz.bellMats) m.emissiveIntensity = Math.pow(p.heat, 2) * 2.5;
+      }
+
+      if (v === F && on > 0) focusThr += on * (nz.booster ? 0.8 : 1) * nz.r;
       if (on <= 0 || !v || nz.style === 'antigrav') continue;
-      if (v === F) focusThr += on * (nz.booster ? 0.8 : 1) * nz.r;
       nz.node.getWorldPosition(tmp);
       if (v === F) { haze.add(tmp); hazeN++; }
       if (!sameBody(v)) continue;
@@ -4341,8 +4957,15 @@ export class LaunchScene {
 
     const others = [...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
+    const _sunP = { x: 0, y: 0, z: 0 };
+    bodyPos('sun', t, _sunP);
+    const rSunNow = Math.hypot(P.s.x - _sunP.x, P.s.y - _sunP.y, (P.s.z || 0) - (_sunP.z || 0));
+    const isInterstellar = rSunNow >= SUN_SOI;
+    const locDesc = isInterstellar
+      ? tr(`🌌 Không gian Liên sao · Cách Mặt Trời ${fmt(rSunNow / 1000, 0)} km`, `🌌 Interstellar Space · ${fmt(rSunNow / 1000, 0)} km from Sun`)
+      : tr(`Quanh ${refLabel} · độ cao ${fmt(P.alt / 1000, 1)} km`, `Orbiting ${refLabel} · altitude ${fmt(P.alt / 1000, 1)} km`);
     const info = [
-      tr(`Quanh ${refLabel} · độ cao ${fmt(P.alt / 1000, 1)} km`, `Orbiting ${refLabel} · altitude ${fmt(P.alt / 1000, 1)} km`),
+      locDesc,
       tr(`Vận tốc quỹ đạo ${fmt(P.speedOrb)} m/s`, `Orbital velocity ${fmt(P.speedOrb)} m/s`),
     ];
     if (pred && pred.bodyCA && P.ref === 'earth') {
@@ -4441,17 +5064,19 @@ export class LaunchScene {
     $('h-sas').textContent = this.sas ? tr('BẬT', 'ON') : tr('TẮT', 'OFF');
     $('h-sas').style.color = this.sas ? 'var(--ok)' : 'var(--danger)';
     $('h-sasmode').textContent = sasModes[this.sasMode];
-    const isFreeMission = !this.mission || this.mission.id === 'free';
-    $('h-ap').textContent = isFreeMission
-      ? tr('KHÓA (Tự do)', 'LOCKED (Free)')
+    const isAutopilotLocked = !this.mission || this.mission.id === 'free' || !!this.mission.noAutopilot;
+    $('h-ap').textContent = isAutopilotLocked
+      ? (this.mission?.noAutopilot ? tr('KHÓA (Thủ công)', 'LOCKED (Manual)') : tr('KHÓA (Tự do)', 'LOCKED (Free)'))
       : this.program
         ? tr('BẬT', 'ON')
         : tr('TẮT', 'OFF');
-    $('h-ap').style.color = isFreeMission ? 'var(--danger)' : this.program ? 'var(--ok)' : 'var(--muted)';
+    $('h-ap').style.color = isAutopilotLocked ? 'var(--danger)' : this.program ? 'var(--ok)' : 'var(--muted)';
     const btnAp = $('btn-autopilot');
     if (btnAp) {
-      if (isFreeMission) {
-        btnAp.textContent = tr('🚫 TỰ LÁI BỊ KHÓA (BAY TỰ DO)', '🚫 AUTOPILOT LOCKED (FREE FLIGHT)');
+      if (isAutopilotLocked) {
+        btnAp.textContent = this.mission?.noAutopilot
+          ? tr('🚫 KHÔNG CÓ TỰ LÁI (DIỆT 100 ALIEN)', '🚫 NO AUTOPILOT (100 ALIENS MISSION)')
+          : tr('🚫 TỰ LÁI BỊ KHÓA (BAY TỰ DO)', '🚫 AUTOPILOT LOCKED (FREE FLIGHT)');
         btnAp.style.background = 'rgba(239,68,68,0.12)';
         btnAp.style.borderColor = 'rgba(239,68,68,0.4)';
         btnAp.style.color = '#f87171';
@@ -4473,8 +5098,10 @@ export class LaunchScene {
     const killsEl = $('h-alien-kills');
     if (killsEl) killsEl.textContent = String(this.aliensKilled || 0);
     const maxAstro = this.maxAstronauts || 10;
-    const isOnLaunchpad = this.phase === 'ready' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
-    const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && (P.ref !== 'earth' || !!P.landed);
+    const canBoardOnPad = this.phase === 'ready' && !this.lifted;
+    const isOnLaunchpad = this.phase === 'ready' || this.phase === 'countdown' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
+    const isGasGiant = !!(P && BODIES[P.ref]?.gasGiant);
+    const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && !isGasGiant && (P.ref !== 'earth' || !!P.landed);
     const curBodyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P?.ref).length;
     const astroEl = $('h-astronauts');
     if (astroEl) {
@@ -4490,9 +5117,9 @@ export class LaunchScene {
     }
     const astroPadBox = $('astro-pad-btns');
     if (astroPadBox) {
-      astroPadBox.classList.toggle('hidden', !isOnLaunchpad);
+      astroPadBox.classList.toggle('hidden', !canBoardOnPad);
       astroPadBox.querySelectorAll('button[data-add-astro]').forEach((btn) => {
-        btn.disabled = this.astronautsAboard >= maxAstro;
+        btn.disabled = !canBoardOnPad || this.astronautsAboard >= maxAstro;
       });
     }
     const astroDeployBox = $('astro-deploy-btns');
@@ -4513,15 +5140,12 @@ export class LaunchScene {
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       const activeWeapons = this.getActivePlayerWeapons();
-      const hasLaser = activeWeapons.some((w) => w.weaponType === 'laser');
-      const hasWater = activeWeapons.some((w) => w.weaponType === 'water');
-      const wTag = hasLaser && hasWater
-        ? tr('LAZER + NƯỚC 1M PSI', 'LASER + 1M PSI WATER')
-        : hasWater
-          ? tr('NƯỚC 1,000,000 PSI', '1,000,000 PSI WATER')
-          : hasLaser
-            ? tr('SÚNG LAZER', 'LASER GUN')
-            : tr('VŨ KHÍ DỰ PHÒNG', 'BACKUP WEAPON');
+      const wNames = [];
+      if (activeWeapons.some((w) => w.weaponType === 'laser')) wNames.push(tr('LAZER', 'LASER'));
+      if (activeWeapons.some((w) => w.weaponType === 'water')) wNames.push(tr('NƯỚC 1M PSI', '1M PSI WATER'));
+      if (activeWeapons.some((w) => w.weaponType === 'acid')) wNames.push(tr('AXIT', 'ACID'));
+      if (activeWeapons.some((w) => w.weaponType === 'electric')) wNames.push(tr('ĐIỆN 1M WATT', '1M WATT ELECTRIC'));
+      const wTag = wNames.length ? wNames.join(' + ') : tr('VŨ KHÍ DỰ PHÒNG', 'BACKUP WEAPON');
       btnFire.textContent = `🔫 ${tr('BẮN ALIEN', 'FIRE AT ALIENS')}: ${wTag} (V)`;
     }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);

@@ -1278,7 +1278,7 @@ export function createCeresAsteroidBelt() {
       const x = (rnd() - 0.5) * 32000;
       const z = (rnd() - 0.5) * 18000;
       const archDrop = (x * x) / (2 * 95000);
-      const y = 950 + Math.pow(rnd(), 1.35) * 6800 - archDrop;
+      const y = 2600 + Math.pow(rnd(), 1.35) * 9200 - archDrop;
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
       const sz = rnd() < 0.08 ? 85 + rnd() * 115 : 16 + Math.pow(rnd(), 1.8) * 64;

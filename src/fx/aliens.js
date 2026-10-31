@@ -297,6 +297,66 @@ export function createBeamVisual(type, startPos, endPos) {
     group.add(new THREE.Mesh(coreGeo, coreMat));
     group.add(new THREE.Mesh(outerGeo, outerMat));
     group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.18, maxLife: 0.18 };
+  } else if (type === 'acid') {
+    // Corrosive Acid Stream (toxic lime-yellow core + expanding neon-green acid spray sheath)
+    const coreGeo = new THREE.CylinderGeometry(0.15, 0.08, len, 12, 1, true);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0xd9f99d,
+      transparent: true,
+      opacity: 0.96,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const outerGeo = new THREE.CylinderGeometry(0.46, 0.14, len, 12, 1, true);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      transparent: true,
+      opacity: 0.68,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    group.add(new THREE.Mesh(coreGeo, coreMat));
+    group.add(new THREE.Mesh(outerGeo, outerMat));
+    group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.21, maxLife: 0.21 };
+  } else if (type === 'electric') {
+    // 1,000,000 WATT High-Voltage Tesla Lightning Arc (golden-white core + electric cyan sheath + jagged lightning zig-zag)
+    const coreGeo = new THREE.CylinderGeometry(0.11, 0.11, len, 10, 1, true);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.98,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const outerGeo = new THREE.CylinderGeometry(0.42, 0.42, len, 12, 1, true);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.72,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    group.add(new THREE.Mesh(coreGeo, coreMat));
+    group.add(new THREE.Mesh(outerGeo, outerMat));
+
+    // Jagged 3D lightning arc segments spiraling along the beam
+    const segs = 8;
+    const pts = [];
+    for (let i = 0; i <= segs; i++) {
+      const f = i / segs;
+      const y = (f - 0.5) * len;
+      const jx = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * 1.35;
+      const jz = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * 1.35;
+      pts.push(new THREE.Vector3(jx, y, jz));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const arcGeo = new THREE.TubeGeometry(curve, 20, 0.12, 6, false);
+    group.add(new THREE.Mesh(arcGeo, coreMat));
+    group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.19, maxLife: 0.19 };
   } else if (type === 'alienLaser') {
     // Alien Bio-Plasma Beam (neon green core + purple outer aura) for warrior/boss Alien brawls
     const coreGeo = new THREE.CylinderGeometry(0.08, 0.08, len, 10, 1, true);

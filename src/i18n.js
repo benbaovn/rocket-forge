@@ -106,6 +106,14 @@ const PART_I18N = {
     vi: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
     en: { name: '1,000,000 PSI Water Cannon ×2', cat: 'Weapons', desc: 'Ultra-high-pressure 1,000,000 PSI supersonic hydro-jet cannons that blast and shred Aliens (Press V to fire)' },
   },
+  gunAcid: {
+    vi: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° bắn tia dịch độc xanh lục làm tan chảy giáp và rút máu Alien liên tục (Phím V)' },
+    en: { name: 'Corrosive Acid Cannon ×2', cat: 'Weapons', desc: '360° gimbaled bio-acid sprayers firing pressurized toxic acid streams that melt armor and deal continuous corrosion damage to Aliens (Press V)' },
+  },
+  gunElectric: {
+    vi: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', desc: 'Cặp pháo điện Tesla 1,000,000 WATT xoay 360° phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh (Phím V)' },
+    en: { name: '1,000,000 WATT Electric Cannon ×2', cat: 'Weapons', desc: '360° gimbaled 1,000,000 WATT Tesla arc cannons that unleash high-voltage lightning bolts, stunning the target and chaining electricity to nearby Aliens (Press V)' },
+  },
   booster: {
     vi: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
     en: { name: 'Solid Rocket Boosters ×2', cat: 'Engines', desc: 'Solid fuel boosters, auto-jettison on burnout' },
@@ -314,6 +322,46 @@ const MISSION_I18N = {
       name: 'Free Flight',
       desc: 'Build and fly freely. Autopilot (G) launches to an 80 km orbit; boosters with landing legs automatically recover.',
       objs: {},
+    },
+  },
+  alien100: {
+    vi: {
+      name: 'Tiêu diệt 100 Alien (Không tự lái)',
+      desc: 'Tự điều khiển tàu chiến lên vũ trụ hoặc các hành tinh/mặt trăng và tiêu diệt đủ 100 UFO Alien bằng Súng Lazer hoặc Máy Phun Nước 1,000,000 PSI (Không có chế độ Lái tự động).',
+      objs: {
+        kill25: 'Tiêu diệt 25 UFO Alien',
+        kill50: 'Tiêu diệt 50 UFO Alien',
+        kill100: 'Tiêu diệt đủ 100 UFO Alien',
+      },
+    },
+    en: {
+      name: 'Eliminate 100 Aliens (No Autopilot)',
+      desc: 'Manually pilot your warship into space or to planets/moons and destroy 100 Alien UFOs using Laser Turrets or 1,000,000 PSI Water Cannons (No Autopilot mode).',
+      objs: {
+        kill25: 'Destroy 25 Alien UFOs',
+        kill50: 'Destroy 50 Alien UFOs',
+        kill100: 'Destroy all 100 Alien UFOs',
+      },
+    },
+  },
+  alien500: {
+    vi: {
+      name: 'Đại chiến 500 Alien (Không tự lái)',
+      desc: 'Chiến dịch quy mô tổng lực: Tự tay lái chiến hạm tiêu diệt đủ 500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+      objs: {
+        kill100: 'Tiêu diệt 100 UFO Alien',
+        kill250: 'Tiêu diệt 250 UFO Alien',
+        kill500: 'Tiêu diệt toàn bộ 500 UFO Alien',
+      },
+    },
+    en: {
+      name: 'Galactic War: 500 Aliens (No Autopilot)',
+      desc: 'All-out galactic campaign: Manually pilot your warship to eliminate 500 Alien UFOs across the Solar System and Interstellar Space using Lasers, Water Cannons, or Supernovas (No Autopilot mode).',
+      objs: {
+        kill100: 'Destroy 100 Alien UFOs',
+        kill250: 'Destroy 250 Alien UFOs',
+        kill500: 'Eliminate all 500 Alien UFOs',
+      },
     },
   },
   orbit: {
@@ -840,6 +888,7 @@ export function applyLanguage(lang, app) {
   };
 
   // Build UI
+  setTxt('#load-tip', '💡 Đề xuất nên chơi màn hình full (F11)', '💡 Recommended: Play in Fullscreen mode (F11)');
   setTxt('#build-ui .crumb', 'Xưởng lắp ráp · VAB', 'Vehicle Assembly · VAB');
   setTxt('#btn-undo', '↶ Hoàn tác', '↶ Undo');
   setTxt('#btn-clear', '🗑 Xóa hết', '🗑 Clear All');

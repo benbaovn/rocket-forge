@@ -28,6 +28,8 @@ export const PARTS = {
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng cung cấp điện năng cho tàu vũ trụ, tên lửa & xe' },
   gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
   waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
+  gunAcid: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'acid', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° bắn tia dịch độc xanh lục làm tan chảy giáp và rút máu Alien liên tục (Phím V)' },
+  gunElectric: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'electric', desc: 'Cặp pháo điện Tesla 1,000,000 WATT xoay 360° phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh (Phím V)' },
   booster: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', kind: 'radial', count: 2, height: 11.8, dry: 1.8, fuel: 14, thrustSL: 1100, thrustVac: 1200, ispSL: 240, ispVac: 265, desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
   cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
   chassisRover: { name: 'Khung gầm Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
@@ -273,6 +275,8 @@ const builders = {
   solarPanel() { return buildSolarPanel(); },
   gunLaser() { return buildGunLaser(); },
   waterCannon() { return buildWaterCannon(); },
+  gunAcid() { return buildGunAcid(); },
+  gunElectric() { return buildGunElectric(); },
 
   tankS() { return tank(PARTS.tankS.height, MAT.white, true); },
   tankM() { return tank(PARTS.tankM.height, MAT.checker, false); },
@@ -511,6 +515,14 @@ const builders = {
     g.add(mesh(new THREE.TorusGeometry(R * 0.56, 0.08, 16, 56).rotateX(Math.PI / 2), MAT.silver, 0, 0.16, 0));
     g.add(mesh(new THREE.CylinderGeometry(R * 0.48, R * 0.54, 0.14, 48), cyanGlow, 0, 0.12, 0));
 
+    // High-intensity quantum field point light (turns on when engine opens, turns off when engine cuts off)
+    const agLight = new THREE.PointLight(0x00e5ff, 0, 50, 2.0);
+    agLight.position.set(0, H * 0.52, 0);
+    g.add(agLight);
+    g.userData.agLight = agLight;
+    g.userData.cyanGlow = cyanGlow;
+    g.userData.violetGlow = violetGlow;
+
     addNozzle(g, 0, 0, 0.95, [cyanGlow, violetGlow], 'antigrav');
     return g;
   },
@@ -661,6 +673,7 @@ const builders = {
   energiaPolyus() { return buildEnergiaPolyus(); },
   energiaCore() { return buildEnergiaCore(); },
   ufoSaucer() { return buildUfoSaucer(); },
+  gunAcid() { return buildGunAcid(); },
 };
 
 function tank(h, mat, decal) {
@@ -1457,6 +1470,149 @@ function buildWaterCannon() {
   g.userData.turret = turret;
   g.userData.muzzle = muzzle;
   g.userData.weaponType = 'water';
+  return g;
+}
+
+function buildGunAcid() {
+  const g = new THREE.Group();
+  const acidMat = new THREE.MeshStandardMaterial({
+    color: 0x84cc16,
+    emissive: new THREE.Color(0x4ade80),
+    emissiveIntensity: 2.35,
+    roughness: 0.14,
+    metalness: 0.2,
+  });
+  const hazardMat = new THREE.MeshStandardMaterial({
+    color: 0xfacc15,
+    emissive: new THREE.Color(0xca8a04),
+    emissiveIntensity: 0.85,
+    roughness: 0.28,
+    metalness: 0.35,
+  });
+  const glassTankMat = new THREE.MeshPhysicalMaterial({
+    color: 0xbef264,
+    emissive: new THREE.Color(0x22c55e),
+    emissiveIntensity: 1.45,
+    roughness: 0.08,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0.88,
+  });
+
+  // Heavy bio-hazard side bracket
+  g.add(mesh(new THREE.BoxGeometry(0.24, 0.62, 0.54), MAT.darkMetal, 0.08, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.50, 0.28, 0.42), MAT.carbon, 0.35, -0.07, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.46, 0.06, 0.44), hazardMat, 0.35, -0.07, 0));
+
+  // Twin glowing toxic-green pressurized acid canisters on sides
+  for (const sz of [-0.21, 0.21]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.58, 20), glassTankMat, 0.34, 0.13, sz));
+    g.add(mesh(new THREE.SphereGeometry(0.115, 16, 12), MAT.darkMetal, 0.34, 0.42, sz));
+    g.add(mesh(new THREE.SphereGeometry(0.115, 16, 12), MAT.darkMetal, 0.34, -0.16, sz));
+    for (const ry of [0.02, 0.24]) {
+      g.add(mesh(new THREE.TorusGeometry(0.118, 0.015, 8, 20).rotateX(Math.PI / 2), hazardMat, 0.34, ry, sz));
+    }
+  }
+
+  // Acid pump manifold & rotary turret pedestal
+  g.add(mesh(new THREE.CylinderGeometry(0.25, 0.28, 0.19, 24), MAT.titanium, 0.64, -0.03, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.26, 0.024, 10, 28).rotateX(Math.PI / 2), acidMat, 0.64, 0.06, 0));
+
+  // Rotating 360-degree Corrosive Acid Sprayer Turret
+  const turret = new THREE.Group();
+  turret.position.set(0.64, 0.14, 0);
+  g.add(turret);
+
+  // Chemical reaction chamber & dual-stage corrosion-proof barrel
+  turret.add(mesh(new THREE.BoxGeometry(0.38, 0.35, 0.40), MAT.darkMetal, 0, 0.08, 0));
+  turret.add(mesh(new THREE.SphereGeometry(0.15, 18, 14), acidMat, 0.05, 0.13, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.105, 0.135, 0.50, 22), MAT.titanium, 0, 0.45, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.072, 0.095, 0.66, 22), MAT.darkMetal, 0, 0.90, 0));
+
+  // Glowing neon-green acid injector rings & flared bio-acid atomizer nozzle
+  for (const cy of [0.42, 0.68, 0.94, 1.16]) {
+    turret.add(mesh(new THREE.TorusGeometry(0.092, 0.018, 10, 22).rotateX(Math.PI / 2), acidMat, 0, cy, 0));
+  }
+  turret.add(mesh(new THREE.CylinderGeometry(0.095, 0.065, 0.18, 22), acidMat, 0, 1.31, 0));
+
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(0, 1.42, 0);
+  turret.add(muzzle);
+
+  g.userData.turret = turret;
+  g.userData.muzzle = muzzle;
+  g.userData.weaponType = 'acid';
+  return g;
+}
+
+function buildGunElectric() {
+  const g = new THREE.Group();
+  const voltMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: new THREE.Color(0x00e5ff),
+    emissiveIntensity: 2.65,
+    roughness: 0.12,
+    metalness: 0.25,
+  });
+  const sparkGoldMat = new THREE.MeshStandardMaterial({
+    color: 0xfef08a,
+    emissive: new THREE.Color(0xfacc15),
+    emissiveIntensity: 2.2,
+    roughness: 0.16,
+    metalness: 0.35,
+  });
+  const insulatorMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    roughness: 0.32,
+    metalness: 0.65,
+  });
+
+  // Heavy high-voltage transformer side bracket
+  g.add(mesh(new THREE.BoxGeometry(0.24, 0.64, 0.56), MAT.darkMetal, 0.08, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.52, 0.30, 0.44), MAT.carbon, 0.35, -0.07, 0));
+
+  // Twin 1,000,000 WATT supercapacitor banks with ribbed ceramic insulators & copper coils
+  for (const sz of [-0.21, 0.21]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.58, 20), insulatorMat, 0.34, 0.14, sz));
+    for (const ry of [-0.06, 0.08, 0.22, 0.36]) {
+      g.add(mesh(new THREE.TorusGeometry(0.118, 0.018, 8, 22).rotateX(Math.PI / 2), MAT.copper, 0.34, ry, sz));
+    }
+    g.add(mesh(new THREE.SphereGeometry(0.115, 16, 12), voltMat, 0.34, 0.44, sz));
+  }
+
+  // Rotary Tesla pedestal & magnetic induction ring
+  g.add(mesh(new THREE.CylinderGeometry(0.26, 0.29, 0.20, 24), MAT.titanium, 0.65, -0.03, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.27, 0.025, 10, 28).rotateX(Math.PI / 2), sparkGoldMat, 0.65, 0.06, 0));
+
+  // Rotating 360-degree 1,000,000 WATT Tesla Arc Turret
+  const turret = new THREE.Group();
+  turret.position.set(0.65, 0.14, 0);
+  g.add(turret);
+
+  // High-voltage generator housing & copper primary winding
+  turret.add(mesh(new THREE.BoxGeometry(0.40, 0.36, 0.42), MAT.darkMetal, 0, 0.08, 0));
+  turret.add(mesh(new THREE.SphereGeometry(0.16, 18, 14), voltMat, 0.05, 0.14, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.54, 24), MAT.copper, 0, 0.46, 0));
+  turret.add(mesh(new THREE.CylinderGeometry(0.075, 0.10, 0.68, 24), insulatorMat, 0, 0.92, 0));
+
+  // Tesla resonator toroid rings & golden-cyan corona discharge rings along the barrel
+  for (let i = 0; i < 5; i++) {
+    const cy = 0.38 + i * 0.19;
+    const rMat = i % 2 === 0 ? voltMat : sparkGoldMat;
+    turret.add(mesh(new THREE.TorusGeometry(0.105 - i * 0.004, 0.018, 10, 24).rotateX(Math.PI / 2), rMat, 0, cy, 0));
+  }
+
+  // Top Tesla crown toroid & 1,000,000 WATT arc emitter sphere
+  turret.add(mesh(new THREE.TorusGeometry(0.13, 0.032, 12, 28).rotateX(Math.PI / 2), MAT.silver, 0, 1.28, 0));
+  turret.add(mesh(new THREE.SphereGeometry(0.095, 18, 14), sparkGoldMat, 0, 1.38, 0));
+
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(0, 1.46, 0);
+  turret.add(muzzle);
+
+  g.userData.turret = turret;
+  g.userData.muzzle = muzzle;
+  g.userData.weaponType = 'electric';
   return g;
 }
 
@@ -4896,7 +5052,13 @@ function buildUfoSaucer() {
   // Built-in Parachutes & Anti-Gravity Propulsion Nozzle
   addParachutes(g, 3.4);
   const bellM = bellMaterial(true);
-  addNozzle(g, 0, 0, 0.95, [bellM], 'antigrav');
+  const ufoAgLight = new THREE.PointLight(0x22c55e, 0, 55, 2.0);
+  ufoAgLight.position.set(0, 0.45, 0);
+  g.add(ufoAgLight);
+  g.userData.agLight = ufoAgLight;
+  g.userData.cyanGlow = neonCyan;
+  g.userData.violetGlow = neonPurple;
+  addNozzle(g, 0, 0, 0.95, [bellM, neonCyan, neonPurple], 'antigrav');
 
   return g;
 }
@@ -4962,7 +5124,7 @@ function mergeGroupMeshesByMaterial(rootGroup, excludeSet = new Set()) {
   }
 }
 
-const DYNAMIC_PARTS = new Set(['legs', 'gridfins', 'wheelsRover', 'gearPlane', 'gunLaser', 'waterCannon']);
+const DYNAMIC_PARTS = new Set(['legs', 'gridfins', 'wheelsRover', 'gearPlane', 'gunLaser', 'waterCannon', 'gunAcid', 'gunElectric']);
 
 export function buildPart(type) {
   const g = builders[type]();
@@ -5006,7 +5168,7 @@ export function radialPlacements(type) {
       { angle: Math.PI, dist: 1.12, offsetZ: 0 },
     ];
   }
-  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
+  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
     return [
       { angle: 0, dist: R - 0.05, offsetZ: 0 },
       { angle: Math.PI, dist: R - 0.05, offsetZ: 0 },

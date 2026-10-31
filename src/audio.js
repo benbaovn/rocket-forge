@@ -164,6 +164,65 @@ class AudioEngine {
     s.stop(t + 0.27);
   }
 
+  acidSpray(vol = 0.36) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.white;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.setValueAtTime(1650, t);
+    f.frequency.exponentialRampToValueAtTime(620, t + 0.24);
+    f.Q.value = 3.2;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+    s.connect(f).connect(g).connect(this.master);
+    s.start(t);
+    s.stop(t + 0.28);
+
+    const o = this.ctx.createOscillator();
+    const go = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(140, t + 0.22);
+    go.gain.setValueAtTime(vol * 0.45, t);
+    go.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+    o.connect(go).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.25);
+  }
+
+  electricZap(vol = 0.38) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    // 1,000,000 WATT high-voltage Tesla arc crackle + FM buzz
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.pink;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'highpass';
+    f.frequency.setValueAtTime(2200, t);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(vol * 0.9, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    s.connect(f).connect(g).connect(this.master);
+    s.start(t);
+    s.stop(t + 0.24);
+
+    const o = this.ctx.createOscillator();
+    const go = this.ctx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(980, t);
+    o.frequency.setValueAtTime(420, t + 0.04);
+    o.frequency.setValueAtTime(1350, t + 0.08);
+    o.frequency.exponentialRampToValueAtTime(160, t + 0.21);
+    go.gain.setValueAtTime(vol * 0.55, t);
+    go.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.connect(go).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.23);
+  }
+
   alienBoom(vol = 0.65) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;

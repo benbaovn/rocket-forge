@@ -33,6 +33,7 @@ kbd { font-family: var(--font-orbitron); font-size: 11px; font-weight: 700; padd
 .load-bar { width: 360px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
 #load-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
 #load-text { color: var(--muted); font-size: 14px; }
+.load-tip { color: var(--accent); font-size: 13px; letter-spacing: 0.8px; opacity: 0.9; padding: 6px 16px; border-radius: 999px; background: rgba(79, 216, 255, 0.08); border: 1px solid rgba(79, 216, 255, 0.24); margin-top: 2px; }
 
 /* buttons */
 .btn { font-family: inherit; color: var(--text); background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }

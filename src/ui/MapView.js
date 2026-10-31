@@ -10,7 +10,7 @@ import { tr, getLang } from '../i18n.js';
 
 // 1 unit in 3D scene = 1 kilometre (1,000 metres)
 const SCALE = 0.001;
-const CERES_MAP_Y = -1400; // Ceres positioned underneath the Asteroid Belt (Vành đai đá) on the 3D Map
+const CERES_MAP_Y = -3800; // Ceres positioned underneath the Asteroid Belt (Vành đai đá) on the 3D Map
 const to3D = (x, y, z = 0, out = new THREE.Vector3()) => out.set(x * SCALE, (z || 0) * SCALE, -(y || 0) * SCALE);
 const fmtKm = (m) => (m >= 1e6 ? (m / 1e6).toFixed(2) + ' Mm' : m >= 1e4 ? (m / 1000).toFixed(0) + ' km' : (m / 1000).toFixed(1) + ' km');
 const fmt = (v, d = 0) => (typeof v === 'number' && isFinite(v) ? v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d }) : '—');

@@ -6,6 +6,26 @@ export const MISSIONS = [
     objectives: [],
   },
   {
+    id: 'alien100', icon: '👽', name: 'Tiêu diệt 100 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Tự điều khiển tàu chiến lên vũ trụ hoặc các hành tinh/mặt trăng và tiêu diệt đủ 100 UFO Alien bằng Súng Lazer hoặc Máy Phun Nước 1,000,000 PSI (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill25', text: 'Tiêu diệt 25 UFO Alien' },
+      { id: 'kill50', text: 'Tiêu diệt 50 UFO Alien' },
+      { id: 'kill100', text: 'Tiêu diệt đủ 100 UFO Alien' },
+    ],
+  },
+  {
+    id: 'alien500', icon: '👾', name: 'Đại chiến 500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Chiến dịch quy mô tổng lực: Tự tay lái chiến hạm tiêu diệt đủ 500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill100', text: 'Tiêu diệt 100 UFO Alien' },
+      { id: 'kill250', text: 'Tiêu diệt 250 UFO Alien' },
+      { id: 'kill500', text: 'Tiêu diệt toàn bộ 500 UFO Alien' },
+    ],
+  },
+  {
     id: 'orbit', icon: '🛰', name: 'Lên quỹ đạo', preset: 'Hai tầng (khuyên dùng)',
     desc: 'Đưa tên lửa vào quỹ đạo ổn định quanh Trái Đất (cận điểm trên 70 km).',
     objectives: [

@@ -56,13 +56,13 @@ export const PRESETS = {
   'Tàu lượn phản lực siêu âm': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tankS', 'engReuse'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
-  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
-  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+gunLaser+waterCannon+legs', 'engAntiGrav'],
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
 };
 
 export function ensureStackHasWeapons(stack) {
   if (!Array.isArray(stack) || !stack.length) return stack;
-  const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon')));
+  const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')));
   if (hasWeapon) return stack;
   // Find best upper-stage body/tank part to mount weapons
   let target = stack.find((it) => {
@@ -308,8 +308,8 @@ export function computeStats(stack) {
     const bottom = stack[stack.length - 1];
     if (bottom && !PARTS[bottom.type].thrustVac) warnings.push(tr('Phần dưới cùng nên là động cơ.', 'The bottom part should be an engine.'));
   }
-  if (stack.length && !stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon')))) {
-    warnings.push(tr('Tên lửa chưa có vũ khí (Súng Lazer / Máy Phun Nước 1M PSI) để bắn Alien!', 'Rocket has no weapons (Laser Gun / 1M PSI Water Cannon) to shoot Aliens!'));
+  if (stack.length && !stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')))) {
+    warnings.push(tr('Tên lửa chưa có vũ khí (Súng Lazer / Máy Phun Nước 1M PSI / Súng Acid / Súng Điện 1M WATT) để bắn Alien!', 'Rocket has no weapons (Laser Gun / 1M PSI Water Cannon / Acid Gun / 1M WATT Electric Gun) to shoot Aliens!'));
   }
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos };
 }
@@ -355,7 +355,7 @@ export function buildRocket(stack) {
 
     segGroups[k].add(partContainer);
     partObjs.push({ index: p.index, obj, container: partContainer, seg: k, def: p.def, y: p.y });
-    if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle });
+    if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle, agLight: obj.userData.agLight, cyanGlow: obj.userData.cyanGlow, violetGlow: obj.userData.violetGlow });
     if (p.item.type === 'capsule' || p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'buranShuttle' || p.item.type === 'energiaNose' || p.item.type === 'energiaPolyus' || p.item.type === 'ufoSaucer') {
       if (p.index > 0 && obj.userData.tower) obj.userData.tower.visible = false; // something mounted above
       if (!capsule) capsule = { obj, seg: k };
@@ -405,6 +405,18 @@ export function buildRocket(stack) {
           const effDist = isUfo ? 3.15 : isBuran ? 1.98 : pl.dist;
           const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose') ? 5.2 : p.def.height;
           posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.62) : (p.y + effH * 0.28); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
+        } else if (a === 'gunAcid') {
+          const isUfo = p.item.type === 'ufoSaucer';
+          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia');
+          const effDist = isUfo ? 3.50 : isBuran ? 1.98 : pl.dist;
+          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose') ? 5.2 : p.def.height;
+          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.98) : (p.y + effH * 0.56); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
+        } else if (a === 'gunElectric') {
+          const isUfo = p.item.type === 'ufoSaucer';
+          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia');
+          const effDist = isUfo ? 3.30 : isBuran ? 1.98 : pl.dist;
+          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose') ? 5.2 : p.def.height;
+          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.80) : (p.y + effH * 0.42); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {
@@ -465,7 +477,7 @@ export function buildRocket(stack) {
         boosters.push({ seg: k, objs: group, fuel: ad.fuel * ad.count, dry: ad.dry * ad.count, count: ad.count, attached: true });
       }
       if (a === 'legs' || a === 'gridfins') deployables.push({ seg: k, type: a, objs: group, partIndex: p.index });
-      if (a === 'gunLaser' || a === 'waterCannon') {
+      if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
         for (const ao of group) {
           weapons.push({ seg: k, type: a, weaponType: PARTS[a].weapon, obj: ao, muzzle: ao.userData.muzzle, turret: ao.userData.turret });
         }

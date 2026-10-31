@@ -31,10 +31,10 @@ const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
 const fmt = (v, d = 0) => v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d });
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const WARPS = [1, 2, 4, 10, 50, 100, 1000, 10000, 100000, 1000000, 10000000];
-const SAS_MODES_VI = ['Giữ hướng', 'Prograde', 'Retrograde', 'Hướng tâm ra', 'Hướng tâm vào', 'Mục tiêu', 'Ngược mục tiêu'];
-const SAS_MODES_EN = ['Hold Attitude', 'Prograde', 'Retrograde', 'Radial Out', 'Radial In', 'Target', 'Anti-Target'];
-const CAM_MODES_VI = ['Bám theo', 'Tháp quan sát', 'Gắn trên thân', 'Điện ảnh'];
-const CAM_MODES_EN = ['Chase', 'Tracking Tower', 'Onboard', 'Cinematic'];
+const SAS_MODES_VI = ['Giữ', 'Prograde', 'Retrograde', 'Hướng ra', 'Hướng vào', 'Mục tiêu', 'Ngược MT'];
+const SAS_MODES_EN = ['Hold', 'Prograde', 'Retrograde', 'Rad Out', 'Rad In', 'Target', 'Anti-Tgt'];
+const CAM_MODES_VI = ['Bám', 'Tháp', 'Thân', 'Cine'];
+const CAM_MODES_EN = ['Chase', 'Tower', 'Hull', 'Cine'];
 
 export class LaunchScene {
   constructor(app) {
@@ -648,8 +648,8 @@ export class LaunchScene {
     const btnTpMode = $('btn-tp-mode');
     if (btnTpMode) {
       btnTpMode.textContent = isOrb
-        ? tr('🛰️ Vào Quỹ Đạo', '🛰️ Orbit')
-        : tr('🛬 Đáp Bề Mặt', '🛬 Surface');
+        ? tr('🛰️ Quỹ đạo', '🛰️ Orbit')
+        : tr('🛬 Bề mặt', '🛬 Surf');
     }
     const surfBtn = $('btn-tpmode-surf');
     const orbBtn = $('btn-tpmode-orb');
@@ -5014,7 +5014,7 @@ export class LaunchScene {
     const altEl = $('h-alt');
     if (altV >= 10000) { altEl.textContent = fmt(altV / 1000, 2); $('h-alt-u').textContent = 'km'; }
     else { altEl.textContent = fmt(altV, 0); $('h-alt-u').textContent = 'm'; }
-    $('h-vel-l').textContent = low ? tr('VẬN TỐC (so với mặt đất)', 'VELOCITY (surface)') : tr('VẬN TỐC (quỹ đạo)', 'VELOCITY (orbital)');
+    $('h-vel-l').textContent = low ? tr('⚡ MẶT ĐẤT', '⚡ SURF') : tr('⚡ QUỸ ĐẠO', '⚡ ORB');
     $('h-vel').textContent = fmt(low ? P.speedSurf : P.speedOrb);
     const vu = low ? P.vSurf.u : P.vOrb.u, ve = low ? Math.hypot(P.vSurf.e, P.vSurf.z || 0) : P.vOrb.e;
     $('h-vs').textContent = fmt(vu, 1) + ' m/s';
@@ -5040,8 +5040,8 @@ export class LaunchScene {
       const ip = this.issOrbit.pos(this.simT), iv = this.issOrbit.vel(this.simT);
       const d = this.docked ? 0 : Math.hypot(ip.x - P.s.x, ip.y - P.s.y, P.s.z);
       const rv = this.docked ? 0 : Math.hypot(P.s.vx - iv.x, P.s.vy - iv.y, P.s.vz);
-      $('h-target-name').textContent = this.docked ? tr('🛰 ĐÃ GẮN VÀO ISS', '🛰 DOCKED WITH ISS') : tr('Mục tiêu · ISS', 'Target · ISS');
-      $('h-tdist').textContent = this.docked ? tr('0.0 m (Đã khóa)', '0.0 m (Locked)') : (d >= 10000 ? fmt(d / 1000, 1) + ' km' : fmt(d, d < 100 ? 1 : 0) + ' m');
+      $('h-target-name').textContent = this.docked ? tr('🛰 ĐÃ GẮN ISS', '🛰 DOCKED · ISS') : '🎯 ISS';
+      $('h-tdist').textContent = this.docked ? tr('0.0 m (Khóa)', '0.0 m (Locked)') : (d >= 10000 ? fmt(d / 1000, 1) + ' km' : fmt(d, d < 100 ? 1 : 0) + ' m');
       $('h-trel').textContent = fmt(rv, rv < 10 ? 2 : 0) + ' m/s';
     }
     // docking HUD
@@ -5056,7 +5056,7 @@ export class LaunchScene {
       const att = THREE.MathUtils.radToDeg(wrapPi(P.beta - g.beta));
       const sc = clamp(90 / Math.max(2, Math.abs(along), Math.abs(latY) * 3, Math.abs(ez) * 3), 0.5, 40);
       $('dk-dot').style.transform = `translate(${clamp(ez * sc, -90, 90)}px, ${clamp(-latY * sc, -90, 90)}px)`;
-      $('dk-info').innerHTML = this.docked ? tr('🛰 ĐÃ GHÉP NỐI · ĐANG BAY CÙNG ISS', '🛰 DOCKED · ORBITING WITH ISS') : tr(`Khoảng cách <b>${fmt(Math.max(0, along), 1)} m</b> · lệch <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · tốc độ <b>${fmt(rv, 2)} m/s</b> · góc <b>${fmt(att, 1)}°</b>`, `Distance <b>${fmt(Math.max(0, along), 1)} m</b> · offset <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · speed <b>${fmt(rv, 2)} m/s</b> · angle <b>${fmt(att, 1)}°</b>`);
+      $('dk-info').innerHTML = this.docked ? tr('🛰 ĐÃ GHÉP NỐI · ĐANG BAY CÙNG ISS', '🛰 DOCKED · ORBITING WITH ISS') : tr(`Khoảng cách <b>${fmt(Math.max(0, along), 1)} m</b> · lệch <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · tốc độ <b>${fmt(rv, 2)} m/s</b> · góc <b>${fmt(att, 1)}°</b>`, `Dist <b>${fmt(Math.max(0, along), 1)} m</b> · offset <b>${fmt(Math.hypot(latY, ez), 2)} m</b> · vel <b>${fmt(rv, 2)} m/s</b> · ang <b>${fmt(att, 1)}°</b>`);
     }
     // systems
     const sasModes = tr(SAS_MODES_VI, SAS_MODES_EN);
@@ -5066,7 +5066,7 @@ export class LaunchScene {
     $('h-sasmode').textContent = sasModes[this.sasMode];
     const isAutopilotLocked = !this.mission || this.mission.id === 'free' || !!this.mission.noAutopilot;
     $('h-ap').textContent = isAutopilotLocked
-      ? (this.mission?.noAutopilot ? tr('KHÓA (Thủ công)', 'LOCKED (Manual)') : tr('KHÓA (Tự do)', 'LOCKED (Free)'))
+      ? '🔒'
       : this.program
         ? tr('BẬT', 'ON')
         : tr('TẮT', 'OFF');
@@ -5074,20 +5074,22 @@ export class LaunchScene {
     const btnAp = $('btn-autopilot');
     if (btnAp) {
       if (isAutopilotLocked) {
-        btnAp.textContent = this.mission?.noAutopilot
-          ? tr('🚫 KHÔNG CÓ TỰ LÁI (DIỆT 100 ALIEN)', '🚫 NO AUTOPILOT (100 ALIENS MISSION)')
-          : tr('🚫 TỰ LÁI BỊ KHÓA (BAY TỰ DO)', '🚫 AUTOPILOT LOCKED (FREE FLIGHT)');
+        btnAp.innerHTML = `🚫 ${tr('Khóa', 'Locked')} <kbd>G</kbd>`;
+        btnAp.title = this.mission?.noAutopilot
+          ? tr('Nhiệm vụ diệt 100 Alien không hỗ trợ tự lái', 'Autopilot disabled for 100 Aliens mission')
+          : tr('Chế độ bay tự do không hỗ trợ tự lái', 'Autopilot disabled in Free Flight');
         btnAp.style.background = 'rgba(239,68,68,0.12)';
         btnAp.style.borderColor = 'rgba(239,68,68,0.4)';
         btnAp.style.color = '#f87171';
         btnAp.style.opacity = '0.75';
         btnAp.style.cursor = 'not-allowed';
       } else {
-        btnAp.textContent = this.program
-          ? tr('🤖 ĐANG TỰ LÁI NHIỆM VỤ (G)', '🤖 AUTOPILOT ACTIVE (G)')
-          : tr('🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
-        btnAp.style.background = this.program ? 'rgba(74,222,128,0.32)' : 'rgba(74,222,128,0.16)';
-        btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.85)' : 'rgba(74,222,128,0.45)';
+        btnAp.innerHTML = this.program
+          ? `🤖 ${tr('Đang lái', 'Active')} <kbd>G</kbd>`
+          : `🤖 ${tr('Tự lái', 'Auto')} <kbd>G</kbd>`;
+        btnAp.title = tr('Bật/tắt tự lái nhiệm vụ (G)', 'Toggle Mission Autopilot (G)');
+        btnAp.style.background = this.program ? 'rgba(74,222,128,0.28)' : 'rgba(74,222,128,0.12)';
+        btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.8)' : 'rgba(74,222,128,0.38)';
         btnAp.style.color = '#86efac';
         btnAp.style.opacity = '1';
         btnAp.style.cursor = 'pointer';
@@ -5106,14 +5108,14 @@ export class LaunchScene {
     const astroEl = $('h-astronauts');
     if (astroEl) {
       astroEl.textContent = curBodyDeployed > 0
-        ? `${this.astronautsAboard}/${maxAstro} (${tr('Đã thả', 'Out')}: ${curBodyDeployed})`
-        : `${this.astronautsAboard} / ${maxAstro}`;
+        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})`
+        : `${this.astronautsAboard}/${maxAstro}`;
     }
     const astroBadge = $('astro-count-badge');
     if (astroBadge) {
       astroBadge.textContent = curBodyDeployed > 0
-        ? `${this.astronautsAboard} / ${maxAstro} · ${tr('Đã thả', 'Deployed')}: ${curBodyDeployed}/${maxAstro}`
-        : `${this.astronautsAboard} / ${maxAstro}`;
+        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})`
+        : `${this.astronautsAboard}/${maxAstro}`;
     }
     const astroPadBox = $('astro-pad-btns');
     if (astroPadBox) {
@@ -5130,12 +5132,13 @@ export class LaunchScene {
     if (btnAstroDeploy && canShowDeploy) {
       const bLabel = (BODIES[P.ref] || BODIES.earth).label;
       if (this.astronautsAboard > 0) {
-        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Thả phi hành gia xuống ${bLabel} (${this.astronautsAboard})`, `Deploy Astronauts on ${bLabel} (${this.astronautsAboard})`)}`;
+        btnAstroDeploy.textContent = `👨‍🚀 ${tr('Thả', 'Deploy')} (${this.astronautsAboard})`;
       } else if (curBodyDeployed < maxAstro) {
-        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Thả phi hành gia xuống ${bLabel} (${curBodyDeployed}/${maxAstro})`, `Deploy Astronaut on ${bLabel} (${curBodyDeployed}/${maxAstro})`)}`;
+        btnAstroDeploy.textContent = `👨‍🚀 ${tr('Thả', 'Deploy')} (${curBodyDeployed}/${maxAstro})`;
       } else {
-        btnAstroDeploy.textContent = `👨‍🚀 ${tr(`Đã thả đủ ${maxAstro}/${maxAstro} phi hành gia trên ${bLabel}`, `All ${maxAstro}/${maxAstro} Astronauts Deployed on ${bLabel}`)}`;
+        btnAstroDeploy.textContent = `👨‍🚀 ${maxAstro}/${maxAstro} ✓`;
       }
+      btnAstroDeploy.title = `${bLabel} · ${this.astronautsAboard}/${maxAstro}`;
     }
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
@@ -5145,17 +5148,18 @@ export class LaunchScene {
       if (activeWeapons.some((w) => w.weaponType === 'water')) wNames.push(tr('NƯỚC 1M PSI', '1M PSI WATER'));
       if (activeWeapons.some((w) => w.weaponType === 'acid')) wNames.push(tr('AXIT', 'ACID'));
       if (activeWeapons.some((w) => w.weaponType === 'electric')) wNames.push(tr('ĐIỆN 1M WATT', '1M WATT ELECTRIC'));
-      const wTag = wNames.length ? wNames.join(' + ') : tr('VŨ KHÍ DỰ PHÒNG', 'BACKUP WEAPON');
-      btnFire.textContent = `🔫 ${tr('BẮN ALIEN', 'FIRE AT ALIENS')}: ${wTag} (V)`;
+      const wTag = wNames.length ? wNames.join(' + ') : tr('DỰ PHÒNG', 'BACKUP');
+      btnFire.innerHTML = `🔫 ${tr('Bắn', 'Fire')} <kbd>V</kbd>`;
+      btnFire.title = `${tr('Vũ khí', 'Weapons')}: ${wTag}`;
     }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);
     $('h-thr').style.width = thr * 100 + '%';
     $('h-thr-v').textContent = Math.round(thr * 100) + '%';
     const prog = $('h-prog');
     const lines = [];
-    if (this.docked) lines.push(`<b>🛰 ${tr('Đã gắn kết với ISS', 'Docked with ISS')}</b><br>${tr('Đang bay cùng quỹ đạo Trạm Vũ Trụ Quốc Tế', 'Orbiting together with the Space Station')}`);
-    else if (this.program && this.program.status) lines.push(`<b>${this.program.label || tr('Lái tự động', 'Autopilot')}</b><br>${this.program.status() || ''}${this.program.wait && (this.program.phase === 'phasing' || this.program.phase === 'tliWait') ? ' · ' + this.fmtTime(this.program.wait) : ''}`);
-    if (b && b.rec) lines.push(`<b>${tr('Tầng 1', 'Stage 1')}</b><br>${b.rec.status()}`);
+    if (this.docked) lines.push(`<b>🛰 ${tr('Đã gắn ISS', 'Docked · ISS')}</b><br>${tr('Đang bay cùng quỹ đạo ISS', 'Orbiting with ISS')}`);
+    else if (this.program && this.program.status) lines.push(`<b>${this.program.label || tr('Tự lái', 'Autopilot')}</b><br>${this.program.status() || ''}${this.program.wait && (this.program.phase === 'phasing' || this.program.phase === 'tliWait') ? ' · ' + this.fmtTime(this.program.wait) : ''}`);
+    if (b && b.rec) lines.push(`<b>S1</b> · ${b.rec.status()}`);
     prog.innerHTML = lines.join('<hr>');
     prog.classList.toggle('hidden', !lines.length);
     // stages
@@ -5165,9 +5169,20 @@ export class LaunchScene {
       const att = attached(k);
       const active = k === P.activeSeg && att;
       const f = this.fuelMax[k] > 0 ? this.fuel[k] / this.fuelMax[k] : 0;
-      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>${tr('Tầng', 'Stage')} ${this.segs.length - k}${active ? ' ▶' : ''}</span><span>${this.fuelMax[k] > 0 ? fmt(this.fuel[k], 1) + ' t' : '—'}</span></div><div class="fr-bar"><div style="width:${f * 100}%"></div></div>`;
+      const sInf = this.segInfo ? this.segInfo[k] : null;
+      const hasSolarBat = att && sInf && sInf.solarOnBattery > 0 && sInf.batteryCount > 0;
+      const chgRate = hasSolarBat && P.solarChargeRate ? (P.solarChargeRate[k] || 0) : 0;
+      const solarBadge = hasSolarBat
+        ? (chgRate > 0.01 && this.fuel[k] < this.fuelMax[k] - 0.05
+          ? ` <span style="color:#4ade80;font-size:10px;font-weight:700">☀️⚡+${fmt(chgRate, 1)}t/s</span>`
+          : ` <span style="color:#38bdf8;font-size:10px" title="${tr('Pin tự hồi năng lượng nhờ Solar Panel', 'Battery auto-recharges via Solar Panel')}">☀️⚡</span>`)
+        : '';
+      const barStyle = hasSolarBat && chgRate > 0.5 && this.fuel[k] < this.fuelMax[k] - 0.05
+        ? `width:${f * 100}%;background:linear-gradient(90deg,#22d3ee,#4ade80);box-shadow:0 0 8px rgba(74,222,128,0.65)`
+        : `width:${f * 100}%`;
+      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}</span><span>${this.fuelMax[k] > 0 ? fmt(this.fuel[k], 1) + ' t' : '—'}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
       for (const bb of this.rocket.boosters) if (bb.seg === k) {
-        html += `<div class="fr-top" style="margin-top:4px;font-size:11px;opacity:${bb.attached ? 1 : 0.35}"><span>↳ ${tr('Đẩy phụ', 'Boosters')}</span><span>${fmt(bb.fuel, 1)} t</span></div><div class="fr-bar boost"><div style="width:${(bb.fuel / bb.fuelMax) * 100}%"></div></div>`;
+        html += `<div class="fr-top" style="margin-top:3px;font-size:10px;opacity:${bb.attached ? 1 : 0.35}"><span>↳ SRB</span><span>${fmt(bb.fuel, 1)} t</span></div><div class="fr-bar boost"><div style="width:${(bb.fuel / bb.fuelMax) * 100}%"></div></div>`;
       }
       html += '</div>';
     }

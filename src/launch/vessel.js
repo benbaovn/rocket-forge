@@ -206,7 +206,9 @@ export class Vessel {
 
     // Compute local brightness / darkness for the Laser Engine (brighter -> slower, darker -> faster)
     let laserScale = 1.0;
-    if (info.tLaser > 0 || (info.hasSolar && info.batteryCount > 0)) {
+    let solarChargeFactor = 1.0;
+    const hasAnySolarBat = this.segIdx.some((sk) => segInfo[sk]?.solarOnBattery > 0 && segInfo[sk]?.batteryCount > 0);
+    if (info.tLaser > 0 || hasAnySolarBat || (info.hasSolar && info.batteryCount > 0)) {
       bodyPos('sun', t, _sp);
       const sx = _sp.x - this.s.x, sy = _sp.y - this.s.y, sz = (_sp.z || 0) - (this.s.z || 0);
       const dSun = Math.max(R_SUN, Math.hypot(sx, sy, sz));
@@ -218,10 +220,9 @@ export class Vessel {
       const atmBright = pr * 1.25;
       const lightLevel = solarIrradiance * sunVis + atmBright;
       laserScale = THREE.MathUtils.clamp(1.65 / (0.42 + lightLevel * 1.35), 0.08, 3.25);
-      // Solar panels trickle-charge quantum battery packs when not firing
-      if (!this.engineOn && info.hasSolar && info.batteryCount > 0 && fuelMax && fuel[k] < fuelMax[k] && !inShadow) {
-        fuel[k] = Math.min(fuelMax[k], fuel[k] + 0.04 * Math.min(2.5, solarIrradiance) * h);
-      }
+      solarChargeFactor = inShadow
+        ? 0.55
+        : THREE.MathUtils.clamp(0.75 + Math.min(2.0, solarIrradiance) * (0.55 + 0.45 * Math.max(0, cosZenith)), 0.75, 2.6);
     }
 
     let thrust = 0;
@@ -240,10 +241,45 @@ export class Vessel {
       // Anti-gravity thrust scales directly with local gravity (stronger gravity -> faster, weaker gravity -> slower)
       // Laser thrust scales inversely with local brightness (brighter -> slower, darker -> faster)
       const curThrust = (normVac - (normVac - normSL) * pr) + (agVac * gRatio + lzVac * laserScale) * batBoost;
-      const curMdot = normMdot + agMdot * Math.max(0.05, gRatio) + lzMdot * Math.max(0.15, laserScale * 0.75);
+      const sciFiDrainScale = info.solarOnBattery > 0 ? 12.0 : 1.0;
+      const curMdot = normMdot + (agMdot * Math.max(0.12, gRatio) + lzMdot * Math.max(0.18, laserScale * 0.75)) * sciFiDrainScale;
       thrust += curThrust * thr * engFrac;
       fuel[k] = Math.max(0, fuel[k] - curMdot * thr * engFrac * h);
-      if (fuel[k] === 0) this.events.push(['fuelOut', k]);
+      if (fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
+        this.events.push(['fuelOut', k]);
+      }
+    }
+
+    // Solar panels attached to a battery pack actively regenerate battery energy
+    this.solarChargeRate = this.solarChargeRate || {};
+    this.solarBoostMode = this.solarBoostMode || {};
+    if (hasAnySolarBat && fuelMax) {
+      for (const sk of this.segIdx) {
+        const sInf = segInfo[sk];
+        if (!sInf || !(sInf.solarOnBattery > 0) || !(sInf.batteryCount > 0) || !(fuelMax[sk] > 0)) {
+          this.solarChargeRate[sk] = 0;
+          continue;
+        }
+        const isFiringThisSeg = this.coreFiring && sk === k && thr > 0.35;
+        if (fuel[sk] <= fuelMax[sk] * 0.88) {
+          this.solarBoostMode[sk] = true;
+        } else if (fuel[sk] >= fuelMax[sk] - 1e-4) {
+          this.solarBoostMode[sk] = false;
+        }
+        if (fuel[sk] < fuelMax[sk]) {
+          if (!isFiringThisSeg || this.solarBoostMode[sk]) {
+            const chargeRate = (4.2 * sInf.solarOnBattery + fuelMax[sk] * 0.055) * solarChargeFactor;
+            fuel[sk] = Math.min(fuelMax[sk], fuel[sk] + chargeRate * h);
+            this.solarChargeRate[sk] = chargeRate;
+          } else {
+            const trickleRate = 0.25 * sInf.solarOnBattery * solarChargeFactor;
+            fuel[sk] = Math.min(fuelMax[sk], fuel[sk] + trickleRate * h);
+            this.solarChargeRate[sk] = trickleRate;
+          }
+        } else {
+          this.solarChargeRate[sk] = 0;
+        }
+      }
     }
     this.boosterFiring = false;
     for (const b of this.boosters()) {

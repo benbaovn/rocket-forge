@@ -1,7 +1,7 @@
 // Mission definitions: objectives are evaluated against LaunchScene state every frame.
 export const MISSIONS = [
   {
-    id: 'free', icon: '🚀', name: 'Bay tự do', preset: null,
+    id: 'free', icon: '🌌', name: 'Bay tự do', preset: null,
     desc: 'Tự do lắp ráp và bay. Lái tự động (G) đưa tên lửa lên quỹ đạo 80 km; tầng có chân hạ cánh sẽ tự bay về.',
     objectives: [],
   },

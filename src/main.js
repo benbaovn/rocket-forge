@@ -176,7 +176,7 @@ class App {
     this.goBuild();
     // pre-compile launch scene shaders to avoid hitch
     try { renderer.compile(this.launch.scene, this.launch.camera); } catch { /* ignore */ }
-    setLoad(100, 'Sẵn sàng!');
+    setLoad(100, tr('Sẵn sàng!', 'Ready!'));
     await nextFrame();
     $('loading').style.opacity = 0;
     setTimeout(() => $('loading').remove(), 900);
@@ -301,6 +301,8 @@ class App {
 
     const bName = $('gpu-badge-name');
     if (bName) bName.textContent = `${g.shortName} · ${tierLabel}`;
+    const bBadge = $('gpu-badge');
+    if (bBadge) bBadge.title = `${g.cleanName} · ${tierLabel}`;
     const lName = $('gpu-launch-name');
     if (lName) lName.textContent = `⚡ ${g.shortName}`;
 

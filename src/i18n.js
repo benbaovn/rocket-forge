@@ -3,11 +3,11 @@ import { PARTS } from './parts.js';
 import { MISSIONS } from './missions.js';
 import { BODIES } from './sim/constants.js';
 
-let currentLang = 'vi';
+let currentLang = 'en';
 try {
-  currentLang = (typeof localStorage !== 'undefined' && localStorage?.getItem && localStorage.getItem('rf-lang')) || 'vi';
+  currentLang = (typeof localStorage !== 'undefined' && localStorage?.getItem && localStorage.getItem('rf-lang-v2')) || 'en';
 } catch { /* ignore */ }
-if (currentLang !== 'vi' && currentLang !== 'en') currentLang = 'vi';
+if (currentLang !== 'vi' && currentLang !== 'en') currentLang = 'en';
 
 export function getLang() {
   return currentLang;
@@ -95,8 +95,8 @@ const PART_I18N = {
     en: { name: 'Grid Fins ×4', cat: 'Structural', desc: 'Attaches to top tank of booster – steers during descent' },
   },
   solarPanel: {
-    vi: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời đa tầng cung cấp điện năng cho tàu vũ trụ, tên lửa & xe' },
-    en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays providing power for spacecraft & rovers' },
+    vi: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
+    en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
   gunLaser: {
     vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
@@ -206,6 +206,38 @@ const PART_I18N = {
     vi: { name: 'Tầng Đẩy S-IC · 5× F-1 (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 S-IC khổng lồ in cờ Mỹ, chữ USA đỏ, 4 cánh đuôi trắng và 5 siêu động cơ F-1' },
     en: { name: 'S-IC First Stage · 5× F-1 (Stage 1)', cat: 'Engines', desc: 'Giant S-IC first stage with US Flag, red USA markings, 4 white fins & 5 F-1 engines' },
   },
+  apollo11CM: {
+    vi: { name: 'Tàu Chỉ Huy Apollo 11 CM Bạc & Tháp Mắt Cáo LES (Tầng 8)', cat: 'Đầu', desc: 'Khoang chỉ huy Apollo 11 màu bạc kim loại kèm tháp thoát hiểm khung mắt cáo chữ X hở, đai đỏ và dù hạ cánh' },
+    en: { name: 'Apollo 11 Silver Command Module & Lattice LES Tower (Stage 8)', cat: 'Command & Nose', desc: 'Metallic silver Apollo 11 Command Module with open diagonal X-lattice escape tower, red collars & parachutes' },
+  },
+  apollo11SM: {
+    vi: { name: 'Khoang Dịch Vụ Apollo 11 SM Ánh Bạc (Tầng 7)', cat: 'Nhiên liệu', desc: 'Khoang dịch vụ Apollo 11 màu bạc kim loại có 2 đai tản nhiệt trắng và 4 cụm động cơ điều hướng RCS đầu đỏ' },
+    en: { name: 'Apollo 11 Silver Service Module SM (Stage 7)', cat: 'Fuel Tanks', desc: 'Metallic silver Apollo 11 Service Module with dual white radiator collars & 4 red-capped RCS thruster quads' },
+  },
+  apollo11SLA: {
+    vi: { name: 'Khoang Côn SLA Cắt Mở Lộ Tàu Đổ Bộ LM Eagle (Tầng 6)', cat: 'Nhiên liệu', desc: 'Áo côn trắng SLA có ô cửa cắt chính diện để lộ Tàu đổ bộ Mặt Trăng (LM Eagle) bọc lá vàng bên trong kèm đai đáy đen gân dọc' },
+    en: { name: 'Apollo 11 Cutaway SLA Cone & Lunar Module Eagle (Stage 6)', cat: 'Fuel Tanks', desc: 'White conical SLA adapter with front cutaway bay revealing the gold-foil Lunar Module (Eagle) inside & corrugated black base band' },
+  },
+  apollo11S4B: {
+    vi: { name: 'Tầng Đẩy S-IVB Apollo 11 · Chữ Đỏ USA (Tầng 5)', cat: 'Nhiên liệu', desc: 'Tầng đẩy S-IVB thân trắng in 2 cột chữ USA đỏ dọc thân, cổ gân dọc, 2 cụm động cơ APS chóp đỏ và đai đáy đen' },
+    en: { name: 'Apollo 11 S-IVB Stage · Red USA Markings (Stage 5)', cat: 'Fuel Tanks', desc: 'White S-IVB upper stage with dual red vertical USA columns, corrugated upper skirt, red-tipped APS pods & lower black band' },
+  },
+  apollo11S4BInter: {
+    vi: { name: 'Cổ Côn Chuyển Tầng Kẻ Ô Bàn Cờ 2 Tầng Apollo 11 (Tầng 4)', cat: 'Cấu trúc', desc: 'Cổ hình nón cụt kẻ gân dọc chia 2 tầng ô bàn cờ Đen-Trắng đối xứng kèm các chóp cảm biến màu đỏ' },
+    en: { name: 'Apollo 11 2-Tier Checkerboard Conical Interstage (Stage 4)', cat: 'Structural', desc: 'Corrugated conical S-IVB/S-II interstage with 2-tier alternating black-and-white checkerboard pattern & red sensor fairings' },
+  },
+  apollo11S2: {
+    vi: { name: 'Tầng Đẩy S-II Apollo 11 · Chữ Đỏ UNITED STATES (Tầng 3)', cat: 'Nhiên liệu', desc: 'Tầng đẩy S-II sơn trắng có cổ trên kẻ gân, cột 8 vạch đen, chữ dọc UNITED STATES màu đỏ và đai đáy đen đậm' },
+    en: { name: 'Apollo 11 S-II Stage · Red UNITED STATES & Black Dashes (Stage 3)', cat: 'Fuel Tanks', desc: 'White S-II second stage with corrugated upper collar, 8 black calibration dashes, red vertical UNITED STATES & black bottom band' },
+  },
+  apollo11S2Inter: {
+    vi: { name: 'Vòng Chuyển Tầng S-II / S-IC Kẻ Gân & Ốp Ullage Apollo 11 (Tầng 2)', cat: 'Cấu trúc', desc: 'Vòng chuyển tầng kẻ gân dọc sơn mảng Đen-Trắng xen kẽ kèm các ốp tên lửa Ullage chóp nhọn màu trắng' },
+    en: { name: 'Apollo 11 Corrugated S-II / S-IC Interstage & Ullage Pods (Stage 2)', cat: 'Structural', desc: 'Corrugated black-and-white vertical striped interstage with protruding white conical-tipped ullage fairings' },
+  },
+  apollo11S1: {
+    vi: { name: 'Tầng 1 S-IC Apollo 11 · Cánh Đen-Trắng & 5× F-1 Kim Loại (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 S-IC in 2 lá cờ Mỹ, chữ USA đỏ, 4 chụp côn & cánh đuôi sơn xen kẽ Đen-Trắng có thẻ chữ A/B/C/D và 5 loa phụt F-1 xám bạc có gân ngang' },
+    en: { name: 'Apollo 11 S-IC Stage · Alternating Fins & 5× Metallic F-1 (Stage 1)', cat: 'Engines', desc: 'S-IC first stage with dual US Flags, red vertical USA, alternating white/black conical fairings & fins with letter tabs & 5 ribbed metallic F-1 bells' },
+  },
   soyuzNose: {
     vi: { name: 'Mũi Chóp Fairing & Tàu Soyuz (Tầng 5)', cat: 'Đầu', desc: 'Chóp mũi khí động trắng-bạc có ô cửa tròn + khoang tàu Soyuz & dù hạ cánh' },
     en: { name: 'Soyuz Fairing Nose Cone & Spacecraft (Stage 5)', cat: 'Command & Nose', desc: 'White-silver bi-conic nose cone with circular porthole + Soyuz capsule & parachutes' },
@@ -270,45 +302,214 @@ const PART_I18N = {
     vi: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
     en: { name: 'Energia ("Энергия") Super-Heavy Core & 4× Zenit Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 Zenit strap-on boosters in stone-grey fairings, 4 central RD-0120 engines with black bands & 4 RD-170 nozzles' },
   },
+  cz5Fairing: {
+    vi: { name: 'Chóp Mũi Trường Chinh 5 (Cờ CHN · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động Trường Chinh 5 (CZ-5) in Quốc kỳ Trung Quốc, chữ CHN, cổ chuyển tầng viền đồng và dù hạ cánh' },
+    en: { name: 'Long March 5 Payload Fairing (CHN Flag · Stage 3)', cat: 'Command & Nose', desc: 'Aerodynamic Long March 5 (CZ-5) ogive payload fairing with PRC flag, CHN markings, bronze adapter seam & parachutes' },
+  },
+  cz5Stage2: {
+    vi: { name: 'Thân Giữa Trường Chinh 5 · 中国航天 & Logo 5 (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tầng đẩy trung tâm Trường Chinh 5 in logo CASC, dòng chữ dọc 中国航天, biểu tượng số 5 đỏ LONG MARCH và cặp động cơ YF-75D' },
+    en: { name: 'Long March 5 Core Stage 2 · 中国航天 & Red 5 (Stage 2)', cat: 'Fuel Tanks', desc: 'Upper/middle 5m core stage with CASC emblem, vertical 中国航天 calligraphy, red 5 LONG MARCH logo & dual YF-75D engines' },
+  },
+  cz5Stage1: {
+    vi: { name: 'Tầng 1 Trường Chinh 5 & 4 Booster CZ-5 (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 lõi Trường Chinh 5 đáy bọc cách nhiệt nâu đỏ kèm 4 tầng đẩy phụ mũi vát nghiêng kẻ sọc caro đỏ CZ-5, cánh đuôi và 10 động cơ YF-77 / YF-100' },
+    en: { name: 'Long March 5 Core Stage 1 & 4× CZ-5 Boosters (Stage 1)', cat: 'Engines', desc: 'Lower 5m core with rust-orange thermal skirt & 4 slanted-nose liquid boosters with red/white checkerboards, CZ-5 markings, fins & 10 YF-77/YF-100 engines' },
+  },
+  ariane5Fairing: {
+    vi: { name: 'Chóp Mũi Ariane 5 (Arianespace & Cổ ESC-A · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động Ariane 5 ECA in logo Arianespace Service & Solutions, cổ chuyển tầng xám kim loại ESC-A và dù hạ cánh' },
+    en: { name: 'Ariane 5 Payload Fairing (Arianespace & ESC-A · Stage 3)', cat: 'Command & Nose', desc: 'Aerodynamic Ariane 5 ECA ogive fairing with Arianespace Service & Solutions logo, metallic-grey ESC-A interstage collar & parachutes' },
+  },
+  ariane5Stage2: {
+    vi: { name: 'Thân Trên Ariane 5 EPC & Cụm Ống Dẫn (Tầng 2)', cat: 'Nhiên liệu', desc: 'Phần trên bồn nhiên liệu lạnh EPC màu bạc xám kẻ gân kèm 4 ống dẫn nổi dọc thân, ngàm giữ booster và động cơ' },
+    en: { name: 'Ariane 5 Upper EPC Core & Feedlines (Stage 2)', cat: 'Fuel Tanks', desc: 'Upper brushed silver-grey EPC cryogenic tank section with 4 external vertical feedlines, booster mount struts & propulsion' },
+  },
+  ariane5Stage1: {
+    vi: { name: 'Tầng 1 Ariane 5 (Động cơ Vulcain 2 & 2 Booster EAP ESA/CNES)', cat: 'Động cơ', desc: 'Tầng 1 lõi EPC với siêu động cơ Vulcain 2 ở tâm + 2 tầng đẩy phụ EAP P241 mũi vát nghiêng in 12 cờ Châu Âu, logo ESA, CNES và 2 loa phụt lớn' },
+    en: { name: 'Ariane 5 EPC Core, Vulcain 2 & Twin EAP Boosters (Stage 1)', cat: 'Engines', desc: 'Lower EPC cryogenic core with central Vulcain 2 engine, spherical helium pod & twin EAP P241 solid boosters with 12 European flags, ESA & CNES logos' },
+  },
+  slsOrion: {
+    vi: { name: 'Tàu Orion & Tháp Thoát Hiểm LAS (SLS Artemis · Tầng 3)', cat: 'Đầu', desc: 'Khoang tàu Orion bọc áo bảo vệ trắng kèm tháp thoát hiểm LAS 4 loa phụt, khoang dịch vụ ESM in Cờ Mỹ, logo NASA Meatball, NASA Worm, ESA & dù hạ cánh' },
+    en: { name: 'Orion Spacecraft & LAS Escape Tower (SLS Artemis · Stage 3)', cat: 'Command & Nose', desc: 'Orion crew module shroud with Launch Abort System (LAS) tower, European Service Module fairing with US Flag, NASA Meatball, NASA Worm, ESA logos & parachutes' },
+  },
+  slsStage2: {
+    vi: { name: 'Cổ Chuyển Tầng LVSA & Thân Trên Cam SLS ICPS (Tầng 2)', cat: 'Nhiên liệu', desc: 'Cổ chuyển tầng hình nón cụt LVSA kèm gân dọc & phần trên bồn nhiên liệu bọt cách nhiệt cam SOFI, vạch kẻ vàng cam, tâm ngắm quang học và đầu ống dẫn LOX' },
+    en: { name: 'SLS LVSA Conical Adapter & Upper SOFI Core (Stage 2)', cat: 'Fuel Tanks', desc: 'Tapered orange Launch Vehicle Stage Adapter (LVSA) with vertical stringers, upper SOFI orange foam tank, ochre bands, optical targets & white-capped LOX feedline' },
+  },
+  slsStage1: {
+    vi: { name: 'Tầng 1 Lõi Cam SLS (4× RS-25) & 2 Tên Lửa Đẩy Rắn 5 Đốt SRB', cat: 'Động cơ', desc: 'Thân chính bọt cam SOFI với đuôi trắng, 4 động cơ RS-25 đen & 2 tên lửa đẩy phụ 5 đốt SRB kẻ sọc caro đen-trắng răng cưa, chữ NASA đỏ dọc thân' },
+    en: { name: 'SLS Core Stage (4× RS-25) & Twin 5-Segment SRB Boosters (Stage 1)', cat: 'Engines', desc: 'Orange SOFI core stage with white aft skirt, 4 black RS-25 engines & twin 5-segment Solid Rocket Boosters with sawtooth checkerboards and vertical red NASA worm' },
+  },
+  atlasVFairing: {
+    vi: { name: 'Chóp Mũi Phồng Atlas V 5m (Cờ Mỹ & Cổ Gân · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động Atlas V 5m in Cờ Mỹ, hàng lỗ thoát âm, đai côn gân dọc, khoang phồng bảo vệ Centaur có đuôi côn thu (boat-tail) & dù hạ cánh' },
+    en: { name: 'Atlas V 5m Bulged Payload Fairing (US Flag · Stage 3)', cat: 'Command & Nose', desc: 'Aerodynamic Atlas V 5m payload fairing with US Flag, acoustic vent dot rows, corrugated shoulder frustum, wide Centaur shroud with boat-tail & parachutes' },
+  },
+  atlasVStage2: {
+    vi: { name: 'Khoang Chuyển Tầng Trắng Logo Atlas & Thân Trên Đồng CCB (Tầng 2)', cat: 'Nhiên liệu', desc: 'Khoang chuyển tầng trắng in logo Atlas V / ULA nối liền phần trên bồn nhiên liệu màu đồng nâu (CCB) kèm đầu hộp trắng và ống dẫn màu xanh oliu' },
+    en: { name: 'Atlas V White Interstage (ULA Logo) & Upper Bronze CCB (Stage 2)', cat: 'Fuel Tanks', desc: 'White cylindrical interstage with Atlas V / ULA mission badge above the upper bronze-copper CCB tank with white upper fairing cap & olive-green conduit' },
+  },
+  atlasVStage1: {
+    vi: { name: 'Tầng 1 Đồng Nâu Atlas V CCB & 2 Booster Trắng Mũi Vát (Tầng 1)', cat: 'Động cơ', desc: 'Thân chính màu đồng nâu Atlas V với ống dẫn xanh oliu, máng gân vàng nâu, váy đáy trắng và 2 tầng đẩy phụ trắng lớn mũi vát nghiêng có viền xanh đen & cụm loa phụt kép' },
+    en: { name: 'Atlas V Bronze CCB Core & Twin Slanted-Nose White Boosters (Stage 1)', cat: 'Engines', desc: 'Lower bronze-copper CCB core with olive-green conduit, segmented tan tunnel, white aft skirt & twin white strap-on boosters with navy bands, slanted noses & dual nozzles' },
+  },
+  fhFairing: {
+    vi: { name: 'Chóp Mũi Phồng Falcon Heavy (Arabsat-6A · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi phồng đầu tròn đặc trưng của SpaceX Falcon Heavy in logo kim cương Arabsat-6A, đường ghép vỏ sò, cổ thu boat-tail và dù hạ cánh' },
+    en: { name: 'Falcon Heavy Bulged Fairing (Arabsat-6A · Stage 3)', cat: 'Command & Nose', desc: 'Rounded-crown SpaceX Falcon Heavy payload fairing with Arabsat-6A diamond globe logo, clamshell seams, boat-tail base & parachutes' },
+  },
+  fhStage2: {
+    vi: { name: 'Tầng 2 & Khoang Chuyển Tầng Trắng Falcon Heavy (Logo FH & Cờ Mỹ)', cat: 'Nhiên liệu', desc: 'Thân trụ trắng mảnh Tầng 2 & Interstage của Falcon Heavy với ống dẫn nổi dọc thân, logo chim ưng FH, Quốc kỳ Mỹ và động cơ Merlin Vacuum' },
+    en: { name: 'Falcon Heavy White Stage 2 & Interstage (FH Logo & US Flag)', cat: 'Fuel Tanks', desc: 'Slender glossy white Stage 2 and interstage cylinder with vertical cable raceway, red/blue FH emblem, US Flag & Merlin Vacuum engine' },
+  },
+  fhStage1: {
+    vi: { name: 'Tầng 1 Falcon Heavy (3 Lõi Booster Trắng, 12 Chân Đáp Đen & 27 Merlin 1D)', cat: 'Động cơ', desc: 'Cụm 3 lõi tên lửa đẩy Falcon Heavy màu trắng với 2 chóp mũi phụ tròn, thanh giằng ngang trắng, 12 cánh lưới Titanium đen, đường cáp dọc đen, 12 chân đáp đen gập sát đáy và 27 động cơ Merlin 1D' },
+    en: { name: 'Falcon Heavy Triple White Cores, 12 Black Legs & 27× Merlin 1D (Stage 1)', cat: 'Engines', desc: 'Triple Falcon Heavy white booster cores with rounded side nose cones, white horizontal cross-strut, 12 black Titanium grid fins, dark raceways, 12 folded black landing legs & 27 Merlin 1D engines' },
+  },
+  f9Dragon: {
+    vi: { name: 'Tàu Vũ Trụ Crew Dragon & Khoang Trunk Đen-Trắng (Falcon 9 · Tầng 3)', cat: 'Đầu', desc: 'Tàu Crew Dragon đầu vòm trắng có 4 hốc động cơ thoát hiểm SuperDraco, Cờ Mỹ, nối liền khoang dịch vụ Trunk chia 2 nửa Đen-Trắng có 4 cánh ổn định và dù hạ cánh' },
+    en: { name: 'Crew Dragon Spacecraft & Split Black-White Trunk (Falcon 9 · Stage 3)', cat: 'Command & Nose', desc: 'Crew Dragon capsule with 4 SuperDraco abort nacelles & US Flag atop the half-black solar / half-white ribbed radiator Trunk with 4 stabilization fins & parachutes' },
+  },
+  f9Stage2: {
+    vi: { name: 'Tầng 2 Trắng & Khoang Interstage Đen Falcon 9 Block 5 (Tầng 2)', cat: 'Nhiên liệu', desc: 'Bồn nhiên liệu Tầng 2 màu trắng bóng kết hợp khoang chuyển tầng Interstage sợi carbon đen tuyền đặc trưng của Falcon 9 Block 5 và động cơ Merlin Vacuum' },
+    en: { name: 'Falcon 9 Block 5 White Stage 2 & Matte-Black Interstage (Stage 2)', cat: 'Fuel Tanks', desc: 'Glossy white Stage 2 propellant tank paired with the signature Falcon 9 Block 5 matte-black carbon-fiber interstage & Merlin Vacuum engine' },
+  },
+  f9Stage1: {
+    vi: { name: 'Tầng 1 Falcon 9 Block 5 (Logo FALCON 9, Chữ Dọc SPACEX & 9 Merlin 1D)', cat: 'Động cơ', desc: 'Tầng 1 Falcon 9 Block 5 màu trắng in logo cánh chim đỏ FALCON 9, Cờ Mỹ, dòng chữ dọc SPACEX xanh đậm, 4 cánh lưới Titanium đen, 4 chân đáp đen tạo khe chữ V trắng và 9 loa phụt Merlin 1D bạc' },
+    en: { name: 'Falcon 9 Block 5 First Stage (FALCON 9, Vertical SPACEX & 9× Merlin 1D)', cat: 'Engines', desc: 'White Falcon 9 Block 5 booster with red FALCON 9 swoosh, US Flag, vertical navy SPACEX lettering, 4 black Titanium grid fins, 4 folded black landing legs with white center V-wedge & 9 silver Merlin 1D bells' },
+  },
+  shuttleNose: {
+    vi: { name: 'Chóp Mũi Bồn Cam ET & Đai Gân Vàng Intertank (Space Shuttle · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động bồn nhiên liệu ngoài (External Tank) màu cam đất kèm cột thu lôi, đường ống cáp đen dọc mũi, cổ gân vàng nâu Intertank và dù hạ cánh' },
+    en: { name: 'Space Shuttle ET Burnt-Orange Nose Cone & Ribbed Intertank (Stage 3)', cat: 'Command & Nose', desc: 'Burnt-orange External Tank ogive nose cone with lightning rod tip, black vertical cable tray, golden-tan ribbed Intertank collar with access door & parachutes' },
+  },
+  shuttleOrbiter: {
+    vi: { name: 'Tàu Con Thoi Discovery (STS) & Thân Giữa Bồn Cam ET (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu vũ trụ con thoi Discovery gắn lưng bồn cam ET với mũi gạch đen RCC, cụm RCS mũi, kính buồng lái 6 ô, chữ United States + Cờ Mỹ + logo NASA + Discovery trên cánh tam giác kép và 3 động cơ chính RS-25 (SSME)' },
+    en: { name: 'Space Shuttle Orbiter Discovery & Middle External Tank (Stage 2)', cat: 'Fuel Tanks', desc: 'Piggyback Space Shuttle Orbiter Discovery on the burnt-orange ET with black RCC nose cap, forward RCS array, 6-pane cockpit windshield, United States + US Flag + NASA Meatball + Discovery wing markings & 3 RS-25 SSME nozzles' },
+  },
+  shuttleSrb: {
+    vi: { name: 'Đáy Bồn Cam ET & 2 Tên Lửa Đẩy Phụ Trắng SRB (Space Shuttle · Tầng 1)', cat: 'Động cơ', desc: 'Phần dưới bồn nhiên liệu ngoài màu cam đáy vòm tròn kèm 2 tên lửa đẩy nhiên liệu rắn SRB màu trắng mũi nhọn có đai đen-cam, 3 vòng gân vàng ở váy đáy và cặp loa phụt khổng lồ' },
+    en: { name: 'Lower External Tank & Twin White Solid Rocket Boosters (SRBs · Stage 1)', cat: 'Engines', desc: 'Lower burnt-orange External Tank with rounded aft dome & twin white Solid Rocket Boosters with pointed nose cones, black-orange collar bands, black field joints, 3 golden-yellow aft skirt rings & wide SRB nozzles' },
+  },
+  protonFairing: {
+    vi: { name: 'Chóp Mũi Proton-M / Briz-M (Logo ESA ExoMars · Tầng 4)', cat: 'Đầu', desc: 'Chóp mũi khí động Proton-M / Briz-M sơn trắng bóng in logo ESA xanh đậm, dải cờ sứ mệnh ExoMars, hàng ngàm tách dọc mũi, cổ chuyển tầng xám gân và dù hạ cánh' },
+    en: { name: 'Proton-M / Briz-M Payload Fairing (ESA ExoMars · Stage 4)', cat: 'Command & Nose', desc: 'Glossy white Briz-M payload fairing with navy ESA logo, ExoMars flag-stripe & horizon mission patch, longitudinal separation latch tabs, ribbed grey adapter skirt & parachutes' },
+  },
+  protonStage3: {
+    vi: { name: 'Tầng 3 Proton-M (Logo Roscosmos, Cờ Nga & Hốc Chữ U · Tầng 3)', cat: 'Nhiên liệu', desc: 'Tầng 3 tên lửa Proton-M màu trắng có đai gân dọc trên/dưới, in Quốc kỳ Nga, logo Roscosmos, hốc chữ U xám đen đặc trưng, ống cáp nổi và động cơ RD-0210' },
+    en: { name: 'Proton-M Third Stage (Roscosmos Emblem, Russian Flag & U-Cutouts · Stage 3)', cat: 'Fuel Tanks', desc: 'White Proton-M Third Stage with ribbed collars, Roscosmos red-arrow emblem, Russian Tricolor Flag, signature dark U-shaped recessed cutouts, external cable ducts & RD-0210 engine' },
+  },
+  protonStage2: {
+    vi: { name: 'Tầng 2 Proton-M (Chữ Đỏ ПРОТОН-М & Giàn Mắt Cáo Chéo · Tầng 2)', cat: 'Nhiên liệu', desc: 'Thân trụ trắng Tầng 2 Proton-M in dòng chữ dọc đỏ rực ПРОТОН-М, cổ chữ ХРУНИЧЕВ, khung giàn mắt cáo chéo hở lộ vòm bồn xanh đen bên trong và 4 động cơ RD-0210' },
+    en: { name: 'Proton-M Second Stage (Red ПРОТОН-М & Open Lattice Interstage · Stage 2)', cat: 'Fuel Tanks', desc: 'Glossy white Proton-M Second Stage with bold red vertical ПРОТОН•М lettering, ХРУНИЧЕВ collar, open silver diagonal lattice truss revealing the dark-green internal tank dome & 4× RD-0210 nozzles' },
+  },
+  protonStage1: {
+    vi: { name: 'Tầng 1 Proton-M (Lõi Xám Gân, 6 Bình Trắng Đai Đen & 6× RD-275M)', cat: 'Động cơ', desc: 'Tầng 1 đặc trưng của Proton-M với thân lõi xám bạc kẻ gân dọc ở giữa, bao quanh bởi 6 bình nhiên liệu phụ màu trắng mũi côn nhọn có đai đáy đen tuyền, chụp hướng dòng và 6 động cơ RD-275M' },
+    en: { name: 'Proton-M First Stage (Ribbed Grey Core, 6 Black-Banded White Tanks & 6× RD-275M)', cat: 'Engines', desc: 'Iconic Proton-M First Stage with exposed light-grey vertically ribbed central core, black bottom tail cone & 6 strap-on white fuel tanks with slanted conical tops, black lower bands, white engine scoops & 6 RD-275M engines' },
+  },
+  d4hFairing: {
+    vi: { name: 'Chóp Mũi Trắng 5m Delta IV Heavy (Đầu Đen & Ngàm Tách · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi tải trọng 5m màu trắng của Delta IV Heavy với chóp đỉnh đen, cụm cảm biến mũi, đường ghép dọc/ngang, đai đen ở đáy và dù hạ cánh' },
+    en: { name: 'Delta IV Heavy 5m White Payload Fairing (Black Tip & Seams · Stage 3)', cat: 'Command & Nose', desc: '5-meter white payload fairing of Delta IV Heavy with matte-black conical nose tip, shoulder sensor bracket, vertical/horizontal seam lines, black base separation band & parachutes' },
+  },
+  d4hStage2: {
+    vi: { name: 'Tầng 2 Cryogenic DCSS & Khoang Chuyển Tầng Trắng Đai Vàng (Delta IV Heavy · Tầng 2)', cat: 'Nhiên liệu', desc: 'Khoang chuyển tầng và Tầng 2 DCSS màu trắng với 2 đai bọt cách nhiệt vàng nghệ ở cổ trên, ống cáp dọc thân và động cơ chân không RL10B-2' },
+    en: { name: 'Delta IV Heavy White DCSS & Interstage with Yellow Foam Bands (Stage 2)', cat: 'Fuel Tanks', desc: 'White cylindrical DCSS and interstage barrel featuring 2 golden-yellow foam bands near the top, front vertical white cable raceway & RL10B-2 vacuum engine' },
+  },
+  d4hStage1: {
+    vi: { name: 'Tầng 1 Delta IV Heavy (3 Lõi Cam CBC Ám Khói Đen, Đai Trắng Giữa & 3× RS-68A)', cat: 'Động cơ', desc: 'Cụm 3 lõi tên lửa đẩy Common Booster Core (CBC) màu cam SOFI đặc trưng với vệt ám khói đen ở đáy, đai trắng giữa viền vàng, 2 chóp mũi phụ trắng, cặp ống dẫn LOX trắng nổi dọc mặt trước, đáy côn xám bạc và 3 siêu động cơ RS-68A' },
+    en: { name: 'Delta IV Heavy Triple Orange CBCs (Scorched Base, White Band & 3× RS-68A · Stage 1)', cat: 'Engines', desc: 'Triple Common Booster Cores with burnt-orange SOFI foam, liftoff hydrogen-fireball black scorch gradient at base, white center intertank band with golden-yellow borders, 2 white booster nose cones, twin front white LOX feedlines, conical grey base shields & 3 RS-68A engines' },
+  },
+  titan4Fairing: {
+    vi: { name: 'Chóp Mũi Trắng Dài 5m Titan IV (4 Đốt Gân & Đáy Côn · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi tải trọng 5m (PLF) trắng cao vút của Titan IVB chia 4 đốt trụ có gân dọc, đường ghép giữa, đáy côn thu boat-tail và dù hạ cánh' },
+    en: { name: 'Titan IVB Tall 5m White Payload Fairing (4 Ribbed Bays & Boat-Tail · Stage 3)', cat: 'Command & Nose', desc: 'Tall 5-meter white payload fairing (PLF) of Titan IVB with 4 cylindrical bays, longitudinal trisector seam, fine vertical ribs, conical boat-tail base & parachutes' },
+  },
+  titan4Stage2: {
+    vi: { name: 'Tầng 2 Titan IV (Ốp Nâu Đỏ Chữ L, Phù Hiệu USAF & Khe Gió Đen · Tầng 2)', cat: 'Nhiên liệu', desc: 'Tầng 2 Titan IV với tấm bọc cách nhiệt màu nâu đỏ hình chữ L, đai bạc хроm kèm phù hiệu Không quân Mỹ (USAF), cổ chuyển tầng gân trắng có 2 cụm khe thoát khí đen và động cơ LR91' },
+    en: { name: 'Titan IV Second Stage (L-Shaped Cork Panel, USAF Roundel & Black Vents · Stage 2)', cat: 'Fuel Tanks', desc: 'Titan IV Second Stage with L-shaped reddish-brown cork thermal panel, chrome-silver USAF roundel collar, white corrugated interstage with 2 black vent louver clusters & LR91 engine' },
+  },
+  titan4Stage1: {
+    vi: { name: 'Tầng 1 Titan IV (Lõi Bạc US AIR FORCE & 2 Booster Trắng SRMU · Tầng 1)', cat: 'Động cơ', desc: 'Thân lõi Tầng 1 bằng nhôm bạc sáng bóng in dòng chữ dọc US AIR FORCE, đáy côn nâu đỏ với loa phụt bạc LR87, kẹp giữa 2 tên lửa đẩy phụ rắn SRMU màu trắng kem có gân 3 vòng, khung giằng tam giác trắng và 2 loa phụt xám lớn' },
+    en: { name: 'Titan IV First Stage (Silver US AIR FORCE Core & Twin Cream-White SRMUs · Stage 1)', cat: 'Engines', desc: 'Brushed metallic silver-aluminium core with vertical US AIR FORCE stencil, reddish-brown conical shroud & silver LR87 bell, flanked by twin cream-white SRMU solid rocket boosters with triple-ring bands, white triangular A-frame trusses & wide grey nozzles' },
+  },
+  starshipNose: {
+    vi: { name: 'Mũi Tàu Starship Đen Gạch Chịu Nhiệt & 2 Cánh Vây Trước (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi ogive của tàu Starship phủ gạch chịu nhiệt đen than chì kết hợp ánh thép không gỉ, 2 cánh vây khí động phía trước (Forward Flaps) và dù hạ cánh' },
+    en: { name: 'Starship Black Thermal-Tile Ogive Nose Cone & 2 Forward Flaps (Stage 3)', cat: 'Command & Nose', desc: 'Ogive Starship nose cone in matte charcoal-black thermal protection tiles with sunlit stainless-steel highlight, 2 trapezoidal forward aero flaps & parachutes' },
+  },
+  starshipShip: {
+    vi: { name: 'Thân Tàu Starship (Đai Băng Trắng, 2 Cánh Vây Sau, Đai Hot-Stage & 6 Raptor · Tầng 2)', cat: 'Nhiên liệu', desc: 'Thân tàu Starship chia 2 nửa trắng phủ băng lạnh & đen gạch chịu nhiệt, váy đáy xám đen kèm 2 cánh vây lớn phía sau (Aft Flaps), vành tách tầng nóng (Hot-Staging Ring) và 6 động cơ Raptor' },
+    en: { name: 'Starship Main Barrel (Frost-White Band, 2 Aft Flaps, Hot-Stage Ring & 6× Raptor · Stage 2)', cat: 'Fuel Tanks', desc: 'Starship main barrel with cryogenic frost-white tank band, black windward heat-shield tiles, dark aft skirt with 2 large trapezoidal aft flaps, vented hot-staging ring & 6 Raptor engines' },
+  },
+  starshipBooster: {
+    vi: { name: 'Tầng Đẩy Super Heavy (Thép Không Gỉ, 4 Cánh Lưới, 4 Sống Khí Động & 33 Động Cơ Raptor)', cat: 'Động cơ', desc: 'Siêu tầng đẩy Super Heavy bằng thép không gỉ với 4 cánh lưới xòe ngang ở đỉnh, vệt băng trắng dọc sống lưng, 4 gờ khí động (chines) nổi dọc thân dưới và cụm 33 động cơ Raptor phát sáng rực rỡ ở đáy' },
+    en: { name: 'Super Heavy Stainless-Steel Booster (4 Grid Fins, 4 Lower Chines & 33 Glowing Raptors · Stage 1)', cat: 'Engines', desc: 'Super Heavy stainless-steel booster featuring 4 deployed dark waffle grid fins, 18 weld rings, vertical cryogenic frost spine, 4 tall lower aerodynamic chines & 33 glowing golden-white Raptor engines' },
+  },
   ufoSaucer: {
     vi: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
     en: { name: 'Quantum UFO Flying Saucer', cat: 'Command & Nose', desc: 'Alien UFO flying saucer with crystal pilot dome, glowing plasma rim, 55-ton quantum battery, parachutes & anti-gravity core' },
   },
 };
 
+export const PRESET_ICONS = {
+  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': '👑',
+  'Hai tầng (khuyên dùng)': '🚀',
+  'Saturn V (Apollo)': '🌕',
+  'Soyuz / R-7 Semyorka': '⭐',
+  'N1 Liên Xô (Mặt Trăng)': '🌒',
+  'Titan IV (Tàu Voyager)': '📡',
+  'Tàu con thoi Space Shuttle': '🛫',
+  'Energia – Buran': '🛩️',
+  'Tên lửa Energia (Мир-2 / Polyus)': '🛰️',
+  'Proton-M (Nga)': '🛡️',
+  'Ariane 5 (James Webb)': '🔭',
+  'Atlas V (Sao Hỏa)': '🔴',
+  'Delta IV Heavy': '🔥',
+  'Trường Chinh 5 (Long March 5)': '🐉',
+  'Falcon 9 (SpaceX)': '🦅',
+  'Falcon Heavy (SpaceX)': '⚡',
+  'SLS Artemis (NASA)': '🟠',
+  'Starship & Super Heavy': '🦾',
+  'Nhỏ gọn': '🧨',
+  'Siêu nặng (lên quỹ đạo)': '🏋️',
+  'Đại Bàng 9 (tái sử dụng)': '♻️',
+  'Tàu chở khách (ISS)': '👨‍🚀',
+  'Apollo (Mặt Trăng)': '🌖',
+  'Xe địa hình Rover 4x4': '🛞',
+  'Canô lướt sóng siêu tốc': '🚤',
+  'Thuyền phản lực tên lửa': '🛥️',
+  'Tiêm kích phản lực F-22': '✈️',
+  'Tàu Phản Trọng Lực Lượng Tử': '⚛️',
+  'Tàu Chiến Lazer Liên Hành Tinh': '🔫',
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': '👽',
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': '🛸',
+};
+
 export const PRESET_LABELS = {
+  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': { vi: 'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)', en: 'Best Rocket (2-Stage Ultimate)' },
   'Hai tầng (khuyên dùng)': { vi: 'Hai tầng (khuyên dùng)', en: 'Two-Stage (Recommended)' },
-  'Saturn V (Apollo)': { vi: '🚀 Saturn V (Apollo – Mặt Trăng)', en: '🚀 Saturn V (Apollo – Moon)' },
-  'Soyuz / R-7 Semyorka': { vi: '🚀 Soyuz / R-7 Semyorka (Liên Xô)', en: '🚀 Soyuz / R-7 Semyorka (USSR)' },
-  'N1 Liên Xô (Mặt Trăng)': { vi: '🚀 N1 Liên Xô (Siêu tên lửa Mặt Trăng)', en: '🚀 Soviet N1 (Super Heavy Lunar)' },
-  'Titan IV (Tàu Voyager)': { vi: '🚀 Titan IV (Tàu thăm dò Voyager)', en: '🚀 Titan IV (Voyager Probe)' },
-  'Tàu con thoi Space Shuttle': { vi: '🚀 Tàu con thoi Space Shuttle (NASA)', en: '🚀 Space Shuttle (NASA)' },
-  'Energia – Buran': { vi: '🚀 Tàu con thoi Buran (Energia – Buran)', en: '🚀 Energia – Buran (Space Shuttle)' },
-  'Tên lửa Energia (Мир-2 / Polyus)': { vi: '🚀 Tên lửa Energia (Энергия – Мир-2)', en: '🚀 Energia – Polyus (Энергия – Мир-2)' },
-  'Proton-M (Nga)': { vi: '🚀 Proton-M (Nga – Trạm vũ trụ)', en: '🚀 Proton-M (Russia)' },
-  'Ariane 5 (James Webb)': { vi: '🚀 Ariane 5 (Kính James Webb – ESA)', en: '🚀 Ariane 5 (JWST – ESA)' },
-  'Atlas V (Sao Hỏa)': { vi: '🚀 Atlas V (Thám hiểm Sao Hỏa)', en: '🚀 Atlas V (Mars Explorer)' },
-  'Delta IV Heavy': { vi: '🚀 Delta IV Heavy (ULA)', en: '🚀 Delta IV Heavy (ULA)' },
-  'Trường Chinh 5 (Long March 5)': { vi: '🚀 Trường Chinh 5 (Long March 5)', en: '🚀 Long March 5 (ChangZheng 5)' },
-  'Falcon 9 (SpaceX)': { vi: '🚀 Falcon 9 (SpaceX – Tái sử dụng)', en: '🚀 Falcon 9 (SpaceX – Reusable)' },
-  'Falcon Heavy (SpaceX)': { vi: '🚀 Falcon Heavy (SpaceX – Siêu nặng)', en: '🚀 Falcon Heavy (SpaceX)' },
-  'SLS Artemis (NASA)': { vi: '🚀 SLS Artemis (NASA – Mặt Trăng)', en: '🚀 SLS Artemis (NASA – Moon)' },
-  'Starship & Super Heavy': { vi: '🚀 Starship & Super Heavy (SpaceX)', en: '🚀 Starship & Super Heavy (SpaceX)' },
+  'Saturn V (Apollo)': { vi: 'Saturn V (Apollo – Mặt Trăng)', en: 'Saturn V (Apollo – Moon)' },
+  'Soyuz / R-7 Semyorka': { vi: 'Soyuz / R-7 Semyorka (Liên Xô)', en: 'Soyuz / R-7 Semyorka (USSR)' },
+  'N1 Liên Xô (Mặt Trăng)': { vi: 'N1 Liên Xô (Siêu tên lửa Mặt Trăng)', en: 'Soviet N1 (Super Heavy Lunar)' },
+  'Titan IV (Tàu Voyager)': { vi: 'Titan IV (Tàu thăm dò Voyager)', en: 'Titan IV (Voyager Probe)' },
+  'Tàu con thoi Space Shuttle': { vi: 'Tàu con thoi Space Shuttle (NASA)', en: 'Space Shuttle (NASA)' },
+  'Energia – Buran': { vi: 'Tàu con thoi Buran (Energia – Buran)', en: 'Energia – Buran (Space Shuttle)' },
+  'Tên lửa Energia (Мир-2 / Polyus)': { vi: 'Tên lửa Energia (Энергия – Мир-2)', en: 'Energia – Polyus (Энергия – Мир-2)' },
+  'Proton-M (Nga)': { vi: 'Proton-M (Nga – Trạm vũ trụ)', en: 'Proton-M (Russia)' },
+  'Ariane 5 (James Webb)': { vi: 'Ariane 5 (Kính James Webb – ESA)', en: 'Ariane 5 (JWST – ESA)' },
+  'Atlas V (Sao Hỏa)': { vi: 'Atlas V (Thám hiểm Sao Hỏa)', en: 'Atlas V (Mars Explorer)' },
+  'Delta IV Heavy': { vi: 'Delta IV Heavy (ULA)', en: 'Delta IV Heavy (ULA)' },
+  'Trường Chinh 5 (Long March 5)': { vi: 'Trường Chinh 5 (Long March 5)', en: 'Long March 5 (ChangZheng 5)' },
+  'Falcon 9 (SpaceX)': { vi: 'Falcon 9 (SpaceX – Tái sử dụng)', en: 'Falcon 9 (SpaceX – Reusable)' },
+  'Falcon Heavy (SpaceX)': { vi: 'Falcon Heavy (SpaceX – Siêu nặng)', en: 'Falcon Heavy (SpaceX)' },
+  'SLS Artemis (NASA)': { vi: 'SLS Artemis (NASA – Mặt Trăng)', en: 'SLS Artemis (NASA – Moon)' },
+  'Starship & Super Heavy': { vi: 'Starship & Super Heavy (SpaceX)', en: 'Starship & Super Heavy (SpaceX)' },
   'Nhỏ gọn': { vi: 'Nhỏ gọn', en: 'Compact Rocket' },
   'Siêu nặng (lên quỹ đạo)': { vi: 'Siêu nặng (lên quỹ đạo)', en: 'Super Heavy (Orbital)' },
   'Đại Bàng 9 (tái sử dụng)': { vi: 'Đại Bàng 9 (tái sử dụng)', en: 'Falcon 9 (Reusable)' },
   'Tàu chở khách (ISS)': { vi: 'Tàu chở khách (ISS)', en: 'Crew Dragon (ISS)' },
   'Apollo (Mặt Trăng)': { vi: 'Apollo (Mặt Trăng)', en: 'Apollo (Moon & Planets)' },
   'Xe địa hình Rover 4x4': { vi: 'Xe địa hình Rover 4x4', en: '4x4 Planetary Rover' },
-  'Xe thám hiểm phản lực': { vi: 'Xe thám hiểm phản lực', en: 'Rocket-Powered Rover' },
   'Canô lướt sóng siêu tốc': { vi: 'Canô lướt sóng siêu tốc', en: 'High-Speed Wave Boat' },
   'Thuyền phản lực tên lửa': { vi: 'Thuyền phản lực tên lửa', en: 'Rocket Hydroplane Boat' },
   'Tiêm kích phản lực F-22': { vi: 'Tiêm kích phản lực F-22', en: 'F-22 Raptor Fighter Jet' },
-  'Tàu lượn phản lực siêu âm': { vi: 'Tàu lượn phản lực siêu âm', en: 'Hypersonic Rocket Plane' },
-  'Tàu Phản Trọng Lực Lượng Tử': { vi: '🛸 Tàu Phản Trọng Lực Lượng Tử', en: '🛸 Quantum Anti-Gravity Ship' },
-  'Tàu Chiến Lazer Liên Hành Tinh': { vi: '⚡ Tàu Chiến Lazer Liên Hành Tinh', en: '⚡ Interplanetary Laser Cruiser' },
-  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': { vi: '👽 Chiến Hạm Diệt Alien (Lazer + Nước 1,000,000 PSI)', en: '👽 Alien Hunter Warship (Laser + 1M PSI Water)' },
-  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': { vi: '🛸 Đĩa Bay UFO Siêu Cấp (Alien Saucer)', en: '🛸 Super Alien UFO Flying Saucer' },
+  'Tàu Phản Trọng Lực Lượng Tử': { vi: 'Tàu Phản Trọng Lực Lượng Tử', en: 'Quantum Anti-Gravity Ship' },
+  'Tàu Chiến Lazer Liên Hành Tinh': { vi: 'Tàu Chiến Lazer Liên Hành Tinh', en: 'Interplanetary Laser Cruiser' },
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': { vi: 'Chiến Hạm Diệt Alien (Lazer + Nước 1,000,000 PSI)', en: 'Alien Hunter Warship (Laser + 1M PSI Water)' },
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': { vi: 'Đĩa Bay UFO Siêu Cấp (Alien Saucer)', en: 'Super Alien UFO Flying Saucer' },
 };
 
 const MISSION_I18N = {
@@ -833,11 +1034,14 @@ const BODY_LABELS = {
 };
 
 export function applyLanguage(lang, app) {
-  if (lang !== 'vi' && lang !== 'en') lang = 'vi';
+  if (lang !== 'vi' && lang !== 'en') lang = 'en';
   currentLang = lang;
-  try { localStorage.setItem('rf-lang', lang); } catch { /* ignore */ }
+  try {
+    localStorage.setItem('rf-lang-v2', lang);
+    localStorage.setItem('rf-lang', lang);
+  } catch { /* ignore */ }
   document.documentElement.lang = lang;
-  document.title = lang === 'en' ? 'Rocket Forge – Build & Launch Rockets' : 'Rocket Forge – Lắp ráp & Phóng tên lửa';
+  document.title = lang === 'en' ? 'Rocket Forge – 3D Spaceflight Simulator' : 'Rocket Forge – Lắp ráp & Phóng tên lửa';
 
   // 1. Update PARTS in-place
   for (const [k, def] of Object.entries(PARTS)) {
@@ -887,124 +1091,131 @@ export function applyLanguage(lang, app) {
     if (el) el.setAttribute(attr, lang === 'en' ? en : vi);
   };
 
-  // Build UI
-  setTxt('#load-tip', '💡 Đề xuất nên chơi màn hình full (F11)', '💡 Recommended: Play in Fullscreen mode (F11)');
-  setTxt('#build-ui .crumb', 'Xưởng lắp ráp · VAB', 'Vehicle Assembly · VAB');
-  setTxt('#btn-undo', '↶ Hoàn tác', '↶ Undo');
-  setTxt('#btn-clear', '🗑 Xóa hết', '🗑 Clear All');
+  // Build UI (Minimalist Icon Labels)
+  setTxt('#load-tip', '💡 Nên chơi toàn màn hình (F11)', '💡 Recommended: Fullscreen (F11)');
+  setTxt('#btn-undo', '↶', '↶');
+  setTxt('#btn-clear', '🗑', '🗑');
+  setTxt('#btn-preset', '🚀', '🚀');
+  setAttr('#btn-mission', 'title', 'Chọn nhiệm vụ', 'Select Mission');
+  setAttr('#btn-preset', 'title', 'Mẫu tên lửa', 'Rocket Presets');
+  setAttr('#btn-undo', 'title', 'Hoàn tác (Ctrl+Z)', 'Undo (Ctrl+Z)');
+  setAttr('#btn-clear', 'title', 'Xóa tất cả', 'Clear All');
   setAttr('#btn-settings', 'title', 'Cài đặt (O)', 'Settings (O)');
-  setTxt('#palette h3', 'Linh kiện', 'Parts');
-  setTxt('#stats h3', 'Thông số', 'Specifications');
+  setTxt('#preset-modal-title', '🚀 Mẫu Tên Lửa', '🚀 Select Rocket Preset');
+  setTxt('#btn-preset-close', 'Đóng', 'Close');
+  setAttr('#btn-preset-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
+  setTxt('#palette h3', '🧩 Linh kiện', '🧩 Parts');
+  setTxt('#stats h3', '📊 Thông số', '📊 Specs');
 
   const statLabels = document.querySelectorAll('#stats .stat-grid .stat label');
   if (statLabels.length >= 4) {
-    statLabels[0].textContent = tr('Khối lượng', 'Total Mass');
-    statLabels[1].textContent = tr('Chiều cao', 'Height');
-    statLabels[2].textContent = tr('TWR cất cánh', 'Liftoff TWR');
-    statLabels[3].textContent = tr('Tổng Δv', 'Total Δv');
+    statLabels[0].textContent = tr('⚖ Khối lượng', '⚖ Mass');
+    statLabels[1].textContent = tr('📏 Chiều cao', '📏 Height');
+    statLabels[2].textContent = tr('🚀 TWR', '🚀 TWR');
+    statLabels[3].textContent = tr('⚡ Tổng Δv', '⚡ Total Δv');
   }
   const dvMarks = document.querySelectorAll('#stats .dv-bar i');
   if (dvMarks.length >= 2) {
-    dvMarks[0].setAttribute('data-l', tr('Không gian', 'Space'));
+    dvMarks[0].setAttribute('data-l', tr('Vũ trụ', 'Space'));
     dvMarks[1].setAttribute('data-l', tr('Quỹ đạo', 'Orbit'));
   }
   setTxt('#stats h4', 'Các tầng', 'Stages');
 
-  setTxt('#btn-rot-x', '🔴 Xoay X (90°)', '🔴 Rotate X (90°)');
-  setTxt('#btn-rot-y', '🟢 Xoay Y (90°)', '🟢 Rotate Y (90°)');
-  setTxt('#btn-rot-z', '🔵 Xoay Z (90°)', '🔵 Rotate Z (90°)');
-  setTxt('#btn-rot-reset', '↺ Đặt lại', '↺ Reset');
-  setAttr('#btn-rot-x', 'title', 'Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X', 'Rotate around X axis (Pitch 90°) · Key 1 or X');
-  setAttr('#btn-rot-y', 'title', 'Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y', 'Rotate around Y axis (Yaw 90°) · Key 2 or Y');
-  setAttr('#btn-rot-z', 'title', 'Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z', 'Rotate around Z axis (Roll 90°) · Key 3 or Z');
-  setAttr('#btn-rot-reset', 'title', 'Đặt lại góc xoay ban đầu (0°)', 'Reset rotation angles (0°)');
-  setTxt('#btn-side-toggle', '↔ Gắn sang 2 bên', '↔ Attach to Both Sides');
-  setTxt('#btn-del', 'Xóa linh kiện (Del)', 'Delete Part (Del)');
+  setTxt('#btn-rot-x', '🔴 X 90°', '🔴 X 90°');
+  setTxt('#btn-rot-y', '🟢 Y 90°', '🟢 Y 90°');
+  setTxt('#btn-rot-z', '🔵 Z 90°', '🔵 Z 90°');
+  setTxt('#btn-rot-reset', '↺ 0°', '↺ 0°');
+  setAttr('#btn-rot-x', 'title', 'Xoay trục X 90° (Phím 1 / X)', 'Rotate X 90° (Key 1 / X)');
+  setAttr('#btn-rot-y', 'title', 'Xoay trục Y 90° (Phím 2 / Y)', 'Rotate Y 90° (Key 2 / Y)');
+  setAttr('#btn-rot-z', 'title', 'Xoay trục Z 90° (Phím 3 / Z)', 'Rotate Z 90° (Key 3 / Z)');
+  setAttr('#btn-rot-reset', 'title', 'Đặt lại góc xoay (0°)', 'Reset rotation (0°)');
+  setTxt('#btn-side-toggle', '↔ Gắn 2 bên', '↔ Side Mount ×2');
+  setTxt('#btn-del', '🗑 Xóa (Del)', '🗑 Delete (Del)');
 
-  setTxt('#quick-rot-bar .rot-bar-title', '📐 XOAY 3D:', '📐 3D ROTATE:');
-  setTxt('#bar-rot-x', '🔴 Trục X (90°)', '🔴 X Axis (90°)');
-  setTxt('#bar-rot-y', '🟢 Trục Y (90°)', '🟢 Y Axis (90°)');
-  setTxt('#bar-rot-z', '🔵 Trục Z (90°)', '🔵 Z Axis (90°)');
-  setAttr('#bar-rot-x', 'title', 'Xoay quanh trục X (Pitch: ngửa/chúi 90°) · Phím 1 hoặc X', 'Rotate around X axis (Pitch 90°) · Key 1 or X');
-  setAttr('#bar-rot-y', 'title', 'Xoay quanh trục Y (Yaw: quay ngang 90°) · Phím 2 hoặc Y', 'Rotate around Y axis (Yaw 90°) · Key 2 or Y');
-  setAttr('#bar-rot-z', 'title', 'Xoay quanh trục Z (Roll: nghiêng 90°) · Phím 3 hoặc Z', 'Rotate around Z axis (Roll 90°) · Key 3 or Z');
-  setAttr('#bar-rot-reset', 'title', 'Đặt lại góc xoay ban đầu (0°)', 'Reset rotation angles (0°)');
+  setTxt('#quick-rot-bar .rot-bar-title', '📐 3D:', '📐 3D:');
+  setTxt('#bar-rot-x', '🔴 X 90°', '🔴 X 90°');
+  setTxt('#bar-rot-y', '🟢 Y 90°', '🟢 Y 90°');
+  setTxt('#bar-rot-z', '🔵 Z 90°', '🔵 Z 90°');
+  setAttr('#bar-rot-x', 'title', 'Xoay trục X 90° (Phím 1 / X)', 'Rotate X 90° (Key 1 / X)');
+  setAttr('#bar-rot-y', 'title', 'Xoay trục Y 90° (Phím 2 / Y)', 'Rotate Y 90° (Key 2 / Y)');
+  setAttr('#bar-rot-z', 'title', 'Xoay trục Z 90° (Phím 3 / Z)', 'Rotate Z 90° (Key 3 / Z)');
+  setAttr('#bar-rot-reset', 'title', 'Đặt lại góc xoay (0°)', 'Reset rotation (0°)');
 
   setHtml(
     '#build-ui .hint',
-    '🖱 Kéo linh kiện vào <b>giữa</b> hoặc <b>2 bên hông</b> tên lửa · Click chọn · <b>Phím 1/2/3 (X/Y/Z)</b> xoay 3D · <kbd>O</kbd> cài đặt · <kbd>Del</kbd> xóa',
-    '🖱 Drag parts to <b>center</b> or <b>both sides</b> of rocket · Click to select · <b>Keys 1/2/3 (X/Y/Z)</b> 3D rotate · <kbd>O</kbd> options · <kbd>Del</kbd> delete'
+    '🖱 Kéo linh kiện · Click chọn · <kbd>1/2/3</kbd> Xoay · <kbd>Del</kbd> Xóa · <kbd>Ctrl+Z</kbd> Hoàn tác',
+    '🖱 Drag parts · Click select · <kbd>1/2/3</kbd> Rotate · <kbd>Del</kbd> Delete · <kbd>Ctrl+Z</kbd> Undo'
   );
-  setTxt('#btn-launchpad', '🚀 RA BỆ PHÓNG', '🚀 TO LAUNCHPAD');
+  setTxt('#btn-launchpad', '🚀 PHÓNG', '🚀 LAUNCH');
 
-  // Launch UI
+  // Launch UI (Minimalist Icon-Driven Telemetry)
   const leftReadouts = document.querySelectorAll('#launch-ui .hud-left .big-readout label');
-  if (leftReadouts.length >= 1) leftReadouts[0].textContent = tr('ĐỘ CAO', 'ALTITUDE');
-  setTxt('#h-vel-l', 'VẬN TỐC', 'VELOCITY');
+  if (leftReadouts.length >= 1) leftReadouts[0].textContent = tr('⛰ ĐỘ CAO', '⛰ ALT');
+  setTxt('#h-vel-l', '⚡ VẬN TỐC', '⚡ VEL');
 
   const leftRowGroups = document.querySelectorAll('#launch-ui .hud-left > .rows');
   const leftSpans = leftRowGroups[0] ? leftRowGroups[0].querySelectorAll('div span') : [];
   if (leftSpans.length >= 7) {
-    leftSpans[0].textContent = tr('Vận tốc đứng', 'Vertical Speed');
-    leftSpans[1].textContent = tr('Vận tốc ngang', 'Horizontal Speed');
-    leftSpans[2].textContent = 'Mach';
-    leftSpans[3].textContent = tr('Gia tốc', 'Acceleration');
-    leftSpans[4].textContent = tr('Áp suất động', 'Dynamic Pressure');
-    leftSpans[5].textContent = tr('Góc nghiêng', 'Pitch Angle');
-    leftSpans[6].textContent = tr('Thời gian bay', 'Flight Time');
+    leftSpans[0].textContent = '↕ VS';
+    leftSpans[1].textContent = '↔ HS';
+    leftSpans[2].textContent = '🔥 M';
+    leftSpans[3].textContent = '⊕ G';
+    leftSpans[4].textContent = '💨 Q';
+    leftSpans[5].textContent = tr('📐 Góc', '📐 ANG');
+    leftSpans[6].textContent = '⏱ MET';
   }
   const orbitHeader = document.querySelector('#launch-ui .hud-left h4.sub');
   if (orbitHeader) {
     const bodySpan = document.getElementById('h-body');
     const curBody = bodySpan ? bodySpan.textContent : tr('Trái Đất', 'Earth');
-    orbitHeader.innerHTML = `${tr('Quỹ đạo', 'Orbit')} · <span id="h-body">${curBody}</span>`;
+    orbitHeader.innerHTML = `🪐 <span id="h-body">${curBody}</span>`;
   }
   const orbitSpans = leftRowGroups[1] ? leftRowGroups[1].querySelectorAll('div span') : [];
   if (orbitSpans.length >= 3) {
-    orbitSpans[0].textContent = tr('Viễn điểm (Ap)', 'Apoapsis (Ap)');
-    orbitSpans[1].textContent = tr('Cận điểm (Pe)', 'Periapsis (Pe)');
-    orbitSpans[2].textContent = tr('Chu kỳ', 'Orbital Period');
+    orbitSpans[0].textContent = '▲ Ap';
+    orbitSpans[1].textContent = '▼ Pe';
+    orbitSpans[2].textContent = '⟳ T';
   }
   const targetSpans = document.querySelectorAll('#h-target-box .rows div span');
   if (targetSpans.length >= 2) {
-    targetSpans[0].textContent = tr('Khoảng cách', 'Distance');
-    targetSpans[1].textContent = tr('Vận tốc tương đối', 'Relative Velocity');
+    targetSpans[0].textContent = tr('📏 Cách', '📏 Dist');
+    targetSpans[1].textContent = tr('⚡ Tốc', '⚡ Rel');
   }
 
-  setTxt('#launch-ui .hud-right h4', 'Tầng & nhiên liệu', 'Stages & Fuel');
+  setTxt('#launch-ui .hud-right h4', '⛽ CÁC TẦNG', '⛽ STAGES');
   const rightSpans = document.querySelectorAll('#launch-ui .hud-right .rows div span');
   if (rightSpans.length >= 5) {
-    rightSpans[0].textContent = 'SAS';
-    rightSpans[1].textContent = tr('Chế độ SAS', 'SAS Mode');
-    rightSpans[2].textContent = tr('Lái tự động', 'Autopilot');
-    rightSpans[3].textContent = tr('Tua nhanh', 'Time Warp');
-    rightSpans[4].textContent = 'Camera';
-    if (rightSpans[5]) rightSpans[5].textContent = tr('👽 Alien đã diệt', '👽 Aliens Killed');
-    if (rightSpans[6]) rightSpans[6].textContent = tr('👨‍🚀 Phi hành gia', '👨‍🚀 Astronauts');
+    rightSpans[0].textContent = '🧭 SAS';
+    rightSpans[1].textContent = '🎯';
+    rightSpans[2].textContent = '🤖 AP';
+    rightSpans[3].textContent = '⏩';
+    rightSpans[4].textContent = '🎥';
+    if (rightSpans[5]) rightSpans[5].textContent = '👽';
+    if (rightSpans[6]) rightSpans[6].textContent = tr('👨‍🚀 ĐH', '👨‍🚀 Crew');
   }
-  setTxt('#astro-bar-title', '👨‍🚀 PHI HÀNH GIA:', '👨‍🚀 ASTRONAUTS:');
-  setTxt('#btn-astro-add-1', '👨‍🚀 +1 Phi hành gia', '👨‍🚀 +1 Astronaut');
-  setTxt('#btn-astro-add-2', '👨‍🚀 +2 Phi hành gia', '👨‍🚀 +2 Astronauts');
-  setTxt('#btn-astro-add-3', '👨‍🚀 +3 Phi hành gia', '👨‍🚀 +3 Astronauts');
-  setTxt('#btn-astro-add-4', '👨‍🚀 +4 Phi hành gia', '👨‍🚀 +4 Astronauts');
-  setTxt('#btn-astro-add-5', '👨‍🚀 +5 Phi hành gia', '👨‍🚀 +5 Astronauts');
-  setTxt('#btn-astro-deploy', '👨‍🚀 Thả phi hành gia xuống', '👨‍🚀 Deploy Astronauts');
-  setTxt('#btn-autopilot', '🤖 TỰ LÁI NHIỆM VỤ (G)', '🤖 MISSION AUTOPILOT (G)');
-  setTxt('#btn-toggle-map', '🌐 BẢN ĐỒ QUỸ ĐẠO 3D (M)', '🌐 3D ORBITAL MAP (M)');
-  setTxt('#btn-teleport', '🪐 DỊCH CHUYỂN HÀNH TINH / MẶT TRĂNG (Y)', '🪐 TELEPORT PLANETS / MOONS (Y)');
+  setTxt('#astro-bar-title', '👨‍🚀', '👨‍🚀');
+  setTxt('#btn-astro-add-1', '+1', '+1');
+  setTxt('#btn-astro-add-2', '+2', '+2');
+  setTxt('#btn-astro-add-3', '+3', '+3');
+  setTxt('#btn-astro-add-4', '+4', '+4');
+  setTxt('#btn-astro-add-5', '+5', '+5');
+  setTxt('#btn-astro-deploy', '👨‍🚀 Thả', '👨‍🚀 Deploy');
+  setHtml('#btn-autopilot', '🤖 Tự lái <kbd>G</kbd>', '🤖 Auto <kbd>G</kbd>');
+  setHtml('#btn-toggle-map', '🌐 Bản đồ <kbd>M</kbd>', '🌐 Map <kbd>M</kbd>');
+  setHtml('#btn-teleport', '🪐 Dịch <kbd>Y</kbd>', '🪐 Warp <kbd>Y</kbd>');
 
   // Teleport Quick-Bar & Modal
-  setTxt('#tp-bar-title', '🪐 DỊCH CHUYỂN:', '🪐 TELEPORT:');
-  setTxt('#btn-tp-expand', '📋 Mở bảng (Y)', '📋 All Bodies (Y)');
-  setAttr('#btn-tp-mode', 'title', 'Đổi chế độ dịch chuyển: Đáp bề mặt hoặc Vào quỹ đạo', 'Switch teleport mode: Land on Surface or Enter Orbit');
-  setAttr('#btn-tp-expand', 'title', 'Mở bảng dịch chuyển chi tiết (Y)', 'Open full teleport panel (Y)');
+  setTxt('#tp-bar-title', '🪐', '🪐');
+  setTxt('#btn-tp-expand', '⊞ Y', '⊞ Y');
+  setAttr('#btn-tp-mode', 'title', 'Đổi chế độ: Bề mặt / Quỹ đạo', 'Switch mode: Surface or Orbit');
+  setAttr('#btn-tp-expand', 'title', 'Mở bảng dịch chuyển (Y)', 'Open teleport panel (Y)');
   setTxt('#tp-bar-btns [data-tp="earth"]', '🌍 Trái Đất', '🌍 Earth');
   setTxt('#tp-bar-btns [data-tp="iss"]', '🛰️ ISS', '🛰️ ISS');
   setTxt('#tp-bar-btns [data-tp="moon"]', '🌕 Mặt Trăng', '🌕 Moon');
   setTxt('#tp-bar-btns [data-tp="mercury"]', '⚪ Sao Thủy', '⚪ Mercury');
   setTxt('#tp-bar-btns [data-tp="venus"]', '🟡 Sao Kim', '🟡 Venus');
   setTxt('#tp-bar-btns [data-tp="mars"]', '🔴 Sao Hỏa', '🔴 Mars');
-  setTxt('#tp-bar-btns [data-tp="olympus"]', '🌋 Olympus Mons', '🌋 Olympus Mons');
+  setTxt('#tp-bar-btns [data-tp="olympus"]', '🌋 Olympus', '🌋 Olympus');
   setTxt('#tp-bar-btns [data-tp="phobos"]', '🪨 Phobos', '🪨 Phobos');
   setTxt('#tp-bar-btns [data-tp="deimos"]', '🪨 Deimos', '🪨 Deimos');
   setTxt('#tp-bar-btns [data-tp="ceres"]', '🪨 Ceres', '🪨 Ceres');
@@ -1031,11 +1242,12 @@ export function applyLanguage(lang, app) {
   setTxt('#tp-bar-btns [data-tp="triton"]', '❄️ Triton', '❄️ Triton');
   setTxt('#tp-bar-btns [data-tp="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
   setTxt('#tp-bar-btns [data-tp="sun"]', '☀️ Mặt Trời', '☀️ Sun');
+  setTxt('#tp-bar-btns [data-tp="interstellar"]', '🌌 Liên Sao', '🌌 Deep Space');
 
-  setTxt('#tp-modal-title', '🪐 Dịch chuyển tới Hành Tinh & Mặt Trăng', '🪐 Teleport to Planets & Moons');
-  setTxt('#tp-mode-lbl', 'Chế độ điểm đến:', 'Destination Mode:');
-  setTxt('#btn-tpmode-surf', '🛬 Đáp Bề Mặt (Surface)', '🛬 Land on Surface');
-  setTxt('#btn-tpmode-orb', '🛰️ Vào Quỹ Đạo (Orbit)', '🛰️ Enter Orbit');
+  setTxt('#tp-modal-title', '🪐 Dịch chuyển', '🪐 Teleport');
+  setTxt('#tp-mode-lbl', 'Chế độ:', 'Mode:');
+  setTxt('#btn-tpmode-surf', '🛬 Bề Mặt', '🛬 Surface');
+  setTxt('#btn-tpmode-orb', '🛰️ Quỹ Đạo', '🛰️ Orbit');
   setTxt('#btn-teleport-close', 'Đóng', 'Close');
   setAttr('#btn-teleport-x', 'title', 'Đóng (Esc / Y)', 'Close (Esc / Y)');
 
@@ -1057,106 +1269,98 @@ export function applyLanguage(lang, app) {
   setTxt('#map-focus-bar [data-focus="neptune"]', '🔵 Hải Vương', '🔵 Neptune');
   setTxt('#map-focus-bar [data-focus="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
 
-  setTxt('#map-telemetry h4', 'THÔNG SỐ QUỸ ĐẠO', 'ORBITAL TELEMETRY');
-  setTxt('#btn-map-delete', '🗑️ Xóa vật thể', '🗑️ Delete Object');
-  setAttr('#map-close-btn', 'title', 'Đóng bản đồ (M)', 'Close Map (M)');
+  setTxt('#map-telemetry h4', 'QUỸ ĐẠO', 'ORBITAL TELEMETRY');
+  setTxt('#btn-map-delete', '🗑️ Xóa', '🗑️ Delete');
+  setAttr('#map-close-btn', 'title', 'Đóng (M)', 'Close (M)');
 
   setHtml(
     '#map-legend',
-    `<span>🖱 <kbd>Chuột trái</kbd> Xoay 3D</span>
-     <span>🖱 <kbd>Chuột phải</kbd> Lia</span>
-     <span>📜 <kbd>Cuộn</kbd> Thu phóng</span>
-     <span><kbd>,</kbd>/<kbd>.</kbd> Tua thời gian</span>
-     <span><kbd>Tab</kbd> Đổi tâm</span>
+    `<span>🖱 <kbd>LMB</kbd> 3D</span>
+     <span>🖱 <kbd>RMB</kbd> Lia</span>
+     <span>📜 <kbd>Cuộn</kbd> Zoom</span>
+     <span><kbd>, .</kbd> Tua</span>
+     <span><kbd>Tab</kbd> Tâm</span>
      <span><kbd>M</kbd> Đóng</span>`,
-    `<span>🖱 <kbd>Left Click</kbd> Rotate 3D</span>
-     <span>🖱 <kbd>Right Click</kbd> Pan</span>
+    `<span>🖱 <kbd>LMB</kbd> 3D</span>
+     <span>🖱 <kbd>RMB</kbd> Pan</span>
      <span>📜 <kbd>Scroll</kbd> Zoom</span>
-     <span><kbd>,</kbd>/<kbd>.</kbd> Time Warp</span>
-     <span><kbd>Tab</kbd> Switch Focus</span>
+     <span><kbd>, .</kbd> Warp</span>
+     <span><kbd>Tab</kbd> Focus</span>
      <span><kbd>M</kbd> Close</span>`
   );
 
   // Bottom HUD
-  setTxt('#launch-ui .hud-bottom .throttle label', 'GA', 'THR');
+  setTxt('#launch-ui .hud-bottom .throttle label', '⚡ GA', '⚡ THR');
   setHtml(
     '#launch-ui .hud-bottom .keys',
-    `<span><kbd>Shift</kbd>/<kbd>Ctrl</kbd> ga</span>
-     <span><kbd>Z</kbd>/<kbd>X</kbd> max/tắt</span>
-     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> lái 3D theo camera</span>
-     <span><kbd>Space</kbd> tách tầng</span>
-     <span><kbd>V</kbd> bắn Alien</span>
-     <span><kbd>Y</kbd> dịch chuyển</span>
-     <span><kbd>T</kbd> SAS</span>
-     <span><kbd>F</kbd> chế độ SAS</span>
-     <span><kbd>G</kbd> tự lái</span>
-     <span><kbd>M</kbd> bản đồ</span>
-     <span><kbd>B</kbd> xem tầng 1</span>
-     <span><kbd>C</kbd> camera</span>
-     <span><kbd>,</kbd>/<kbd>.</kbd> tua</span>
-     <span><kbd>I</kbd><kbd>K</kbd><kbd>J</kbd><kbd>L</kbd><kbd>H</kbd><kbd>N</kbd> RCS</span>
-     <span><kbd>P</kbd> dù/chân</span>
-     <span><kbd>O</kbd> cài đặt</span>
-     <span><kbd>Esc</kbd> menu</span>`,
-    `<span><kbd>Shift</kbd>/<kbd>Ctrl</kbd> throttle</span>
-     <span><kbd>Z</kbd>/<kbd>X</kbd> max/cut</span>
-     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 3D steer</span>
-     <span><kbd>Space</kbd> stage</span>
-     <span><kbd>V</kbd> fire</span>
-     <span><kbd>Y</kbd> teleport</span>
-     <span><kbd>T</kbd> SAS</span>
-     <span><kbd>F</kbd> SAS mode</span>
-     <span><kbd>G</kbd> autopilot</span>
-     <span><kbd>M</kbd> map</span>
-     <span><kbd>B</kbd> stage 1 cam</span>
-     <span><kbd>C</kbd> camera</span>
-     <span><kbd>,</kbd>/<kbd>.</kbd> warp</span>
-     <span><kbd>I</kbd><kbd>K</kbd><kbd>J</kbd><kbd>L</kbd><kbd>H</kbd><kbd>N</kbd> RCS</span>
-     <span><kbd>P</kbd> chute/legs</span>
-     <span><kbd>O</kbd> options</span>
-     <span><kbd>Esc</kbd> menu</span>`
+    `<span title="Tăng/giảm ga"><kbd>⇧/⌃</kbd> ⚡</span>
+     <span title="Ga tối đa / tắt"><kbd>Z/X</kbd> 🔥</span>
+     <span title="Lái 3D"><kbd>WASD</kbd> 🕹️</span>
+     <span title="Tách tầng"><kbd>Space</kbd> 🚀</span>
+     <span title="Bắn vũ khí"><kbd>V</kbd> 🔫</span>
+     <span title="Tự lái"><kbd>G</kbd> 🤖</span>
+     <span title="Bản đồ 3D"><kbd>M</kbd> 🌐</span>
+     <span title="Dịch chuyển"><kbd>Y</kbd> 🪐</span>
+     <span title="SAS & Chế độ"><kbd>T/F</kbd> 🧭</span>
+     <span title="Đổi Camera"><kbd>C</kbd> 🎥</span>
+     <span title="Tua thời gian"><kbd>, .</kbd> ⏩</span>
+     <span title="Dù / Chân đáp"><kbd>P</kbd> 🪂</span>
+     <span title="Menu"><kbd>Esc</kbd> ⚙</span>`,
+    `<span title="Throttle Up/Down"><kbd>⇧/⌃</kbd> ⚡</span>
+     <span title="Max / Cut Throttle"><kbd>Z/X</kbd> 🔥</span>
+     <span title="3D Attitude Steer"><kbd>WASD</kbd> 🕹️</span>
+     <span title="Stage Separation"><kbd>Space</kbd> 🚀</span>
+     <span title="Fire Weapons"><kbd>V</kbd> 🔫</span>
+     <span title="Autopilot"><kbd>G</kbd> 🤖</span>
+     <span title="3D Orbital Map"><kbd>M</kbd> 🌐</span>
+     <span title="Teleport"><kbd>Y</kbd> 🪐</span>
+     <span title="SAS & Mode"><kbd>T/F</kbd> 🧭</span>
+     <span title="Camera"><kbd>C</kbd> 🎥</span>
+     <span title="Time Warp"><kbd>, .</kbd> ⏩</span>
+     <span title="Chute / Legs"><kbd>P</kbd> 🪂</span>
+     <span title="Menu"><kbd>Esc</kbd> ⚙</span>`
   );
 
-  setTxt('#btn-go', '▶ BẮT ĐẦU ĐẾM NGƯỢC', '▶ START COUNTDOWN');
-  setTxt('#btn-back', '← Về xưởng', '← Back to VAB');
+  setTxt('#btn-go', '▶ PHÓNG', '▶ LAUNCH');
+  setTxt('#btn-back', '← VAB', '← VAB');
 
   // Modals: Mission, Pause (#menu), Settings (#settings), Result (#result)
-  setTxt('#mission-modal h2', 'Chọn nhiệm vụ', 'Select Mission');
+  setTxt('#mission-modal h2', '🎯 Nhiệm vụ', '🎯 Select Mission');
   setTxt('#btn-mission-close', 'Đóng', 'Close');
   setAttr('#btn-mission-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
 
-  setTxt('#menu h2', 'Tạm dừng', 'Paused');
-  setTxt('#menu [data-act="resume"]', 'Tiếp tục', 'Resume');
-  setTxt('#menu [data-act="restart"]', 'Phóng lại', 'Relaunch');
-  setTxt('#menu [data-act="build"]', 'Về xưởng lắp ráp', 'Back to VAB');
-  setTxt('#lbl-quality-1', 'Chất lượng đồ họa', 'Graphics Quality');
+  setTxt('#menu h2', '⏸ Tạm dừng', '⏸ Paused');
+  setTxt('#menu [data-act="resume"]', '▶ Tiếp tục', '▶ Resume');
+  setTxt('#menu [data-act="restart"]', '🔁 Phóng lại', '🔁 Relaunch');
+  setTxt('#menu [data-act="build"]', '🛠️ Về VAB', '🛠️ Back to VAB');
+  setTxt('#lbl-quality-1', 'Đồ họa', 'Graphics Quality');
   setTxt('#lbl-lang-1', 'Ngôn ngữ / Language', 'Language / Ngôn ngữ');
 
-  setTxt('#settings h2', 'Cài đặt', 'Settings');
-  setTxt('#lbl-quality-2', 'Chất lượng đồ họa', 'Graphics Quality');
+  setTxt('#settings h2', '⚙ Cài đặt', '⚙ Settings');
+  setTxt('#lbl-quality-2', 'Đồ họa', 'Graphics Quality');
   setTxt('#lbl-lang-2', 'Ngôn ngữ / Language', 'Language / Ngôn ngữ');
-  setTxt('#lbl-gpu-api', 'API & Phần cứng', 'API & Hardware');
-  setTxt('#lbl-gpu-pipe', 'Pipeline Đồ họa', 'Render Pipeline');
-  setTxt('#lbl-gpu-perf', 'Hiệu năng thực tế', 'Live Performance');
-  setAttr('#gpu-badge', 'title', 'Thông tin GPU & Đồ họa (Click để mở cài đặt)', 'GPU & Graphics Info (Click to open settings)');
-  setAttr('#gpu-launch-badge', 'title', 'Đồ họa GPU & FPS (O)', 'GPU Graphics & FPS (O)');
+  setTxt('#lbl-gpu-api', 'Phần cứng', 'API & Hardware');
+  setTxt('#lbl-gpu-pipe', 'Pipeline', 'Render Pipeline');
+  setTxt('#lbl-gpu-perf', 'Hiệu năng', 'Live Performance');
+  setAttr('#gpu-badge', 'title', 'Thông tin GPU & Cài đặt', 'GPU & Graphics Info');
+  setAttr('#gpu-launch-badge', 'title', 'GPU & FPS (O)', 'GPU & FPS (O)');
   setTxt('#btn-settings-close', 'Đóng', 'Close');
 
-  setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt (Vietnamese)');
-  setTxt('#btn-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English (Tiếng Anh)');
-  setTxt('#btn-menu-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt (Vietnamese)');
-  setTxt('#btn-menu-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English (Tiếng Anh)');
+  setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt');
+  setTxt('#btn-lang-en', '🇬🇧 English', '🇬🇧 English');
+  setTxt('#btn-menu-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt');
+  setTxt('#btn-menu-lang-en', '🇬🇧 English', '🇬🇧 English');
 
   const resLabels = document.querySelectorAll('#result .stat-grid .stat label');
   if (resLabels.length >= 4) {
-    resLabels[0].textContent = tr('Độ cao tối đa', 'Max Altitude');
-    resLabels[1].textContent = tr('Vận tốc tối đa', 'Max Velocity');
-    resLabels[2].textContent = tr('Thời gian bay', 'Flight Time');
-    resLabels[3].textContent = tr('G tối đa', 'Max G-Load');
+    resLabels[0].textContent = tr('⛰ Độ cao max', '⛰ Max Alt');
+    resLabels[1].textContent = tr('⚡ Vận tốc max', '⚡ Max Vel');
+    resLabels[2].textContent = tr('⏱ Thời gian', '⏱ Flight Time');
+    resLabels[3].textContent = tr('⊕ G tối đa', '⊕ Max G');
   }
   setTxt('#result [data-act="restart"]', '🔁 Phóng lại', '🔁 Relaunch');
-  setTxt('#result [data-act="build"]', '🔧 Sửa tên lửa', '🔧 Edit Rocket');
-  setTxt('#result [data-act="continue"]', '👁 Xem tiếp', '👁 Continue Watching');
+  setTxt('#result [data-act="build"]', '🔧 Sửa', '🔧 Edit');
+  setTxt('#result [data-act="continue"]', '👁 Xem tiếp', '👁 Watch');
 
   // 6. Refresh active scenes if app is initialized
   if (app) {

@@ -8,7 +8,7 @@ import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes,
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
-import { getLang, tr, PRESET_LABELS } from '../i18n.js';
+import { getLang, tr, PRESET_LABELS, PRESET_ICONS } from '../i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -221,6 +221,39 @@ export class BuildScene {
   }
 
   // ------------------------------------------------------------------ UI
+  showPartTooltip(def, cardEl) {
+    const tip = $('part-tooltip');
+    if (!tip || this.drag) return;
+    const totalMass = (def.dry + (def.fuel || 0)).toFixed(2);
+    const pills = [
+      `<span class="pt-pill">⚖️ <b>${totalMass} t</b>${def.kind === 'radial' ? tr(' / chiếc', ' / ea') : ''}</span>`,
+    ];
+    if (def.fuel) pills.push(`<span class="pt-pill">⛽ <b>${def.fuel.toFixed(1)} t</b></span>`);
+    if (def.thrustVac) {
+      pills.push(`<span class="pt-pill">🔥 <b>${def.thrustSL}–${def.thrustVac} kN</b></span>`);
+      pills.push(`<span class="pt-pill">⚡ Isp <b>${def.ispVac}s</b></span>`);
+    }
+    pills.push(`<span class="pt-pill">🔗 ${def.kind === 'radial' ? tr('Gắn sườn', 'Radial') : tr('Trục chính', 'Stack')}</span>`);
+    tip.innerHTML = `
+      <div class="pt-head">
+        <span class="pt-name">${def.name}</span>
+        <span class="pt-cat">${def.cat}</span>
+      </div>
+      <div class="pt-specs">${pills.join('')}</div>
+      <div class="pt-desc">${def.desc}</div>
+    `;
+    tip.classList.remove('hidden');
+    const rect = cardEl.getBoundingClientRect();
+    const tipH = tip.offsetHeight || 110;
+    const top = Math.max(86, Math.min(innerHeight - tipH - 16, rect.top));
+    tip.style.top = `${top}px`;
+  }
+
+  hidePartTooltip() {
+    const tip = $('part-tooltip');
+    if (tip) tip.classList.add('hidden');
+  }
+
   renderPalette() {
     const list = $('part-list');
     list.innerHTML = '';
@@ -232,39 +265,83 @@ export class BuildScene {
       h.className = 'cat';
       h.textContent = cat;
       list.appendChild(h);
+      const grid = document.createElement('div');
+      grid.className = 'part-grid';
       for (const type of types) {
         const def = PARTS[type];
         const card = document.createElement('div');
         card.className = 'part-card';
-        const meta = [];
-        meta.push(`${(def.dry + (def.fuel || 0)).toFixed(2)} t${def.kind === 'radial' ? tr(' mỗi chiếc', ' each') : ''}`);
-        if (def.thrustVac) meta.push(`${def.thrustSL}–${def.thrustVac} kN · Isp ${def.ispVac}s`);
-        card.innerHTML = `<img src="${thumbs[type]}" alt=""><div><div class="pc-name">${def.name}</div><div class="pc-meta">${meta.join('<br>')}<br>${def.desc}</div></div>`;
-        card.addEventListener('pointerdown', (e) => this.startDrag(e, type, thumbs[type]));
-        list.appendChild(card);
+        const badgeTxt = def.thrustVac
+          ? `🔥${def.thrustVac}`
+          : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+        const shortName = def.name.replace(/\s*×\d+$/i, '');
+        card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
+        card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
+        card.addEventListener('pointerleave', () => this.hidePartTooltip());
+        card.addEventListener('pointerdown', (e) => {
+          this.hidePartTooltip();
+          this.startDrag(e, type, thumbs[type]);
+        });
+        grid.appendChild(card);
       }
+      list.appendChild(grid);
     }
   }
 
   renderPresets() {
     const sel = $('preset');
     const lang = getLang();
-    sel.innerHTML = `<option value="">${tr('📐 Mẫu tên lửa…', '📐 Rocket Presets…')}</option>`;
-    for (const name of Object.keys(PRESETS)) {
-      const o = document.createElement('option');
-      o.value = name;
-      o.textContent = PRESET_LABELS[name]?.[lang] || name;
-      sel.appendChild(o);
+    if (sel) {
+      sel.innerHTML = `<option value="">${tr('📐 Mẫu tên lửa…', '📐 Rocket Presets…')}</option>`;
+      for (const name of Object.keys(PRESETS)) {
+        const o = document.createElement('option');
+        o.value = name;
+        const ico = PRESET_ICONS[name] || '🚀';
+        o.textContent = `${ico} ${PRESET_LABELS[name]?.[lang] || name}`;
+        sel.appendChild(o);
+      }
+    }
+    const pCards = $('preset-cards');
+    if (pCards) {
+      pCards.innerHTML = Object.keys(PRESETS).map((name) => {
+        const ico = PRESET_ICONS[name] || '🚀';
+        const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
+        const partCount = PRESETS[name].length;
+        return `<div class="preset-card" data-preset="${name}">
+          <div class="prc-ico">${ico}</div>
+          <div>
+            <div class="prc-name">${cleanLabel}</div>
+            <div class="prc-meta">${partCount} ${tr('tầng/khối', 'modules')}</div>
+          </div>
+        </div>`;
+      }).join('');
+      pCards.querySelectorAll('.preset-card').forEach((el) => {
+        el.addEventListener('click', () => {
+          const pName = el.dataset.preset;
+          if (!pName || !PRESETS[pName]) return;
+          this.pushHistory();
+          this.stack = stackFromTypes(PRESETS[pName]);
+          this.select(null);
+          this.rebuild(true);
+          if ($('preset-modal')) $('preset-modal').classList.add('hidden');
+          audio.click();
+        });
+      });
     }
   }
 
   renderMissionCards() {
     const cards = $('mission-cards');
-    cards.innerHTML = MISSIONS.map((m) => `<div class="mission-card" data-id="${m.id}"><div class="mc-ico">${m.icon}</div><div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div>${m.objectives.length ? '<ul>' + m.objectives.map((o) => '<li>' + o.text + '</li>').join('') + '</ul>' : ''}</div></div>`).join('');
+    cards.innerHTML = MISSIONS.map((m) => `<div class="mission-card ${m.id === (this.missionId || 'free') ? 'active' : ''}" data-id="${m.id}"><div class="mc-ico">${m.icon}</div><div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div>${m.objectives.length ? '<ul>' + m.objectives.map((o) => '<li>' + o.text + '</li>').join('') + '</ul>' : ''}</div></div>`).join('');
     cards.querySelectorAll('.mission-card').forEach((el) => el.addEventListener('click', () => { this.setMission(el.dataset.id, true); $('mission-modal').classList.add('hidden'); audio.click(); }));
     const curM = missionById(this.missionId || 'free');
     const nm = $('mission-name');
     if (nm && curM) nm.textContent = curM.name;
+    const btnM = $('btn-mission');
+    if (btnM && curM) {
+      btnM.textContent = '🎯';
+      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${curM.icon} ${curM.name}`;
+    }
   }
 
   refreshLanguage() {
@@ -311,7 +388,7 @@ export class BuildScene {
     $('bar-rot-z').onclick = (e) => this.rotateSelection('z', e.shiftKey ? -Math.PI / 2 : Math.PI / 2);
     $('bar-rot-reset').onclick = () => this.resetSelectionRot();
 
-    // mission picker
+    // mission picker & preset modal
     this.missionId = 'free';
     this.renderMissionCards();
     const closeMissionModal = () => {
@@ -324,6 +401,19 @@ export class BuildScene {
     $('mission-modal').addEventListener('click', (e) => {
       if (e.target === $('mission-modal')) closeMissionModal();
     });
+
+    const closePresetModal = () => {
+      if ($('preset-modal')) $('preset-modal').classList.add('hidden');
+      audio.click();
+    };
+    if ($('btn-preset')) $('btn-preset').onclick = () => $('preset-modal')?.classList.remove('hidden');
+    if ($('btn-preset-close')) $('btn-preset-close').onclick = closePresetModal;
+    if ($('btn-preset-x')) $('btn-preset-x').onclick = closePresetModal;
+    if ($('preset-modal')) {
+      $('preset-modal').addEventListener('click', (e) => {
+        if (e.target === $('preset-modal')) closePresetModal();
+      });
+    }
 
     window.addEventListener('pointermove', (e) => this.onDragMove(e));
     window.addEventListener('pointerup', (e) => this.onDragEnd(e));
@@ -340,6 +430,10 @@ export class BuildScene {
       if (e.key === 'Escape') {
         if (!$('mission-modal').classList.contains('hidden')) {
           $('mission-modal').classList.add('hidden');
+          return;
+        }
+        if ($('preset-modal') && !$('preset-modal').classList.contains('hidden')) {
+          $('preset-modal').classList.add('hidden');
           return;
         }
         this.select(null);
@@ -401,7 +495,7 @@ export class BuildScene {
           obj.add(fl);
         }
       }
-      else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
+      else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
         obj = new THREE.Group();
         for (const pl of radialPlacements(type)) {
           const sl = buildPart(type);
@@ -468,6 +562,14 @@ export class BuildScene {
     this.app.missionId = m.id;
     const nm = document.getElementById('mission-name');
     if (nm) nm.textContent = m.name;
+    const btnM = $('btn-mission');
+    if (btnM) {
+      btnM.textContent = '🎯';
+      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${m.icon} ${m.name}`;
+    }
+    document.querySelectorAll('#mission-cards .mission-card').forEach((el) => {
+      el.classList.toggle('active', el.dataset.id === m.id);
+    });
     if (loadPreset && m.preset && PRESETS[m.preset]) {
       this.pushHistory();
       this.stack = stackFromTypes(PRESETS[m.preset]);
@@ -603,10 +705,20 @@ export class BuildScene {
       // topmost tank of the bottom stage (directly below the lowest decoupler)
       const idx = stages[stages.length - 1] || [];
       for (const i of idx) if (isTank(i)) { if (!st[i].attach.includes('gridfins')) { st[i].attach.push('gridfins'); placed = true; } break; }
-    } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon') {
-      // prefer upper-stage tank or capsule/cabin first
-      for (let i = 0; i < st.length; i++) {
-        if (isTank(i) && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
+    } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
+      // For solarPanel, prefer battery packs first so it recharges battery energy
+      if (type === 'solarPanel') {
+        for (let i = 0; i < st.length; i++) {
+          const d = PARTS[st[i].type];
+          const isBat = st[i].type === 'batteryPack' || st[i].type === 'batteryPackL' || d?.isBattery || st[i].type === 'chassisRover';
+          if (isBat && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
+        }
+      }
+      // prefer upper-stage tank or capsule/cabin next
+      if (!placed) {
+        for (let i = 0; i < st.length; i++) {
+          if (isTank(i) && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
+        }
       }
       if (!placed) {
         for (let i = 0; i < st.length; i++) {
@@ -892,9 +1004,12 @@ export class BuildScene {
     twrEl.style.color = twr >= 1.2 ? 'var(--ok)' : twr >= 1 ? '#ffd23d' : 'var(--danger)';
     $('st-dv').textContent = Math.round(st.totalDv) + ' m/s';
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
-    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">${tr('Tầng', 'Stage')} ${s.num}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
+    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.solarOnBattery ? ' ☀️⚡' : ''}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
     const w = $('warnings');
-    w.innerHTML = st.warnings.length ? st.warnings.map((x) => `<div>⚠ ${x}</div>`).join('') : `<div class="ok">✔ ${tr('Tên lửa sẵn sàng phóng!', 'Rocket is ready for launch!')}</div>`;
+    const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
+    w.innerHTML = st.warnings.length
+      ? st.warnings.map((x) => `<div>⚠ ${x}</div>`).join('')
+      : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}</div>`;
     $('btn-launchpad').disabled = !this.stack.length;
     this.stats = st;
   }
@@ -911,6 +1026,7 @@ export class BuildScene {
   exit() {
     this.active = false;
     this.controls.enabled = false;
+    this.hidePartTooltip();
     $('build-ui').classList.add('hidden');
     this.select(null);
     audio.ambience(false);

@@ -585,6 +585,30 @@ const MISSION_I18N = {
       },
     },
   },
+  alien5000: {
+    vi: {
+      name: 'Tiêu diệt 5000 Alien + Hoàng Hậu & Vua (Không tự lái)',
+      desc: 'Thánh chiến tận thế: Tự tay lái chiến hạm tiêu diệt đủ 5000 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao, đồng thời hạ gục cả Siêu Trùm Alien Hoàng Hậu (9.500 HP) và Alien Vua (10.000 HP) ở độ cao 1.000.000.000 km (Không có chế độ Lái tự động).',
+      objs: {
+        kill1000: 'Tiêu diệt 1000 UFO Alien',
+        kill2500: 'Tiêu diệt 2500 UFO Alien',
+        kill5000: 'Tiêu diệt toàn bộ 5000 UFO Alien',
+        killQueen: 'Tiêu diệt Siêu Trùm Alien Hoàng Hậu (9.500 HP)',
+        killKing: 'Tiêu diệt Siêu Trùm Alien Vua (10.000 HP)',
+      },
+    },
+    en: {
+      name: 'Annihilate 5000 Aliens + Queen & King (No Autopilot)',
+      desc: 'Apocalyptic cosmic crusade: Manually pilot your warship to annihilate 5000 Alien UFOs across the Solar System and Interstellar Space, and defeat both the Colossal Alien Queen (9,500 HP) and Alien King (10,000 HP) at 1,000,000,000 km altitude (No Autopilot mode).',
+      objs: {
+        kill1000: 'Destroy 1000 Alien UFOs',
+        kill2500: 'Destroy 2500 Alien UFOs',
+        kill5000: 'Annihilate all 5000 Alien UFOs',
+        killQueen: 'Defeat the Colossal Alien Queen (9,500 HP)',
+        killKing: 'Defeat the Colossal Alien King (10,000 HP)',
+      },
+    },
+  },
   orbit: {
     vi: {
       name: 'Lên quỹ đạo',

@@ -108,8 +108,8 @@ export class LaunchScene {
           this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
           if (this.mission && this.mission.id !== 'free') {
             if (this.mission.noAutopilot) {
-              const targetCount = this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
-              this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens!`));
+              const targetCount = this.mission.id === 'alien5000' ? 5000 : this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
+              this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien${this.mission.id === 'alien5000' ? ' cùng Hoàng Hậu & Vua' : ''}!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens${this.mission.id === 'alien5000' ? ' plus the Queen & King' : ''}!`));
             } else {
               this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
             }
@@ -1981,7 +1981,7 @@ export class LaunchScene {
     this.lifted = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
-    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500') this.aliensKilled = 0;
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500' || this.mission?.id === 'alien5000') this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
@@ -2030,8 +2030,8 @@ export class LaunchScene {
     this.sc = this.makeContext();
     if (this.mission.id !== 'free' && !isSpecial) {
       if (this.mission.noAutopilot) {
-        const targetCount = this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
-        this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens!`));
+        const targetCount = this.mission.id === 'alien5000' ? 5000 : this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
+        this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien${this.mission.id === 'alien5000' ? ' cùng Hoàng Hậu & Vua' : ''}!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens${this.mission.id === 'alien5000' ? ' plus the Queen & King' : ''}!`));
       } else {
         this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
       }
@@ -2126,7 +2126,7 @@ export class LaunchScene {
     if (!this.mission || this.mission.id === 'free' || this.mission.noAutopilot) {
       this.program = null;
       this.autoShootAliens = false;
-      const targetCount = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
+      const targetCount = this.mission?.id === 'alien5000' ? 5000 : this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
       this.event(
         this.mission?.noAutopilot
           ? tr(
@@ -2366,7 +2366,7 @@ export class LaunchScene {
     const objs = this.mission.objectives;
     if (!objs.length) return;
     const kills = this.aliensKilled || 0;
-    const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500' || this.mission.id === 'alien1500';
+    const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500' || this.mission.id === 'alien1500' || this.mission.id === 'alien5000';
     const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('') + (isAlienMission ? `_${kills}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
@@ -2387,6 +2387,16 @@ export class LaunchScene {
         label = `${o.text} (${Math.min(750, kills)}/750)`;
       } else if (o.id === 'kill1500') {
         label = `${o.text} (${Math.min(1500, kills)}/1500)`;
+      } else if (o.id === 'kill1000') {
+        label = `${o.text} (${Math.min(1000, kills)}/1000)`;
+      } else if (o.id === 'kill2500') {
+        label = `${o.text} (${Math.min(2500, kills)}/2500)`;
+      } else if (o.id === 'kill5000') {
+        label = `${o.text} (${Math.min(5000, kills)}/5000)`;
+      } else if (o.id === 'killQueen') {
+        label = `${o.text} (${this.flags.killQueen ? 1 : 0}/1)`;
+      } else if (o.id === 'killKing') {
+        label = `${o.text} (${this.flags.killKing ? 1 : 0}/1)`;
       }
       return `<div class="mp-row ${this.flags[o.id] ? 'done' : ''}"><i>${this.flags[o.id] ? '✔' : '○'}</i>${label}</div>`;
     }).join('');
@@ -2398,7 +2408,7 @@ export class LaunchScene {
     if (!v || this.phase === 'crashed') return;
     const F = this.flags;
     const kills = this.aliensKilled || 0;
-    const alienTarget = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
+    const alienTarget = this.mission?.id === 'alien5000' ? 5000 : this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
     if (kills >= 25 && !F.kill25) {
       this.setFlag('kill25');
       this.milestone(
@@ -2446,10 +2456,12 @@ export class LaunchScene {
     }
     if (kills >= 500 && !F.kill500) {
       this.setFlag('kill500');
-      if (alienTarget === 1500) {
+      if (alienTarget === 1500 || alienTarget === 5000) {
         this.milestone(
-          tr('👽🔥 ĐÃ DIỆT 500/1500 ALIEN!', '👽🔥 500/1500 ALIENS ELIMINATED!'),
-          tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
+          tr(`👽🔥 ĐÃ DIỆT 500/${alienTarget} ALIEN!`, `👽🔥 500/${alienTarget} ALIENS ELIMINATED!`),
+          alienTarget === 1500
+            ? tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
+            : tr('Đạt cột mốc 500/5000 Alien! Tiếp tục tiến sâu vào vũ trụ!', 'Reached 500/5000 Aliens milestone! Keep pushing into deep space!')
         );
       } else {
         this.milestone(
@@ -2467,11 +2479,45 @@ export class LaunchScene {
         );
       }
     }
+    if (kills >= 1000 && !F.kill1000) {
+      this.setFlag('kill1000');
+      if (alienTarget === 5000) {
+        this.milestone(
+          tr('👽🔥 ĐÃ DIỆT 1000/5000 ALIEN!', '👽🔥 1000/5000 ALIENS ELIMINATED!'),
+          tr('Đạt cột mốc 1000/5000 Alien! Hãy tiến tới 1.000.000.000 km để săn Vua & Hoàng Hậu!', 'Reached 1000/5000 Aliens milestone! Push toward 1,000,000,000 km to hunt the King & Queen!')
+        );
+      }
+    }
     if (kills >= 1500 && !F.kill1500) {
       this.setFlag('kill1500');
+      if (alienTarget === 5000) {
+        this.milestone(
+          tr('👽🔥 ĐÃ DIỆT 1500/5000 ALIEN!', '👽🔥 1500/5000 ALIENS ELIMINATED!'),
+          tr('Tiếp tục đại chiến tiêu diệt đủ 5000 Alien cùng Hoàng Hậu & Vua!', 'Keep fighting to eliminate all 5000 Aliens along with the Queen & King!')
+        );
+      } else {
+        this.milestone(
+          tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
+          tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
+        );
+      }
+    }
+    if (kills >= 2500 && !F.kill2500) {
+      this.setFlag('kill2500');
+      if (alienTarget === 5000) {
+        this.milestone(
+          tr('👽⚡ ĐÃ DIỆT 2500/5000 ALIEN!', '👽⚡ 2500/5000 ALIENS ELIMINATED!'),
+          tr('Đã hoàn thành 50% số lượng UFO Alien trong chiến dịch 5000 Alien!', 'Halfway through the 5000 Alien UFOs target!')
+        );
+      }
+    }
+    if (kills >= 5000 && !F.kill5000) {
+      this.setFlag('kill5000');
       this.milestone(
-        tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
-        tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
+        tr('⚔️🌌💥 ĐẠI THẦN CHIẾN: ĐÃ TIÊU DIỆT ĐỦ 5000 ALIEN!', '⚔️🌌💥 GODSLAYER WAR: 5000 ALIENS ANNIHILATED!'),
+        F.killKing && F.killQueen
+          ? tr('Huyền thoại tối thượng! Đã diệt đủ 5000 Alien cùng cả Hoàng Hậu & Vua Alien!', 'Supreme Legend! Eliminated all 5000 Aliens along with both the Alien Queen & King!')
+          : tr('Đã diệt đủ 5000 UFO Alien! Hãy tiêu diệt nốt Alien Hoàng Hậu & Vua ở độ cao 1.000.000.000 km!', '5000 Alien UFOs destroyed! Now defeat the Alien Queen & King at 1,000,000,000 km!')
       );
     }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.space) { this.setFlag('space'); this.setFlag('alt70'); }
@@ -3418,13 +3464,13 @@ export class LaunchScene {
     const distKm = effDist / 1000;
     const logProg = Math.max(0, Math.log10(Math.max(70, distKm)) - Math.log10(70)); // 0 at 70 km .. ~4.0 at Pluto/Interstellar
     const outerProg = Math.min(14, distKm / 55000);                                 // 0 near Earth .. 14 at Pluto/Interstellar
-    const missionBonus = this.mission?.id === 'alien1500' ? 6 : (this.mission?.id === 'alien500' ? 4 : (this.mission?.id === 'alien100' ? 2 : 0));
-    const maxConcurrentAliens = Math.min(32, Math.max(2, Math.round(2 + logProg * 2.2 + outerProg) + missionBonus));
+    const missionBonus = this.mission?.id === 'alien5000' ? 10 : (this.mission?.id === 'alien1500' ? 6 : (this.mission?.id === 'alien500' ? 4 : (this.mission?.id === 'alien100' ? 2 : 0)));
+    const maxConcurrentAliens = Math.min(36, Math.max(2, Math.round(2 + logProg * 2.2 + outerProg) + missionBonus));
     const factor = Math.min(1, logProg / 4.0);
 
     const baseInterval = Math.max(0.32, 2.6 - logProg * 0.45 - outerProg * 0.04);
-    const missionMul = this.mission?.id === 'alien1500' ? 0.42 : (this.mission?.id === 'alien500' ? 0.55 : (this.mission?.id === 'alien100' ? 0.72 : 1.0));
-    const spawnInterval = Math.max(0.25, baseInterval * missionMul);
+    const missionMul = this.mission?.id === 'alien5000' ? 0.32 : (this.mission?.id === 'alien1500' ? 0.42 : (this.mission?.id === 'alien500' ? 0.55 : (this.mission?.id === 'alien100' ? 0.72 : 1.0)));
+    const spawnInterval = Math.max(0.20, baseInterval * missionMul);
     const deficit = maxConcurrentAliens - (this.aliens ? this.aliens.length : 0);
     const batchSize = deficit >= 12 ? 3 : (deficit >= 5 ? 2 : 1);
 
@@ -3841,7 +3887,9 @@ export class LaunchScene {
     if (alien.mesh && alien.mesh.parent) alien.mesh.parent.remove(alien.mesh);
     this.aliens = this.aliens.filter((a) => a !== alien);
     this.aliensKilled = (this.aliensKilled || 0) + 1;
-    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500') {
+    if (alien.tier === 'king') this.setFlag('killKing');
+    else if (alien.tier === 'queen') this.setFlag('killQueen');
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500' || this.mission?.id === 'alien5000') {
       this.checkObjectives();
       this.renderMissionPanel(false);
     }
@@ -5370,7 +5418,7 @@ export class LaunchScene {
     const btnAp = $('btn-autopilot');
     if (btnAp) {
       if (isAutopilotLocked) {
-        const targetCount = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
+        const targetCount = this.mission?.id === 'alien5000' ? 5000 : this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
         btnAp.innerHTML = `🚫 ${tr('Khóa', 'Locked')} <kbd>G</kbd>`;
         btnAp.title = this.mission?.noAutopilot
           ? tr(`Nhiệm vụ diệt ${targetCount} Alien không hỗ trợ tự lái`, `Autopilot disabled for ${targetCount} Aliens mission`)

@@ -36,6 +36,18 @@ export const MISSIONS = [
     ],
   },
   {
+    id: 'alien5000', icon: '⚔️', name: 'Tiêu diệt 5000 Alien + Hoàng Hậu & Vua (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Thánh chiến tận thế: Tự tay lái chiến hạm tiêu diệt đủ 5000 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao, đồng thời hạ gục cả Siêu Trùm Alien Hoàng Hậu (9.500 HP) và Alien Vua (10.000 HP) ở độ cao 1.000.000.000 km (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill1000', text: 'Tiêu diệt 1000 UFO Alien' },
+      { id: 'kill2500', text: 'Tiêu diệt 2500 UFO Alien' },
+      { id: 'kill5000', text: 'Tiêu diệt toàn bộ 5000 UFO Alien' },
+      { id: 'killQueen', text: 'Tiêu diệt Siêu Trùm Alien Hoàng Hậu (9.500 HP)' },
+      { id: 'killKing', text: 'Tiêu diệt Siêu Trùm Alien Vua (10.000 HP)' },
+    ],
+  },
+  {
     id: 'orbit', icon: '🛰', name: 'Lên quỹ đạo', preset: 'Hai tầng (khuyên dùng)',
     desc: 'Đưa tên lửa vào quỹ đạo ổn định quanh Trái Đất (cận điểm trên 70 km).',
     objectives: [

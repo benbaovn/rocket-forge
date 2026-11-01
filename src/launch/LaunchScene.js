@@ -5520,7 +5520,7 @@ export class LaunchScene {
       if (activeWeapons.some((w) => w.weaponType === 'acid')) wNames.push(tr('AXIT', 'ACID'));
       if (activeWeapons.some((w) => w.weaponType === 'electric')) wNames.push(tr('ĐIỆN 1M WATT', '1M WATT ELECTRIC'));
       const wTag = wNames.length ? wNames.join(' + ') : tr('DỰ PHÒNG', 'BACKUP');
-      btnFire.innerHTML = `🔫 ${tr('Bắn', 'Fire')}${this.astronautsAboard > 0 ? ` <small style="color:#facc15">⚡${fireMulStr}×</small>` : ''} <kbd>V</kbd>`;
+      btnFire.innerHTML = `🔫 ${tr('Bắn', 'Fire')} <kbd>V</kbd>`;
       btnFire.title = `${tr('Vũ khí', 'Weapons')}: ${wTag} · ${tr('Tốc độ bắn', 'Fire Rate')}: ${fireMulStr}× (${this.astronautsAboard}/${maxAstro} 👨‍🚀)`;
     }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);

@@ -328,3 +328,34 @@ export const MISSIONS = [
 ];
 
 export const missionById = (id) => MISSIONS.find((m) => m.id === id) || MISSIONS[0];
+
+const COMPLETED_MISSIONS_KEY = 'rf-completed-missions';
+
+export function getCompletedMissions() {
+  try {
+    const raw = localStorage.getItem(COMPLETED_MISSIONS_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function isMissionCompleted(id) {
+  if (!id || id === 'free') return false;
+  return getCompletedMissions().has(id);
+}
+
+export function markMissionCompleted(id) {
+  if (!id || id === 'free') return false;
+  try {
+    const set = getCompletedMissions();
+    set.add(id);
+    localStorage.setItem(COMPLETED_MISSIONS_KEY, JSON.stringify([...set]));
+    return true;
+  } catch {
+    return false;
+  }
+}
+

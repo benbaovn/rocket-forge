@@ -16,7 +16,7 @@ import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, ang
 import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI } from '../sim/constants.js';
 import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
-import { MISSIONS, missionById } from '../missions.js';
+import { MISSIONS, missionById, isMissionCompleted, markMissionCompleted } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
 import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, OLYMPUS_PSI } from '../fx/moon.js';
@@ -1992,8 +1992,10 @@ export class LaunchScene {
     this.lifted = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
+    this.missionCompletedMarked = false;
     if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500' || this.mission?.id === 'alien5000') this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
+    if (this.completeTimer) clearTimeout(this.completeTimer);
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
     this.astronautsAboard = 0;
@@ -2381,7 +2383,8 @@ export class LaunchScene {
     const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('') + (isAlienMission ? `_${kills}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
-    $('mp-title').textContent = this.mission.icon + ' ' + this.mission.name;
+    const doneMark = isMissionCompleted(this.mission.id) ? ' ✔' : '';
+    $('mp-title').textContent = this.mission.icon + ' ' + this.mission.name + doneMark;
     $('mp-list').innerHTML = objs.map((o) => {
       let label = o.text;
       if (o.id === 'kill25') label = `${o.text} (${Math.min(25, kills)}/25)`;
@@ -2559,9 +2562,17 @@ export class LaunchScene {
     }
     // mission completion
     const objs = this.mission.objectives;
-    if (objs.length && objs.every((o) => F[o.id]) && !this.completeTimer && !this.resultShown) {
-      this.completeTimer = setTimeout(() => this.showResult(true, tr('Hoàn thành nhiệm vụ: ' + this.mission.name + '!', 'Mission accomplished: ' + this.mission.name + '!')), 4500);
-      this.milestone(tr('NHIỆM VỤ HOÀN THÀNH', 'MISSION COMPLETE'), this.mission.name);
+    if (objs.length && objs.every((o) => F[o.id])) {
+      if (!this.missionCompletedMarked) {
+        this.missionCompletedMarked = true;
+        markMissionCompleted(this.mission.id);
+        this.renderMissionPanel(true);
+        if (this.app?.build?.renderMissionCards) this.app.build.renderMissionCards();
+      }
+      if (!this.completeTimer && !this.resultShown) {
+        this.completeTimer = setTimeout(() => this.showResult(true, tr('Hoàn thành nhiệm vụ: ' + this.mission.name + '!', 'Mission accomplished: ' + this.mission.name + '!')), 4500);
+        this.milestone(tr('NHIỆM VỤ HOÀN THÀNH', 'MISSION COMPLETE'), this.mission.name);
+      }
     }
     if (!objs.length && F.orbit && !this._freeOrbitNotified) {
       this._freeOrbitNotified = true;
@@ -2786,6 +2797,10 @@ export class LaunchScene {
   showResult(success, sub) {
     if (this.resultShown) return;
     this.resultShown = true;
+    if (success && this.mission && this.mission.id !== 'free') {
+      markMissionCompleted(this.mission.id);
+      if (this.app?.build?.renderMissionCards) this.app.build.renderMissionCards();
+    }
     const isSpecial = this.player && (this.player.isRover || this.player.isBoat || this.player.isPlane);
     const alt = this.maxAlt;
     let rank = 'F';

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
-import { MISSIONS, missionById } from '../missions.js';
+import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
 import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
@@ -399,15 +399,43 @@ export class BuildScene {
 
   renderMissionCards() {
     const cards = $('mission-cards');
-    cards.innerHTML = MISSIONS.map((m) => `<div class="mission-card ${m.id === (this.missionId || 'free') ? 'active' : ''}" data-id="${m.id}"><div class="mc-ico">${m.icon}</div><div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div>${m.objectives.length ? '<ul>' + m.objectives.map((o) => '<li>' + o.text + '</li>').join('') + '</ul>' : ''}</div></div>`).join('');
-    cards.querySelectorAll('.mission-card').forEach((el) => el.addEventListener('click', () => { this.setMission(el.dataset.id, true); $('mission-modal').classList.add('hidden'); audio.click(); }));
+    if (!cards) return;
+    cards.innerHTML = MISSIONS.map((m) => {
+      const active = m.id === (this.missionId || 'free') ? 'active' : '';
+      const done = isMissionCompleted(m.id);
+      const doneClass = done ? 'completed' : '';
+      const icoTick = done ? `<span class="mc-ico-tick" title="${tr('Đã hoàn thành', 'Completed')}">✔</span>` : '';
+      const badges = done
+        ? `<div class="mc-badges"><span class="mc-done-badge">✔ ${tr('Đã hoàn thành', 'Completed')}</span><span class="mc-replay-badge">🔄 ${tr('Chơi lại', 'Replay')}</span></div>`
+        : '';
+      const objList = m.objectives.length
+        ? '<ul>' + m.objectives.map((o) => `<li class="${done ? 'done' : ''}">${done ? '✔ ' : ''}${o.text}</li>`).join('') + '</ul>'
+        : '';
+      return `<div class="mission-card ${active} ${doneClass}" data-id="${m.id}">
+        <div class="mc-ico">${m.icon}${icoTick}</div>
+        <div class="mc-body">
+          <div class="mc-head">
+            <div class="mc-name">${m.name}</div>
+            ${badges}
+          </div>
+          <div class="mc-desc">${m.desc}</div>
+          ${objList}
+        </div>
+      </div>`;
+    }).join('');
+    cards.querySelectorAll('.mission-card').forEach((el) => el.addEventListener('click', () => {
+      this.setMission(el.dataset.id, true);
+      $('mission-modal').classList.add('hidden');
+      audio.click();
+    }));
     const curM = missionById(this.missionId || 'free');
+    const curDone = curM && isMissionCompleted(curM.id);
     const nm = $('mission-name');
-    if (nm && curM) nm.textContent = curM.name;
+    if (nm && curM) nm.textContent = curDone ? `${curM.name} ✔` : curM.name;
     const btnM = $('btn-mission');
     if (btnM && curM) {
-      btnM.textContent = '🎯';
-      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${curM.icon} ${curM.name}`;
+      btnM.textContent = curDone ? '🎯✔' : '🎯';
+      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${curM.icon} ${curM.name}${curDone ? ` (✔ ${tr('Đã hoàn thành – Có thể chơi lại', 'Completed – Replayable')})` : ''}`;
     }
   }
 
@@ -462,7 +490,10 @@ export class BuildScene {
       $('mission-modal').classList.add('hidden');
       audio.click();
     };
-    $('btn-mission').onclick = () => $('mission-modal').classList.remove('hidden');
+    $('btn-mission').onclick = () => {
+      this.renderMissionCards();
+      $('mission-modal').classList.remove('hidden');
+    };
     $('btn-mission-close').onclick = closeMissionModal;
     if ($('btn-mission-x')) $('btn-mission-x').onclick = closeMissionModal;
     $('mission-modal').addEventListener('click', (e) => {
@@ -632,12 +663,13 @@ export class BuildScene {
     const m = missionById(id);
     this.missionId = m.id;
     this.app.missionId = m.id;
+    const done = isMissionCompleted(m.id);
     const nm = document.getElementById('mission-name');
-    if (nm) nm.textContent = m.name;
+    if (nm) nm.textContent = done ? `${m.name} ✔` : m.name;
     const btnM = $('btn-mission');
     if (btnM) {
-      btnM.textContent = '🎯';
-      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${m.icon} ${m.name}`;
+      btnM.textContent = done ? '🎯✔' : '🎯';
+      btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${m.icon} ${m.name}${done ? ` (✔ ${tr('Đã hoàn thành – Có thể chơi lại', 'Completed – Replayable')})` : ''}`;
     }
     document.querySelectorAll('#mission-cards .mission-card').forEach((el) => {
       el.classList.toggle('active', el.dataset.id === m.id);
@@ -1100,6 +1132,7 @@ export class BuildScene {
     this.active = true;
     this.controls.enabled = true;
     $('build-ui').classList.remove('hidden');
+    this.renderMissionCards();
     this.updateStats();
     audio.ambience(true);
   }

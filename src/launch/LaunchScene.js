@@ -637,6 +637,7 @@ export class LaunchScene {
         });
         if (hitAlien) {
           audio.init();
+          this.firingHeld = true;
           this.fireWeapons(hitAlien);
         }
       }
@@ -1043,17 +1044,20 @@ export class LaunchScene {
     audio.thunk(0.55);
     this.hudTimer = 0;
     this.updateHUD(0);
+    const fireMul = this.getCrewFireRateMultiplier();
+    const fireMulStr = Number.isInteger(fireMul) ? `${fireMul}.0` : fireMul.toFixed(1);
+    const fireBonusPct = Math.round((fireMul - 1) * 100);
     this.milestone(
-      `👨‍🚀 +${added} ${tr('PHI HÀNH GIA LÊN TÀU', 'ASTRONAUT(S) ABOARD')}`,
+      `👨‍🚀 +${added} ${tr('PHI HÀNH GIA LÊN TÀU', 'ASTRONAUT(S) ABOARD')} · ⚡${fireMulStr}×`,
       tr(
-        `Phi hành đoàn trên tàu: ${this.astronautsAboard} / ${max} phi hành gia sẵn sàng làm nhiệm vụ!`,
-        `Crew aboard: ${this.astronautsAboard} / ${max} astronauts ready for the mission!`
+        `Phi hành đoàn: ${this.astronautsAboard}/${max} · Tốc độ bắn vũ khí tăng gấp ${fireMulStr}× (+${fireBonusPct}%)!`,
+        `Crew aboard: ${this.astronautsAboard}/${max} · Weapon fire rate boosted to ${fireMulStr}× (+${fireBonusPct}%)!`
       )
     );
     this.event(
       tr(
-        `👨‍🚀 Đã thêm ${added} phi hành gia vào tàu! (Hiện có: ${this.astronautsAboard}/${max})`,
-        `👨‍🚀 Added ${added} astronaut(s) to the craft! (Aboard: ${this.astronautsAboard}/${max})`
+        `👨‍🚀⚡ Đã thêm ${added} phi hành gia vào tàu! (Hiện có: ${this.astronautsAboard}/${max} · Tốc độ bắn: ${fireMulStr}× [+${fireBonusPct}%])`,
+        `👨‍🚀⚡ Added ${added} astronaut(s) to the craft! (Aboard: ${this.astronautsAboard}/${max} · Fire rate: ${fireMulStr}× [+${fireBonusPct}%])`
       ),
       'warn'
     );
@@ -1181,17 +1185,19 @@ export class LaunchScene {
 
     this.hudTimer = 0;
     this.updateHUD(0);
+    const fireMul = this.getCrewFireRateMultiplier();
+    const fireMulStr = Number.isInteger(fireMul) ? `${fireMul}.0` : fireMul.toFixed(1);
     this.milestone(
       `👨‍🚀 ${tr('ĐÃ THẢ', 'DEPLOYED')} ${canDeploy} ${tr('PHI HÀNH GIA XUỐNG', 'ASTRONAUT(S) ON')} ${B.label.toUpperCase()}!`,
       tr(
-        `Đã thả ${totalNow}/${max} phi hành gia xuống ${bodyDescVi} · Còn trên tàu: ${this.astronautsAboard}/${max}`,
-        `Deployed ${totalNow}/${max} astronauts on ${bodyDescEn} · Remaining aboard: ${this.astronautsAboard}/${max}`
+        `Đã thả ${totalNow}/${max} phi hành gia xuống ${bodyDescVi} · Còn trên tàu: ${this.astronautsAboard}/${max} (Tốc độ bắn: ${fireMulStr}×)`,
+        `Deployed ${totalNow}/${max} astronauts on ${bodyDescEn} · Remaining aboard: ${this.astronautsAboard}/${max} (Fire rate: ${fireMulStr}×)`
       )
     );
     this.event(
       tr(
-        `👨‍🚀🏳️ Đã thả ${canDeploy} phi hành gia xuống ${bodyDescVi}! (Đã thả: ${totalNow}/${max} · Trên tàu: ${this.astronautsAboard}/${max})`,
-        `👨‍🚀🏳️ Deployed ${canDeploy} astronaut(s) onto ${bodyDescEn}! (Deployed: ${totalNow}/${max} · Aboard: ${this.astronautsAboard}/${max})`
+        `👨‍🚀🏳️ Đã thả ${canDeploy} phi hành gia xuống ${bodyDescVi}! (Đã thả: ${totalNow}/${max} · Trên tàu: ${this.astronautsAboard}/${max} · Tốc độ bắn: ${fireMulStr}×)`,
+        `👨‍🚀🏳️ Deployed ${canDeploy} astronaut(s) onto ${bodyDescEn}! (Deployed: ${totalNow}/${max} · Aboard: ${this.astronautsAboard}/${max} · Fire rate: ${fireMulStr}×)`
       ),
       'warn'
     );
@@ -3634,6 +3640,21 @@ export class LaunchScene {
     return alien;
   }
 
+  /**
+   * More astronauts aboard = faster weapon fire rate!
+   * 0 astronauts -> 1.0x (0.18s cooldown)
+   * Each astronaut aboard adds +40% fire rate -> 10 astronauts = 5.0x fire rate (0.036s cooldown)
+   */
+  getCrewFireRateMultiplier() {
+    const crew = Math.max(0, this.astronautsAboard || 0);
+    return +(1 + crew * 0.4).toFixed(2);
+  }
+
+  getWeaponCooldown() {
+    const baseCooldown = 0.18;
+    return baseCooldown / this.getCrewFireRateMultiplier();
+  }
+
   fireWeapons(targetAlien = null) {
     const P = this.player;
     if (!P || P.dead || P.crashed) return;
@@ -3657,7 +3678,8 @@ export class LaunchScene {
       ];
     }
 
-    this.weaponCooldown = 0.14;
+    const cd = this.getWeaponCooldown();
+    this.weaponCooldown = Math.max(cd * 0.25, (this.weaponCooldown || 0) + cd);
 
     // Pick target Alien (either clicked Alien, or Royal King/Queen first, then closest Alien)
     let tgt = targetAlien;
@@ -4046,9 +4068,14 @@ export class LaunchScene {
     if (!this.aliens) this.aliens = [];
     if (!this.weaponBeams) this.weaponBeams = [];
 
-    this.weaponCooldown = Math.max(0, (this.weaponCooldown || 0) - dt);
-    if ((this.keys['v'] || this.keys['enter'] || this.firingHeld) && this.weaponCooldown <= 0) {
-      this.fireWeapons();
+    this.weaponCooldown = (this.weaponCooldown || 0) - dt;
+    if (this.keys['v'] || this.keys['enter'] || this.firingHeld) {
+      let burstGuard = 0;
+      while (this.weaponCooldown <= 0 && burstGuard++ < 4) {
+        this.fireWeapons();
+      }
+    } else {
+      this.weaponCooldown = Math.max(0, this.weaponCooldown);
     }
 
     // Never allow Aliens on Earth (< ATM_TOP); only spawn in outer space or on other planets/moons
@@ -4202,8 +4229,11 @@ export class LaunchScene {
         w.turret.rotation.z = Math.sin(this.time * 3.5) * 0.12;
       }
     }
-    if ((this.program || this.autoShootAliens) && nearestAlien && this.weaponCooldown <= 0) {
-      this.fireWeapons(nearestAlien);
+    if ((this.program || this.autoShootAliens) && nearestAlien) {
+      let burstGuard = 0;
+      while (nearestAlien && !nearestAlien.dead && nearestAlien.hp > 0 && this.weaponCooldown <= 0 && burstGuard++ < 4) {
+        this.fireWeapons(nearestAlien);
+      }
     }
 
     // Update active laser & 1,000,000 PSI water beams
@@ -5450,17 +5480,20 @@ export class LaunchScene {
     const isGasGiant = !!(P && BODIES[P.ref]?.gasGiant);
     const curBodyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P?.ref).length;
     const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && !isGasGiant && !!P.landed && this.astronautsAboard > 0 && curBodyDeployed < maxAstro;
+    const fireMul = this.getCrewFireRateMultiplier();
+    const fireMulStr = Number.isInteger(fireMul) ? `${fireMul}.0` : fireMul.toFixed(1);
+    const fireRateTag = this.astronautsAboard > 0 ? ` ⚡${fireMulStr}×` : '';
     const astroEl = $('h-astronauts');
     if (astroEl) {
       astroEl.textContent = curBodyDeployed > 0
-        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})`
-        : `${this.astronautsAboard}/${maxAstro}`;
+        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})${fireRateTag}`
+        : `${this.astronautsAboard}/${maxAstro}${fireRateTag}`;
     }
     const astroBadge = $('astro-count-badge');
     if (astroBadge) {
       astroBadge.textContent = curBodyDeployed > 0
-        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})`
-        : `${this.astronautsAboard}/${maxAstro}`;
+        ? `${this.astronautsAboard}/${maxAstro} (↓${curBodyDeployed})${fireRateTag}`
+        : `${this.astronautsAboard}/${maxAstro}${fireRateTag}`;
     }
     const astroPadBox = $('astro-pad-btns');
     if (astroPadBox) {
@@ -5489,8 +5522,8 @@ export class LaunchScene {
       if (activeWeapons.some((w) => w.weaponType === 'acid')) wNames.push(tr('AXIT', 'ACID'));
       if (activeWeapons.some((w) => w.weaponType === 'electric')) wNames.push(tr('ĐIỆN 1M WATT', '1M WATT ELECTRIC'));
       const wTag = wNames.length ? wNames.join(' + ') : tr('DỰ PHÒNG', 'BACKUP');
-      btnFire.innerHTML = `🔫 ${tr('Bắn', 'Fire')} <kbd>V</kbd>`;
-      btnFire.title = `${tr('Vũ khí', 'Weapons')}: ${wTag}`;
+      btnFire.innerHTML = `🔫 ${tr('Bắn', 'Fire')}${this.astronautsAboard > 0 ? ` <small style="color:#facc15">⚡${fireMulStr}×</small>` : ''} <kbd>V</kbd>`;
+      btnFire.title = `${tr('Vũ khí', 'Weapons')}: ${wTag} · ${tr('Tốc độ bắn', 'Fire Rate')}: ${fireMulStr}× (${this.astronautsAboard}/${maxAstro} 👨‍🚀)`;
     }
     const thr = this.docked ? 0 : (this.program ? (P.engineOn ? P.throttle : 0) : this.throttle);
     $('h-thr').style.width = thr * 100 + '%';

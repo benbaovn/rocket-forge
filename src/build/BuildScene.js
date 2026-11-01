@@ -254,11 +254,77 @@ export class BuildScene {
     if (tip) tip.classList.add('hidden');
   }
 
+  getPartCardLabel(type, def) {
+    const labels = {
+      apollo11CM: ['Apollo 11 · Tàu CM', 'Apollo 11 · CM Tower'],
+      apollo11SM: ['Apollo 11 · Khoang SM', 'Apollo 11 · SM Stage'],
+      apollo11SLA: ['Apollo 11 · Khoang LM', 'Apollo 11 · SLA & LM'],
+      apollo11S4B: ['Apollo 11 · Tầng 3 S-IVB', 'Apollo 11 · S-IVB (S3)'],
+      apollo11S4BInter: ['Apollo 11 · Cổ S-IVB/S-II', 'Apollo 11 · S-IVB Inter'],
+      apollo11S2: ['Apollo 11 · Tầng 2 S-II', 'Apollo 11 · S-II (S2)'],
+      apollo11S2Inter: ['Apollo 11 · Vòng S-II/S-IC', 'Apollo 11 · S-II Inter'],
+      apollo11S1: ['Apollo 11 · Tầng 1 (5× F-1)', 'Apollo 11 · S-IC (5× F-1)'],
+      soyuzNose: ['Soyuz · Mũi Tàu Soyuz', 'Soyuz · Fairing & Ship'],
+      soyuzFairing: ['Soyuz · Khoang Tải Cam', 'Soyuz · Payload Shroud'],
+      soyuzBlockI: ['Soyuz · Tầng 3 Block I', 'Soyuz · Block I (S3)'],
+      soyuzCore: ['Soyuz · Thân Block A', 'Soyuz · Block A Core'],
+      soyuzBooster: ['Soyuz · 4 Booster R-7', 'Soyuz · 4× R-7 Boosters'],
+      n1Tower: ['N1 Liên Xô · Tháp LOK', 'Soviet N1 · LOK Tower'],
+      n1Fairing: ['N1 Liên Xô · Khoang L3', 'Soviet N1 · L3 Shroud'],
+      n1BlockV: ['N1 Liên Xô · Tầng 3 (V)', 'Soviet N1 · Block V (S3)'],
+      n1BlockB: ['N1 Liên Xô · Tầng 2 (B)', 'Soviet N1 · Block B (S2)'],
+      n1BlockA: ['N1 Liên Xô · T1 (30 NK-15)', 'Soviet N1 · Block A (S1)'],
+      buranNose: ['Buran · Chóp Mũi Energia', 'Buran · Energia Nose'],
+      buranShuttle: ['Buran · Tàu Con Thoi', 'Buran · Shuttle Orbiter'],
+      buranEnergia: ['Buran · T1 (4 Booster)', 'Buran · Energia + 4 Zenit'],
+      energiaPolyus: ['Energia · Trạm МИР-2', 'Energia · Polyus МИР-2'],
+      cz5Fairing: ['Trường Chinh 5 · Chóp Mũi', 'Long March 5 · Fairing'],
+      cz5Stage2: ['Trường Chinh 5 · Tầng 2', 'Long March 5 · Stage 2'],
+      cz5Stage1: ['Trường Chinh 5 · T1 (4B)', 'Long March 5 · Stage 1'],
+      ariane5Fairing: ['Ariane 5 · Chóp Mũi ECA', 'Ariane 5 · ECA Fairing'],
+      ariane5Stage2: ['Ariane 5 · Thân Trên EPC', 'Ariane 5 · Upper EPC'],
+      ariane5Stage1: ['Ariane 5 · T1 + 2 EAP', 'Ariane 5 · Core + 2 EAP'],
+      slsOrion: ['SLS Artemis · Tàu Orion', 'SLS Artemis · Orion LAS'],
+      slsStage2: ['SLS Artemis · Tầng 2 Cam', 'SLS Artemis · Upper SOFI'],
+      slsStage1: ['SLS Artemis · T1 + 2 SRB', 'SLS Artemis · Core + SRB'],
+      atlasVFairing: ['Atlas V · Chóp Mũi 5m', 'Atlas V · 5m Fairing'],
+      atlasVStage2: ['Atlas V · Tầng 2 Đồng', 'Atlas V · Upper CCB'],
+      atlasVStage1: ['Atlas V · T1 + 2 Booster', 'Atlas V · CCB + 2 SRB'],
+      fhFairing: ['Falcon Heavy · Chóp Mũi', 'Falcon Heavy · Fairing'],
+      fhStage2: ['Falcon Heavy · Tầng 2', 'Falcon Heavy · Stage 2'],
+      fhStage1: ['Falcon Heavy · 3 Lõi T1', 'Falcon Heavy · 3 Cores'],
+      f9Dragon: ['Falcon 9 · Tàu Dragon', 'Falcon 9 · Crew Dragon'],
+      f9Stage2: ['Falcon 9 · Tầng 2 Đen-Trắng', 'Falcon 9 · Stage 2'],
+      f9Stage1: ['Falcon 9 · Tầng 1 Block 5', 'Falcon 9 · Stage 1 (9×M)'],
+      shuttleNose: ['Space Shuttle · Mũi Cam ET', 'Shuttle · Orange ET Nose'],
+      shuttleOrbiter: ['Space Shuttle · Discovery', 'Shuttle · Discovery STS'],
+      shuttleSrb: ['Space Shuttle · Đáy + 2 SRB', 'Shuttle · ET + 2× SRB'],
+      protonFairing: ['Proton-M · Chóp ExoMars', 'Proton-M · Briz Fairing'],
+      protonStage3: ['Proton-M · Tầng 3 Roscosmos', 'Proton-M · Stage 3'],
+      protonStage2: ['Proton-M · Tầng 2 Giàn Hở', 'Proton-M · Stage 2 Truss'],
+      protonStage1: ['Proton-M · T1 (6 Bình)', 'Proton-M · Stage 1 (6×)'],
+      d4hFairing: ['Delta IV Heavy · Chóp Mũi', 'Delta IV Heavy · Fairing'],
+      d4hStage2: ['Delta IV Heavy · Tầng 2', 'Delta IV Heavy · Stage 2'],
+      d4hStage1: ['Delta IV Heavy · 3 Lõi Cam', 'Delta IV Heavy · 3× CBC'],
+      titan4Fairing: ['Titan IV · Chóp Mũi Dài', 'Titan IV · Tall Fairing'],
+      titan4Stage2: ['Titan IV · Tầng 2 USAF', 'Titan IV · Stage 2 USAF'],
+      titan4Stage1: ['Titan IV · T1 + 2 SRMU', 'Titan IV · Core + 2 SRMU'],
+      starshipNose: ['Starship · Mũi Đen Cánh Vây', 'Starship · Black Nose'],
+      starshipShip: ['Starship · Thân 6 Raptor', 'Starship · Ship (6×Rap)'],
+      starshipBooster: ['Starship · Super Heavy T1', 'Starship · Super Heavy'],
+    };
+    if (labels[type]) return tr(labels[type][0], labels[type][1]);
+    return def.name.replace(/\s*×\d+$/i, '');
+  }
+
   renderPalette() {
     const list = $('part-list');
     list.innerHTML = '';
     const cats = {};
-    for (const [type, def] of Object.entries(PARTS)) (cats[def.cat] = cats[def.cat] || []).push(type);
+    for (const [type, def] of Object.entries(PARTS)) {
+      if (def.hiddenInPalette) continue;
+      (cats[def.cat] = cats[def.cat] || []).push(type);
+    }
     const thumbs = this.thumbs || (this.thumbs = this.makeThumbnails());
     for (const [cat, types] of Object.entries(cats)) {
       const h = document.createElement('div');
@@ -275,7 +341,7 @@ export class BuildScene {
         const badgeTxt = def.thrustVac
           ? `🔥${def.thrustVac}`
           : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
-        const shortName = def.name.replace(/\s*×\d+$/i, '');
+        const shortName = this.getPartCardLabel(type, def);
         card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
         card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
         card.addEventListener('pointerleave', () => this.hidePartTooltip());
@@ -466,8 +532,10 @@ export class BuildScene {
     const sc = new THREE.Scene();
     const pm = new THREE.PMREMGenerator(r);
     sc.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
-    const dl = new THREE.DirectionalLight(0xffffff, 2.5); dl.position.set(3, 5, 4); sc.add(dl);
-    const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    const dl = new THREE.DirectionalLight(0xffffff, 2.6); dl.position.set(2.5, 4.5, 5.5); sc.add(dl);
+    const fl = new THREE.DirectionalLight(0xdbeafe, 1.35); fl.position.set(-4.0, 2.0, 4.5); sc.add(fl);
+    const al = new THREE.AmbientLight(0xffffff, 0.55); sc.add(al);
+    const cam = new THREE.PerspectiveCamera(28, 1, 0.1, 120);
     const px = new Float32Array(S * S * 4);
     const cv = document.createElement('canvas'); cv.width = cv.height = S;
     const ctx = cv.getContext('2d');
@@ -529,8 +597,9 @@ export class BuildScene {
       sc.add(obj);
       const box = new THREE.Box3().setFromObject(obj);
       const size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
-      const d = Math.max(size.x, size.y, size.z) / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * 1.25;
-      cam.position.set(ctr.x + d * 0.62, ctr.y + d * 0.35, ctr.z + d * 0.72);
+      const maxDim = Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
+      const d = maxDim / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * 0.96;
+      cam.position.set(ctr.x + d * 0.24, ctr.y + d * 0.14, ctr.z + d * 0.92);
       cam.lookAt(ctr);
       try {
         r.setRenderTarget(rt);

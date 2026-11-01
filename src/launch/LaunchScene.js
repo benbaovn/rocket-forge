@@ -1337,7 +1337,7 @@ export class LaunchScene {
         tr('🌌✨ Tàu đã dịch chuyển tới Không gian Liên sao ngoài Hệ Mặt Trời!', '🌌✨ Teleported into Interstellar Space beyond the Solar System!'),
         'warn'
       );
-      this.supernovaSpawnTimer = 10 + Math.random() * 8;
+      this.supernovaSpawnTimer = 900 + Math.random() * 600;
       this.supernovaDistAcc = 0;
     } else if (target === 'royal1b') {
       const r = R_E + (this.startAlt || 0) + 1000000000 * 1000; // 1,000,000,000 km altitude
@@ -1369,7 +1369,7 @@ export class LaunchScene {
       this.setFlag('space');
       this.setFlag('interstellarSpace');
       this.flags.royalAliens1B = false;
-      this.supernovaSpawnTimer = 22 + Math.random() * 12;
+      this.supernovaSpawnTimer = 900 + Math.random() * 600;
       this.supernovaDistAcc = 0;
     } else {
       const isOlympusSummit = target === 'olympus';
@@ -1891,7 +1891,7 @@ export class LaunchScene {
     }
     this.aliens = []; this.weaponBeams = []; this.supernovas = [];
     this.alienSpawnTimer = 1.0; this.weaponCooldown = 0; this.firingHeld = false;
-    this.supernovaSpawnTimer = 18 + Math.random() * 14;
+    this.supernovaSpawnTimer = 900 + Math.random() * 600;
     this.supernovaDistAcc = 0;
     this.supernovaDistNext = 2400 + Math.random() * 2800;
     this.lastSupernovaRef = 'earth';
@@ -4275,12 +4275,10 @@ export class LaunchScene {
         tr('🌌✨ Tàu đã chính thức rời khỏi Hệ Mặt Trời, tiến vào Không gian Liên sao rộng lớn!', '🌌✨ The craft has officially left the Solar System, venturing into deep Interstellar Space!'),
         'warn'
       );
-      if ((this.supernovaSpawnTimer ?? 999) > 16) {
-        this.supernovaSpawnTimer = 8 + Math.random() * 8;
-      }
+      this.supernovaSpawnTimer = 900 + Math.random() * 600;
     }
 
-    // Spontaneous Supernova ONLY outside the Solar System in Interstellar Space
+    // Spontaneous Supernova ONLY outside the Solar System in Interstellar Space (every 900-1500 seconds)
     const onPlanetOrMoon = P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
     if (!isOutsideSolarSystem || onPlanetOrMoon) {
       // Inside solar system: clear any active supernovas if on/near body and do not spawn natural supernovas
@@ -4291,13 +4289,13 @@ export class LaunchScene {
         }
         this.supernovas = [];
       }
-      this.supernovaSpawnTimer = 35 + Math.random() * 25;
+      this.supernovaSpawnTimer = 900 + Math.random() * 600;
       this.supernovaDistAcc = 0;
     } else if (this.phase === 'flight') {
       const spd = P.speed || Math.hypot(P.vSurf?.e || 0, P.vSurf?.u || 0);
       this.supernovaDistAcc = (this.supernovaDistAcc || 0) + spd * dt;
-      this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 45) - dt;
-      if (this.supernovaSpawnTimer <= 0 && (this.supernovaDistAcc >= (this.supernovaDistNext || 2400) || this.supernovaSpawnTimer <= -10)) {
+      this.supernovaSpawnTimer = (this.supernovaSpawnTimer ?? 1200) - dt;
+      if (this.supernovaSpawnTimer <= 0) {
         const vxScene = P.vSurf?.e || 0;
         const vyScene = P.vSurf?.u || 0;
         const vzScene = P.s?.vz || 0;
@@ -4315,7 +4313,7 @@ export class LaunchScene {
         ).addScaledVector(moveDir, distAhead);
         const snScale = THREE.MathUtils.clamp(distAhead / 52, 1.8, 38);
         this.triggerSupernova(flybyPos, snScale, false);
-        this.supernovaSpawnTimer = 45 + Math.random() * 45; // Spawns every 45-90 seconds in interstellar space
+        this.supernovaSpawnTimer = 900 + Math.random() * 600; // Spawns every 900-1500 seconds in interstellar space
         this.supernovaDistAcc = 0;
         this.supernovaDistNext = 5000 + Math.random() * 8000;
       }

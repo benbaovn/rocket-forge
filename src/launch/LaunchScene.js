@@ -734,7 +734,7 @@ export class LaunchScene {
           const active = curTarget === 'royal1b' ? 'active' : '';
           return `<button type="button" class="tp-card-btn ${active}" data-tp="royal1b">
             <span class="tp-card-top">👑👸 ${tr('Độ Cao 1.000.000.000 km', '1,000,000,000 km Altitude')}</span>
-            <span class="tp-card-sub">${tr('Lãnh địa Alien Vua (10.000 HP) & Alien Hoàng Hậu (9.500 HP)', 'Domain of Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP)')}</span>
+            <span class="tp-card-sub">${tr('Lãnh địa Alien Vua (100.000 HP) & Alien Hoàng Hậu (90.500 HP)', 'Domain of Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP)')}</span>
           </button>`;
         }
         const B = BODIES[key] || BODIES.earth;
@@ -1607,10 +1607,10 @@ export class LaunchScene {
         this.royalRespawnTimer = 25;
         this.milestone(
           tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
-          tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (10.000 HP) và Alien Hoàng Hậu (9.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have emerged!')
+          tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (100.000 HP) và Alien Hoàng Hậu (90.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have emerged!')
         );
         this.event(
-          tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (10.000 HP) và ALIEN HOÀNG HẬU (9.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (10,000 HP) & ALIEN QUEEN (9,500 HP) have appeared! Press V or click to fire!'),
+          tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (100.000 HP) và ALIEN HOÀNG HẬU (90.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (100,000 HP) & ALIEN QUEEN (90,500 HP) have appeared! Press V or click to fire!'),
           'warn'
         );
       }
@@ -3496,7 +3496,7 @@ export class LaunchScene {
     // All Aliens are peaceful toward each other (no Alien-on-Alien brawling)
     const roll = Math.random();
     let tier = 'scout';
-    let maxHp = 45 + Math.floor(Math.random() * 20); // 45–64 HP
+    let maxHp = 250; // Alien Trinh Sát: 250 HP
     let speedMul = 1.35;
     let radiusBase = 22;
     let labelVi = 'Alien Trinh Sát';
@@ -3506,7 +3506,7 @@ export class LaunchScene {
 
     if (roll > bossThreshold) {
       tier = 'boss';
-      maxHp = 280 + Math.floor(Math.random() * 140); // 280–420 HP
+      maxHp = 1000; // Tàu Mẹ Alien: 1000 HP
       speedMul = 0.65;
       radiusBase = 36;
       labelVi = 'Tàu Mẹ Alien Hạng Nặng (Nhiều máu)';
@@ -3514,7 +3514,7 @@ export class LaunchScene {
       mapColor = '#fb7185';
     } else if (roll > warriorThreshold) {
       tier = 'warrior';
-      maxHp = 115 + Math.floor(Math.random() * 45); // 115–160 HP
+      maxHp = 500; // Alien Chiến Binh: 500 HP
       speedMul = 0.95;
       radiusBase = 28;
       labelVi = 'Alien Chiến Binh';
@@ -3590,7 +3590,7 @@ export class LaunchScene {
 
     const isKing = role === 'king';
     const tier = isKing ? 'king' : 'queen';
-    const maxHp = isKing ? 10000 : 9500;
+    const maxHp = isKing ? 100000 : 90500;
     const labelVi = isKing
       ? '👑 ALIEN VUA KHỔNG LỒ (Siêu Trùm 1 Tỷ km)'
       : '👸 ALIEN HOÀNG HẬU KHỔNG LỒ (Siêu Trùm 1 Tỷ km)';
@@ -3937,12 +3937,12 @@ export class LaunchScene {
     );
     if (alien.tier === 'king') {
       this.milestone(
-        tr('👑💥 ĐÃ TIÊU DIỆT ALIEN VUA (10.000 HP)!', '👑💥 COLOSSAL ALIEN KING (10,000 HP) DEFEATED!'),
+        tr('👑💥 ĐÃ TIÊU DIỆT ALIEN VUA (100.000 HP)!', '👑💥 COLOSSAL ALIEN KING (100,000 HP) DEFEATED!'),
         tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
       );
     } else if (alien.tier === 'queen') {
       this.milestone(
-        tr('👸💥 ĐÃ TIÊU DIỆT ALIEN HOÀNG HẬU (9.500 HP)!', '👸💥 COLOSSAL ALIEN QUEEN (9,500 HP) DEFEATED!'),
+        tr('👸💥 ĐÃ TIÊU DIỆT ALIEN HOÀNG HẬU (90.500 HP)!', '👸💥 COLOSSAL ALIEN QUEEN (90,500 HP) DEFEATED!'),
         tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
       );
     }
@@ -4115,7 +4115,7 @@ export class LaunchScene {
               this.spawnRoyalAlien('queen');
               this.royalRespawnTimer = 25;
               this.event(
-                tr('👑👸 Alien Vua (10.000 HP) & Alien Hoàng Hậu (9.500 HP) mới đã xuất hiện ở độ cao 1.000.000.000 km!', '👑👸 A new Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have appeared at 1,000,000,000 km!'),
+                tr('👑👸 Alien Vua (100.000 HP) & Alien Hoàng Hậu (90.500 HP) mới đã xuất hiện ở độ cao 1.000.000.000 km!', '👑👸 A new Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have appeared at 1,000,000,000 km!'),
                 'warn'
               );
             }

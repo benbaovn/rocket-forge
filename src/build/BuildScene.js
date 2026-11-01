@@ -434,7 +434,7 @@ export class BuildScene {
     if (nm && curM) nm.textContent = curDone ? `${curM.name} ✔` : curM.name;
     const btnM = $('btn-mission');
     if (btnM && curM) {
-      btnM.textContent = curDone ? '🎯✔' : '🎯';
+      btnM.textContent = '🎯';
       btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${curM.icon} ${curM.name}${curDone ? ` (✔ ${tr('Đã hoàn thành – Có thể chơi lại', 'Completed – Replayable')})` : ''}`;
     }
   }
@@ -668,7 +668,7 @@ export class BuildScene {
     if (nm) nm.textContent = done ? `${m.name} ✔` : m.name;
     const btnM = $('btn-mission');
     if (btnM) {
-      btnM.textContent = done ? '🎯✔' : '🎯';
+      btnM.textContent = '🎯';
       btnM.title = `${tr('Nhiệm vụ', 'Mission')}: ${m.icon} ${m.name}${done ? ` (✔ ${tr('Đã hoàn thành – Có thể chơi lại', 'Completed – Replayable')})` : ''}`;
     }
     document.querySelectorAll('#mission-cards .mission-card').forEach((el) => {

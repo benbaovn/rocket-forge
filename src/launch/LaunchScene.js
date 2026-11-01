@@ -1602,17 +1602,22 @@ export class LaunchScene {
     if (!(P.ref === 'earth' && P.alt < ATM_TOP)) {
       if (target === 'royal1b') {
         this.setFlag('royalAliens1B');
-        this.spawnRoyalAlien('king');
-        this.spawnRoyalAlien('queen');
-        this.royalRespawnTimer = 25;
-        this.milestone(
-          tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
-          tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (100.000 HP) và Alien Hoàng Hậu (90.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have emerged!')
-        );
-        this.event(
-          tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (100.000 HP) và ALIEN HOÀNG HẬU (90.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (100,000 HP) & ALIEN QUEEN (90,500 HP) have appeared! Press V or click to fire!'),
-          'warn'
-        );
+        const spawnedKing = this.spawnRoyalAlien('king');
+        const spawnedQueen = this.spawnRoyalAlien('queen');
+        if (spawnedKing || spawnedQueen) {
+          this.milestone(
+            tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
+            tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (100.000 HP) và Alien Hoàng Hậu (90.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have emerged!')
+          );
+          this.event(
+            tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (100.000 HP) và ALIEN HOÀNG HẬU (90.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (100,000 HP) & ALIEN QUEEN (90,500 HP) have appeared! Press V or click to fire!'),
+            'warn'
+          );
+        } else {
+          this.event(
+            tr('👑👸 Đã tới độ cao 1.000.000.000 km (Alien Vua & Hoàng Hậu đã bị tiêu diệt vĩnh viễn).', '👑👸 Reached 1,000,000,000 km altitude (Alien King & Queen have already been permanently defeated).')
+          );
+        }
       }
       const density = this.getAlienDensityConfig();
       const initialWave = Math.min(10, Math.max(1, Math.ceil(density.maxConcurrentAliens * 0.45)));
@@ -3585,10 +3590,13 @@ export class LaunchScene {
   spawnRoyalAlien(role = 'king') {
     if (!this.player || this.player.crashed) return null;
     if (!this.aliens) this.aliens = [];
+    const isKing = role === 'king';
+    // Once killed, Alien King or Alien Queen never spawns again
+    if (isKing && this.flags?.killKing) return null;
+    if (!isKing && this.flags?.killQueen) return null;
     // Prevent duplicate live King or Queen
     if (this.aliens.some((a) => !a.dead && a.tier === role)) return null;
 
-    const isKing = role === 'king';
     const tier = isKing ? 'king' : 'queen';
     const maxHp = isKing ? 100000 : 90500;
     const labelVi = isKing
@@ -4093,33 +4101,18 @@ export class LaunchScene {
       const earthDistKm = Math.max(0, Math.hypot(P.s.x, P.s.y, P.s.z || 0) - R_E) / 1000;
       const effectiveAltKm = Math.max(curAltKm, earthDistKm);
       if (effectiveAltKm >= 1000000000) {
-        if (!this.flags.royalAliens1B) {
+        const spawnedKing = !this.flags.killKing ? this.spawnRoyalAlien('king') : null;
+        const spawnedQueen = !this.flags.killQueen ? this.spawnRoyalAlien('queen') : null;
+        if (!this.flags.royalAliens1B && (spawnedKing || spawnedQueen)) {
           this.setFlag('royalAliens1B');
-          this.spawnRoyalAlien('king');
-          this.spawnRoyalAlien('queen');
-          this.royalRespawnTimer = 25;
           this.milestone(
             tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
-            tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (10.000 HP) và Alien Hoàng Hậu (9.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have emerged!')
+            tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (100.000 HP) và Alien Hoàng Hậu (90.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have emerged!')
           );
           this.event(
-            tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (10.000 HP) và ALIEN HOÀNG HẬU (9.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (10,000 HP) & ALIEN QUEEN (9,500 HP) have appeared! Press V or click to fire!'),
+            tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (100.000 HP) và ALIEN HOÀNG HẬU (90.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (100,000 HP) & ALIEN QUEEN (90,500 HP) have appeared! Press V or click to fire!'),
             'warn'
           );
-        } else {
-          const hasRoyalAlive = this.aliens.some((a) => !a.dead && a.isRoyal && a.hp > 0);
-          if (!hasRoyalAlive) {
-            this.royalRespawnTimer = (this.royalRespawnTimer ?? 25) - dt;
-            if (this.royalRespawnTimer <= 0) {
-              this.spawnRoyalAlien('king');
-              this.spawnRoyalAlien('queen');
-              this.royalRespawnTimer = 25;
-              this.event(
-                tr('👑👸 Alien Vua (100.000 HP) & Alien Hoàng Hậu (90.500 HP) mới đã xuất hiện ở độ cao 1.000.000.000 km!', '👑👸 A new Colossal Alien King (100,000 HP) & Alien Queen (90,500 HP) have appeared at 1,000,000,000 km!'),
-                'warn'
-              );
-            }
-          }
         }
       }
 

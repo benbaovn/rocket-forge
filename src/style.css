@@ -115,6 +115,10 @@ select.btn option { background: #111a29; }
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
+.part-card.part-card-wide,
+.part-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
 .part-card:hover {
   background: rgba(79, 216, 255, 0.12);
   border-color: rgba(79, 216, 255, 0.48);

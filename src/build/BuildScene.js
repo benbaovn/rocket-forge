@@ -270,7 +270,8 @@ export class BuildScene {
       for (const type of types) {
         const def = PARTS[type];
         const card = document.createElement('div');
-        card.className = 'part-card';
+        card.className = type === 'ufoSaucer' ? 'part-card part-card-wide' : 'part-card';
+        card.dataset.part = type;
         const badgeTxt = def.thrustVac
           ? `🔥${def.thrustVac}`
           : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;

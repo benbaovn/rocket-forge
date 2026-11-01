@@ -739,10 +739,21 @@ select.btn option { background: #111a29; }
 }
 .gpu-badge.gpu-launch {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   margin-top: 8px;
   justify-content: space-between;
   border-radius: 8px;
   padding: 6px 10px;
+}
+#gpu-launch-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 .gpu-dot {
   width: 8px;
@@ -753,6 +764,7 @@ select.btn option { background: #111a29; }
   flex-shrink: 0;
 }
 .gpu-fps {
+  flex-shrink: 0;
   padding: 2px 7px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.38);

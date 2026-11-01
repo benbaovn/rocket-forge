@@ -74,12 +74,19 @@ function detectGPU(renderer) {
   } else {
     cleanName = cleanName.replace(/\s*\(0x[0-9a-fA-F]+\).*$/, '').trim();
   }
-  cleanName = cleanName.replace(/\s+Direct3D.*$/i, '').replace(/\s+OpenGL.*$/i, '').trim();
+  cleanName = cleanName
+    .replace(/^ANGLE\s+Metal\s+Renderer:\s*/i, '')
+    .replace(/\s+Direct3D.*$/i, '')
+    .replace(/\s+OpenGL.*$/i, '')
+    .trim();
 
-  const rtxMatch = cleanName.match(/(RTX\s*\d{4}\s*(?:Ti|SUPER|M)?|GTX\s*\d{4}\s*(?:Ti|SUPER)?|Radeon\s*RX\s*\d{4}\s*(?:XT|XTX)?)/i);
-  const shortName = rtxMatch ? rtxMatch[1].replace(/\s+/g, ' ').trim() : cleanName.replace(/^NVIDIA\s+GeForce\s+/i, '');
-  const isHighEnd = /RTX\s*[2345]\d{3}|Radeon\s*RX\s*[6789]\d{3}|Arc\s*A7|Apple\s*M[1234]\s*(Pro|Max|Ultra)/i.test(rawRenderer);
-  const apiBackend = /D3D12/i.test(rawRenderer) ? 'D3D12' : /D3D11/i.test(rawRenderer) ? 'D3D11' : /Vulkan/i.test(rawRenderer) ? 'Vulkan' : 'WebGL2';
+  const gpuMatch = cleanName.match(/(RTX\s*\d{4}\s*(?:Ti|SUPER|M)?|GTX\s*\d{4}\s*(?:Ti|SUPER)?|Radeon\s*RX\s*\d{4}\s*(?:XT|XTX)?|Apple\s*M\d+(?:\s*(?:Pro|Max|Ultra))?|Apple\s*A\d+(?:\s*(?:Pro|Bionic))?|Apple\s*GPU|Arc\s*A\d{3}\w*)/i);
+  let shortName = gpuMatch
+    ? gpuMatch[1].replace(/\s+/g, ' ').trim()
+    : cleanName.replace(/^(?:NVIDIA\s+GeForce|AMD\s+Radeon|Intel\(R\))\s+/i, '').trim();
+  if (shortName.length > 18) shortName = shortName.slice(0, 17).trim() + '…';
+  const isHighEnd = /RTX\s*[2345]\d{3}|Radeon\s*RX\s*[6789]\d{3}|Arc\s*A7|Apple\s*M[1234]\s*(Pro|Max|Ultra)?/i.test(rawRenderer);
+  const apiBackend = /Metal/i.test(rawRenderer) ? 'Metal' : /D3D12/i.test(rawRenderer) ? 'D3D12' : /D3D11/i.test(rawRenderer) ? 'D3D11' : /Vulkan/i.test(rawRenderer) ? 'Vulkan' : 'WebGL2';
 
   return {
     rawRenderer,

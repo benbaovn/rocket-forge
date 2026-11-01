@@ -26,7 +26,7 @@ export function stackFromTypes(list) {
 }
 
 export const PRESETS = {
-  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL', 'engAntiGrav'],
+  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL+fins', 'engAntiGrav'],
   'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon', 'saturnSM+gunLaser+waterCannon', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
   'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
   'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon', 'soyuzFairing+gunLaser+waterCannon', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],

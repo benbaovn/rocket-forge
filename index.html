@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#000000" />
   <title>Rocket Forge – 3D Spaceflight Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -43,6 +47,7 @@
         </select>
         <button id="btn-undo" class="btn icon top-icon-btn" type="button" title="Undo (Ctrl+Z)">↶</button>
         <button id="btn-clear" class="btn icon top-icon-btn danger" type="button" title="Clear All">🗑</button>
+        <button id="btn-stats-toggle" class="btn icon top-icon-btn compact-only" type="button" title="Specs">📊</button>
         <button id="btn-settings" class="btn icon top-icon-btn" type="button" title="Settings (O)">⚙</button>
       </div>
     </header>
@@ -210,6 +215,7 @@
           <button type="button" class="tp-btn" data-tp="pluto">🟤 Pluto</button>
           <button type="button" class="tp-btn" data-tp="sun">☀️ Sun</button>
           <button type="button" class="tp-btn" data-tp="interstellar">🌌 Deep Space</button>
+          <button type="button" class="tp-btn" data-tp="royal1b">👑 1B km</button>
         </div>
         <button type="button" id="btn-tp-expand" class="tp-mode-btn tp-expand-btn" title="Open Teleport Panel (Y)">⊞ Y</button>
       </div>

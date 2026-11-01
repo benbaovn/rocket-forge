@@ -19,6 +19,9 @@ function ensureShared() {
     antennaTip: new THREE.SphereGeometry(0.08, 10, 8),
     coreRing: new THREE.TorusGeometry(1.15, 0.12, 10, 24).rotateX(Math.PI / 2),
     tentacleSeg: new THREE.CylinderGeometry(0.11, 0.06, 1.15, 10),
+    crownBase: new THREE.CylinderGeometry(0.48, 0.38, 0.24, 16),
+    crownSpike: new THREE.ConeGeometry(0.11, 0.42, 8),
+    crownGem: new THREE.OctahedronGeometry(0.12, 0),
     hpBg: new THREE.PlaneGeometry(3.6, 0.34),
     hpFg: new THREE.PlaneGeometry(3.48, 0.24),
   };
@@ -26,6 +29,20 @@ function ensureShared() {
   _sharedMats = {
     hullDark: new THREE.MeshStandardMaterial({ color: 0x1e2230, metalness: 0.88, roughness: 0.26 }),
     hullChrome: new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.92, roughness: 0.18 }),
+    royalGoldHull: new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.94,
+      roughness: 0.14,
+      emissive: new THREE.Color(0x78350f),
+      emissiveIntensity: 0.55,
+    }),
+    royalRoseHull: new THREE.MeshStandardMaterial({
+      color: 0xec4899,
+      metalness: 0.90,
+      roughness: 0.16,
+      emissive: new THREE.Color(0x831843),
+      emissiveIntensity: 0.55,
+    }),
     neonGreen: new THREE.MeshStandardMaterial({
       color: 0x4ade80,
       emissive: new THREE.Color(0x22c55e),
@@ -53,8 +70,14 @@ function ensureShared() {
     neonGold: new THREE.MeshStandardMaterial({
       color: 0xfacc15,
       emissive: new THREE.Color(0xd97706),
-      emissiveIntensity: 2.2,
-      roughness: 0.2,
+      emissiveIntensity: 2.5,
+      roughness: 0.16,
+    }),
+    neonPink: new THREE.MeshStandardMaterial({
+      color: 0xf472b6,
+      emissive: new THREE.Color(0xdb2777),
+      emissiveIntensity: 2.5,
+      roughness: 0.16,
     }),
     alienSkin: new THREE.MeshStandardMaterial({
       color: 0x4ade80,
@@ -76,6 +99,20 @@ function ensureShared() {
       emissiveIntensity: 1.15,
       roughness: 0.3,
       metalness: 0.2,
+    }),
+    alienSkinKing: new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: new THREE.Color(0xb45309),
+      emissiveIntensity: 1.35,
+      roughness: 0.24,
+      metalness: 0.38,
+    }),
+    alienSkinQueen: new THREE.MeshStandardMaterial({
+      color: 0xf472b6,
+      emissive: new THREE.Color(0xbe185d),
+      emissiveIntensity: 1.35,
+      roughness: 0.24,
+      metalness: 0.32,
     }),
     alienEyeMat: new THREE.MeshStandardMaterial({
       color: 0x050508,
@@ -103,18 +140,46 @@ export function createAlienMesh(tier = 'warrior') {
   const bodyGroup = new THREE.Group();
   root.add(bodyGroup);
 
-  const isBoss = tier === 'boss';
+  const isKing = tier === 'king';
+  const isQueen = tier === 'queen';
+  const isRoyal = isKing || isQueen;
+  const isBoss = tier === 'boss' || isRoyal;
   const isWarrior = tier === 'warrior';
-  const glowMat = isBoss ? M.neonRed : (isWarrior ? M.neonPurple : M.neonGreen);
-  const baseSkin = isBoss ? M.alienSkinBoss : (isWarrior ? M.alienSkinPurple : M.alienSkin);
+  const glowMat = isKing
+    ? M.neonGold
+    : isQueen
+      ? M.neonPink
+      : isBoss
+        ? M.neonRed
+        : isWarrior
+          ? M.neonPurple
+          : M.neonGreen;
+  const baseSkin = isKing
+    ? M.alienSkinKing
+    : isQueen
+      ? M.alienSkinQueen
+      : isBoss
+        ? M.alienSkinBoss
+        : isWarrior
+          ? M.alienSkinPurple
+          : M.alienSkin;
   const skinMat = baseSkin.clone();
-  const baseEmissiveHex = isBoss ? 0x9f1239 : (isWarrior ? 0x6b21a8 : 0x15803d);
+  const baseEmissiveHex = isKing
+    ? 0xb45309
+    : isQueen
+      ? 0xbe185d
+      : isBoss
+        ? 0x9f1239
+        : isWarrior
+          ? 0x6b21a8
+          : 0x15803d;
 
   // Spinning saucer disc
   const saucer = new THREE.Group();
   bodyGroup.add(saucer);
 
-  const upper = new THREE.Mesh(G.saucerOuter, M.hullDark);
+  const upperHullMat = isKing ? M.royalGoldHull : isQueen ? M.royalRoseHull : M.hullDark;
+  const upper = new THREE.Mesh(G.saucerOuter, upperHullMat);
   upper.position.y = 0.22;
   saucer.add(upper);
 
@@ -127,19 +192,40 @@ export function createAlienMesh(tier = 'warrior') {
   saucer.add(rim);
 
   if (isBoss) {
-    // Extra golden shield ring for high-HP Boss UFO
-    const bossHalo = new THREE.Mesh(G.saucerRim, M.neonGold);
+    // Extra shield ring for Boss / Royal UFOs
+    const bossHalo = new THREE.Mesh(G.saucerRim, isQueen ? M.neonCyan : M.neonGold);
     bossHalo.scale.setScalar(1.18);
     bossHalo.position.y = 0.15;
     saucer.add(bossHalo);
   }
 
-  // 8 perimeter plasma orbs around the flying saucer
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const orbMat = isBoss ? (i % 2 === 0 ? M.neonRed : M.neonGold) : (i % 2 === 0 ? M.neonGreen : M.neonPurple);
+  if (isRoyal) {
+    // Second & third colossal imperial halo rings for Alien King & Alien Queen
+    const outerHalo = new THREE.Mesh(G.saucerRim, isKing ? M.neonRed : M.neonPink);
+    outerHalo.scale.setScalar(1.38);
+    outerHalo.position.y = 0.32;
+    saucer.add(outerHalo);
+
+    const lowerHalo = new THREE.Mesh(G.saucerRim, isKing ? M.neonGold : M.neonCyan);
+    lowerHalo.scale.setScalar(1.26);
+    lowerHalo.position.y = -0.35;
+    saucer.add(lowerHalo);
+  }
+
+  // Perimeter plasma orbs around the flying saucer
+  const orbCount = isRoyal ? 16 : 8;
+  for (let i = 0; i < orbCount; i++) {
+    const a = (i / orbCount) * Math.PI * 2;
+    const orbMat = isKing
+      ? (i % 2 === 0 ? M.neonGold : M.neonRed)
+      : isQueen
+        ? (i % 2 === 0 ? M.neonPink : M.neonCyan)
+        : isBoss
+          ? (i % 2 === 0 ? M.neonRed : M.neonGold)
+          : (i % 2 === 0 ? M.neonGreen : M.neonPurple);
     const orb = new THREE.Mesh(G.orb, orbMat);
     orb.position.set(Math.cos(a) * 3.75, 0.02, Math.sin(a) * 3.75);
+    if (isRoyal) orb.scale.setScalar(1.35);
     saucer.add(orb);
   }
 
@@ -148,12 +234,14 @@ export function createAlienMesh(tier = 'warrior') {
   coreRing.position.y = -0.52;
   saucer.add(coreRing);
 
-  // 4 bio-mechanical alien tentacles beneath the saucer
+  // Bio-mechanical alien tentacles beneath the saucer (8 for King/Queen, 4 for standard)
   const tentacles = [];
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+  const tentacleCount = isRoyal ? 8 : 4;
+  for (let i = 0; i < tentacleCount; i++) {
+    const a = (i / tentacleCount) * Math.PI * 2 + Math.PI / tentacleCount;
     const tPivot = new THREE.Group();
-    tPivot.position.set(Math.cos(a) * 1.35, -0.45, Math.sin(a) * 1.35);
+    const rad = isRoyal ? 1.85 : 1.35;
+    tPivot.position.set(Math.cos(a) * rad, -0.45, Math.sin(a) * rad);
     tPivot.rotation.y = -a;
     const seg1 = new THREE.Mesh(G.tentacleSeg, skinMat);
     seg1.position.y = -0.55;
@@ -163,7 +251,7 @@ export function createAlienMesh(tier = 'warrior') {
     seg2.scale.set(0.75, 0.85, 0.75);
     tPivot.add(seg2);
     bodyGroup.add(tPivot);
-    tentacles.push({ pivot: tPivot, phase: i * 1.57 });
+    tentacles.push({ pivot: tPivot, phase: i * 1.1 });
   }
 
   // Alien pilot inside the cockpit dome
@@ -179,6 +267,30 @@ export function createAlienMesh(tier = 'warrior') {
   head.position.y = 0.92;
   head.scale.set(1.05, 1.22, 0.95);
   pilot.add(head);
+
+  // Royal Crown on top of Alien King / Alien Queen head + floating crown above dome
+  if (isRoyal) {
+    const buildCrown = (scaleVal, yPos) => {
+      const cg = new THREE.Group();
+      cg.position.y = yPos;
+      cg.scale.setScalar(scaleVal);
+      const cBand = new THREE.Mesh(G.crownBase, isKing ? M.neonGold : M.neonPink);
+      cg.add(cBand);
+      const spikes = isKing ? 6 : 8;
+      for (let s = 0; s < spikes; s++) {
+        const ang = (s / spikes) * Math.PI * 2;
+        const sp = new THREE.Mesh(G.crownSpike, isKing ? M.neonGold : M.neonPink);
+        sp.position.set(Math.cos(ang) * 0.40, 0.26, Math.sin(ang) * 0.40);
+        cg.add(sp);
+        const gem = new THREE.Mesh(G.crownGem, isKing ? M.neonRed : M.neonCyan);
+        gem.position.set(Math.cos(ang) * 0.43, 0.02, Math.sin(ang) * 0.43);
+        cg.add(gem);
+      }
+      return cg;
+    };
+    pilot.add(buildCrown(0.95, 1.62));
+    bodyGroup.add(buildCrown(1.85, 2.28));
+  }
 
   // Two large slanted black alien eyes
   for (const sgn of [-1, 1]) {
@@ -207,7 +319,7 @@ export function createAlienMesh(tier = 'warrior') {
 
   // Overhead HP bar billboard
   const hpGroup = new THREE.Group();
-  hpGroup.position.y = 3.15;
+  hpGroup.position.y = isRoyal ? 3.85 : 3.15;
   root.add(hpGroup);
 
   const hpBg = new THREE.Mesh(G.hpBg, M.hpBgMat);
@@ -218,10 +330,10 @@ export function createAlienMesh(tier = 'warrior') {
   hpFg.position.z = 0.02;
   hpGroup.add(hpFg);
 
-  const hpBarScaleX = isBoss ? 1.55 : (isWarrior ? 1.1 : 0.78);
-  hpGroup.scale.set(hpBarScaleX, isBoss ? 1.35 : 1.0, 1);
+  const hpBarScaleX = isRoyal ? 2.15 : isBoss ? 1.55 : (isWarrior ? 1.1 : 0.78);
+  hpGroup.scale.set(hpBarScaleX, isRoyal ? 1.75 : isBoss ? 1.35 : 1.0, 1);
 
-  const scale = isBoss ? 1.92 : (isWarrior ? 1.36 : 0.92);
+  const scale = isKing ? 5.5 : isQueen ? 5.2 : isBoss ? 1.92 : (isWarrior ? 1.36 : 0.92);
   root.scale.setScalar(scale);
 
   root.userData = {

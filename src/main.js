@@ -10,6 +10,7 @@ import { BuildScene } from './build/BuildScene.js';
 import { LaunchScene } from './launch/LaunchScene.js';
 import { audio } from './audio.js';
 import { getLang, applyLanguage, tr } from './i18n.js';
+import { initMobile } from './ui/mobile.js';
 
 /**
  * Renders the active scene into its own (optionally multisampled) HDR target, then soft-clamps it into the
@@ -136,14 +137,8 @@ class App {
     this.gpuInfo = detectGPU(renderer);
     console.info(`[Rocket Forge GPU] Active: ${this.gpuInfo.cleanName} (${this.gpuInfo.apiBackend}) | MaxSamples: ${this.gpuInfo.maxSamples}x | MaxTex: ${this.gpuInfo.maxTex}`);
 
-    const savedQ = localStorage.getItem('rf-quality');
-    const manualQ = localStorage.getItem('rf-quality-manual') === '1';
-    if (this.gpuInfo.isHighEnd && (!savedQ || !manualQ)) {
-      this.qualityName = 'rtx';
-    } else {
-      this.qualityName = savedQ || (this.gpuInfo.isHighEnd ? 'rtx' : 'high');
-    }
-    if (!QUALITY[this.qualityName]) this.qualityName = this.gpuInfo.isHighEnd ? 'rtx' : 'high';
+    // Automatically set the highest graphics quality ('rtx') when entering the game
+    this.qualityName = 'rtx';
     this.qualityCfg = QUALITY[this.qualityName];
     this.renderScale = 1;          // dynamic resolution multiplier (0.6 … 1), adjusted from measured frame times
     this.frameTimes = [];
@@ -172,6 +167,7 @@ class App {
 
     window.addEventListener('resize', () => this.onResize());
     this.initMenus();
+    initMobile(this);
     this.clock = new THREE.Clock();
     this.goBuild();
     // pre-compile launch scene shaders to avoid hitch
@@ -242,7 +238,7 @@ class App {
   }
 
   applyQuality(name, rebuild = true, manual = false) {
-    if (!QUALITY[name]) name = 'high';
+    if (!QUALITY[name]) name = 'rtx';
     this.qualityName = name;
     this.qualityCfg = QUALITY[name];
     localStorage.setItem('rf-quality', name);

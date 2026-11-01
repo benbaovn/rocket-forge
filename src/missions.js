@@ -26,6 +26,16 @@ export const MISSIONS = [
     ],
   },
   {
+    id: 'alien1500', icon: '👑', name: 'Hủy diệt 1500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Cuộc chiến sinh tồn tối thượng: Tự tay lái chiến hạm tiêu diệt đủ 1500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước, Súng Acid, Súng Điện hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill300', text: 'Tiêu diệt 300 UFO Alien' },
+      { id: 'kill750', text: 'Tiêu diệt 750 UFO Alien' },
+      { id: 'kill1500', text: 'Tiêu diệt toàn bộ 1500 UFO Alien' },
+    ],
+  },
+  {
     id: 'orbit', icon: '🛰', name: 'Lên quỹ đạo', preset: 'Hai tầng (khuyên dùng)',
     desc: 'Đưa tên lửa vào quỹ đạo ổn định quanh Trái Đất (cận điểm trên 70 km).',
     objectives: [

@@ -108,7 +108,8 @@ export class LaunchScene {
           this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
           if (this.mission && this.mission.id !== 'free') {
             if (this.mission.noAutopilot) {
-              this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt 100 Alien!', 'Mission: ' + this.mission.name + ' – No Autopilot, fly manually and press V / click to destroy 100 Aliens!'));
+              const targetCount = this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
+              this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens!`));
             } else {
               this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
             }
@@ -701,7 +702,7 @@ export class LaunchScene {
       },
       {
         title: tr('🌌 Ngoài Hệ Mặt Trời · Không Gian Liên Sao', '🌌 Interstellar Space · Deep Space'),
-        items: ['interstellar'],
+        items: ['interstellar', 'royal1b'],
       },
     ];
 
@@ -726,6 +727,13 @@ export class LaunchScene {
           return `<button type="button" class="tp-card-btn ${active}" data-tp="interstellar">
             <span class="tp-card-top">🌌 ${tr('Không Gian Liên Sao', 'Interstellar Space')}</span>
             <span class="tp-card-sub">${tr('Ngoài Hệ Mặt Trời (>830.000 km) · Siêu Tân Tinh (Supernova)', 'Beyond Solar System (>830,000 km) · Supernova Zone')}</span>
+          </button>`;
+        }
+        if (key === 'royal1b') {
+          const active = curTarget === 'royal1b' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="royal1b">
+            <span class="tp-card-top">👑👸 ${tr('Độ Cao 1.000.000.000 km', '1,000,000,000 km Altitude')}</span>
+            <span class="tp-card-sub">${tr('Lãnh địa Alien Vua (10.000 HP) & Alien Hoàng Hậu (9.500 HP)', 'Domain of Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP)')}</span>
           </button>`;
         }
         const B = BODIES[key] || BODIES.earth;
@@ -1069,11 +1077,26 @@ export class LaunchScene {
     const max = this.maxAstronauts || 10;
     const B = BODIES[P.ref] || BODIES.earth;
     if (B.gasGiant || P.ref === 'sun') return;
-    const alreadyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P.ref).length;
 
-    const canDeploy = this.astronautsAboard > 0
-      ? Math.min(this.astronautsAboard, max - alreadyDeployed)
-      : Math.min(1, max - alreadyDeployed);
+    const isOnLaunchpad = this.phase === 'ready' || this.phase === 'countdown' || (!this.lifted && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
+    if (!P.landed || isOnLaunchpad) {
+      this.event(
+        tr('⚠️ Tàu phải hạ cánh chạm mặt đất của hành tinh hoặc mặt trăng mới thả phi hành gia xuống được!', '⚠️ Craft must touch down on the surface of a planet or moon before deploying astronauts!'),
+        'warn'
+      );
+      return;
+    }
+
+    if (this.astronautsAboard <= 0) {
+      this.event(
+        tr('⚠️ Không có phi hành gia nào trên tàu để thả xuống! Hãy đưa phi hành gia lên tàu ở bệ phóng trước khi phóng.', '⚠️ No astronauts aboard to deploy! Board astronauts at the launchpad before liftoff.'),
+        'warn'
+      );
+      return;
+    }
+
+    const alreadyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P.ref).length;
+    const canDeploy = Math.min(this.astronautsAboard, max - alreadyDeployed);
     if (canDeploy <= 0) {
       this.event(
         tr(`⚠️ Số lượng phi hành gia trên ${B.label} đã đạt giới hạn tối đa ${max}!`, `⚠️ Astronaut count on ${B.label} has reached the maximum limit of ${max}!`),
@@ -1083,7 +1106,7 @@ export class LaunchScene {
     }
 
     this.astronautsAboard = Math.max(0, this.astronautsAboard - canDeploy);
-    const isSurface = !!P.landed || (!B.gasGiant && P.ref !== 'sun' && (P.agl ?? P.alt) < 400);
+    const isSurface = true;
 
     // Open the craft's 3D airlock gate & boarding ramp so the player sees astronauts walk out
     this.ensureBoardingHatchMesh();
@@ -1310,6 +1333,38 @@ export class LaunchScene {
       );
       this.supernovaSpawnTimer = 10 + Math.random() * 8;
       this.supernovaDistAcc = 0;
+    } else if (target === 'royal1b') {
+      const r = R_E + (this.startAlt || 0) + 1000000000 * 1000; // 1,000,000,000 km altitude
+      const ux = Math.sin(sunPhi), uy = Math.cos(sunPhi);
+      const ex = uy, ey = -ux;
+      const vInter = 18000;
+      P.s.x = ux * r;
+      P.s.y = uy * r;
+      P.s.z = 0;
+      P.s.vx = ux * vInter + ex * 1500;
+      P.s.vy = uy * vInter + ey * 1500;
+      P.s.vz = 0;
+      P.beta = wrapPi(sunPhi);
+      P.omega = 0;
+      P.clamped = false;
+      P.landed = null;
+      P.updateFrame(this.simT);
+      P.syncDir3DFromBeta();
+      if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+      this.holdBeta = P.beta;
+      this.phase = 'flight';
+      this.ignited = true;
+      this.released = true;
+      this.lifted = true;
+      this.throttle = 0;
+      P.throttle = 0;
+      P.engineOn = false;
+      this.inAtmoBody = null;
+      this.setFlag('space');
+      this.setFlag('interstellarSpace');
+      this.flags.royalAliens1B = false;
+      this.supernovaSpawnTimer = 22 + Math.random() * 12;
+      this.supernovaDistAcc = 0;
     } else {
       const isOlympusSummit = target === 'olympus';
       const bodyKey = isOlympusSummit ? 'mars' : target;
@@ -1527,6 +1582,8 @@ export class LaunchScene {
       this.camera.position.set(-13, 4.5, 0);
     } else if (P.isPlane) {
       this.camera.position.set(12, 4, 16);
+    } else if (target === 'royal1b') {
+      this.camera.position.set(rh * 0.8 + 52, 18, rh * 1.4 + 92);
     } else {
       this.camera.position.set(rh * 0.68 + 12, 3.5, rh * 1.18 + 20);
     }
@@ -1534,6 +1591,30 @@ export class LaunchScene {
     this.controls.update();
     this.mapT = 0;
     this.updateTeleportActiveButtons(target);
+
+    // Immediately populate an initial wave of Aliens proportional to distance from Earth
+    if (!(P.ref === 'earth' && P.alt < ATM_TOP)) {
+      if (target === 'royal1b') {
+        this.setFlag('royalAliens1B');
+        this.spawnRoyalAlien('king');
+        this.spawnRoyalAlien('queen');
+        this.royalRespawnTimer = 25;
+        this.milestone(
+          tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
+          tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (10.000 HP) và Alien Hoàng Hậu (9.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have emerged!')
+        );
+        this.event(
+          tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (10.000 HP) và ALIEN HOÀNG HẬU (9.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (10,000 HP) & ALIEN QUEEN (9,500 HP) have appeared! Press V or click to fire!'),
+          'warn'
+        );
+      }
+      const density = this.getAlienDensityConfig();
+      const initialWave = Math.min(10, Math.max(1, Math.ceil(density.maxConcurrentAliens * 0.45)));
+      for (let i = 0; i < initialWave; i++) {
+        this.spawnAlien(density);
+      }
+      this.alienSpawnTimer = density.spawnInterval * 0.5;
+    }
   }
 
   setWarp(d) {
@@ -1557,6 +1638,33 @@ export class LaunchScene {
     this.cineAngle = Math.atan2(this.camera.position.z, this.camera.position.x);
   }
 
+  layoutEventsBox() {
+    const box = $('events');
+    if (!box) return;
+    const mp = $('mission-panel');
+    const hudLeft = document.querySelector('#launch-ui .hud-left');
+    if (window.innerWidth > 760 && window.innerHeight > 520 && mp) {
+      if (hudLeft && hudLeft.offsetHeight > 0) {
+        mp.style.top = `${hudLeft.offsetTop + hudLeft.offsetHeight + 8}px`;
+      } else {
+        mp.style.top = '';
+      }
+      const anchor = (!mp.classList.contains('hidden') && mp.offsetHeight > 0) ? mp : hudLeft;
+      const topBound = anchor && anchor.offsetHeight > 0
+        ? anchor.getBoundingClientRect().bottom + 10
+        : 320;
+      const bottomBound = window.innerHeight - 64;
+      const maxH = Math.max(0, bottomBound - topBound);
+      box.style.maxHeight = `${maxH}px`;
+      while (box.children.length > 0 && box.scrollHeight > maxH) {
+        box.lastChild.remove();
+      }
+    } else {
+      if (mp) mp.style.top = '';
+      box.style.maxHeight = '';
+    }
+  }
+
   event(text, cls = '') {
     const box = $('events');
     const d = document.createElement('div');
@@ -1565,7 +1673,11 @@ export class LaunchScene {
     const s = `T${t < 0 ? '-' : '+'}${String(Math.floor(Math.abs(t) / 60)).padStart(2, '0')}:${String(Math.floor(Math.abs(t)) % 60).padStart(2, '0')}`;
     d.innerHTML = `<span class="t">${s}</span>${text}`;
     box.prepend(d);
-    while (box.children.length > 7) box.lastChild.remove();
+    while (box.children.length > 4) box.lastChild.remove();
+    this.layoutEventsBox();
+    setTimeout(() => {
+      if (d.parentNode) d.remove();
+    }, 8000);
   }
 
   milestone(big, small) {
@@ -1869,10 +1981,11 @@ export class LaunchScene {
     this.lifted = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
-    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500') this.aliensKilled = 0;
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500') this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
+    this.astronautsAboard = 0;
     this.clearDeployedAstronauts(false);
     this.ensurePadAstronautMeshes();
     this.hatchOpenStartT = null;
@@ -1917,7 +2030,8 @@ export class LaunchScene {
     this.sc = this.makeContext();
     if (this.mission.id !== 'free' && !isSpecial) {
       if (this.mission.noAutopilot) {
-        this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt 100 Alien!', 'Mission: ' + this.mission.name + ' – No Autopilot, fly manually and press V / click to destroy 100 Aliens!'));
+        const targetCount = this.mission.id === 'alien1500' ? 1500 : this.mission.id === 'alien500' ? 500 : 100;
+        this.event(tr(`Nhiệm vụ: ${this.mission.name} – Không có Lái tự động, hãy tự điều khiển tàu và nhấn V / click chuột để tiêu diệt ${targetCount} Alien!`, `Mission: ${this.mission.name} – No Autopilot, fly manually and press V / click to destroy ${targetCount} Aliens!`));
       } else {
         this.event(tr('Nhiệm vụ: ' + this.mission.name + ' – nhấn G để bật lái tự động.', 'Mission: ' + this.mission.name + ' – press G to enable Autopilot.'));
       }
@@ -2012,11 +2126,12 @@ export class LaunchScene {
     if (!this.mission || this.mission.id === 'free' || this.mission.noAutopilot) {
       this.program = null;
       this.autoShootAliens = false;
+      const targetCount = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
       this.event(
         this.mission?.noAutopilot
           ? tr(
-            '🚫 Nhiệm vụ Tiêu diệt 100 Alien không có chế độ Lái tự động! Hãy tự điều khiển tàu và nhấn V / click chuột để bắn Alien.',
-            '🚫 Autopilot is disabled in the Eliminate 100 Aliens mission! Pilot the craft manually and press V / click to shoot Aliens.'
+            `🚫 Nhiệm vụ Tiêu diệt ${targetCount} Alien không có chế độ Lái tự động! Hãy tự điều khiển tàu và nhấn V / click chuột để bắn Alien.`,
+            `🚫 Autopilot is disabled in the Eliminate ${targetCount} Aliens mission! Pilot the craft manually and press V / click to shoot Aliens.`
           )
           : tr(
             '🚫 Chế độ Bay tự do không cho phép dùng Lái tự động! Hãy tự điều khiển hoặc chọn một Nhiệm vụ cụ thể.',
@@ -2251,7 +2366,7 @@ export class LaunchScene {
     const objs = this.mission.objectives;
     if (!objs.length) return;
     const kills = this.aliensKilled || 0;
-    const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500';
+    const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500' || this.mission.id === 'alien1500';
     const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('') + (isAlienMission ? `_${kills}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
@@ -2261,15 +2376,21 @@ export class LaunchScene {
       if (o.id === 'kill25') label = `${o.text} (${Math.min(25, kills)}/25)`;
       else if (o.id === 'kill50') label = `${o.text} (${Math.min(50, kills)}/50)`;
       else if (o.id === 'kill100') {
-        const targetKills = this.mission.id === 'alien500' ? 100 : 100;
         label = `${o.text} (${Math.min(100, kills)}/100)`;
       } else if (o.id === 'kill250') {
         label = `${o.text} (${Math.min(250, kills)}/250)`;
       } else if (o.id === 'kill500') {
         label = `${o.text} (${Math.min(500, kills)}/500)`;
+      } else if (o.id === 'kill300') {
+        label = `${o.text} (${Math.min(300, kills)}/300)`;
+      } else if (o.id === 'kill750') {
+        label = `${o.text} (${Math.min(750, kills)}/750)`;
+      } else if (o.id === 'kill1500') {
+        label = `${o.text} (${Math.min(1500, kills)}/1500)`;
       }
       return `<div class="mp-row ${this.flags[o.id] ? 'done' : ''}"><i>${this.flags[o.id] ? '✔' : '○'}</i>${label}</div>`;
     }).join('');
+    this.layoutEventsBox();
   }
 
   checkObjectives() {
@@ -2277,41 +2398,80 @@ export class LaunchScene {
     if (!v || this.phase === 'crashed') return;
     const F = this.flags;
     const kills = this.aliensKilled || 0;
+    const alienTarget = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
     if (kills >= 25 && !F.kill25) {
       this.setFlag('kill25');
       this.milestone(
-        tr('👽 ĐÃ DIỆT 25/100 ALIEN!', '👽 25/100 ALIENS ELIMINATED!'),
-        tr('Tiếp tục truy quét UFO Alien ngoài vũ trụ!', 'Keep hunting Alien UFOs across space!')
+        tr(`👽 ĐÃ DIỆT 25/${alienTarget} ALIEN!`, `👽 25/${alienTarget} ALIENS ELIMINATED!`),
+        tr(`Tiếp tục truy quét UFO Alien ngoài vũ trụ! (Mục tiêu: ${alienTarget} Alien)`, `Keep hunting Alien UFOs across space! (Target: ${alienTarget} Aliens)`)
       );
     }
     if (kills >= 50 && !F.kill50) {
       this.setFlag('kill50');
       this.milestone(
-        tr('👽 ĐÃ DIỆT 50/100 ALIEN!', '👽 50/100 ALIENS ELIMINATED!'),
-        tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
+        tr(`👽 ĐÃ DIỆT 50/${alienTarget} ALIEN!`, `👽 50/${alienTarget} ALIENS ELIMINATED!`),
+        alienTarget === 100
+          ? tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
+          : tr(`Tiếp tục chiến dịch tiêu diệt ${alienTarget} Alien!`, `Keep pushing through the ${alienTarget} Aliens campaign!`)
       );
     }
     if (kills >= 100 && !F.kill100) {
       this.setFlag('kill100');
       this.milestone(
-        tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!'),
-        this.mission.id === 'alien500'
-          ? tr('Đạt cột mốc 100 Alien! Tiếp tục chiến dịch 500 Alien!', 'Reached 100 Aliens milestone! Keep fighting in the 500 Aliens war!')
-          : tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
+        alienTarget === 100
+          ? tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!')
+          : tr(`👽💥 ĐÃ DIỆT 100/${alienTarget} ALIEN!`, `👽💥 100/${alienTarget} ALIENS ELIMINATED!`),
+        alienTarget === 100
+          ? tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
+          : tr(`Đạt cột mốc 100/${alienTarget} Alien! Tiếp tục chiến dịch!`, `Reached 100/${alienTarget} Aliens milestone! Keep fighting!`)
       );
     }
     if (kills >= 250 && !F.kill250) {
       this.setFlag('kill250');
-      this.milestone(
-        tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
-        tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
-      );
+      if (alienTarget === 500) {
+        this.milestone(
+          tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
+          tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
+        );
+      }
+    }
+    if (kills >= 300 && !F.kill300) {
+      this.setFlag('kill300');
+      if (alienTarget === 1500) {
+        this.milestone(
+          tr('👽🔥 ĐÃ DIỆT 300/1500 ALIEN!', '👽🔥 300/1500 ALIENS ELIMINATED!'),
+          tr('Đạt cột mốc 300/1500 Alien! Tiến sâu hơn vào vũ trụ để săn thêm Alien!', 'Reached 300/1500 Aliens milestone! Fly deeper into space to hunt more Aliens!')
+        );
+      }
     }
     if (kills >= 500 && !F.kill500) {
       this.setFlag('kill500');
+      if (alienTarget === 1500) {
+        this.milestone(
+          tr('👽🔥 ĐÃ DIỆT 500/1500 ALIEN!', '👽🔥 500/1500 ALIENS ELIMINATED!'),
+          tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
+        );
+      } else {
+        this.milestone(
+          tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
+          tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
+        );
+      }
+    }
+    if (kills >= 750 && !F.kill750) {
+      this.setFlag('kill750');
+      if (alienTarget === 1500) {
+        this.milestone(
+          tr('👽⚡ ĐÃ DIỆT 750/1500 ALIEN!', '👽⚡ 750/1500 ALIENS ELIMINATED!'),
+          tr('Đã hoàn thành 50% chặng đường Hủy Diệt 1500 Alien!', 'Halfway through the 1500 Aliens Annihilation War!')
+        );
+      }
+    }
+    if (kills >= 1500 && !F.kill1500) {
+      this.setFlag('kill1500');
       this.milestone(
-        tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
-        tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
+        tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
+        tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
       );
     }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.space) { this.setFlag('space'); this.setFlag('alt70'); }
@@ -2412,6 +2572,7 @@ export class LaunchScene {
     this.active = true;
     this.controls.enabled = this.camMode === 0;
     $('launch-ui').classList.remove('hidden');
+    this.layoutEventsBox();
   }
 
   exit() {
@@ -2426,7 +2587,11 @@ export class LaunchScene {
     clearTimeout(this.completeTimer);
   }
 
-  onResize(w, h) { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+  onResize(w, h) {
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.layoutEventsBox();
+  }
 
   buildFailureReasons(sub) {
     const reasons = [];
@@ -3223,52 +3388,94 @@ export class LaunchScene {
         groundRelY = Math.max(groundRelY, patchWorldY - pWorld.y);
       }
     }
-    const clearance = tier === 'boss' ? 10.5 : (tier === 'warrior' ? 8.0 : 6.5);
+    const clearance = (tier === 'king' || tier === 'queen') ? 26.0 : tier === 'boss' ? 10.5 : (tier === 'warrior' ? 8.0 : 6.5);
     return Math.max(-35, groundRelY + clearance);
   }
 
-  spawnAlien() {
+  /**
+   * Computes Alien spawn density based on distance from Earth:
+   * the further from Earth (LEO -> Moon -> Mars/Venus -> Asteroid Belt -> Jupiter -> Saturn -> Uranus -> Neptune -> Pluto -> Interstellar),
+   * the more Aliens spawn concurrently, the faster they appear, and the higher the proportion of Warrior/Boss UFOs.
+   */
+  getAlienDensityConfig() {
+    const P = this.player;
+    if (!P) return { distKm: 0, factor: 0, maxConcurrentAliens: 3, spawnInterval: 2.6, batchSize: 1 };
+    const directDist = Math.max(0, Math.hypot(P.s.x, P.s.y, P.s.z || 0) - R_E);
+    const earthA = BODIES.earth.a || 52000e3;
+    let refDist = 0;
+    const B = BODIES[P.ref];
+    if (B && P.ref !== 'earth') {
+      if (P.ref === 'moon') {
+        refDist = B.a || 5600e3;
+      } else if (P.ref === 'sun') {
+        refDist = earthA;
+      } else {
+        const topB = (B.parent && B.parent !== 'sun' && BODIES[B.parent]) ? BODIES[B.parent] : B;
+        refDist = Math.abs((topB.a || 0) - earthA) + (B.parent && B.parent !== 'sun' ? (B.a || 0) : 0);
+      }
+    }
+    const effDist = Math.max(directDist, refDist);
+    const distKm = effDist / 1000;
+    const logProg = Math.max(0, Math.log10(Math.max(70, distKm)) - Math.log10(70)); // 0 at 70 km .. ~4.0 at Pluto/Interstellar
+    const outerProg = Math.min(14, distKm / 55000);                                 // 0 near Earth .. 14 at Pluto/Interstellar
+    const missionBonus = this.mission?.id === 'alien1500' ? 6 : (this.mission?.id === 'alien500' ? 4 : (this.mission?.id === 'alien100' ? 2 : 0));
+    const maxConcurrentAliens = Math.min(32, Math.max(2, Math.round(2 + logProg * 2.2 + outerProg) + missionBonus));
+    const factor = Math.min(1, logProg / 4.0);
+
+    const baseInterval = Math.max(0.32, 2.6 - logProg * 0.45 - outerProg * 0.04);
+    const missionMul = this.mission?.id === 'alien1500' ? 0.42 : (this.mission?.id === 'alien500' ? 0.55 : (this.mission?.id === 'alien100' ? 0.72 : 1.0));
+    const spawnInterval = Math.max(0.25, baseInterval * missionMul);
+    const deficit = maxConcurrentAliens - (this.aliens ? this.aliens.length : 0);
+    const batchSize = deficit >= 12 ? 3 : (deficit >= 5 ? 2 : 1);
+
+    return { distKm, factor, maxConcurrentAliens, spawnInterval, batchSize };
+  }
+
+  spawnAlien(density = this.getAlienDensityConfig()) {
     if (!this.player || this.player.crashed) return;
     // Never spawn Aliens on Earth (only in outer space >= ATM_TOP or on other planets/moons)
     if (this.player.ref === 'earth' && this.player.alt < ATM_TOP) return;
     if (!this.aliens) this.aliens = [];
 
-    // Mix of low-HP peaceful Scout Aliens (do NOT fight), medium-HP Warrior Aliens, and high-HP Boss Mothership Aliens
+    const factor = density?.factor ?? 0;
+    const bossThreshold = 0.78 - factor * 0.20;    // 22% near Earth -> 42% in deep space
+    const warriorThreshold = 0.42 - factor * 0.22; // 42% Scout near Earth -> 20% Scout in deep space
+
+    // All Aliens are peaceful toward each other (no Alien-on-Alien brawling)
     const roll = Math.random();
     let tier = 'scout';
-    let maxHp = 45 + Math.floor(Math.random() * 20); // 45–64 HP (ít máu: 1–2 phát bắn)
+    let maxHp = 45 + Math.floor(Math.random() * 20); // 45–64 HP
     let speedMul = 1.35;
     let radiusBase = 22;
-    let labelVi = 'Alien Trinh Sát (Ít máu · Không đánh lộn)';
-    let labelEn = 'Scout Alien (Low HP · Peaceful)';
+    let labelVi = 'Alien Trinh Sát';
+    let labelEn = 'Scout Alien';
     let mapColor = '#4ade80';
-    let canFight = false;
+    const canFight = false;
 
-    if (roll > 0.72) {
+    if (roll > bossThreshold) {
       tier = 'boss';
-      maxHp = 280 + Math.floor(Math.random() * 140); // 280–420 HP (nhiều máu: tàu mẹ hạng nặng)
+      maxHp = 280 + Math.floor(Math.random() * 140); // 280–420 HP
       speedMul = 0.65;
       radiusBase = 36;
       labelVi = 'Tàu Mẹ Alien Hạng Nặng (Nhiều máu)';
       labelEn = 'Heavy Boss Alien (High HP)';
       mapColor = '#fb7185';
-      canFight = true;
-    } else if (roll > 0.36) {
+    } else if (roll > warriorThreshold) {
       tier = 'warrior';
-      maxHp = 115 + Math.floor(Math.random() * 45); // 115–160 HP (máu trung bình)
+      maxHp = 115 + Math.floor(Math.random() * 45); // 115–160 HP
       speedMul = 0.95;
       radiusBase = 28;
       labelVi = 'Alien Chiến Binh';
       labelEn = 'Warrior Alien';
       mapColor = '#c084fc';
-      canFight = true;
     }
 
     const mesh = createAlienMesh(tier);
     this.scene.add(mesh);
 
+    const spreadExtra = Math.max(0, (this.aliens.length - 4) * 2.4);
     const orbitAngle = Math.random() * Math.PI * 2;
-    const orbitRadius = radiusBase + Math.random() * 32;
+    const orbitRadius = radiusBase + Math.random() * (32 + spreadExtra);
     const orbitSpeed = (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.42) * speedMul;
     const tx0 = Math.cos(orbitAngle) * orbitRadius;
     const tz0 = Math.sin(orbitAngle) * orbitRadius;
@@ -3283,8 +3490,9 @@ export class LaunchScene {
       id: 'alien_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
       mesh,
       tier,
+      isRoyal: false,
       canFight,
-      fightCooldown: 1.5 + Math.random() * 1.8,
+      fightCooldown: 999,
       labelVi,
       labelEn,
       mapColor,
@@ -3309,23 +3517,75 @@ export class LaunchScene {
       const locText = this.player.alt > 40000
         ? tr(`ngoài không gian quanh ${bodyLabel}`, `in outer space near ${bodyLabel}`)
         : tr(`trên ${bodyLabel}`, `at ${bodyLabel}`);
-      if (tier === 'scout') {
-        this.event(
-          tr(
-            `🛸 Phát hiện ${labelVi} (${maxHp} HP) bay qua ${locText} — chỉ quan sát hòa bình, không đánh lộn.`,
-            `🛸 ${labelEn} (${maxHp} HP) spotted ${locText} — peaceful observer, does not fight.`
-          )
-        );
-      } else {
-        this.event(
-          tr(
-            `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
-            `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
-          ),
-          'warn'
-        );
-      }
+      this.event(
+        tr(
+          `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
+          `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
+        ),
+        tier === 'boss' ? 'warn' : ''
+      );
     }
+  }
+
+  /**
+   * Spawn the colossal Alien King ('king') or Alien Queen ('queen') when reaching 1,000,000,000 km altitude
+   */
+  spawnRoyalAlien(role = 'king') {
+    if (!this.player || this.player.crashed) return null;
+    if (!this.aliens) this.aliens = [];
+    // Prevent duplicate live King or Queen
+    if (this.aliens.some((a) => !a.dead && a.tier === role)) return null;
+
+    const isKing = role === 'king';
+    const tier = isKing ? 'king' : 'queen';
+    const maxHp = isKing ? 10000 : 9500;
+    const labelVi = isKing
+      ? '👑 ALIEN VUA KHỔNG LỒ (Siêu Trùm 1 Tỷ km)'
+      : '👸 ALIEN HOÀNG HẬU KHỔNG LỒ (Siêu Trùm 1 Tỷ km)';
+    const labelEn = isKing
+      ? '👑 COLOSSAL ALIEN KING (1 Billion km Mega-Boss)'
+      : '👸 COLOSSAL ALIEN QUEEN (1 Billion km Mega-Boss)';
+    const mapColor = isKing ? '#facc15' : '#f472b6';
+
+    const mesh = createAlienMesh(tier);
+    this.scene.add(mesh);
+
+    const orbitAngle = isKing ? 0.52 : -0.52;
+    const orbitRadius = isKing ? 66 : 70;
+    const orbitSpeed = isKing ? 0.16 : -0.16;
+    const tx0 = Math.cos(orbitAngle) * orbitRadius;
+    const tz0 = Math.sin(orbitAngle) * orbitRadius;
+    const floorY = this.alienFloorRelY(tx0, tz0, tier);
+    const bobAmp = 4.5;
+    const baseY = Math.max(isKing ? 12 : 16, floorY + bobAmp + 6.0);
+    const relPos = new THREE.Vector3(tx0, baseY, tz0);
+    mesh.position.copy(this.player.root.position).add(relPos);
+
+    const alien = {
+      id: `alien_${tier}_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
+      mesh,
+      tier,
+      isRoyal: true,
+      canFight: false,
+      fightCooldown: 999,
+      labelVi,
+      labelEn,
+      mapColor,
+      hp: maxHp,
+      maxHp,
+      hitFlash: 0,
+      orbitAngle,
+      orbitRadius,
+      orbitSpeed,
+      baseY,
+      bobPhase: isKing ? 0 : Math.PI,
+      bobAmp,
+      relPos,
+      pushOffset: new THREE.Vector3(),
+      vel: new THREE.Vector3(),
+    };
+    this.aliens.unshift(alien);
+    return alien;
   }
 
   fireWeapons(targetAlien = null) {
@@ -3353,18 +3613,19 @@ export class LaunchScene {
 
     this.weaponCooldown = 0.14;
 
-    // Pick target Alien (either clicked Alien, or closest hostile Alien first, then any Alien)
+    // Pick target Alien (either clicked Alien, or Royal King/Queen first, then closest Alien)
     let tgt = targetAlien;
     if (!tgt && this.aliens && this.aliens.length) {
-      let bestHostileD = Infinity;
+      let bestRoyalD = Infinity;
       for (const a of this.aliens) {
-        if (!a.canFight) continue;
+        if (!a.isRoyal || a.dead || a.hp <= 0) continue;
         const d = a.relPos.length();
-        if (d < bestHostileD) { bestHostileD = d; tgt = a; }
+        if (d < bestRoyalD) { bestRoyalD = d; tgt = a; }
       }
       if (!tgt) {
         let bestD = Infinity;
         for (const a of this.aliens) {
+          if (a.dead || a.hp <= 0) continue;
           const d = a.relPos.length();
           if (d < bestD) { bestD = d; tgt = a; }
         }
@@ -3580,7 +3841,7 @@ export class LaunchScene {
     if (alien.mesh && alien.mesh.parent) alien.mesh.parent.remove(alien.mesh);
     this.aliens = this.aliens.filter((a) => a !== alien);
     this.aliensKilled = (this.aliensKilled || 0) + 1;
-    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500') {
+    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500') {
       this.checkObjectives();
       this.renderMissionPanel(false);
     }
@@ -3589,34 +3850,36 @@ export class LaunchScene {
     this.flashPos = { x: hitX, y: hitY, z: hitZ };
 
     const aName = tr(alien.labelVi || 'UFO Alien', alien.labelEn || 'Alien UFO');
-    if (weaponType === 'alienBrawl') {
-      this.event(
-        tr(
-          `👽⚔️ ${aName} (${alien.maxHp} HP) đã bị bắn nổ trong cuộc đánh lộn giữa các Alien!`,
-          `👽⚔️ ${aName} (${alien.maxHp} HP) was destroyed in a brawl between fighting Aliens!`
-        )
+    const wLabel = weaponType === 'supernova'
+      ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
+      : weaponType === 'water'
+        ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
+        : weaponType === 'acid'
+          ? tr('Súng Acid Ăn Mòn', 'Corrosive Acid Cannon')
+          : weaponType === 'electric'
+            ? tr('Súng Điện 1,000,000 WATT', '1,000,000 WATT Electric Cannon')
+            : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
+    this.event(
+      tr(
+        `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
+        `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
+      )
+    );
+    if (alien.tier === 'king') {
+      this.milestone(
+        tr('👑💥 ĐÃ TIÊU DIỆT ALIEN VUA (10.000 HP)!', '👑💥 COLOSSAL ALIEN KING (10,000 HP) DEFEATED!'),
+        tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
       );
-    } else {
-      const wLabel = weaponType === 'supernova'
-        ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
-        : weaponType === 'water'
-          ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
-          : weaponType === 'acid'
-            ? tr('Súng Acid Ăn Mòn', 'Corrosive Acid Cannon')
-            : weaponType === 'electric'
-              ? tr('Súng Điện 1,000,000 WATT', '1,000,000 WATT Electric Cannon')
-              : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
-      this.event(
-        tr(
-          `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
-          `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
-        )
+    } else if (alien.tier === 'queen') {
+      this.milestone(
+        tr('👸💥 ĐÃ TIÊU DIỆT ALIEN HOÀNG HẬU (9.500 HP)!', '👸💥 COLOSSAL ALIEN QUEEN (9,500 HP) DEFEATED!'),
+        tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
       );
     }
-    // Heavy Boss Alien core collapses into a mini Supernova on destruction (only in outer space, never on planets/moons)!
+    // Heavy Boss / Royal Alien core collapses into a mini Supernova on destruction (only in outer space, never on planets/moons)!
     const onPlanetOrMoon = !P || P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
-    if (alien.tier === 'boss' && weaponType !== 'supernova' && !onPlanetOrMoon) {
-      this.triggerSupernova(alien.relPos ? alien.relPos.clone() : null, 0.58, true);
+    if ((alien.tier === 'boss' || alien.isRoyal) && weaponType !== 'supernova' && !onPlanetOrMoon) {
+      this.triggerSupernova(alien.relPos ? alien.relPos.clone() : null, alien.isRoyal ? 1.45 : 0.58, true);
     }
   }
 
@@ -3695,8 +3958,8 @@ export class LaunchScene {
     this.shakeBoost = Math.max(this.shakeBoost || 0, isBossCollapse ? 2.5 : 4.5);
 
     if (!isBossCollapse) {
-      // Vaporize all live Aliens caught in the Supernova shockwave!
-      const doomed = (this.aliens || []).slice();
+      // Vaporize non-royal Aliens caught in the Supernova shockwave (Royal King & Queen survive so player can fight them)!
+      const doomed = (this.aliens || []).filter((a) => !a.isRoyal);
       for (const a of doomed) {
         this.destroyAlien(a, 'supernova');
       }
@@ -3750,11 +4013,55 @@ export class LaunchScene {
         this.aliens = [];
       }
     } else {
+      // Spawn colossal Alien King & Alien Queen when player reaches altitude >= 1,000,000,000 km
+      const curAltKm = (P.ref === 'earth' ? Math.max(0, P.alt - (this.startAlt || 0)) : Math.max(0, P.alt)) / 1000;
+      const earthDistKm = Math.max(0, Math.hypot(P.s.x, P.s.y, P.s.z || 0) - R_E) / 1000;
+      const effectiveAltKm = Math.max(curAltKm, earthDistKm);
+      if (effectiveAltKm >= 1000000000) {
+        if (!this.flags.royalAliens1B) {
+          this.setFlag('royalAliens1B');
+          this.spawnRoyalAlien('king');
+          this.spawnRoyalAlien('queen');
+          this.royalRespawnTimer = 25;
+          this.milestone(
+            tr('👑👸 ALIEN VUA & ALIEN HOÀNG HẬU XUẤT HIỆN!', '👑👸 ALIEN KING & ALIEN QUEEN HAVE APPEARED!'),
+            tr('Đạt độ cao 1.000.000.000 km! Hai siêu trùm khổng lồ Alien Vua (10.000 HP) và Alien Hoàng Hậu (9.500 HP) đã xuất hiện!', 'Reached 1,000,000,000 km altitude! Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have emerged!')
+          );
+          this.event(
+            tr('👑👸🚨 Đạt độ cao 1.000.000.000 km! ALIEN VUA (10.000 HP) và ALIEN HOÀNG HẬU (9.500 HP) khổng lồ đã xuất hiện! Nhấn V hoặc click chuột để bắn!', '👑👸🚨 Reached 1,000,000,000 km altitude! Colossal ALIEN KING (10,000 HP) & ALIEN QUEEN (9,500 HP) have appeared! Press V or click to fire!'),
+            'warn'
+          );
+        } else {
+          const hasRoyalAlive = this.aliens.some((a) => !a.dead && a.isRoyal && a.hp > 0);
+          if (!hasRoyalAlive) {
+            this.royalRespawnTimer = (this.royalRespawnTimer ?? 25) - dt;
+            if (this.royalRespawnTimer <= 0) {
+              this.spawnRoyalAlien('king');
+              this.spawnRoyalAlien('queen');
+              this.royalRespawnTimer = 25;
+              this.event(
+                tr('👑👸 Alien Vua (10.000 HP) & Alien Hoàng Hậu (9.500 HP) mới đã xuất hiện ở độ cao 1.000.000.000 km!', '👑👸 A new Colossal Alien King (10,000 HP) & Alien Queen (9,500 HP) have appeared at 1,000,000,000 km!'),
+                'warn'
+              );
+            }
+          }
+        }
+      }
+
+      const density = this.getAlienDensityConfig();
+      const { maxConcurrentAliens, spawnInterval, batchSize } = density;
+      while (this.aliens.length > maxConcurrentAliens + 4) {
+        const idx = this.aliens.findLastIndex((a) => !a.isRoyal);
+        if (idx === -1) break;
+        const [rem] = this.aliens.splice(idx, 1);
+        if (rem && rem.mesh && rem.mesh.parent) rem.mesh.parent.remove(rem.mesh);
+      }
       this.alienSpawnTimer = (this.alienSpawnTimer || 0) - dt;
-      const maxConcurrentAliens = this.mission?.id === 'alien500' ? 8 : (this.mission?.id === 'alien100' ? 6 : 4);
-      const spawnInterval = this.mission?.id === 'alien500' ? 0.95 : (this.mission?.id === 'alien100' ? 1.35 : 2.6);
       if (this.aliens.length < maxConcurrentAliens && this.alienSpawnTimer <= 0) {
-        this.spawnAlien();
+        const toSpawn = Math.min(batchSize, maxConcurrentAliens - this.aliens.length);
+        for (let s = 0; s < toSpawn; s++) {
+          this.spawnAlien(density);
+        }
         this.alienSpawnTimer = spawnInterval;
       }
     }
@@ -3763,28 +4070,20 @@ export class LaunchScene {
 
     let nearestAlien = null;
     let bestDist = Infinity;
-    let nearestHostileAlien = null;
-    let bestHostileDist = Infinity;
 
-    // Mutual separation: Scout Aliens actively steer clear of all other Aliens so they never collide or brawl
+    // Mutual separation: all Aliens peacefully steer clear of each other and NEVER collide or brawl
     for (let i = 0; i < this.aliens.length; i++) {
       const a = this.aliens[i];
       for (let j = i + 1; j < this.aliens.length; j++) {
         const b = this.aliens[j];
         const diff = new THREE.Vector3().subVectors(a.relPos, b.relPos);
         const dist = diff.length();
-        const minSep = (a.tier === 'scout' || b.tier === 'scout') ? 16.0 : 10.5;
+        const minSep = (a.isRoyal || b.isRoyal) ? 38.0 : 16.0;
         if (dist > 0.01 && dist < minSep) {
           const push = ((minSep - dist) / minSep) * 18 * dt;
           diff.normalize();
-          if (a.tier === 'scout' && b.tier !== 'scout') {
-            a.vel.addScaledVector(diff, push * 1.8);
-          } else if (b.tier === 'scout' && a.tier !== 'scout') {
-            b.vel.addScaledVector(diff, -push * 1.8);
-          } else {
-            a.vel.addScaledVector(diff, push);
-            b.vel.addScaledVector(diff, -push);
-          }
+          a.vel.addScaledVector(diff, push);
+          b.vel.addScaledVector(diff, -push);
         }
       }
     }
@@ -3846,60 +4145,17 @@ export class LaunchScene {
         bestDist = d;
         nearestAlien = a;
       }
-      if (a.canFight && d < bestHostileDist) {
-        bestHostileDist = d;
-        nearestHostileAlien = a;
-      }
     }
 
-    // Alien brawling ("đánh lộn"): ONLY Warrior & Boss Aliens fight each other; Scout Aliens NEVER fight!
-    const fighters = this.aliens.filter((a) => a.canFight && a.tier !== 'scout' && !a.dead && a.hp > 0);
-    if (fighters.length >= 2) {
-      for (const attacker of fighters) {
-        if (attacker.dead || attacker.hp <= 0) continue;
-        attacker.fightCooldown = (attacker.fightCooldown ?? 1.8) - dt;
-        if (attacker.fightCooldown <= 0) {
-          const rivals = fighters.filter((r) => r !== attacker && !r.dead && r.hp > 0);
-          if (rivals.length) {
-            const target = rivals[Math.floor(Math.random() * rivals.length)];
-            attacker.fightCooldown = (attacker.tier === 'boss' ? 1.3 : 1.9) + Math.random() * 1.4;
-            const startPos = attacker.mesh.position.clone();
-            const endPos = target.mesh.position.clone();
-            const beam = createBeamVisual('alienLaser', startPos, endPos);
-            this.scene.add(beam);
-            this.weaponBeams.push({
-              mesh: beam,
-              relStart: startPos.clone().sub(pWorld),
-              relEnd: endPos.clone().sub(pWorld),
-              life: beam.userData.life,
-              maxLife: beam.userData.maxLife,
-            });
-            const dmg = attacker.tier === 'boss' ? 22 : 14;
-            target.hp -= dmg;
-            target.hitFlash = 0.15;
-            const knockDir = new THREE.Vector3().subVectors(endPos, startPos).normalize();
-            target.vel.addScaledVector(knockDir, 9);
-            const tFloor = this.alienFloorRelY(target.relPos.x, target.relPos.z, target.tier);
-            if (target.relPos.y <= tFloor + 1.5 && target.vel.y < 0) target.vel.y = 0;
-            target.mesh.userData.setHp(target.hp / target.maxHp);
-            audio.laserShot(0.16);
-            if (target.hp <= 0) {
-              this.destroyAlien(target, 'alienBrawl');
-            }
-          }
-        }
-      }
-    }
-
-    // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled (ignoring peaceful Scouts)
+    // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled
     if (nearestAlien && this.rocket && this.rocket.weapons) {
       for (const w of this.rocket.weapons) {
         if (!w.turret || !P.owns(w.seg)) continue;
         w.turret.rotation.z = Math.sin(this.time * 3.5) * 0.12;
       }
     }
-    if ((this.program || this.autoShootAliens) && nearestHostileAlien && this.weaponCooldown <= 0) {
-      this.fireWeapons(nearestHostileAlien);
+    if ((this.program || this.autoShootAliens) && nearestAlien && this.weaponCooldown <= 0) {
+      this.fireWeapons(nearestAlien);
     }
 
     // Update active laser & 1,000,000 PSI water beams
@@ -4921,18 +5177,58 @@ export class LaunchScene {
       };
     });
 
-    // Solar System Alien Patrols (stationed in outer space & around planets/moons; never on Earth's surface)
+    // Solar System Alien Patrols (stationed in outer space & around planets/moons; more Aliens the further from Earth)
     if (!this.mapAlienFleet) {
       this.mapAlienFleet = [
+        // Near Earth & Moon (fewest)
         { id: 'alien_space_leo', ref: 'earth', alt: 220e3, e: 0.01, argPe: 0.9, nu0: 1.2, hSign: 1, t0: 0, vi: 'UFO Alien · Vũ trụ', en: 'Alien UFO · Outer Space' },
-        { id: 'alien_moon', ref: 'moon', alt: 35e3, e: 0.02, argPe: 2.1, nu0: 0.5, hSign: 1, t0: 0, vi: 'UFO Alien · Mặt Trăng', en: 'Alien UFO · Moon' },
-        { id: 'alien_mars', ref: 'mars', alt: 48e3, e: 0.02, argPe: 1.4, nu0: 2.3, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Hỏa', en: 'Alien UFO · Mars' },
-        { id: 'alien_venus', ref: 'venus', alt: 75e3, e: 0.015, argPe: 0.4, nu0: 3.1, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Kim', en: 'Alien UFO · Venus' },
-        { id: 'alien_mercury', ref: 'mercury', alt: 28e3, e: 0.02, argPe: 2.8, nu0: 1.7, hSign: 1, t0: 0, vi: 'UFO Alien · Sao Thủy', en: 'Alien UFO · Mercury' },
-        { id: 'alien_ceres', ref: 'ceres', alt: 24e3, e: 0.015, argPe: 1.8, nu0: 0.9, hSign: 1, t0: 0, vi: 'UFO Alien · Ceres', en: 'Alien UFO · Ceres' },
+        { id: 'alien_moon_1', ref: 'moon', alt: 35e3, e: 0.02, argPe: 2.1, nu0: 0.5, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Mặt Trăng', en: 'Alien UFO #1 · Moon' },
+        { id: 'alien_moon_2', ref: 'moon', alt: 62e3, e: 0.015, argPe: 0.6, nu0: 3.6, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Mặt Trăng', en: 'Alien UFO #2 · Moon' },
+        // Inner planets (Venus, Mars, Mercury)
+        { id: 'alien_venus_1', ref: 'venus', alt: 75e3, e: 0.015, argPe: 0.4, nu0: 3.1, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Kim', en: 'Alien UFO #1 · Venus' },
+        { id: 'alien_venus_2', ref: 'venus', alt: 110e3, e: 0.02, argPe: 2.2, nu0: 1.0, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Kim', en: 'Alien UFO #2 · Venus' },
+        { id: 'alien_mars_1', ref: 'mars', alt: 48e3, e: 0.02, argPe: 1.4, nu0: 2.3, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Hỏa', en: 'Alien UFO #1 · Mars' },
+        { id: 'alien_mars_2', ref: 'mars', alt: 85e3, e: 0.018, argPe: 3.0, nu0: 0.4, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Hỏa', en: 'Alien UFO #2 · Mars' },
+        { id: 'alien_phobos', ref: 'phobos', alt: 18e3, e: 0.01, argPe: 1.1, nu0: 2.0, hSign: 1, t0: 0, vi: 'UFO Alien · Phobos', en: 'Alien UFO · Phobos' },
+        { id: 'alien_mercury_1', ref: 'mercury', alt: 28e3, e: 0.02, argPe: 2.8, nu0: 1.7, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Thủy', en: 'Alien UFO #1 · Mercury' },
+        { id: 'alien_mercury_2', ref: 'mercury', alt: 52e3, e: 0.015, argPe: 0.9, nu0: 4.2, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Thủy', en: 'Alien UFO #2 · Mercury' },
+        // Asteroid belt (Ceres)
+        { id: 'alien_ceres_1', ref: 'ceres', alt: 24e3, e: 0.015, argPe: 1.8, nu0: 0.9, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Ceres', en: 'Alien UFO #1 · Ceres' },
+        { id: 'alien_ceres_2', ref: 'ceres', alt: 44e3, e: 0.02, argPe: 0.3, nu0: 2.9, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Ceres', en: 'Alien UFO #2 · Ceres' },
+        { id: 'alien_ceres_3', ref: 'ceres', alt: 68e3, e: 0.01, argPe: 2.6, nu0: 4.8, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Ceres', en: 'Alien UFO #3 · Ceres' },
+        // Jupiter system
+        { id: 'alien_jupiter_1', ref: 'jupiter', alt: 160e3, e: 0.02, argPe: 0.5, nu0: 1.1, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Mộc', en: 'Alien UFO #1 · Jupiter' },
+        { id: 'alien_jupiter_2', ref: 'jupiter', alt: 280e3, e: 0.015, argPe: 2.4, nu0: 3.7, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Mộc', en: 'Alien UFO #2 · Jupiter' },
+        { id: 'alien_io', ref: 'io', alt: 25e3, e: 0.01, argPe: 1.6, nu0: 0.4, hSign: 1, t0: 0, vi: 'UFO Alien · Io', en: 'Alien UFO · Io' },
         { id: 'alien_europa', ref: 'europa', alt: 22e3, e: 0.01, argPe: 1.1, nu0: 0.8, hSign: 1, t0: 0, vi: 'UFO Alien · Europa', en: 'Alien UFO · Europa' },
-        { id: 'alien_titan', ref: 'titan', alt: 55e3, e: 0.015, argPe: 2.5, nu0: 2.0, hSign: 1, t0: 0, vi: 'UFO Alien · Titan', en: 'Alien UFO · Titan' },
-        { id: 'alien_pluto', ref: 'pluto', alt: 20e3, e: 0.02, argPe: 0.7, nu0: 1.5, hSign: 1, t0: 0, vi: 'UFO Alien · Diêm Vương', en: 'Alien UFO · Pluto' },
+        { id: 'alien_ganymede', ref: 'ganymede', alt: 32e3, e: 0.015, argPe: 2.9, nu0: 2.2, hSign: -1, t0: 0, vi: 'UFO Alien · Ganymede', en: 'Alien UFO · Ganymede' },
+        // Saturn system
+        { id: 'alien_saturn_1', ref: 'saturn', alt: 150e3, e: 0.02, argPe: 0.8, nu0: 0.6, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Thổ', en: 'Alien UFO #1 · Saturn' },
+        { id: 'alien_saturn_2', ref: 'saturn', alt: 260e3, e: 0.018, argPe: 2.7, nu0: 2.9, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Thổ', en: 'Alien UFO #2 · Saturn' },
+        { id: 'alien_saturn_3', ref: 'saturn', alt: 380e3, e: 0.012, argPe: 1.4, nu0: 4.9, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Sao Thổ', en: 'Alien UFO #3 · Saturn' },
+        { id: 'alien_enceladus', ref: 'enceladus', alt: 18e3, e: 0.01, argPe: 0.4, nu0: 1.5, hSign: 1, t0: 0, vi: 'UFO Alien · Enceladus', en: 'Alien UFO · Enceladus' },
+        { id: 'alien_titan_1', ref: 'titan', alt: 55e3, e: 0.015, argPe: 2.5, nu0: 2.0, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Titan', en: 'Alien UFO #1 · Titan' },
+        { id: 'alien_titan_2', ref: 'titan', alt: 90e3, e: 0.02, argPe: 0.9, nu0: 5.1, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Titan', en: 'Alien UFO #2 · Titan' },
+        // Uranus system
+        { id: 'alien_uranus_1', ref: 'uranus', alt: 120e3, e: 0.02, argPe: 1.2, nu0: 0.7, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Thiên Vương', en: 'Alien UFO #1 · Uranus' },
+        { id: 'alien_uranus_2', ref: 'uranus', alt: 210e3, e: 0.015, argPe: 3.1, nu0: 2.6, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Thiên Vương', en: 'Alien UFO #2 · Uranus' },
+        { id: 'alien_uranus_3', ref: 'uranus', alt: 310e3, e: 0.018, argPe: 0.3, nu0: 4.5, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Sao Thiên Vương', en: 'Alien UFO #3 · Uranus' },
+        { id: 'alien_miranda', ref: 'miranda', alt: 16e3, e: 0.01, argPe: 1.9, nu0: 1.1, hSign: 1, t0: 0, vi: 'UFO Alien · Miranda', en: 'Alien UFO · Miranda' },
+        { id: 'alien_titania', ref: 'titania', alt: 24e3, e: 0.015, argPe: 2.4, nu0: 3.3, hSign: -1, t0: 0, vi: 'UFO Alien · Titania', en: 'Alien UFO · Titania' },
+        // Neptune system
+        { id: 'alien_neptune_1', ref: 'neptune', alt: 110e3, e: 0.02, argPe: 0.6, nu0: 0.9, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Sao Hải Vương', en: 'Alien UFO #1 · Neptune' },
+        { id: 'alien_neptune_2', ref: 'neptune', alt: 195e3, e: 0.016, argPe: 2.1, nu0: 2.8, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Sao Hải Vương', en: 'Alien UFO #2 · Neptune' },
+        { id: 'alien_neptune_3', ref: 'neptune', alt: 290e3, e: 0.014, argPe: 1.3, nu0: 4.4, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Sao Hải Vương', en: 'Alien UFO #3 · Neptune' },
+        { id: 'alien_neptune_4', ref: 'neptune', alt: 390e3, e: 0.02, argPe: 2.9, nu0: 5.7, hSign: -1, t0: 0, vi: 'UFO Alien #4 · Sao Hải Vương', en: 'Alien UFO #4 · Neptune' },
+        { id: 'alien_triton_1', ref: 'triton', alt: 24e3, e: 0.015, argPe: 0.7, nu0: 1.6, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Triton', en: 'Alien UFO #1 · Triton' },
+        { id: 'alien_triton_2', ref: 'triton', alt: 46e3, e: 0.02, argPe: 2.6, nu0: 4.1, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Triton', en: 'Alien UFO #2 · Triton' },
+        // Pluto (furthest planet -> dense Alien presence)
+        { id: 'alien_pluto_1', ref: 'pluto', alt: 20e3, e: 0.02, argPe: 0.7, nu0: 0.5, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Diêm Vương', en: 'Alien UFO #1 · Pluto' },
+        { id: 'alien_pluto_2', ref: 'pluto', alt: 34e3, e: 0.015, argPe: 1.8, nu0: 1.7, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Diêm Vương', en: 'Alien UFO #2 · Pluto' },
+        { id: 'alien_pluto_3', ref: 'pluto', alt: 50e3, e: 0.018, argPe: 2.9, nu0: 2.9, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Diêm Vương', en: 'Alien UFO #3 · Pluto' },
+        { id: 'alien_pluto_4', ref: 'pluto', alt: 68e3, e: 0.02, argPe: 0.4, nu0: 4.1, hSign: -1, t0: 0, vi: 'UFO Alien #4 · Diêm Vương', en: 'Alien UFO #4 · Pluto' },
+        { id: 'alien_pluto_5', ref: 'pluto', alt: 88e3, e: 0.015, argPe: 1.5, nu0: 5.3, hSign: 1, t0: 0, vi: 'UFO Alien #5 · Diêm Vương', en: 'Alien UFO #5 · Pluto' },
+        { id: 'alien_pluto_6', ref: 'pluto', alt: 112e3, e: 0.02, argPe: 2.4, nu0: 6.0, hSign: -1, t0: 0, vi: 'UFO Alien #6 · Diêm Vương', en: 'Alien UFO #6 · Pluto' },
       ];
     }
     const patrolAlienObjs = this.mapAlienFleet.map((pat) => {
@@ -5074,9 +5370,10 @@ export class LaunchScene {
     const btnAp = $('btn-autopilot');
     if (btnAp) {
       if (isAutopilotLocked) {
+        const targetCount = this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
         btnAp.innerHTML = `🚫 ${tr('Khóa', 'Locked')} <kbd>G</kbd>`;
         btnAp.title = this.mission?.noAutopilot
-          ? tr('Nhiệm vụ diệt 100 Alien không hỗ trợ tự lái', 'Autopilot disabled for 100 Aliens mission')
+          ? tr(`Nhiệm vụ diệt ${targetCount} Alien không hỗ trợ tự lái`, `Autopilot disabled for ${targetCount} Aliens mission`)
           : tr('Chế độ bay tự do không hỗ trợ tự lái', 'Autopilot disabled in Free Flight');
         btnAp.style.background = 'rgba(239,68,68,0.12)';
         btnAp.style.borderColor = 'rgba(239,68,68,0.4)';
@@ -5103,8 +5400,8 @@ export class LaunchScene {
     const canBoardOnPad = this.phase === 'ready' && !this.lifted;
     const isOnLaunchpad = this.phase === 'ready' || this.phase === 'countdown' || (!this.lifted && P && P.ref === 'earth' && (P.clamped || (P.landed && P.landed.site === 'pad')));
     const isGasGiant = !!(P && BODIES[P.ref]?.gasGiant);
-    const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && !isGasGiant && (P.ref !== 'earth' || !!P.landed);
     const curBodyDeployed = (this.deployedAstronauts || []).filter((a) => a.body === P?.ref).length;
+    const canShowDeploy = !isOnLaunchpad && !!P && !P.crashed && P.ref !== 'sun' && !isGasGiant && !!P.landed && this.astronautsAboard > 0 && curBodyDeployed < maxAstro;
     const astroEl = $('h-astronauts');
     if (astroEl) {
       astroEl.textContent = curBodyDeployed > 0
@@ -5131,13 +5428,8 @@ export class LaunchScene {
     const btnAstroDeploy = $('btn-astro-deploy');
     if (btnAstroDeploy && canShowDeploy) {
       const bLabel = (BODIES[P.ref] || BODIES.earth).label;
-      if (this.astronautsAboard > 0) {
-        btnAstroDeploy.textContent = `👨‍🚀 ${tr('Thả', 'Deploy')} (${this.astronautsAboard})`;
-      } else if (curBodyDeployed < maxAstro) {
-        btnAstroDeploy.textContent = `👨‍🚀 ${tr('Thả', 'Deploy')} (${curBodyDeployed}/${maxAstro})`;
-      } else {
-        btnAstroDeploy.textContent = `👨‍🚀 ${maxAstro}/${maxAstro} ✓`;
-      }
+      const toDeploy = Math.min(this.astronautsAboard, maxAstro - curBodyDeployed);
+      btnAstroDeploy.textContent = `👨‍🚀 ${tr('Thả', 'Deploy')} (${toDeploy})`;
       btnAstroDeploy.title = `${bLabel} · ${this.astronautsAboard}/${maxAstro}`;
     }
     const btnFire = $('btn-fire-weapon');

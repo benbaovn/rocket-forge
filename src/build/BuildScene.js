@@ -417,6 +417,8 @@ export class BuildScene {
 
     window.addEventListener('pointermove', (e) => this.onDragMove(e));
     window.addEventListener('pointerup', (e) => this.onDragEnd(e));
+    // touch: the browser took over the gesture (e.g. scrolling the parts strip) → drop the drag silently
+    window.addEventListener('pointercancel', () => this.cancelDrag());
     const c = this.app.canvas;
     c.addEventListener('pointerdown', (e) => { this.downPos = [e.clientX, e.clientY]; });
     c.addEventListener('pointerup', (e) => {
@@ -613,6 +615,15 @@ export class BuildScene {
     if (d.cand) this.applyCandidate(d.type, d.cand);
     else if (!d.moved) this.smartAdd(d.type);
     else this.rebuild();
+  }
+
+  cancelDrag() {
+    const d = this.drag;
+    if (!d) return;
+    d.ghost.remove();
+    this.drag = null;
+    this.indicator.visible = false;
+    this.rebuild();
   }
 
   screenOf(y) {

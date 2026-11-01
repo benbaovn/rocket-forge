@@ -361,11 +361,11 @@ select.btn option { background: #111a29; }
 .hud h4.sub { margin: 8px 0 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #8aa); border-top: 1px solid rgba(255,255,255,.08); padding-top: 6px; }
 #h-vel-l { font-size: 9px; }
 #h-stages { max-height: 155px; overflow-y: auto; padding-right: 2px; margin-bottom: 6px; }
-#events { top: auto !important; bottom: 64px; left: 14px; right: auto; width: 226px; flex-direction: column-reverse; }
+#events { top: auto !important; bottom: 64px; left: 14px; right: auto; width: 226px; max-height: calc(100dvh - 520px); overflow: hidden; flex-direction: column-reverse; z-index: 2; }
 .prog { margin-top: 6px; padding: 6px 8px; border-radius: 7px; background: rgba(70,212,255,.08); border: 1px solid rgba(70,212,255,.25); font-size: 10.5px; line-height: 1.35; }
 .prog hr { border: 0; border-top: 1px solid rgba(255,255,255,.1); margin: 4px 0; }
 .prog b { color: #7fdcff; }
-#mission-panel { position: absolute; left: 14px; top: 310px; width: 226px; padding: 8px 11px; pointer-events: none; border-radius: 11px; }
+#mission-panel { position: absolute; left: 14px; top: 310px; width: 226px; padding: 8px 11px; pointer-events: none; border-radius: 11px; z-index: 4; }
 #mission-panel .mp-title { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .08em; margin-bottom: 4px; color: #ffd27a; }
 
 /* ---------- Planet & Moon Teleport Quick-Bar & Modal (Sleek Single-Row Pill) ---------- */
@@ -656,7 +656,7 @@ select.btn option { background: #111a29; }
 #map-telemetry .tel-row span { color: #94a3b8; }
 #map-telemetry .tel-row b { color: #f1f5f9; font-weight: 700; font-family: var(--font-orbitron); }
 #map-obj-list { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
-#map-obj-list h5 { margin: 0 0 6px 0; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #f59e0b; font-family: var(--font-orbitron); }
+#map-obj-list h5, #map-obj-list .mol-title { margin: 0 0 6px 0; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #f59e0b; font-family: var(--font-orbitron); }
 .map-obj-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; border-radius: 7px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); margin-bottom: 4px; cursor: pointer; font-size: 11.5px; transition: all 0.15s; }
 .map-obj-item:hover { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.45); }
 .map-obj-item.active { background: rgba(56,189,248,0.22); border-color: #38bdf8; }
@@ -819,4 +819,334 @@ select.btn option { background: #111a29; }
   font-family: var(--font-orbitron);
   font-size: 11px;
   color: #e2e8f0;
+}
+
+/* =====================================================================
+   MOBILE / TABLET / TOUCH
+   - body.touch     : phone / tablet (set by src/ui/mobile.js)
+   - compact query  : phones (portrait or landscape) & tiny windows
+   Camera: 1 finger drag = rotate, 2 fingers = pinch zoom (OrbitControls).
+   ===================================================================== */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+html, body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-text-size-adjust: 100%; }
+button, .btn, .part-card, .preset-card, .mission-card, .tp-card-btn, .map-fbtn, .tp-btn { touch-action: manipulation; }
+.panel.right { max-height: calc(100dvh - 184px); }
+#map { height: 100dvh; }
+#map-telemetry { max-height: calc(100dvh - 140px); }
+
+.compact-only, .hud-quick { display: none; }
+
+/* ---------- touch devices (any size) ---------- */
+body.touch .hint,
+body.touch .keys,
+body.touch #map-legend,
+body.touch .part-tooltip,
+body.touch #load-tip { display: none !important; }
+body.touch .hud-act-btn kbd { display: none; }
+body.touch .hud-act-btn { justify-content: center; }
+body.touch .part-card { touch-action: pan-y; }
+body.touch .hud-bottom { gap: 0; padding: 6px 12px; }
+body.touch .big-btn:hover, body.touch .btn:hover, body.touch .part-card:hover { transform: none; }
+.modal-card, .wide-card, .modal-scroll-list, .panel, #map-telemetry, #h-stages { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+/* landscape hint during flight on phones held upright */
+@media (orientation: portrait) and (max-width: 600px) {
+  body.touch.scene-launch::after {
+    content: '↻ Xoay ngang để chơi tốt hơn · Rotate to landscape';
+    position: fixed; left: 50%; top: 45%; transform: translate(-50%, -50%);
+    z-index: 30; pointer-events: none; white-space: nowrap;
+    padding: 8px 14px; border-radius: 999px; font-size: 11px; color: #e9d5ff;
+    background: rgba(14, 20, 32, 0.8); border: 1px solid rgba(192, 132, 252, 0.45);
+    animation: rotHint 5s ease forwards;
+  }
+}
+@keyframes rotHint { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- tablets / small laptops ---------- */
+@media (min-width: 761px) and (max-width: 1180px) and (min-height: 521px) {
+  .panel.left { width: 212px; }
+  .part-card img { width: 48px; height: 48px; }
+  .panel.right { width: 226px; }
+  .hint { left: 244px; }
+  #sel-box { min-width: 300px; }
+  .hud-left { width: 204px; }
+  .hud-right { width: 212px; }
+  #teleport-bar { left: 228px; right: 236px; }
+  #events, #mission-panel { width: 204px; }
+  #map-telemetry { width: 240px; }
+  #pip { width: 280px; height: 172px; }
+  .hud-bottom { max-width: calc(100vw - 280px); }
+}
+
+/* ---------- phones & tiny windows ---------- */
+@media (max-width: 760px), (max-height: 520px) {
+  .compact-only { display: inline-flex; }
+
+  /* --- loading --- */
+  .load-logo { font-size: 32px; letter-spacing: 3px; }
+  .load-bar { width: 70vw; }
+
+  /* --- VAB top bar --- */
+  .topbar { top: calc(6px + var(--sat)); left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); height: 38px; gap: 8px; }
+  .logo { font-size: 14px; letter-spacing: 2px; }
+  #gpu-badge { padding: 4px 8px; font-size: 10px; gap: 5px; }
+  #gpu-badge .gpu-fps { font-size: 9.5px; padding: 1px 5px; }
+  .top-actions { gap: 5px; }
+  .top-icon-btn { width: 36px; height: 36px; font-size: 15px !important; }
+  .top-icon-btn.on { background: rgba(79, 216, 255, 0.28); border-color: var(--accent); }
+
+  /* --- VAB parts palette → horizontal strip at the bottom --- */
+  #palette.panel.left {
+    top: auto; left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); bottom: calc(8px + var(--sab));
+    width: auto; height: 92px; padding: 6px 8px; overflow-x: auto; overflow-y: hidden; border-radius: 12px;
+  }
+  #palette h3 { display: none; }
+  #part-list { display: flex; flex-direction: row; align-items: stretch; gap: 6px; height: 100%; width: max-content; }
+  #part-list .cat {
+    writing-mode: vertical-rl; transform: rotate(180deg); margin: 0; font-size: 8px; letter-spacing: 1px;
+    flex-shrink: 0; max-height: 80px; overflow: hidden; white-space: nowrap; color: var(--accent);
+  }
+  #part-list .cat::after { display: none; }
+  #part-list .part-grid { display: flex; gap: 6px; flex-shrink: 0; }
+  #part-list .part-card { width: 68px; flex-shrink: 0; padding: 4px 3px 3px; gap: 3px; }
+  body.touch #part-list .part-card { touch-action: pan-x; }
+  #part-list .part-card img { width: 48px; height: 48px; }
+  #part-list .part-card .pc-name { font-size: 8.5px; }
+  #part-list .part-card .pc-badge { font-size: 7.5px; padding: 1px 4px; }
+
+  /* --- VAB specs → toggled overlay (📊 button) --- */
+  #stats.panel.right {
+    display: none; top: calc(50px + var(--sat)); right: calc(8px + var(--sar));
+    width: min(260px, calc(100vw - 16px)); padding: 10px;
+    max-height: calc(100dvh - 50px - 92px - 70px - var(--sat) - var(--sab)); z-index: 15;
+  }
+  #stats.open { display: block !important; }
+  .stat { padding: 7px; }
+  .stat b { font-size: 14px; }
+
+  /* --- VAB selection box & rotate bar --- */
+  #sel-box { top: calc(50px + var(--sat)); min-width: 0; width: min(380px, calc(100vw - 16px)); padding: 8px 10px; }
+  #sel-name { font-size: 13px; }
+  #sel-desc, #sel-box .rot-toolbar { display: none; }
+  #sel-box .btn { padding: 6px 10px; font-size: 11px; }
+  #sel-box .btn.wide { margin-top: 2px; padding: 7px; font-size: 11px; }
+  .rot-bar { bottom: calc(108px + var(--sab)); left: calc(8px + var(--sal)); transform: none; padding: 5px 7px; gap: 5px; }
+  .rot-bar-title { display: none; }
+  .rot-btn { padding: 5px 8px; font-size: 10px; }
+  #btn-launchpad { right: calc(8px + var(--sar)); bottom: calc(108px + var(--sab)); padding: 10px 18px; font-size: 15px; letter-spacing: 1px; border-radius: 12px; }
+  .hint, .part-tooltip { display: none !important; }
+
+  /* --- flight HUD: both panels hidden behind small icons (📊 / ⛽), tap to show / hide --- */
+  .hud { padding: 6px 7px; border-radius: 11px; }
+  .hud-left, .hud-right { display: none; z-index: 3; top: calc(52px + var(--sat)); max-height: calc(100dvh - 60px - var(--sat) - var(--sab)); overflow-y: auto; }
+  .hud-left.shown, .hud-right.shown { display: block; }
+
+  .hud-left { left: calc(8px + var(--sal)); width: 212px; }
+  .primary-readouts { gap: 5px; margin-bottom: 5px; }
+  .big-readout { padding: 4px 6px; }
+  .big-readout label, #h-vel-l { font-size: 8px; letter-spacing: 1px; }
+  .big-readout b { font-size: 14px; }
+  .big-readout small { font-size: 8px; }
+  .rows > div { padding: 2.5px 5px; font-size: 10px; }
+  .rows span { font-size: 9px; }
+  .rows b { font-size: 10px; }
+  .hud h4.sub { margin: 5px 0 3px; padding-top: 4px; font-size: 9px; }
+  .orb-grid > div { padding: 3px 4px; }
+
+  .hud-right { right: calc(8px + var(--sar)); width: 184px; }
+  .hud-right h4 { font-size: 9px; margin-bottom: 4px; }
+  #h-stages { max-height: 120px; }
+  .fuel-row { font-size: 9.5px; margin-bottom: 3px; }
+
+  /* icon row: [📊]  ……  [Fire][Auto][Map][Warp][⛽] */
+  .hud-quick { position: absolute; top: calc(8px + var(--sat)); display: flex; gap: 5px; align-items: center; z-index: 3; }
+  .hud-quick.left { left: calc(8px + var(--sal)); }
+  .hud-quick.right { right: calc(8px + var(--sar)); }
+  .hud-tg {
+    width: 36px; height: 36px; padding: 0; border-radius: 10px; font-size: 16px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; color: var(--text);
+    background: rgba(14, 20, 32, 0.55); border: 1px solid rgba(160, 200, 255, 0.24);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .hud-tg.on { background: rgba(79, 216, 255, 0.3); border-color: var(--accent); }
+  .hud-quick .hud-actions-grid { display: flex; gap: 4px; margin: 0; }
+  .hud-quick .hud-act-btn { height: 36px; padding: 0 8px; font-size: 9.5px; border-radius: 10px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+  #teleport-bar { display: none; }
+  #astronaut-bar {
+    top: calc(8px + var(--sat)); padding: 3px 7px; gap: 5px;
+    max-width: calc(100vw - 600px - var(--sal) - var(--sar)); min-width: 120px; overflow-x: auto; scrollbar-width: none;
+  }
+  #astronaut-bar::-webkit-scrollbar { display: none; }
+  .astro-add-btn { padding: 3px 6px; font-size: 9.5px; }
+
+  #mission-panel { display: none; }
+  .hud-left.shown ~ #mission-panel:not(.hidden) { display: block; left: calc(228px + var(--sal)); top: calc(52px + var(--sat)); width: 190px; padding: 6px 8px; z-index: 3; }
+  .mp-row { font-size: 10.5px; }
+
+  #events { left: calc(8px + var(--sal)); bottom: calc(48px + var(--sab)); width: min(220px, 40vw); max-height: 96px; overflow: hidden; gap: 3px; }
+  .ev { font-size: 9.5px; padding: 4px 8px; }
+  /* status log hidden on phones */
+  #events { display: none !important; }
+
+  .hud-bottom { bottom: calc(8px + var(--sab)); padding: 5px 10px; max-width: calc(100vw - 250px); }
+  .throttle { width: 150px; gap: 6px; }
+  .btn.back { left: calc(8px + var(--sal)); bottom: calc(8px + var(--sab)); padding: 6px 11px; font-size: 11px; }
+  #btn-go { right: calc(8px + var(--sar)); bottom: calc(8px + var(--sab)); padding: 11px 20px; font-size: 15px; letter-spacing: 1px; border-radius: 12px; }
+
+  #countdown { font-size: 88px; }
+  #milestone { top: 24%; width: 70vw; }
+  #milestone .m1 { font-size: 20px; letter-spacing: 2px; }
+  #milestone .m2 { font-size: 11px; }
+  #pip { left: 50%; right: auto; transform: translateX(-50%); top: calc(8px + var(--sat)); bottom: auto; width: min(200px, 30vw); height: auto; aspect-ratio: 360 / 220; }
+  #dock-hud { width: 150px; height: 150px; margin: -75px 0 0 -75px; }
+  #dock-hud .dk-info { font-size: 10px; }
+
+  /* --- 3D orbital map --- */
+  #map-telemetry { left: calc(8px + var(--sal)); top: calc(8px + var(--sat)); width: 196px; padding: 8px 10px; max-height: calc(100dvh - 70px - var(--sat) - var(--sab)); }
+  #map-telemetry h4 { font-size: 10px; }
+  #map-telemetry .tel-row { font-size: 10px; }
+  .map-obj-item { font-size: 10px; padding: 4px 6px; }
+  #map-focus-bar {
+    flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none;
+    left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); transform: none; max-width: none;
+    bottom: calc(8px + var(--sab)); padding: 5px; gap: 4px;
+  }
+  #map-focus-bar::-webkit-scrollbar { display: none; }
+  .map-fbtn { flex-shrink: 0; font-size: 10px; padding: 5px 8px; }
+  #map-close-btn { right: calc(10px + var(--sar)); top: calc(8px + var(--sat)); width: 38px; height: 38px; }
+  #map-obj-popup { bottom: calc(56px + var(--sab)); max-width: calc(100vw - 16px); gap: 10px; padding: 8px 12px; }
+
+  /* --- modals --- */
+  .modal-card { width: min(440px, calc(100vw - 16px)); max-height: calc(100dvh - 16px - var(--sat) - var(--sab)); overflow-y: auto; padding: 16px; }
+  .wide-card, .tp-modal-card { width: calc(100vw - 16px - var(--sal) - var(--sar)); max-height: calc(100dvh - 16px - var(--sat) - var(--sab)); }
+  .modal-card h2 { font-size: 16px; margin-bottom: 10px; letter-spacing: 2px; }
+  .modal-scroll-list { max-height: none; overflow: visible; }
+  .setting { margin-top: 12px; }
+  .seg { flex-wrap: wrap; }
+  .seg button { padding: 8px 6px; font-size: 11px; min-width: 40%; }
+  .rank { font-size: 52px; }
+  .row-btns { flex-wrap: wrap; }
+  .btn.wide { padding: 10px; font-size: 13px; }
+  .tp-group-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 5px; }
+  .tp-card-btn { padding: 6px 8px; }
+  .tp-card-top { font-size: 11px; }
+  .preset-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .mission-card { padding: 9px 10px; gap: 10px; }
+  .mc-ico { font-size: 22px; }
+  .mc-name { font-size: 13px; }
+  .mc-desc { font-size: 11px; }
+  .gpu-card { padding: 9px 10px; }
+  .gpu-card-row { font-size: 10px; gap: 8px; }
+  .gpu-card-row b { font-size: 9.5px; text-align: right; }
+}
+
+/* ---------- phones held upright ---------- */
+@media (max-width: 520px) and (orientation: portrait) {
+  .logo { display: none; }
+  #btn-launchpad { bottom: calc(156px + var(--sab)); }
+  .hud-left { width: calc(50vw - 12px - var(--sal)); }
+  .hud-right { width: calc(50vw - 12px - var(--sar)); }
+  #astronaut-bar { top: auto; bottom: calc(96px + var(--sab)); max-width: calc(100vw - 16px); }
+  #events { width: calc(100vw - 16px); bottom: calc(132px + var(--sab)); }
+  .hud-bottom { left: calc(8px + var(--sal)); right: auto; transform: none; bottom: calc(52px + var(--sab)); max-width: none; }
+  #pip { top: auto; bottom: calc(240px + var(--sab)); width: 60vw; }
+  .hud-left.shown ~ #mission-panel:not(.hidden) { left: calc(8px + var(--sal)); top: auto; bottom: calc(240px + var(--sab)); width: calc(100vw - 16px); }
+  #map-telemetry { width: calc(100vw - 70px); max-height: 38dvh; }
+}
+
+/* =====================================================================
+   TOUCH FLIGHT BUTTONS (#touch-ctl, built by src/ui/mobile.js)
+   ===================================================================== */
+#touch-ctl { display: none; }
+body.touch #touch-ctl { display: block; position: absolute; inset: 0; pointer-events: none; z-index: 2; --tc: 50px; --tg: 6px; }
+body.touch #touch-ctl > * { pointer-events: auto; position: absolute; }
+.tc-btn {
+  width: var(--tc); height: var(--tc); padding: 0; border-radius: 12px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  font-size: 17px; line-height: 1; color: var(--text); cursor: pointer;
+  background: rgba(14, 20, 32, 0.5); border: 1px solid rgba(160, 200, 255, 0.24);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.tc-btn small { font-size: 7.5px; letter-spacing: 0.5px; color: var(--muted); }
+.tc-btn:active, .tc-btn.on { background: rgba(79, 216, 255, 0.32); border-color: var(--accent); }
+.tc-btn.on small { color: #e0f7ff; }
+.tc-thr { border-color: rgba(255, 170, 60, 0.45); color: #ffd28a; }
+.tc-thr small { color: #ffc070; }
+.tc-thr:active, .tc-thr.on { background: rgba(255, 138, 61, 0.35); border-color: #ffaa3c; }
+.tc-stage { background: linear-gradient(135deg, rgba(255, 106, 43, 0.8), rgba(255, 45, 85, 0.8)); border-color: rgba(255, 170, 130, 0.75); }
+.tc-stage small { color: #fff; }
+.tc-stage:active { background: linear-gradient(135deg, #ff6a2b, #ff2d55); }
+
+/* attitude / RCS pad – bottom left */
+.tc-pad {
+  left: calc(10px + var(--sal)); bottom: calc(10px + var(--sab));
+  display: grid; grid-template-columns: repeat(3, var(--tc)); grid-template-rows: repeat(3, var(--tc)); gap: var(--tg);
+}
+.tc-arrow { font-size: 18px; color: #bfeaff; }
+.tc-mid { border-style: dashed; opacity: 0.8; }
+.tc-mid small { font-size: 8px; }
+.tc-rcs-only { visibility: hidden; color: #7dffc8; }
+.tc-pad.rcs .tc-rcs-only { visibility: visible; }
+.tc-pad.rcs .tc-arrow { color: #7dffc8; border-color: rgba(125, 255, 200, 0.45); }
+
+/* action cluster – bottom right */
+.tc-cluster {
+  right: calc(10px + var(--sar)); bottom: calc(10px + var(--sab));
+  display: grid; grid-template-columns: repeat(3, var(--tc)); gap: var(--tg);
+}
+
+/* make room for the buttons */
+body.touch .btn.back { display: none; }               /* ⏸ menu → "Back to VAB" */
+body.touch #btn-go { left: 50%; right: auto; transform: translateX(-50%); bottom: calc(64px + var(--sab)); }
+body.touch #events { left: 50%; right: auto; transform: translateX(-50%); bottom: calc(120px + var(--sab)); width: min(320px, calc(100vw - 2 * (3 * var(--tc, 50px) + 40px))); }
+body.touch #pip { bottom: auto; top: calc(8px + var(--sat)); right: auto; left: 50%; transform: translateX(-50%); }
+
+/* phones: smaller buttons */
+@media (max-width: 760px), (max-height: 520px) {
+  body.touch #touch-ctl { --tc: 40px; --tg: 5px; }
+  .tc-btn { font-size: 15px; border-radius: 10px; }
+  .tc-btn small { font-size: 6.5px; }
+  body.touch #btn-go { bottom: calc(48px + var(--sab)); }
+  body.touch #events { bottom: calc(100px + var(--sab)); width: min(300px, calc(100vw - 2 * (3 * 40px + 34px))); max-height: 80px; }
+}
+@media (max-height: 380px) {
+  body.touch #touch-ctl { --tc: 36px; --tg: 4px; }
+}
+
+/* phones held upright: controls stay at the bottom, HUD pieces stack above them */
+@media (max-width: 520px) and (orientation: portrait) {
+  body.touch .hud-bottom { left: calc(8px + var(--sal)); bottom: calc(190px + var(--sab)); }
+  body.touch #astronaut-bar { bottom: calc(232px + var(--sab)); }
+  body.touch #events { left: calc(8px + var(--sal)); transform: none; width: calc(100vw - 16px); bottom: calc(274px + var(--sab)); }
+  body.touch #btn-go { left: auto; right: calc(8px + var(--sar)); transform: none; bottom: calc(190px + var(--sab)); }
+  body.touch #pip { top: auto; bottom: calc(370px + var(--sab)); }
+}
+
+
+/* ---------- HUD numbers never spill out of their boxes ---------- */
+.primary-readouts > *, .rows > div { min-width: 0; }
+.big-readout { overflow: hidden; }
+.big-readout .br-val { min-width: 0; }
+.big-readout b, .rows b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rows > div { gap: 4px; overflow: hidden; }
+.rows span { flex-shrink: 0; }
+.primary-readouts, .tel-grid, .sys-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.orb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.orb-grid > div { overflow: hidden; }
+.orb-grid > div b { max-width: 100%; }
+@media (max-width: 760px), (max-height: 520px) {
+  /* Ap / Pe / T: one row each (label left, value right) instead of 3 narrow columns */
+  .orb-grid { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .orb-grid > div { flex-direction: row; align-items: center; justify-content: space-between; padding: 2.5px 5px; }
+  .big-readout b { font-size: 13px; }
+}
+@media (max-width: 520px) and (orientation: portrait) {
 }

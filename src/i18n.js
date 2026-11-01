@@ -565,6 +565,26 @@ const MISSION_I18N = {
       },
     },
   },
+  alien1500: {
+    vi: {
+      name: 'Hủy diệt 1500 Alien (Không tự lái)',
+      desc: 'Cuộc chiến sinh tồn tối thượng: Tự tay lái chiến hạm tiêu diệt đủ 1500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước, Súng Acid, Súng Điện hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+      objs: {
+        kill300: 'Tiêu diệt 300 UFO Alien',
+        kill750: 'Tiêu diệt 750 UFO Alien',
+        kill1500: 'Tiêu diệt toàn bộ 1500 UFO Alien',
+      },
+    },
+    en: {
+      name: 'Annihilate 1500 Aliens (No Autopilot)',
+      desc: 'Ultimate cosmic survival war: Manually pilot your warship to annihilate 1500 Alien UFOs across the Solar System and Interstellar Space using Lasers, Water Cannons, Acid, Electric Cannons, or Supernovas (No Autopilot mode).',
+      objs: {
+        kill300: 'Destroy 300 Alien UFOs',
+        kill750: 'Destroy 750 Alien UFOs',
+        kill1500: 'Annihilate all 1500 Alien UFOs',
+      },
+    },
+  },
   orbit: {
     vi: {
       name: 'Lên quỹ đạo',
@@ -1243,6 +1263,7 @@ export function applyLanguage(lang, app) {
   setTxt('#tp-bar-btns [data-tp="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
   setTxt('#tp-bar-btns [data-tp="sun"]', '☀️ Mặt Trời', '☀️ Sun');
   setTxt('#tp-bar-btns [data-tp="interstellar"]', '🌌 Liên Sao', '🌌 Deep Space');
+  setTxt('#tp-bar-btns [data-tp="royal1b"]', '👑 1 Tỷ km', '👑 1B km');
 
   setTxt('#tp-modal-title', '🪐 Dịch chuyển', '🪐 Teleport');
   setTxt('#tp-mode-lbl', 'Chế độ:', 'Mode:');

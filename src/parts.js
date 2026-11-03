@@ -45,14 +45,14 @@ export const PARTS = {
   tailPlane: { name: 'Đuôi đứng & Cánh lái', cat: 'Máy bay', kind: 'stack', height: 1.8, dry: 0.35, desc: 'Cụm đuôi chữ V đôi nghiêng và cánh lái ngang thăng bằng' },
   engJet: { name: 'Động cơ phản lực Afterburner', cat: 'Máy bay', kind: 'stack', height: 2.2, dry: 1.2, thrustSL: 450, thrustVac: 90, ispSL: 3200, ispVac: 300, engines: 1, desc: 'Động cơ tuốc-bin phản lực tăng lực siêu âm, lực đẩy cực mạnh trong khí quyển' },
   gearPlane: { name: 'Càng đáp máy bay 3 bánh', cat: 'Máy bay', kind: 'radial', count: 1, dry: 0.25, desc: 'Bộ 3 càng đáp bánh xe cao su chịu tải giúp chạy đà cất cánh & hạ cánh' },
-  saturnApollo: { name: 'Tàu Chỉ Huy Apollo CM & Tháp LES (Tầng 8)', cat: 'Đầu', kind: 'stack', hiddenInPalette: true, height: 6.2, dry: 1.4, fuel: 1.0, thrustSL: 85, thrustVac: 120, ispSL: 220, ispVac: 320, engines: 1, desc: 'Khoang chỉ huy Apollo (CM) bọc nón trắng + tháp thoát hiểm LES & dù hạ cánh' },
-  saturnSM: { name: 'Khoang Dịch Vụ Apollo SM (Tầng 7)', cat: 'Nhiên liệu', kind: 'stack', hiddenInPalette: true, height: 2.6, dry: 1.1, fuel: 3.2, thrustSL: 110, thrustVac: 220, ispSL: 230, ispVac: 345, engines: 1, autoStage: true, desc: 'Khoang dịch vụ Apollo SM có tấm tản nhiệt xám bạc, 4 cụm RCS và động cơ SPS' },
-  saturnSLA: { name: 'Khoang Côn SLA & Tàu Đổ Bộ LM (Tầng 6)', cat: 'Nhiên liệu', kind: 'stack', hiddenInPalette: true, height: 4.2, dry: 1.3, fuel: 4.5, thrustSL: 140, thrustVac: 260, ispSL: 235, ispVac: 350, engines: 1, autoStage: true, desc: 'Áo côn trắng SLA chứa tàu đổ bộ Mặt Trăng (Lunar Module) kèm động cơ' },
-  saturnS4B: { name: 'Tầng Đẩy S-IVB · 1× J-2 (Tầng 5)', cat: 'Nhiên liệu', kind: 'stack', hiddenInPalette: true, height: 8.6, dry: 1.8, fuel: 14.5, thrustSL: 240, thrustVac: 540, ispSL: 245, ispVac: 365, engines: 1, autoStage: true, desc: 'Tầng đẩy S-IVB thân trụ trắng có vòng đai ngang màu đen và 1 động cơ J-2' },
-  saturnS4BInter: { name: 'Cổ Côn Chuyển Tầng S-IVB / S-II (Tầng 4)', cat: 'Cấu trúc', kind: 'stack', hiddenInPalette: true, height: 3.6, dry: 0.9, fuel: 4.2, thrustSL: 240, thrustVac: 380, ispSL: 240, ispVac: 330, engines: 4, autoStage: true, desc: 'Cổ côn chuyển tầng sơn khối đen-trắng lệch bậc đặc trưng của Saturn V' },
-  saturnS2: { name: 'Tầng Đẩy S-II · 5× J-2 (Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', hiddenInPalette: true, height: 11.4, dry: 2.8, fuel: 28.0, thrustSL: 980, thrustVac: 1320, ispSL: 275, ispVac: 345, engines: 5, autoStage: true, desc: 'Tầng đẩy S-II sơn trắng in chữ dọc UNITED STATES cùng cụm 5 động cơ J-2' },
-  saturnS2Inter: { name: 'Vòng Chuyển Tầng S-II / S-IC (Tầng 2)', cat: 'Cấu trúc', kind: 'stack', hiddenInPalette: true, height: 4.8, dry: 1.2, fuel: 7.5, thrustSL: 750, thrustVac: 960, ispSL: 255, ispVac: 320, engines: 8, autoStage: true, desc: 'Vòng chuyển tầng S-II/S-IC kẻ sọc dọc đen-trắng kèm 8 động cơ đẩy Ullage' },
-  saturnS1: { name: 'Tầng Đẩy S-IC · 5× F-1 (Tầng 1)', cat: 'Động cơ', kind: 'stack', hiddenInPalette: true, height: 17.6, dry: 5.8, fuel: 64.0, thrustSL: 4200, thrustVac: 4800, ispSL: 285, ispVac: 315, engines: 5, autoStage: true, hasFins: true, desc: 'Tầng 1 S-IC khổng lồ in cờ Mỹ, chữ USA đỏ, 4 cánh đuôi trắng và 5 siêu động cơ F-1' },
+  saturnApollo: { name: 'Tàu Chỉ Huy Apollo CM & Tháp LES · Saturn V (Tầng 8)', cat: 'Đầu', kind: 'stack', height: 6.2, dry: 1.4, fuel: 1.0, thrustSL: 85, thrustVac: 120, ispSL: 220, ispVac: 320, engines: 1, desc: 'Khoang chỉ huy Apollo (CM) của tên lửa Saturn V bọc nón trắng + tháp thoát hiểm LES & dù hạ cánh' },
+  saturnSM: { name: 'Khoang Dịch Vụ Apollo SM · Saturn V (Tầng 7)', cat: 'Nhiên liệu', kind: 'stack', height: 2.6, dry: 1.1, fuel: 3.2, thrustSL: 110, thrustVac: 220, ispSL: 230, ispVac: 345, engines: 1, autoStage: true, desc: 'Khoang dịch vụ Apollo SM của tên lửa Saturn V có tấm tản nhiệt xám bạc, 4 cụm RCS và động cơ SPS' },
+  saturnSLA: { name: 'Khoang Côn SLA & Tàu Đổ Bộ LM · Saturn V (Tầng 6)', cat: 'Nhiên liệu', kind: 'stack', height: 4.2, dry: 1.3, fuel: 4.5, thrustSL: 140, thrustVac: 260, ispSL: 235, ispVac: 350, engines: 1, autoStage: true, desc: 'Áo côn trắng SLA của tên lửa Saturn V chứa tàu đổ bộ Mặt Trăng (Lunar Module) kèm động cơ' },
+  saturnS4B: { name: 'Tầng Đẩy S-IVB · 1× J-2 · Saturn V (Tầng 5)', cat: 'Nhiên liệu', kind: 'stack', height: 8.6, dry: 1.8, fuel: 14.5, thrustSL: 240, thrustVac: 540, ispSL: 245, ispVac: 365, engines: 1, autoStage: true, desc: 'Tầng đẩy S-IVB của tên lửa Saturn V thân trụ trắng có vòng đai ngang màu đen và 1 động cơ J-2' },
+  saturnS4BInter: { name: 'Cổ Côn Chuyển Tầng S-IVB / S-II · Saturn V (Tầng 4)', cat: 'Cấu trúc', kind: 'stack', height: 3.6, dry: 0.9, fuel: 4.2, thrustSL: 240, thrustVac: 380, ispSL: 240, ispVac: 330, engines: 4, autoStage: true, desc: 'Cổ côn chuyển tầng sơn khối đen-trắng lệch bậc đặc trưng của Saturn V' },
+  saturnS2: { name: 'Tầng Đẩy S-II · 5× J-2 · Saturn V (Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', height: 11.4, dry: 2.8, fuel: 28.0, thrustSL: 980, thrustVac: 1320, ispSL: 275, ispVac: 345, engines: 5, autoStage: true, desc: 'Tầng đẩy S-II của tên lửa Saturn V sơn trắng in chữ dọc UNITED STATES cùng cụm 5 động cơ J-2' },
+  saturnS2Inter: { name: 'Vòng Chuyển Tầng S-II / S-IC · Saturn V (Tầng 2)', cat: 'Cấu trúc', kind: 'stack', height: 4.8, dry: 1.2, fuel: 7.5, thrustSL: 750, thrustVac: 960, ispSL: 255, ispVac: 320, engines: 8, autoStage: true, desc: 'Vòng chuyển tầng S-II/S-IC của tên lửa Saturn V kẻ sọc dọc đen-trắng kèm 8 động cơ đẩy Ullage' },
+  saturnS1: { name: 'Tầng Đẩy S-IC · 5× F-1 · Saturn V (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 17.6, dry: 5.8, fuel: 64.0, thrustSL: 4200, thrustVac: 4800, ispSL: 285, ispVac: 315, engines: 5, autoStage: true, hasFins: true, desc: 'Tầng 1 S-IC khổng lồ của tên lửa Saturn V in cờ Mỹ, chữ USA đỏ, 4 cánh đuôi trắng và 5 siêu động cơ F-1' },
   apollo11CM: { name: 'Tàu Chỉ Huy Apollo 11 CM Bạc & Tháp Mắt Cáo LES (Tầng 8)', cat: 'Đầu', kind: 'stack', height: 6.2, dry: 1.4, fuel: 1.0, thrustSL: 85, thrustVac: 120, ispSL: 220, ispVac: 320, engines: 1, desc: 'Khoang chỉ huy Apollo 11 màu bạc kim loại kèm tháp thoát hiểm khung mắt cáo chữ X hở, đai đỏ và dù hạ cánh' },
   apollo11SM: { name: 'Khoang Dịch Vụ Apollo 11 SM Ánh Bạc (Tầng 7)', cat: 'Nhiên liệu', kind: 'stack', height: 2.6, dry: 1.1, fuel: 3.2, thrustSL: 110, thrustVac: 220, ispSL: 230, ispVac: 345, engines: 1, autoStage: true, desc: 'Khoang dịch vụ Apollo 11 màu bạc kim loại có 2 đai tản nhiệt trắng và 4 cụm động cơ điều hướng RCS đầu đỏ' },
   apollo11SLA: { name: 'Khoang Côn SLA Cắt Mở Lộ Tàu Đổ Bộ LM Eagle (Tầng 6)', cat: 'Nhiên liệu', kind: 'stack', height: 4.2, dry: 1.3, fuel: 4.5, thrustSL: 140, thrustVac: 260, ispSL: 235, ispVac: 350, engines: 1, autoStage: true, desc: 'Áo côn trắng SLA có ô cửa cắt chính diện để lộ Tàu đổ bộ Mặt Trăng (LM Eagle) bọc lá vàng bên trong kèm đai đáy đen gân dọc' },
@@ -74,9 +74,9 @@ export const PARTS = {
   buranNose: { name: 'Chóp Mũi Buran-Energia & Đai Gân Caro (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 12.5, dry: 1.6, fuel: 9.5, thrustSL: 220, thrustVac: 380, ispSL: 260, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi khí động màu xám xanh của hệ Buran, bồn trắng trên và đai gân dọc in 2 ô vuông caro đen + dù hạ cánh' },
   buranShuttle: { name: 'Tàu Con Thoi Buran & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 14.5, dry: 3.6, fuel: 34.0, thrustSL: 1350, thrustVac: 1820, ispSL: 280, ispVac: 365, engines: 4, autoStage: true, hasFins: true, desc: 'Tàu vũ trụ con thoi Buran gắn lưng Energia với buồng lái kính đen 6 ô, 2 cửa sổ nóc, mũi gạch chịu nhiệt đen, cánh tam giác kép viền đen, đuôi đứng & dù hạ cánh' },
   buranEnergia: { name: 'Tầng Đẩy Buran-Energia & 4 Booster Zenit (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.0, dry: 6.4, fuel: 72.0, thrustSL: 5200, thrustVac: 6000, ispSL: 290, ispVac: 335, engines: 20, autoStage: true, hasFins: true, desc: 'Thân dưới Energia kèm 4 tầng đẩy phụ Zenit (Block A) ốp sườn xám xanh, 4 siêu động cơ RD-0120 ở tâm và 4 cụm động cơ RD-170' },
-  energiaNose: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', kind: 'stack', hiddenInPalette: true, height: 12.5, dry: 1.6, fuel: 9.5, thrustSL: 220, thrustVac: 385, ispSL: 260, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },
+  energiaNose: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 12.5, dry: 1.6, fuel: 9.5, thrustSL: 220, thrustVac: 385, ispSL: 260, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },
   energiaPolyus: { name: 'Trạm Vũ Trụ МИР-2 (Polyus) & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 14.5, dry: 3.6, fuel: 34.0, thrustSL: 1350, thrustVac: 1850, ispSL: 280, ispVac: 365, engines: 4, autoStage: true, hasFins: true, desc: 'Tàu/Trạm chiến đấu quỹ đạo Polyus (МИР-2) sơn đen tuyền gắn lưng Energia kèm 2 bình phụ bên hông, cổ tản nhiệt kẻ sọc bạc & dù hạ cánh' },
-  energiaCore: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', kind: 'stack', hiddenInPalette: true, height: 15.0, dry: 6.4, fuel: 72.0, thrustSL: 5200, thrustVac: 6020, ispSL: 290, ispVac: 335, engines: 20, autoStage: true, hasFins: true, desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
+  energiaCore: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.0, dry: 6.4, fuel: 72.0, thrustSL: 5200, thrustVac: 6020, ispSL: 290, ispVac: 335, engines: 20, autoStage: true, hasFins: true, desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
   cz5Fairing: { name: 'Chóp Mũi Trường Chinh 5 (Cờ CHN · Tầng 3)', cat: 'Đầu', kind: 'stack', height: 9.2, dry: 1.4, fuel: 8.5, thrustSL: 180, thrustVac: 340, ispSL: 260, ispVac: 365, engines: 2, hasFins: true, desc: 'Chóp mũi khí động Trường Chinh 5 (CZ-5) in Quốc kỳ Trung Quốc, chữ CHN, cổ chuyển tầng viền đồng và dù hạ cánh' },
   cz5Stage2: { name: 'Thân Giữa Trường Chinh 5 · 中国航天 & Logo 5 (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 11.4, dry: 2.8, fuel: 28.0, thrustSL: 950, thrustVac: 1420, ispSL: 280, ispVac: 365, engines: 2, autoStage: true, hasFins: true, desc: 'Tầng đẩy trung tâm Trường Chinh 5 in logo CASC, dòng chữ dọc 中国航天, biểu tượng số 5 đỏ LONG MARCH và cặp động cơ YF-75D' },
   cz5Stage1: { name: 'Tầng 1 Trường Chinh 5 & 4 Booster CZ-5 (Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 16.6, dry: 6.2, fuel: 70.0, thrustSL: 5100, thrustVac: 5900, ispSL: 290, ispVac: 335, engines: 10, autoStage: true, hasFins: true, desc: 'Tầng 1 lõi Trường Chinh 5 đáy bọc cách nhiệt nâu đỏ kèm 4 tầng đẩy phụ mũi vát nghiêng kẻ sọc caro đỏ CZ-5, cánh đuôi và 10 động cơ YF-77 / YF-100' },
@@ -105,7 +105,8 @@ export const PARTS = {
   d4hFairing: { name: 'Chóp Mũi Trắng 5m Delta IV Heavy (Đầu Đen & Ngàm Tách · Tầng 3)', cat: 'Đầu', kind: 'stack', height: 8.8, dry: 1.2, fuel: 7.0, thrustSL: 170, thrustVac: 335, ispSL: 265, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi tải trọng 5m màu trắng của Delta IV Heavy với chóp đỉnh đen, cụm cảm biến mũi, đường ghép dọc/ngang, đai đen ở đáy và dù hạ cánh' },
   d4hStage2: { name: 'Tầng 2 Cryogenic DCSS & Khoang Chuyển Tầng Trắng Đai Vàng (Delta IV Heavy · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 6.4, dry: 1.9, fuel: 21.0, thrustSL: 780, thrustVac: 1260, ispSL: 285, ispVac: 375, engines: 1, autoStage: true, hasFins: true, desc: 'Khoang chuyển tầng và Tầng 2 DCSS màu trắng với 2 đai bọt cách nhiệt vàng nghệ ở cổ trên, ống cáp dọc thân và động cơ chân không RL10B-2' },
   d4hStage1: { name: 'Tầng 1 Delta IV Heavy (3 Lõi Cam CBC Ám Khói Đen, Đai Trắng Giữa & 3× RS-68A)', cat: 'Động cơ', kind: 'stack', height: 17.8, dry: 6.4, fuel: 74.0, thrustSL: 5350, thrustVac: 6150, ispSL: 290, ispVac: 340, engines: 3, autoStage: true, hasFins: true, desc: 'Cụm 3 lõi tên lửa đẩy Common Booster Core (CBC) màu cam SOFI đặc trưng với vệt ám khói đen ở đáy, đai trắng giữa viền vàng, 2 chóp mũi phụ trắng, cặp ống dẫn LOX trắng nổi dọc mặt trước, đáy côn xám bạc và 3 siêu động cơ RS-68A' },
-  titan4Fairing: { name: 'Chóp Mũi Trắng Dài 5m Titan IV (4 Đốt Gân & Đáy Côn · Tầng 3)', cat: 'Đầu', kind: 'stack', height: 14.8, dry: 1.4, fuel: 8.0, thrustSL: 180, thrustVac: 365, ispSL: 265, ispVac: 370, engines: 1, hasFins: true, desc: 'Chóp mũi tải trọng 5m (PLF) trắng cao vút của Titan IVB chia 4 đốt trụ có gân dọc, đường ghép giữa, đáy côn thu boat-tail và dù hạ cánh' },
+  titan4Voyager: { name: 'Tàu Thăm Dò Vũ Trụ Voyager 1 / 2 · Titan IV (Tầng 4 – Cuối)', cat: 'Đầu', kind: 'stack', height: 4.6, dry: 0.85, hasFins: true, desc: 'Tàu thăm dò liên sao Voyager (không có động cơ đẩy) với chảo ăng-ten Parabol trắng 3.7m, thân 10 cạnh gắn Đĩa Vàng Golden Record, nguồn đồng vị phóng xạ RTG, cần camera khoa học, cần từ kế và dù hạ cánh' },
+  titan4Fairing: { name: 'Chóp Mũi Trắng Dài 5m Titan IV (Khoang Chứa Tàu Voyager · Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', height: 14.8, dry: 1.4, fuel: 8.0, thrustSL: 180, thrustVac: 365, ispSL: 265, ispVac: 370, engines: 1, autoStage: true, hasFins: true, desc: 'Chóp mũi tải trọng 5m (PLF) trắng cao vút của Titan IVB chia 4 đốt trụ có gân dọc, khoang bảo vệ tàu Voyager bên trong, đáy côn thu boat-tail và tầng đẩy Centaur' },
   titan4Stage2: { name: 'Tầng 2 Titan IV (Ốp Nâu Đỏ Chữ L, Phù Hiệu USAF & Khe Gió Đen · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 8.2, dry: 2.1, fuel: 23.0, thrustSL: 820, thrustVac: 1350, ispSL: 285, ispVac: 365, engines: 1, autoStage: true, hasFins: true, desc: 'Tầng 2 Titan IV với tấm bọc cách nhiệt màu nâu đỏ hình chữ L, đai bạc хроm kèm phù hiệu Không quân Mỹ (USAF), cổ chuyển tầng gân trắng có 2 cụm khe thoát khí đen và động cơ LR91' },
   titan4Stage1: { name: 'Tầng 1 Titan IV (Lõi Bạc US AIR FORCE & 2 Booster Trắng SRMU · Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 14.6, dry: 5.8, fuel: 68.0, thrustSL: 4950, thrustVac: 5820, ispSL: 290, ispVac: 335, engines: 3, autoStage: true, hasFins: true, desc: 'Thân lõi Tầng 1 bằng nhôm bạc sáng bóng in dòng chữ dọc US AIR FORCE, đáy côn nâu đỏ với loa phụt bạc LR87, kẹp giữa 2 tên lửa đẩy phụ rắn SRMU màu trắng kem có gân 3 vòng, khung giằng tam giác trắng và 2 loa phụt xám lớn' },
   starshipNose: { name: 'Mũi Tàu Starship Đen Gạch Chịu Nhiệt & 2 Cánh Vây Trước (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 7.2, dry: 1.4, fuel: 10.0, thrustSL: 240, thrustVac: 420, ispSL: 280, ispVac: 380, engines: 1, hasFins: true, desc: 'Chóp mũi ogive của tàu Starship phủ gạch chịu nhiệt đen than chì kết hợp ánh thép không gỉ, 2 cánh vây khí động phía trước (Forward Flaps) và dù hạ cánh' },
@@ -750,6 +751,7 @@ const builders = {
   d4hFairing() { return buildD4hFairing(); },
   d4hStage2() { return buildD4hStage2(); },
   d4hStage1() { return buildD4hStage1(); },
+  titan4Voyager() { return buildTitan4Voyager(); },
   titan4Fairing() { return buildTitan4Fairing(); },
   titan4Stage2() { return buildTitan4Stage2(); },
   titan4Stage1() { return buildTitan4Stage1(); },
@@ -11526,8 +11528,242 @@ function getTitan4Materials() {
   return _titan4Mats;
 }
 
-// Stage 3 (Top): Titan IVB Tall 5-Meter Pure-White Payload Fairing (PLF) with
-// Conical Boat-Tail Base, 4 Cylindrical Segments, Center-Front Seam & Bi-Conic Nose (H = 14.8m)
+// Stage 4 (Final Stage): Voyager 1 / 2 Interplanetary Spacecraft with 3.7m White High-Gain
+// Parabolic Dish Antenna, 10-Sided Bus, Golden Record, RTG Nuclear Boom, Science Scan Platform
+// Boom, Magnetometer Lattice Boom & Star-37E / Hydrazine Propulsion Module (H = 4.6m)
+function buildTitan4Voyager() {
+  const g = new THREE.Group();
+  const H = PARTS.titan4Voyager.height; // 4.6
+  const {
+    plfWhiteMat,
+    stage2WhiteMat,
+    coreSilverMat,
+    chromeSilverMat,
+    srbNozzleGreyMat,
+    blackVentMat,
+  } = getTitan4Materials();
+
+  const goldFoilMat = new THREE.MeshStandardMaterial({
+    color: 0xeab308,
+    roughness: 0.28,
+    metalness: 0.78,
+  });
+  const goldenRecordMat = new THREE.MeshStandardMaterial({
+    color: 0xfde047,
+    emissive: new THREE.Color(0xca8a04),
+    emissiveIntensity: 0.45,
+    roughness: 0.14,
+    metalness: 0.92,
+  });
+  const rtgGlowMat = new THREE.MeshStandardMaterial({
+    color: 0xf97316,
+    emissive: new THREE.Color(0xea580c),
+    emissiveIntensity: 1.5,
+    roughness: 0.25,
+    metalness: 0.3,
+  });
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: 0x0ea5e9,
+    emissive: new THREE.Color(0x0284c7),
+    emissiveIntensity: 0.9,
+    roughness: 0.1,
+    metalness: 0.8,
+  });
+
+  // 1. Lower Spacecraft Adapter Truss & Thermal Foil Base (y = 0.0 -> 0.88, no engine nozzle)
+  g.add(mesh(new THREE.CylinderGeometry(0.46, 0.62, 0.52, 24, 1, true), srbNozzleGreyMat, 0, 0.26, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.64, 0.64, 0.08, 32), chromeSilverMat, 0, 0.04, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.06, 32), chromeSilverMat, 0, 0.52, 0));
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const strut = mesh(new THREE.CylinderGeometry(0.020, 0.020, 0.64, 8), chromeSilverMat, Math.sin(a) * 0.54, 0.52, Math.cos(a) * 0.54);
+    strut.rotation.y = a;
+    strut.rotation.z = (i % 2 === 0 ? 1 : -1) * 0.34;
+    g.add(strut);
+  }
+  // Spherical Hydrazine / Avionics bay wrapped in gold Kapton foil
+  g.add(mesh(new THREE.SphereGeometry(0.42, 24, 18), goldFoilMat, 0, 0.68, 0));
+
+  // 2. Iconic 10-Sided (Decagonal) Spacecraft Bus (y = 0.88 -> 1.88, r = 0.76)
+  const yBusBot = 0.88;
+  const hBus = 0.98;
+  const rBus = 0.76;
+  g.add(mesh(new THREE.CylinderGeometry(rBus, rBus, hBus, 10), blackVentMat, 0, yBusBot + hBus * 0.5, 0));
+  g.add(mesh(new THREE.CylinderGeometry(rBus + 0.018, rBus + 0.018, 0.07, 10), goldFoilMat, 0, yBusBot + 0.035, 0));
+  g.add(mesh(new THREE.CylinderGeometry(rBus + 0.018, rBus + 0.018, 0.07, 10), goldFoilMat, 0, yBusBot + hBus - 0.035, 0));
+
+  // 10 Decagonal Bay Panels (alternating gold thermal blankets & silver radiator louvers)
+  for (let i = 0; i < 10; i++) {
+    const a = ((i + 0.5) / 10) * Math.PI * 2;
+    const rFace = rBus * Math.cos(Math.PI / 10) + 0.012;
+    const bayMat = i % 2 === 0 ? goldFoilMat : chromeSilverMat;
+    const panel = mesh(new THREE.BoxGeometry(0.38, hBus - 0.18, 0.03), bayMat, Math.sin(a) * rFace, yBusBot + hBus * 0.5, Math.cos(a) * rFace);
+    panel.rotation.y = a;
+    g.add(panel);
+
+    // Corner vertical titanium posts
+    const ca = (i / 10) * Math.PI * 2;
+    g.add(mesh(new THREE.CylinderGeometry(0.024, 0.024, hBus + 0.04, 8), chromeSilverMat, Math.sin(ca) * (rBus + 0.01), yBusBot + hBus * 0.5, Math.cos(ca) * (rBus + 0.01)));
+  }
+
+  // Famous Voyager Golden Record ("Đĩa Vàng Voyager") mounted prominently on the Front (+Z) Face!
+  const yRec = yBusBot + hBus * 0.5;
+  const zRec = rBus + 0.025;
+  g.add(mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.032, 36).rotateX(Math.PI / 2), goldenRecordMat, 0, yRec, zRec));
+  g.add(mesh(new THREE.TorusGeometry(0.20, 0.010, 8, 32), blackVentMat, 0, yRec, zRec + 0.016));
+  g.add(mesh(new THREE.TorusGeometry(0.12, 0.008, 8, 28), blackVentMat, 0, yRec, zRec + 0.016));
+  g.add(mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.036, 20).rotateX(Math.PI / 2), goldFoilMat, 0, yRec, zRec + 0.002));
+
+  // Stowed-compatible Side Equipment Pods at x = +-0.78 (visible even inside fairing cutaway)
+  g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.52, 16).rotateZ(Math.PI / 2), blackVentMat, -0.76, yRec, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.125, 0.018, 8, 20).rotateY(Math.PI / 2), rtgGlowMat, -0.92, yRec, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.32, 0.26, 0.28), goldFoilMat, 0.78, yRec, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.16, 16).rotateX(Math.PI / 2), lensMat, 0.82, yRec + 0.04, 0.14));
+
+  // Center hydrazine spherical tank dome & support struts up to the High-Gain Antenna dish
+  g.add(mesh(new THREE.SphereGeometry(0.46, 24, 16), blackVentMat, 0, yBusBot + hBus + 0.04, 0));
+  const yDishBase = 2.42;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const strut = mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.72, 8), chromeSilverMat, Math.sin(a) * 0.56, 2.14, Math.cos(a) * 0.56);
+    strut.rotation.y = a;
+    strut.rotation.x = -0.22;
+    g.add(strut);
+  }
+
+  // 3. White High-Gain Parabolic Dish Antenna (HGA) Inner Bowl & Feed Horn Tripod (y = 2.42 -> 4.55)
+  const dishInnerPts = [];
+  const rInnerDish = 0.94; // Fits cleanly inside R_T4_PLF = 1.06m fairing!
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    const r = t * rInnerDish;
+    const y = yDishBase + 0.62 * (t * t);
+    dishInnerPts.push(new THREE.Vector2(Math.max(0.001, r), y));
+  }
+  const innerDishMat = plfWhiteMat.clone();
+  innerDishMat.side = THREE.DoubleSide;
+  g.add(mesh(new THREE.LatheGeometry(dishInnerPts, 48), innerDishMat));
+  g.add(mesh(new THREE.TorusGeometry(rInnerDish, 0.024, 10, 48).rotateX(Math.PI / 2), stage2WhiteMat, 0, yDishBase + 0.62, 0));
+  g.add(mesh(new THREE.TorusGeometry(rInnerDish * 0.55, 0.016, 8, 40).rotateX(Math.PI / 2), stage2WhiteMat, 0, yDishBase + 0.19, 0));
+
+  // Central X/S-Band Feed Horn Column & 3 Tripod Struts rising to apex (y = 2.45 -> 4.52)
+  const yApex = 4.38;
+  g.add(mesh(new THREE.CylinderGeometry(0.11, 0.18, 0.55, 24), goldFoilMat, 0, yDishBase + 0.28, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.18, 24), blackVentMat, 0, yApex, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 24), goldFoilMat, 0, yApex + 0.10, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.22, 16), chromeSilverMat, 0, yApex + 0.20, 0));
+
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2 + Math.PI / 6;
+    const rFoot = 0.78;
+    const yFoot = yDishBase + 0.42;
+    const dx = -Math.sin(a) * (rFoot - 0.12);
+    const dy = yApex - yFoot;
+    const dz = -Math.cos(a) * (rFoot - 0.12);
+    const len = Math.hypot(dx, dy, dz);
+    const leg = mesh(new THREE.CylinderGeometry(0.022, 0.026, len, 10), stage2WhiteMat, Math.sin(a) * (rFoot * 0.52), (yFoot + yApex) * 0.5, Math.cos(a) * (rFoot * 0.52));
+    leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx, dy, dz).normalize());
+    g.add(leg);
+  }
+
+  // 4. Deployable Deep-Space Booms Group (voyagerBooms):
+  //    Hidden while enclosed inside titan4Fairing on the pad; automatically deployed in thumbnails & when fairing separates!
+  const booms = new THREE.Group();
+  booms.name = 'voyagerBooms';
+  g.add(booms);
+  g.userData.voyagerBooms = booms;
+
+  // A. Outer Wide Parabolic Dish Rim Extension (expanding HGA dish from r = 0.94m to 1.48m = 3.0m diameter!)
+  const dishOuterPts = [];
+  const rOuterDish = 1.48;
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    const r = rInnerDish + t * (rOuterDish - rInnerDish);
+    const rn = r / rInnerDish;
+    const y = yDishBase + 0.62 * Math.pow(rn, 1.65);
+    dishOuterPts.push(new THREE.Vector2(r, y));
+  }
+  booms.add(mesh(new THREE.LatheGeometry(dishOuterPts, 48), innerDishMat));
+  const yOuterRim = yDishBase + 0.62 * Math.pow(rOuterDish / rInnerDish, 1.65);
+  booms.add(mesh(new THREE.TorusGeometry(rOuterDish, 0.032, 12, 56).rotateX(Math.PI / 2), stage2WhiteMat, 0, yOuterRim, 0));
+
+  // B. Left (-X) RTG Nuclear Generator Boom with 3 Tandem MHW-RTG Cylinders & Glowing Thermal Fins
+  const rtgBoom = new THREE.Group();
+  rtgBoom.position.set(-0.76, yRec - 0.05, 0);
+  rtgBoom.rotation.z = 0.18;
+  booms.add(rtgBoom);
+
+  // Outward truss struts
+  for (const [sy, sz] of [[0.08, 0.08], [0.08, -0.08], [-0.08, 0]]) {
+    rtgBoom.add(mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.85, 8).rotateZ(Math.PI / 2), chromeSilverMat, -0.92, sy, sz));
+  }
+  // 3 MHW-RTG Plutonium-238 Nuclear Cylinders with cooling fins & glowing orange heat bands
+  for (const rx of [-0.62, -1.16, -1.70]) {
+    rtgBoom.add(mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.44, 20).rotateZ(Math.PI / 2), blackVentMat, rx, 0, 0));
+    rtgBoom.add(mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.06, 20).rotateZ(Math.PI / 2), goldFoilMat, rx - 0.19, 0, 0));
+    rtgBoom.add(mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.06, 20).rotateZ(Math.PI / 2), goldFoilMat, rx + 0.19, 0, 0));
+    rtgBoom.add(mesh(new THREE.TorusGeometry(0.146, 0.018, 8, 20).rotateY(Math.PI / 2), rtgGlowMat, rx, 0, 0));
+    for (let f = 0; f < 6; f++) {
+      const fa = (f / 6) * Math.PI * 2;
+      const fin = mesh(new THREE.BoxGeometry(0.38, 0.07, 0.016), blackVentMat, rx, Math.sin(fa) * 0.16, Math.cos(fa) * 0.16);
+      fin.rotation.x = fa;
+      rtgBoom.add(fin);
+    }
+  }
+
+  // C. Right (+X) Science Scan Platform Boom with ISS Narrow/Wide Cameras & Spectrometers
+  const sciBoom = new THREE.Group();
+  sciBoom.position.set(0.76, yRec + 0.06, 0);
+  sciBoom.rotation.z = 0.12;
+  booms.add(sciBoom);
+
+  for (const [sy, sz] of [[0.07, 0.07], [0.07, -0.07], [-0.07, 0]]) {
+    sciBoom.add(mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.65, 8).rotateZ(Math.PI / 2), chromeSilverMat, 0.82, sy, sz));
+  }
+  // Cosmic Ray / LECP mid-boom particle detectors
+  sciBoom.add(mesh(new THREE.BoxGeometry(0.24, 0.22, 0.24), goldFoilMat, 0.72, 0.14, 0));
+  // Steerable 2-Axis Science Scan Platform at tip (x = 1.68)
+  const scanHead = new THREE.Group();
+  scanHead.position.set(1.68, 0, 0);
+  sciBoom.add(scanHead);
+  scanHead.add(mesh(new THREE.BoxGeometry(0.42, 0.34, 0.44), blackVentMat, 0, 0, 0));
+  scanHead.add(mesh(new THREE.BoxGeometry(0.36, 0.26, 0.36), goldFoilMat, 0, 0.22, 0));
+  // Narrow-Angle & Wide-Angle Optical Camera Barrels (+Z)
+  scanHead.add(mesh(new THREE.CylinderGeometry(0.095, 0.105, 0.38, 20).rotateX(Math.PI / 2), blackVentMat, -0.08, 0.06, 0.32));
+  scanHead.add(mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.04, 20).rotateX(Math.PI / 2), lensMat, -0.08, 0.06, 0.51));
+  scanHead.add(mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.26, 18).rotateX(Math.PI / 2), blackVentMat, 0.11, 0.06, 0.26));
+  scanHead.add(mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.04, 18).rotateX(Math.PI / 2), lensMat, 0.11, 0.06, 0.39));
+  // IRIS Infrared Radiometer Dish
+  scanHead.add(mesh(new THREE.CylinderGeometry(0.14, 0.10, 0.14, 20).rotateX(Math.PI / 2), goldFoilMat, 0, -0.14, 0.24));
+
+  // D. Long Golden Magnetometer Lattice Boom & Twin Plasma Wave Whip Antennas
+  const magBoom = new THREE.Group();
+  magBoom.position.set(-0.35, yBusBot + 0.15, -0.58);
+  magBoom.rotation.set(-0.55, 0, 0.65);
+  booms.add(magBoom);
+  magBoom.add(mesh(new THREE.CylinderGeometry(0.032, 0.048, 2.85, 6), goldFoilMat, 0, -1.42, 0));
+  for (let r = 0; r < 8; r++) {
+    magBoom.add(mesh(new THREE.TorusGeometry(0.052, 0.008, 6, 12).rotateX(Math.PI / 2), chromeSilverMat, 0, -0.25 - r * 0.32, 0));
+  }
+  magBoom.add(mesh(new THREE.BoxGeometry(0.16, 0.18, 0.16), goldFoilMat, 0, -2.88, 0));
+
+  // Twin V-shaped Plasma Wave & Planetary Radio Astronomy Whip Antennas
+  for (const sgn of [-1, 1]) {
+    const whip = mesh(new THREE.CylinderGeometry(0.008, 0.016, 2.60, 8), chromeSilverMat, sgn * 0.85, yBusBot - 0.45, -1.05);
+    whip.rotation.z = sgn * 0.62;
+    whip.rotation.x = 0.52;
+    booms.add(whip);
+  }
+
+  // Recovery Parachutes
+  addParachutes(g, yApex);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
+
+  return g;
+}
+
+// Stage 3: Titan IVB Tall 5-Meter Pure-White Payload Fairing (PLF) with
+// Conical Boat-Tail Base, 4 Cylindrical Segments, Voyager Payload Cutaway Bay & Bi-Conic Nose (H = 14.8m)
 function buildTitan4Fairing() {
   const g = new THREE.Group();
   const H = PARTS.titan4Fairing.height; // 14.8
@@ -11535,10 +11771,12 @@ function buildTitan4Fairing() {
     plfWhiteMat,
     stage2WhiteMat,
     coreSilverMat,
+    srbNozzleGreyMat,
     blackVentMat,
   } = getTitan4Materials();
 
   const yBoatTop = 0.92;
+  const yBay2Top = 6.38;
   const yCylTop = 11.85;
   const yConeMid = 14.32;
 
@@ -11557,25 +11795,78 @@ function buildTitan4Fairing() {
     g.add(rib);
   }
 
-  // 2. Tall Pure-White Cylindrical 5m Payload Fairing Barrel (y = 0.92 -> 11.85, r = R_T4_PLF = 1.06)
-  const hCyl = yCylTop - yBoatTop;
-  g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF, R_T4_PLF, hCyl, 64), plfWhiteMat, 0, yBoatTop + hCyl * 0.5, 0));
+  // 2A. Lower 2 Cylindrical Fairing Bays (Centaur Upper Stage Section, y = 0.92 -> 6.38, full 360 deg)
+  const hLowCyl = yBay2Top - yBoatTop;
+  g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF, R_T4_PLF, hLowCyl, 64), plfWhiteMat, 0, yBoatTop + hLowCyl * 0.5, 0));
 
-  // 4 Cylindrical Segments separated by crisp raised white horizontal rings (matching reference photo!)
-  for (const ry of [3.65, 6.38, 9.12, yCylTop]) {
-    g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF + 0.014, R_T4_PLF + 0.014, 0.06, 64), plfWhiteMat, 0, ry, 0));
-  }
-
-  // Subtle vertical acoustic ribs around the fairing cylinder & prominent trisector split seams at 0, +120, -120 deg
   for (let i = 0; i < 60; i++) {
     const a = (i / 60) * Math.PI * 2;
     const isSplit = i % 20 === 0;
     const wRib = isSplit ? 0.036 : 0.022;
     const dRib = isSplit ? 0.028 : 0.014;
-    const rib = mesh(new THREE.BoxGeometry(wRib, hCyl, dRib), plfWhiteMat, Math.sin(a) * (R_T4_PLF + 0.006), yBoatTop + hCyl * 0.5, Math.cos(a) * (R_T4_PLF + 0.006));
+    const rib = mesh(new THREE.BoxGeometry(wRib, hLowCyl, dRib), plfWhiteMat, Math.sin(a) * (R_T4_PLF + 0.006), yBoatTop + hLowCyl * 0.5, Math.cos(a) * (R_T4_PLF + 0.006));
     rib.rotation.y = a;
     g.add(rib);
   }
+
+  // 2B. Upper 2 Cylindrical Fairing Bays (Voyager Payload Bay Section, y = 6.38 -> 11.85)
+  //     Features a removable front cutaway door (g.userData.fairingDoor) so when titan4Voyager is
+  //     mounted inside, the gleaming Voyager probe is clearly visible in VAB & on the pad!
+  const hUpCyl = yCylTop - yBay2Top;
+  const yUpMid = yBay2Top + hUpCyl * 0.5;
+  const cutArc = 1.36; // ~78 deg front cutaway window on +Z
+
+  // Back & side 282-deg fairing shell
+  const backShellGeo = new THREE.CylinderGeometry(R_T4_PLF, R_T4_PLF, hUpCyl, 56, 1, true, cutArc * 0.5, Math.PI * 2 - cutArc);
+  g.add(mesh(backShellGeo, plfWhiteMat, 0, yUpMid, 0));
+
+  // Dark recessed acoustic blanket interior wall behind Voyager
+  const innerBayMat = blackVentMat.clone();
+  innerBayMat.side = THREE.DoubleSide;
+  const innerBayGeo = new THREE.CylinderGeometry(R_T4_PLF * 0.92, R_T4_PLF * 0.92, hUpCyl - 0.08, 48, 1, true, cutArc * 0.5, Math.PI * 2 - cutArc);
+  g.add(mesh(innerBayGeo, innerBayMat, 0, yUpMid, 0));
+  // Payload bay floor & ceiling bulkheads
+  g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF * 0.94, R_T4_PLF * 0.94, 0.10, 48), srbNozzleGreyMat, 0, yBay2Top + 0.05, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF * 0.94, R_T4_PLF * 0.94, 0.10, 48), srbNozzleGreyMat, 0, yCylTop - 0.05, 0));
+
+  // Crisp white vertical frame rails along the left & right edges of the cutaway window
+  for (const sgn of [-1, 1]) {
+    const edgeA = sgn * (cutArc * 0.5);
+    const rail = mesh(new THREE.BoxGeometry(0.055, hUpCyl, 0.10), plfWhiteMat, Math.sin(edgeA) * (R_T4_PLF - 0.02), yUpMid, Math.cos(edgeA) * (R_T4_PLF - 0.02));
+    rail.rotation.y = edgeA;
+    g.add(rail);
+  }
+
+  // Front removable fairing door (visible when titan4Fairing is standalone; hidden when titan4Voyager is inside)
+  const fairingDoor = new THREE.Group();
+  fairingDoor.name = 'fairingDoor';
+  g.add(fairingDoor);
+  g.userData.fairingDoor = fairingDoor;
+
+  const frontDoorGeo = new THREE.CylinderGeometry(R_T4_PLF, R_T4_PLF, hUpCyl, 24, 1, true, -cutArc * 0.5, cutArc);
+  fairingDoor.add(mesh(frontDoorGeo, plfWhiteMat, 0, yUpMid, 0));
+  fairingDoor.add(mesh(new THREE.CylinderGeometry(R_T4_PLF + 0.014, R_T4_PLF + 0.014, 0.06, 24, 1, true, -cutArc * 0.5, cutArc), plfWhiteMat, 0, 9.12, 0));
+
+  // Ribs on Upper Bays (placed on g for back/side shell, or fairingDoor for front window)
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2;
+    const normA = a > Math.PI ? a - Math.PI * 2 : a;
+    const isFront = Math.abs(normA) < cutArc * 0.5;
+    const isSplit = i % 20 === 0;
+    const wRib = isSplit ? 0.036 : 0.022;
+    const dRib = isSplit ? 0.028 : 0.014;
+    const rib = mesh(new THREE.BoxGeometry(wRib, hUpCyl, dRib), plfWhiteMat, Math.sin(a) * (R_T4_PLF + 0.006), yUpMid, Math.cos(a) * (R_T4_PLF + 0.006));
+    rib.rotation.y = a;
+    if (isFront) fairingDoor.add(rib);
+    else g.add(rib);
+  }
+
+  // 4 Cylindrical Segments separated by crisp raised white horizontal rings
+  for (const ry of [3.65, yBay2Top, yCylTop]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF + 0.014, R_T4_PLF + 0.014, 0.06, 64), plfWhiteMat, 0, ry, 0));
+  }
+  // Ring at y = 9.12 (back arc on g so cutaway window stays unobstructed)
+  g.add(mesh(new THREE.CylinderGeometry(R_T4_PLF + 0.014, R_T4_PLF + 0.014, 0.06, 56, 1, true, cutArc * 0.5, Math.PI * 2 - cutArc), plfWhiteMat, 0, 9.12, 0));
 
   // 3. Pointed Bi-Conic White Nose Cone (y = 11.85 -> 14.80)
   const hCone1 = yConeMid - yCylTop;
@@ -12552,6 +12843,14 @@ export function buildPart(type) {
     if (g.userData.tower) {
       mergeGroupMeshesByMaterial(g.userData.tower);
       exclude.add(g.userData.tower);
+    }
+    if (g.userData.voyagerBooms) {
+      mergeGroupMeshesByMaterial(g.userData.voyagerBooms);
+      exclude.add(g.userData.voyagerBooms);
+    }
+    if (g.userData.fairingDoor) {
+      mergeGroupMeshesByMaterial(g.userData.fairingDoor);
+      exclude.add(g.userData.fairingDoor);
     }
     if (g.userData.chute) exclude.add(g.userData.chute);
     if (g.userData.chutes) exclude.add(g.userData.chutes);

@@ -31,7 +31,7 @@ export const PRESETS = {
   'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
   'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon', 'soyuzFairing+gunLaser+waterCannon', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
   'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon', 'n1Fairing+gunLaser+waterCannon', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
-  'Titan IV (Tàu Voyager)': ['titan4Fairing+gunLaser+waterCannon', 'titan4Stage2', 'titan4Stage1'],
+  'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
   'Tàu con thoi Space Shuttle': ['shuttleNose+gunLaser+waterCannon', 'shuttleOrbiter', 'shuttleSrb'],
   'Energia – Buran': ['buranNose+gunLaser+waterCannon', 'buranShuttle', 'buranEnergia'],
   'Tên lửa Energia (Мир-2 / Polyus)': ['energiaNose+gunLaser+waterCannon', 'energiaPolyus', 'energiaCore'],
@@ -81,8 +81,12 @@ export function layout(stack) {
   const out = new Array(stack.length);
   for (let i = stack.length - 1; i >= 0; i--) {
     const def = PARTS[stack[i].type];
-    out[i] = { item: stack[i], def, y, index: i };
-    y += def.height;
+    if (stack[i].type === 'titan4Voyager' && stack[i + 1]?.type === 'titan4Fairing') {
+      out[i] = { item: stack[i], def, y: out[i + 1].y + 6.65, index: i };
+    } else {
+      out[i] = { item: stack[i], def, y, index: i };
+      y += def.height;
+    }
   }
   return { parts: out, height: y };
 }
@@ -292,6 +296,9 @@ export function computeStats(stack) {
     const st1Info = infos[infos.length - 1];
     if (!st1 || (st1.thrust <= 0 && (!st1Info || st1Info.engines === 0))) warnings.push(tr('Tầng 1 chưa có động cơ!', 'Stage 1 has no engine!'));
     else if (st1.thrust > 0 && st1.twr < 1) warnings.push(tr('TWR < 1: tên lửa quá nặng, không thể cất cánh.', 'TWR < 1: rocket is too heavy to lift off.'));
+    if (st1Info && st1Info.engines === 0 && st1Info.bTSL <= 0 && st1Info.chemFuel <= 0 && st1Info.batteryFuel <= 0 && st1Info.bFuel <= 0) {
+      warnings.push(tr('Tầng 1 chưa có nhiên liệu!', 'Stage 1 has no fuel!'));
+    }
     infos.forEach((s, k) => {
       const stNum = infos.length - k;
       if (s.needsBattery) {
@@ -315,7 +322,16 @@ export function computeStats(stack) {
   if (stack.length && !stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')))) {
     warnings.push(tr('Tên lửa chưa có vũ khí (Súng Lazer / Máy Phun Nước 1M PSI / Súng Acid / Súng Điện 1M WATT) để bắn Alien!', 'Rocket has no weapons (Laser Gun / 1M PSI Water Cannon / Acid Gun / 1M WATT Electric Gun) to shoot Aliens!'));
   }
-  return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos };
+  const st1Info = infos[infos.length - 1];
+  const st1Seg = segs[segs.length - 1] || [];
+  const st1HasRoverDrive = isRover && st1Seg.some((i) => stack[i]?.attach?.includes('wheelsRover')) && !!st1Info && (st1Info.chemFuel + st1Info.batteryFuel) > 0;
+  const st1HasEngineAndFuel = !!st1Info && (
+    (st1Info.engines > 0 && st1Info.fuel > 0) ||
+    (st1Info.bTSL > 0 && st1Info.bFuel > 0) ||
+    st1HasRoverDrive
+  );
+  const canLaunch = stack.length > 0 && st1HasEngineAndFuel;
+  return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
 }
 
 /**
@@ -360,7 +376,13 @@ export function buildRocket(stack) {
     segGroups[k].add(partContainer);
     partObjs.push({ index: p.index, obj, container: partContainer, seg: k, def: p.def, y: p.y });
     if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle, agLight: obj.userData.agLight, cyanGlow: obj.userData.cyanGlow, violetGlow: obj.userData.violetGlow });
-    if (p.item.type === 'capsule' || p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'buranShuttle' || p.item.type === 'energiaNose' || p.item.type === 'energiaPolyus' || p.item.type === 'cz5Fairing' || p.item.type === 'cz5Stage2' || p.item.type === 'ariane5Fairing' || p.item.type === 'ariane5Stage2' || p.item.type === 'slsOrion' || p.item.type === 'slsStage2' || p.item.type === 'atlasVFairing' || p.item.type === 'atlasVStage2' || p.item.type === 'fhFairing' || p.item.type === 'fhStage2' || p.item.type === 'f9Dragon' || p.item.type === 'f9Stage2' || p.item.type === 'shuttleNose' || p.item.type === 'shuttleOrbiter' || p.item.type === 'protonFairing' || p.item.type === 'protonStage3' || p.item.type === 'd4hFairing' || p.item.type === 'd4hStage2' || p.item.type === 'titan4Fairing' || p.item.type === 'titan4Stage2' || p.item.type === 'starshipNose' || p.item.type === 'starshipShip' || p.item.type === 'ufoSaucer') {
+    if (p.item.type === 'titan4Voyager' && stack[p.index + 1]?.type === 'titan4Fairing') {
+      if (obj.userData.voyagerBooms) obj.userData.voyagerBooms.visible = false;
+    }
+    if (p.item.type === 'titan4Fairing' && p.index > 0 && stack[p.index - 1]?.type === 'titan4Voyager') {
+      if (obj.userData.fairingDoor) obj.userData.fairingDoor.visible = false;
+    }
+    if (p.item.type === 'capsule' || p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'buranShuttle' || p.item.type === 'energiaNose' || p.item.type === 'energiaPolyus' || p.item.type === 'cz5Fairing' || p.item.type === 'cz5Stage2' || p.item.type === 'ariane5Fairing' || p.item.type === 'ariane5Stage2' || p.item.type === 'slsOrion' || p.item.type === 'slsStage2' || p.item.type === 'atlasVFairing' || p.item.type === 'atlasVStage2' || p.item.type === 'fhFairing' || p.item.type === 'fhStage2' || p.item.type === 'f9Dragon' || p.item.type === 'f9Stage2' || p.item.type === 'shuttleNose' || p.item.type === 'shuttleOrbiter' || p.item.type === 'protonFairing' || p.item.type === 'protonStage3' || p.item.type === 'd4hFairing' || p.item.type === 'd4hStage2' || p.item.type === 'titan4Voyager' || p.item.type === 'titan4Fairing' || p.item.type === 'titan4Stage2' || p.item.type === 'starshipNose' || p.item.type === 'starshipShip' || p.item.type === 'ufoSaucer') {
       if (p.index > 0 && obj.userData.tower) obj.userData.tower.visible = false; // something mounted above
       if (!capsule) capsule = { obj, seg: k };
     }

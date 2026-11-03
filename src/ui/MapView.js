@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { R_E, R_M, R_SUN, EARTH_A, EARTH_SOI, SUN_SOI, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, MOON_A, MOON_SOI, ATM_TOP, ISS_R, BODIES, NON_EARTH_BODIES } from '../sim/constants.js';
+import { R_E, R_M, R_SUN, EARTH_A, EARTH_SOI, SUN_SOI, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, KUIPER_BELT_INNER, KUIPER_BELT_OUTER, OORT_CLOUD_INNER, OORT_CLOUD_OUTER, MOON_A, MOON_SOI, ATM_TOP, ISS_R, BODIES, NON_EARTH_BODIES } from '../sim/constants.js';
 import { moonPos, moonAngle, bodyPos, bodyAngle, helioPos } from '../sim/orbit.js';
 import { tr, getLang } from '../i18n.js';
 
@@ -281,7 +281,7 @@ export class MapView {
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(starCount * 3);
     const col = new Float32Array(starCount * 3);
-    const r = 1.3e6;
+    const r = 3.2e6;
 
     for (let i = 0; i < starCount; i++) {
       const u = Math.random(), v = Math.random();
@@ -364,6 +364,291 @@ export class MapView {
 
     // Main Asteroid Belt between Mars (67,000 km) and Jupiter (115,000 km)
     this.initAsteroidBelt();
+    // Outer Kuiper Belt encompassing Pluto, Haumea, Makemake & Eris
+    this.initKuiperBelt();
+    // Spherical 3D Oort Cloud (Hills Cloud & Outer Cometary Shell) at the edge of the Solar System
+    this.initOortCloud();
+  }
+
+  initOortCloud() {
+    this.oortCloudGroup = new THREE.Group();
+    this.sunGroup.add(this.oortCloudGroup);
+
+    const rInner = OORT_CLOUD_INNER * SCALE;
+    const rOuter = OORT_CLOUD_OUTER * SCALE;
+    const rHillsOuter = rInner + (rOuter - rInner) * 0.42;
+
+    // 1. Inner Hills Cloud torus disc band near the ecliptic plane
+    const cv = document.createElement('canvas');
+    cv.width = 512;
+    cv.height = 32;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 512, 0);
+    grad.addColorStop(0.0, 'rgba(165,243,252,0)');
+    grad.addColorStop(0.18, 'rgba(165,243,252,0.18)');
+    grad.addColorStop(0.45, 'rgba(192,132,252,0.22)');
+    grad.addColorStop(0.76, 'rgba(125,211,252,0.14)');
+    grad.addColorStop(1.0, 'rgba(165,243,252,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 32);
+    const hillsTex = new THREE.CanvasTexture(cv);
+
+    const hillsGeo = new THREE.RingGeometry(rInner, rHillsOuter, 180, 2);
+    const hPos = hillsGeo.attributes.position;
+    const hUv = hillsGeo.attributes.uv;
+    for (let i = 0; i < hPos.count; i++) {
+      const vx = hPos.getX(i), vy = hPos.getY(i);
+      const u = (Math.hypot(vx, vy) - rInner) / Math.max(1e-5, rHillsOuter - rInner);
+      hUv.setXY(i, u, 0.5);
+    }
+    hillsGeo.rotateX(-Math.PI / 2);
+    const hillsMat = new THREE.MeshBasicMaterial({
+      map: hillsTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.65,
+      depthWrite: false,
+    });
+    this.oortCloudGroup.add(new THREE.Mesh(hillsGeo, hillsMat));
+
+    // 2. 3D Faceted Icy Cometary Nuclei (InstancedMesh across both the Hills Torus and Full 3D Spherical Shell)
+    const makeCometGeo = (seed) => {
+      const g = new THREE.IcosahedronGeometry(1, 1);
+      const p = g.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) {
+        v.fromBufferAttribute(p, i);
+        const n = v.clone().normalize();
+        const noise =
+          1 +
+          0.34 * Math.sin(n.x * 4.1 + seed) * Math.cos(n.y * 3.8 - seed) +
+          0.20 * Math.cos(n.z * 5.7 + seed * 1.3);
+        v.copy(n).multiplyScalar(noise);
+        v.x *= 1.22; // elongated bilobed cometary nucleus shape (like 67P)
+        v.y *= 0.76;
+        p.setXYZ(i, v.x, v.y, v.z);
+      }
+      g.computeVertexNormals();
+      return g;
+    };
+
+    const cometMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.55,
+      metalness: 0.18,
+      emissive: 0x0f172a,
+      flatShading: true,
+    });
+
+    let seed = 91827;
+    const rnd = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    const N_PER_SHAPE = 720;
+    const dummy = new THREE.Object3D();
+    const col = new THREE.Color();
+    for (let sIdx = 0; sIdx < 3; sIdx++) {
+      const geo = makeCometGeo(sIdx * 6.3 + 1.9);
+      const im = new THREE.InstancedMesh(geo, cometMat, N_PER_SHAPE);
+      for (let i = 0; i < N_PER_SHAPE; i++) {
+        const theta = rnd() * Math.PI * 2;
+        const isHills = i < N_PER_SHAPE * 0.36;
+        let r, x, y, z;
+        if (isHills) {
+          // Inner Hills Cloud thick torus
+          r = rInner + Math.pow(rnd(), 0.85) * (rHillsOuter - rInner);
+          const lat = (rnd() - 0.5) * 0.58;
+          x = r * Math.cos(lat) * Math.cos(theta);
+          y = r * Math.sin(lat);
+          z = r * Math.cos(lat) * Math.sin(theta);
+        } else {
+          // Full 3D Outer Spherical Oort Cloud shell surrounding the entire Solar System
+          r = rInner + rnd() * (rOuter - rInner);
+          const cosPhi = 2 * rnd() - 1;
+          const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+          x = r * sinPhi * Math.cos(theta);
+          y = r * cosPhi;
+          z = r * sinPhi * Math.sin(theta);
+        }
+        dummy.position.set(x, y, z);
+        dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+        const sizeBase = rnd() < 0.08 ? 820 + rnd() * 680 : 210 + Math.pow(rnd(), 1.8) * 540;
+        dummy.scale.set(
+          sizeBase * (0.8 + rnd() * 0.6),
+          sizeBase * (0.7 + rnd() * 0.5),
+          sizeBase * (0.8 + rnd() * 0.6)
+        );
+        dummy.updateMatrix();
+        im.setMatrixAt(i, dummy.matrix);
+
+        const cPick = rnd();
+        if (cPick < 0.28) {
+          // Pale violet-cyan cometary volatile ice (CH4 / CO / NH3)
+          col.setRGB(0.76 + rnd() * 0.2, 0.72 + rnd() * 0.22, 0.96 + rnd() * 0.04);
+        } else if (cPick < 0.45) {
+          // Dark organic / dusty cometary crust
+          const d = 0.52 + rnd() * 0.25;
+          col.setRGB(d * 0.92, d * 0.96, d * 1.05);
+        } else {
+          // Bright pristine H2O / N2 ice comet nucleus
+          const shade = 0.74 + rnd() * 0.26;
+          col.setRGB(shade * 0.82, shade * 0.96, Math.min(1, shade * 1.08));
+        }
+        im.setColorAt(i, col);
+      }
+      im.instanceMatrix.needsUpdate = true;
+      if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      this.oortCloudGroup.add(im);
+    }
+
+    // 4. Shimmering 3D Spherical Cometary Dust & Micro-Comet Cloud (Points)
+    const dustCount = 2600;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    const dustCol = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      const theta = rnd() * Math.PI * 2;
+      const r = rInner + rnd() * (rOuter - rInner);
+      const cosPhi = 2 * rnd() - 1;
+      const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+      dustPos[i * 3] = r * sinPhi * Math.cos(theta);
+      dustPos[i * 3 + 1] = r * cosPhi;
+      dustPos[i * 3 + 2] = r * sinPhi * Math.sin(theta);
+
+      const tint = 0.72 + rnd() * 0.28;
+      dustCol[i * 3] = tint * 0.75;
+      dustCol[i * 3 + 1] = tint * 0.94;
+      dustCol[i * 3 + 2] = tint;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    dustGeo.setAttribute('color', new THREE.BufferAttribute(dustCol, 3));
+    const dustMat = new THREE.PointsMaterial({
+      size: 2.6,
+      vertexColors: true,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.68,
+      depthWrite: false,
+    });
+    const dustPoints = new THREE.Points(dustGeo, dustMat);
+    this.oortCloudGroup.add(dustPoints);
+  }
+
+  initKuiperBelt() {
+    this.kuiperBeltGroup = new THREE.Group();
+    this.sunGroup.add(this.kuiperBeltGroup);
+
+    const rInner = KUIPER_BELT_INNER * SCALE;
+    const rOuter = KUIPER_BELT_OUTER * SCALE;
+
+    // 1. Icy concentric Kuiper Belt band with resonant gaps (2:3 plutinos, classical belt, 1:2 twotinos, scattered disc)
+    const cv = document.createElement('canvas');
+    cv.width = 512;
+    cv.height = 32;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 512, 0);
+    grad.addColorStop(0.0, 'rgba(125,211,252,0)');
+    grad.addColorStop(0.12, 'rgba(186,230,253,0.22)');
+    grad.addColorStop(0.28, 'rgba(224,242,254,0.34)');
+    grad.addColorStop(0.39, 'rgba(56,189,248,0.06)'); // resonant gap
+    grad.addColorStop(0.54, 'rgba(186,230,253,0.36)');
+    grad.addColorStop(0.68, 'rgba(71,85,105,0.08)');  // Kuiper cliff gap
+    grad.addColorStop(0.84, 'rgba(147,197,253,0.25)');
+    grad.addColorStop(1.0, 'rgba(125,211,252,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 32);
+    const beltTex = new THREE.CanvasTexture(cv);
+
+    const bandGeo = new THREE.RingGeometry(rInner, rOuter, 180, 2);
+    const pos = bandGeo.attributes.position;
+    const uv = bandGeo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i), vy = pos.getY(i);
+      const u = (Math.hypot(vx, vy) - rInner) / Math.max(1e-5, rOuter - rInner);
+      uv.setXY(i, u, 0.5);
+    }
+    bandGeo.rotateX(-Math.PI / 2);
+    bandGeo.translate(0, 420, 0);
+    const bandMat = new THREE.MeshBasicMaterial({
+      map: beltTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+    });
+    this.kuiperBeltGroup.add(new THREE.Mesh(bandGeo, bandMat));
+
+    // 2. 3D Faceted Icy Kuiper Belt Objects (KBOs / Cometary Nuclei)
+    const makeIceGeo = (seed) => {
+      const g = new THREE.IcosahedronGeometry(1, 1);
+      const p = g.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) {
+        v.fromBufferAttribute(p, i);
+        const n = v.clone().normalize();
+        const noise =
+          1 +
+          0.30 * Math.sin(n.x * 3.9 + seed) * Math.cos(n.y * 4.3 - seed) +
+          0.16 * Math.cos(n.z * 6.1 + seed * 1.5);
+        v.copy(n).multiplyScalar(noise);
+        v.y *= 0.72;
+        p.setXYZ(i, v.x, v.y, v.z);
+      }
+      g.computeVertexNormals();
+      return g;
+    };
+
+    const iceMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.62,
+      metalness: 0.16,
+      flatShading: true,
+    });
+
+    let seed = 7331;
+    const rnd = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    const N_PER_SHAPE = 520;
+    const dummy = new THREE.Object3D();
+    const col = new THREE.Color();
+    for (let sIdx = 0; sIdx < 3; sIdx++) {
+      const geo = makeIceGeo(sIdx * 5.1 + 2.3);
+      const im = new THREE.InstancedMesh(geo, iceMat, N_PER_SHAPE);
+      for (let i = 0; i < N_PER_SHAPE; i++) {
+        const ang = rnd() * Math.PI * 2;
+        const u = 0.5 + (rnd() - 0.5) * 0.68 + (rnd() - 0.5) * 0.32;
+        const r = rInner + Math.max(0.01, Math.min(0.99, u)) * (rOuter - rInner);
+        const ySpread = (rnd() - 0.5) * 6500;
+        dummy.position.set(Math.cos(ang) * r, ySpread, Math.sin(ang) * r);
+        dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+        const sizeBase = rnd() < 0.06 ? 420 + rnd() * 380 : 95 + Math.pow(rnd(), 2.0) * 320;
+        dummy.scale.set(
+          sizeBase * (0.75 + rnd() * 0.6),
+          sizeBase * (0.65 + rnd() * 0.5),
+          sizeBase * (0.75 + rnd() * 0.6)
+        );
+        dummy.updateMatrix();
+        im.setMatrixAt(i, dummy.matrix);
+
+        if (rnd() < 0.22) {
+          // Reddish tholin-coated KBO
+          col.setRGB(0.84 + rnd() * 0.15, 0.48 + rnd() * 0.16, 0.36 + rnd() * 0.12);
+        } else {
+          // Frosty cyan-white icy KBO
+          const shade = 0.65 + rnd() * 0.34;
+          col.setRGB(shade * 0.86, shade * 0.95, Math.min(1, shade * 1.06));
+        }
+        im.setColorAt(i, col);
+      }
+      im.instanceMatrix.needsUpdate = true;
+      if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      this.kuiperBeltGroup.add(im);
+    }
   }
 
   initAsteroidBelt() {
@@ -633,12 +918,18 @@ export class MapView {
             data[idx + 2] = Math.round(38 + k * 30);
             data[idx + 3] = 255;
           }
-        } else if (name === 'venus' || name === 'titan') {
+        } else if (name === 'venus') {
           const band = Math.sin(lat * 10.0 + Math.sin(lon * 2.0) * 1.2) * 0.5 + 0.5;
           const swirl = Math.max(0, Math.min(1, 0.5 + n * 0.35 + (band - 0.5) * 0.35));
-          data[idx] = Math.round((name === 'titan' ? 215 : 205) + swirl * 40);
-          data[idx + 1] = Math.round((name === 'titan' ? 140 : 160) + swirl * 55);
-          data[idx + 2] = Math.round((name === 'titan' ? 45 : 75) + swirl * 55);
+          data[idx] = Math.round(205 + swirl * 40);
+          data[idx + 1] = Math.round(160 + swirl * 55);
+          data[idx + 2] = Math.round(75 + swirl * 55);
+          data[idx + 3] = 255;
+        } else if (name === 'titan') {
+          const k = Math.max(0, Math.min(1, 0.5 + n * 0.45));
+          data[idx] = Math.round(195 + k * 45);
+          data[idx + 1] = Math.round(135 + k * 38);
+          data[idx + 2] = Math.round(52 + k * 28);
           data[idx + 3] = 255;
         } else if (name === 'jupiter') {
           const b1 = Math.sin(lat * 18.0 + Math.sin(lon * 3.0 + lat * 4.0) * 0.45);
@@ -692,6 +983,36 @@ export class MapView {
             data[idx + 1] = Math.round(105 + k * 56);
             data[idx + 2] = Math.round(78 + k * 46);
           }
+          data[idx + 3] = 255;
+        } else if (name === 'haumea') {
+          // Haumea: bright crystalline water-ice surface with famous Dark Red Spot
+          const redSpot = Math.hypot((lon - 0.35) * 0.95, (lat + 0.12) * 1.45);
+          if (redSpot < 0.36) {
+            const s = 1 - redSpot / 0.36;
+            const ice = Math.round(215 + n * 24);
+            data[idx] = Math.round(ice * (1 - s * 0.32) + 145 * (s * 0.32));
+            data[idx + 1] = Math.round(ice * (1 - s * 0.68) + 48 * (s * 0.68));
+            data[idx + 2] = Math.round(ice * (1 - s * 0.72) + 42 * (s * 0.72));
+          } else {
+            const v = Math.max(175, Math.min(252, Math.round(224 + n * 24)));
+            data[idx] = v;
+            data[idx + 1] = Math.min(255, v + 4);
+            data[idx + 2] = Math.min(255, v + 10);
+          }
+          data[idx + 3] = 255;
+        } else if (name === 'makemake') {
+          // Makemake: warm reddish-amber tholin & methane ice terrain
+          const k = Math.max(0, Math.min(1, 0.52 + n * 0.48));
+          data[idx] = Math.round(172 + k * 72);
+          data[idx + 1] = Math.round(88 + k * 66);
+          data[idx + 2] = Math.round(54 + k * 48);
+          data[idx + 3] = 255;
+        } else if (name === 'eris') {
+          // Eris: ultra-high-albedo snow-white / icy-silver frozen nitrogen surface
+          const v = Math.max(188, Math.min(254, Math.round(232 + n * 22)));
+          data[idx] = v;
+          data[idx + 1] = Math.min(255, v + 3);
+          data[idx + 2] = Math.min(255, v + 8);
           data[idx + 3] = 255;
         } else if (name === 'ceres') {
           // Ceres: dark carbonaceous surface + Occator Crater bright salt deposits (Cerealia & Vinalia Faculae)
@@ -763,7 +1084,7 @@ export class MapView {
       }
     }
     ctx.putImageData(img, 0, 0);
-    const hasAtmClouds = ['sun', 'venus', 'jupiter', 'saturn', 'uranus', 'neptune', 'titan'].includes(name);
+    const hasAtmClouds = ['sun', 'venus', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(name);
     if (!hasAtmClouds) {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.26)';
       ctx.fillStyle = 'rgba(25, 20, 18, 0.26)';
@@ -805,6 +1126,8 @@ export class MapView {
       const mesh = new THREE.Mesh(geo, mat);
       if (name === 'phobos' || name === 'deimos') {
         mesh.scale.set(1.18, 0.88, 0.96);
+      } else if (name === 'haumea') {
+        mesh.scale.set(1.48, 0.78, 1.04);
       }
       if (name === 'mars') {
         // 3D Olympus Mons Shield Volcano & Caldera on the Mars Map Globe
@@ -834,21 +1157,21 @@ export class MapView {
       g.add(mesh);
       this.planetMeshes[name] = mesh;
 
-      // Iconic planetary ring systems for Saturn and Uranus
-      if (name === 'saturn' || name === 'uranus') {
-        const innerR = pR * (name === 'saturn' ? 1.32 : 1.45);
-        const outerR = pR * (name === 'saturn' ? 2.38 : 1.78);
+      // Iconic planetary ring systems for Saturn, Uranus, and Haumea
+      if (name === 'saturn' || name === 'uranus' || name === 'haumea') {
+        const innerR = pR * (name === 'saturn' ? 1.32 : name === 'uranus' ? 1.45 : 1.72);
+        const outerR = pR * (name === 'saturn' ? 2.38 : name === 'uranus' ? 1.78 : 1.96);
         const rGeo = new THREE.RingGeometry(innerR, outerR, 96);
         rGeo.rotateX(Math.PI / 2);
         const rMat = new THREE.MeshBasicMaterial({
-          color: name === 'saturn' ? 0xfde68a : 0x67e8f9,
+          color: name === 'saturn' ? 0xfde68a : name === 'uranus' ? 0x67e8f9 : 0xe2e8f0,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: name === 'saturn' ? 0.62 : 0.28,
+          opacity: name === 'saturn' ? 0.62 : name === 'uranus' ? 0.28 : 0.42,
           depthWrite: false,
         });
         const rMesh = new THREE.Mesh(rGeo, rMat);
-        rMesh.rotation.z = name === 'saturn' ? 0.42 : 1.25;
+        rMesh.rotation.z = name === 'saturn' ? 0.42 : name === 'uranus' ? 1.25 : 0.28;
         g.add(rMesh);
       }
 
@@ -1251,7 +1574,7 @@ export class MapView {
   }
 
   cycleFocus() {
-    const list = ['vessel', 'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', ...NON_EARTH_BODIES.filter((b) => b !== 'mercury' && b !== 'venus')];
+    const list = ['vessel', 'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', ...NON_EARTH_BODIES.filter((b) => b !== 'mercury' && b !== 'venus'), 'oort'];
     const idx = (list.indexOf(this.focus) + 1) % list.length;
     this.setFocus(list[idx]);
   }
@@ -1280,6 +1603,7 @@ export class MapView {
 
     let dist = 1800;
     if (this.focus === 'sun') dist = 780000;
+    else if (this.focus === 'oort') dist = 2400000;
     else if (this.focus === 'earth') dist = 14000;
     else if (this.focus === 'moon') dist = 2600;
     else if (this.focus === 'iss') dist = 900;
@@ -1304,7 +1628,7 @@ export class MapView {
     } else if (BODIES[this.focus] && BODIES[this.focus].parent) {
       parentName = BODIES[this.focus].parent;
     }
-    const bodyCenter = this.focus === 'sun' ? new THREE.Vector3(0, 0, 0) : this.getTargetWorldPos(parentName);
+    const bodyCenter = (this.focus === 'sun' || this.focus === 'oort') ? new THREE.Vector3(0, 0, 0) : this.getTargetWorldPos(parentName);
     const isCraft = this.focus === 'vessel' || this.focus === 'iss' || (this.focus && this.focus.startsWith('obj:'));
     // Position camera toward the sunlit / parent-facing side of the planet
     const viewDir = isCraft
@@ -1318,7 +1642,7 @@ export class MapView {
     }
 
     const camOffset = viewDir.clone().multiplyScalar(dist);
-    camOffset.y += dist * (this.focus === 'sun' ? 0.62 : 0.42);
+    camOffset.y += dist * ((this.focus === 'sun' || this.focus === 'oort') ? 0.62 : 0.42);
     camOffset.x += dist * 0.2;
 
     this.controls.target.copy(targetPos);
@@ -1329,7 +1653,7 @@ export class MapView {
   getTargetWorldPos(focusName) {
     const S = this.lastState;
     const t = S ? S.t : 0;
-    if (focusName === 'sun') return new THREE.Vector3(0, 0, 0);
+    if (focusName === 'sun' || focusName === 'oort') return new THREE.Vector3(0, 0, 0);
     if (BODIES[focusName]) {
       const hp = helioPos(focusName, t);
       const v = to3D(hp.x, hp.y, hp.z);
@@ -1372,6 +1696,13 @@ export class MapView {
     this.sunLight.position.set(0, 0, 0);
     if (this.asteroidBeltGroup) {
       this.asteroidBeltGroup.rotation.y = -t * 1.15e-5;
+    }
+    if (this.kuiperBeltGroup) {
+      this.kuiperBeltGroup.rotation.y = -t * 2.2e-6;
+    }
+    if (this.oortCloudGroup) {
+      this.oortCloudGroup.rotation.y = -t * 8.0e-7;
+      this.oortCloudGroup.rotation.x = Math.sin(t * 3.0e-7) * 0.04;
     }
 
     // Earth position (around Sun) & rotation
@@ -1783,6 +2114,28 @@ export class MapView {
       this.drawBadge(ctx, beltP.x, by, tr('🪨 Vành đai đá (Tiểu hành tinh)', '🪨 Asteroid Belt'), '#d6d3d1', false);
     }
 
+    // Kuiper Belt label near Haumea / Makemake in the outer Solar System
+    const haumeaV3 = planetV3s.haumea;
+    const kuiperAngle = (S.t || 0) * 1.2e-6 - 1.62;
+    const kuiperR = ((KUIPER_BELT_INNER + KUIPER_BELT_OUTER) * 0.5) * SCALE;
+    const kuiperV3 = haumeaV3
+      ? new THREE.Vector3(haumeaV3.x * 1.02, 2400, haumeaV3.z * 1.02)
+      : new THREE.Vector3(Math.sin(kuiperAngle) * kuiperR, 2400, Math.cos(kuiperAngle) * kuiperR);
+    const kuiperP = this.projectToScreen(kuiperV3, W, H);
+    if (kuiperP) {
+      this.drawBadge(ctx, kuiperP.x, kuiperP.y - 26, tr('🧊 Vành đai Kuiper (Thiên thể băng)', '🧊 Kuiper Belt'), '#7dd3fc', false);
+    }
+
+    // Oort Cloud label at the outer spherical cometary shell of the Solar System
+    const oortAngle = (S.t || 0) * 8.0e-7 - 2.15;
+    const oortR = ((OORT_CLOUD_INNER + OORT_CLOUD_OUTER) * 0.5) * SCALE;
+    const oortV3 = new THREE.Vector3(Math.sin(oortAngle) * oortR, oortR * 0.18, Math.cos(oortAngle) * oortR);
+    const oortP = this.projectToScreen(oortV3, W, H);
+    if (oortP) {
+      const br = this.drawBadge(ctx, oortP.x, oortP.y, tr('☄️ Đám mây Oort (Vỏ cầu sao chổi)', '☄️ Oort Cloud (Cometary Shell)'), '#c084fc', this.focus === 'oort');
+      this.hudTargets.push({ x: oortP.x, y: oortP.y, ...br, focus: 'oort' });
+    }
+
     if (issV3) {
       const issP = this.projectToScreen(issV3, W, H);
       if (issP) {
@@ -1971,7 +2324,14 @@ export class MapView {
     const parentB = targetB.parent ? BODIES[targetB.parent] : null;
 
     const rows = [];
-    if (isTargetMoon && parentB) {
+    if (this.focus === 'oort') {
+      rows.push({ label: tr('Khu vực', 'Region'), val: tr('☄️ Đám mây Oort', '☄️ Oort Cloud') });
+      rows.push({ label: tr('Cấu trúc', 'Structure'), val: tr('Đĩa Hills & Vỏ cầu sao chổi 3D', 'Hills Torus & 3D Spherical Shell') });
+      rows.push({ label: tr('Rìa trong', 'Inner Edge'), val: fmt(OORT_CLOUD_INNER / 1000, 0) + ' km' });
+      rows.push({ label: tr('Rìa ngoài', 'Outer Edge'), val: fmt(OORT_CLOUD_OUTER / 1000, 0) + ' km' });
+      rows.push({ label: tr('Thành phần', 'Composition'), val: tr('Sao chổi băng H₂O, CO, CH₄, NH₃', 'H₂O, CO, CH₄, NH₃ Icy Comets') });
+      rows.push({ label: tr('Vị trí tàu', 'Craft Location'), val: `${refB.icon} ${refB.label}` });
+    } else if (isTargetMoon && parentB) {
       rows.push({ label: tr('Mặt trăng', 'Moon'), val: `${targetB.icon} ${targetB.label}` });
       rows.push({ label: tr('Thân chủ', 'Parent Body'), val: `${parentB.icon} ${parentB.label}` });
     } else if (targetB.parent === 'sun' && parentB) {
@@ -1981,7 +2341,9 @@ export class MapView {
       rows.push({ label: tr('Ngôi sao trung tâm', 'Central Star'), val: `${targetB.icon} ${targetB.label}` });
     }
 
-    if (focusB && focusB.name !== S.ref) {
+    if (this.focus === 'oort') {
+      // Oort Cloud summary rows already populated above
+    } else if (focusB && focusB.name !== S.ref) {
       if (isTargetMoon && parentB) {
         rows.push({ label: tr('Độ cao QĐ', 'Orbit Altitude'), val: fmt((targetB.a - parentB.R) / 1000, 0) + ' km' });
         rows.push({ label: tr('Vận tốc QĐ', 'Orbital Speed'), val: fmt(targetB.a * targetB.n, 0) + ' m/s' });
@@ -2027,6 +2389,7 @@ export class MapView {
     let focusDisplay = this.focus;
     if (this.focus === 'vessel') focusDisplay = tr('Tàu vũ trụ', 'Spacecraft');
     else if (this.focus === 'iss') focusDisplay = 'ISS';
+    else if (this.focus === 'oort') focusDisplay = tr('☄️ Đám mây Oort', '☄️ Oort Cloud');
     else if (BODIES[this.focus]) {
       const fB = BODIES[this.focus];
       const pB = fB.parent && fB.parent !== 'sun' ? BODIES[fB.parent] : null;
@@ -2047,6 +2410,9 @@ export class MapView {
     if (this.btnMapTeleport) {
       if (this.focus === 'iss') {
         this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới Trạm ISS', '⚡ Teleport Craft to ISS');
+        this.btnMapTeleport.classList.remove('hidden');
+      } else if (this.focus === 'oort') {
+        this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới ☄️ Đám mây Oort', '⚡ Teleport Craft to ☄️ Oort Cloud');
         this.btnMapTeleport.classList.remove('hidden');
       } else if (BODIES[this.focus]) {
         const fB = BODIES[this.focus];

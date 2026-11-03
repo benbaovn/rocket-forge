@@ -8,7 +8,25 @@ import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes,
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
-import { getLang, tr, PRESET_LABELS, PRESET_ICONS } from '../i18n.js';
+import { getLang, tr, PRESET_LABELS, PRESET_ICONS, PART_I18N } from '../i18n.js';
+
+function normSearch(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/lazer/g, 'laser')
+    .trim();
+}
+
+function matchesQuery(haystack, rawQuery) {
+  const q = normSearch(rawQuery);
+  if (!q) return true;
+  const h = normSearch(haystack);
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return tokens.every((tk) => h.includes(tk));
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -256,6 +274,14 @@ export class BuildScene {
 
   getPartCardLabel(type, def) {
     const labels = {
+      saturnApollo: ['Saturn V · Tàu CM & LES', 'Saturn V · CM & LES Tower'],
+      saturnSM: ['Saturn V · Khoang SM', 'Saturn V · Service Module'],
+      saturnSLA: ['Saturn V · Khoang LM', 'Saturn V · SLA & LM'],
+      saturnS4B: ['Saturn V · Tầng 3 S-IVB', 'Saturn V · S-IVB (S3)'],
+      saturnS4BInter: ['Saturn V · Cổ S-IVB/S-II', 'Saturn V · S-IVB Inter'],
+      saturnS2: ['Saturn V · Tầng 2 S-II', 'Saturn V · S-II (S2)'],
+      saturnS2Inter: ['Saturn V · Vòng S-II/S-IC', 'Saturn V · S-II Inter'],
+      saturnS1: ['Saturn V · Tầng 1 (5× F-1)', 'Saturn V · S-IC (5× F-1)'],
       apollo11CM: ['Apollo 11 · Tàu CM', 'Apollo 11 · CM Tower'],
       apollo11SM: ['Apollo 11 · Khoang SM', 'Apollo 11 · SM Stage'],
       apollo11SLA: ['Apollo 11 · Khoang LM', 'Apollo 11 · SLA & LM'],
@@ -277,7 +303,9 @@ export class BuildScene {
       buranNose: ['Buran · Chóp Mũi Energia', 'Buran · Energia Nose'],
       buranShuttle: ['Buran · Tàu Con Thoi', 'Buran · Shuttle Orbiter'],
       buranEnergia: ['Buran · T1 (4 Booster)', 'Buran · Energia + 4 Zenit'],
+      energiaNose: ['Energia · Chóp Mũi Trắng', 'Energia · ЭНЕРГИЯ Nose'],
       energiaPolyus: ['Energia · Trạm МИР-2', 'Energia · Polyus МИР-2'],
+      energiaCore: ['Energia · T1 (4 Booster)', 'Energia · Core + 4 Zenit'],
       cz5Fairing: ['Trường Chinh 5 · Chóp Mũi', 'Long March 5 · Fairing'],
       cz5Stage2: ['Trường Chinh 5 · Tầng 2', 'Long March 5 · Stage 2'],
       cz5Stage1: ['Trường Chinh 5 · T1 (4B)', 'Long March 5 · Stage 1'],
@@ -306,6 +334,7 @@ export class BuildScene {
       d4hFairing: ['Delta IV Heavy · Chóp Mũi', 'Delta IV Heavy · Fairing'],
       d4hStage2: ['Delta IV Heavy · Tầng 2', 'Delta IV Heavy · Stage 2'],
       d4hStage1: ['Delta IV Heavy · 3 Lõi Cam', 'Delta IV Heavy · 3× CBC'],
+      titan4Voyager: ['Titan IV · Tàu Voyager (T4)', 'Titan IV · Voyager Probe'],
       titan4Fairing: ['Titan IV · Chóp Mũi Dài', 'Titan IV · Tall Fairing'],
       titan4Stage2: ['Titan IV · Tầng 2 USAF', 'Titan IV · Stage 2 USAF'],
       titan4Stage1: ['Titan IV · T1 + 2 SRMU', 'Titan IV · Core + 2 SRMU'],
@@ -317,15 +346,191 @@ export class BuildScene {
     return def.name.replace(/\s*×\d+$/i, '');
   }
 
+  getPresetParts(presetName) {
+    const entries = PRESETS[presetName] || [];
+    const out = [];
+    const seen = new Set();
+    const add = (t) => {
+      if (t && PARTS[t] && !seen.has(t)) {
+        seen.add(t);
+        out.push(t);
+      }
+    };
+    const isHistorical = entries.some((e) => {
+      const b = e.split('+')[0];
+      return /^(saturn|apollo11|soyuz|n1|titan4|shuttle|buran|energia|proton|ariane5|atlasV|d4h|cz5|f9|fh|sls|starship)/.test(b);
+    });
+    const isWeaponPreset = /Lazer|Alien|UFO|Tốt Nhất/i.test(presetName);
+    for (const entry of entries) {
+      const segs = entry.split('+');
+      const base = segs[0];
+      add(base);
+      if (!isHistorical) {
+        for (let i = 1; i < segs.length; i++) {
+          const att = segs[i];
+          if (!isWeaponPreset && (att === 'gunLaser' || att === 'waterCannon')) continue;
+          add(att);
+        }
+      }
+    }
+    return out;
+  }
+
+  presetNameMatchesSearch(name, q) {
+    if (!q || !q.trim()) return true;
+    const hay = [
+      name,
+      PRESET_LABELS[name]?.vi,
+      PRESET_LABELS[name]?.en,
+    ].filter(Boolean).join(' ');
+    return matchesQuery(hay, q);
+  }
+
+  partMatchesSearch(type, def, q) {
+    if (!q || !q.trim()) return true;
+    const vi = PART_I18N[type]?.vi;
+    const en = PART_I18N[type]?.en;
+    const hay = [
+      type,
+      def.name,
+      def.cat,
+      def.desc,
+      this.getPartCardLabel(type, def),
+      vi?.name,
+      vi?.cat,
+      vi?.desc,
+      en?.name,
+      en?.cat,
+      en?.desc,
+    ].filter(Boolean).join(' ');
+    if (matchesQuery(hay, q)) return true;
+    // Also match if this part belongs to any rocket preset whose name matches the search query
+    for (const pName of Object.keys(PRESETS)) {
+      if (this.presetNameMatchesSearch(pName, q) && this.getPresetParts(pName).includes(type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  presetMatchesSearch(name, q) {
+    if (!q || !q.trim()) return true;
+    if (this.presetNameMatchesSearch(name, q)) return true;
+    const partsHay = this.getPresetParts(name).map((pType) => {
+      const def = PARTS[pType];
+      return `${pType} ${def?.name || ''} ${this.getPartCardLabel(pType, def || { name: '' })} ${PART_I18N[pType]?.vi?.name || ''} ${PART_I18N[pType]?.en?.name || ''}`;
+    }).join(' ');
+    const hay = [
+      name,
+      PRESET_LABELS[name]?.vi,
+      PRESET_LABELS[name]?.en,
+      partsHay,
+    ].filter(Boolean).join(' ');
+    return matchesQuery(hay, q);
+  }
+
+  loadPresetByName(pName) {
+    if (!pName || !PRESETS[pName]) return;
+    this.pushHistory();
+    this.stack = stackFromTypes(PRESETS[pName]);
+    this.select(null);
+    this.rebuild(true);
+    if ($('preset-modal')) $('preset-modal').classList.add('hidden');
+    audio.click();
+  }
+
+  createPartCardEl(type, thumbs, onClickOverride = null) {
+    const def = PARTS[type];
+    const card = document.createElement('div');
+    card.className = type === 'ufoSaucer' ? 'part-card part-card-wide' : 'part-card';
+    card.dataset.part = type;
+    const badgeTxt = def.thrustVac
+      ? `🔥${def.thrustVac}`
+      : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+    const shortName = this.getPartCardLabel(type, def);
+    card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
+    card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
+    card.addEventListener('pointerleave', () => this.hidePartTooltip());
+    if (onClickOverride) {
+      card.addEventListener('click', () => {
+        this.hidePartTooltip();
+        onClickOverride(type);
+      });
+    } else {
+      card.addEventListener('pointerdown', (e) => {
+        this.hidePartTooltip();
+        this.startDrag(e, type, thumbs[type]);
+      });
+    }
+    return card;
+  }
+
   renderPalette() {
     const list = $('part-list');
+    if (!list) return;
     list.innerHTML = '';
+    const q = this.partSearchQuery || '';
+    const clearBtn = $('part-search-clear');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !q.trim());
+
+    const lang = getLang();
+    const thumbs = this.thumbs || (this.thumbs = this.makeThumbnails());
+    let totalShown = 0;
+    const shownParts = new Set();
+
+    // When searching in the left panel, surface both matching Rocket Presets AND their component parts in stage order
+    if (q.trim()) {
+      const matchingPresets = Object.keys(PRESETS).filter((name) => this.presetMatchesSearch(name, q));
+      if (matchingPresets.length > 0) {
+        const ph = document.createElement('div');
+        ph.className = 'cat';
+        ph.textContent = `🚀 ${tr('Mẫu tên lửa', 'Rocket Presets')} (${matchingPresets.length})`;
+        list.appendChild(ph);
+        const pList = document.createElement('div');
+        pList.className = 'palette-preset-list';
+        for (const name of matchingPresets) {
+          const ico = PRESET_ICONS[name] || '🚀';
+          const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'palette-preset-item';
+          btn.innerHTML = `<span class="ppi-ico">${ico}</span><span class="ppi-name">${cleanLabel}</span>`;
+          btn.title = `${tr('Nạp mẫu tên lửa', 'Load rocket preset')}: ${cleanLabel}`;
+          btn.onclick = () => this.loadPresetByName(name);
+          pList.appendChild(btn);
+          totalShown++;
+        }
+        list.appendChild(pList);
+      }
+
+      // Show parts belonging to presets whose name matches the query in top-to-bottom rocket assembly order
+      const directPresets = Object.keys(PRESETS).filter((name) => this.presetNameMatchesSearch(name, q));
+      for (const name of directPresets) {
+        const pParts = this.getPresetParts(name).filter((t) => !shownParts.has(t));
+        if (!pParts.length) continue;
+        const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
+        const h = document.createElement('div');
+        h.className = 'cat';
+        h.textContent = `🧩 ${tr('Bộ phận', 'Parts')}: ${cleanLabel} (${pParts.length})`;
+        list.appendChild(h);
+        const grid = document.createElement('div');
+        grid.className = 'part-grid';
+        for (const type of pParts) {
+          shownParts.add(type);
+          grid.appendChild(this.createPartCardEl(type, thumbs));
+          totalShown++;
+        }
+        list.appendChild(grid);
+      }
+    }
+
     const cats = {};
     for (const [type, def] of Object.entries(PARTS)) {
       if (def.hiddenInPalette) continue;
+      if (shownParts.has(type)) continue;
+      if (!this.partMatchesSearch(type, def, q)) continue;
       (cats[def.cat] = cats[def.cat] || []).push(type);
     }
-    const thumbs = this.thumbs || (this.thumbs = this.makeThumbnails());
     for (const [cat, types] of Object.entries(cats)) {
       const h = document.createElement('div');
       h.className = 'cat';
@@ -334,24 +539,17 @@ export class BuildScene {
       const grid = document.createElement('div');
       grid.className = 'part-grid';
       for (const type of types) {
-        const def = PARTS[type];
-        const card = document.createElement('div');
-        card.className = type === 'ufoSaucer' ? 'part-card part-card-wide' : 'part-card';
-        card.dataset.part = type;
-        const badgeTxt = def.thrustVac
-          ? `🔥${def.thrustVac}`
-          : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
-        const shortName = this.getPartCardLabel(type, def);
-        card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
-        card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
-        card.addEventListener('pointerleave', () => this.hidePartTooltip());
-        card.addEventListener('pointerdown', (e) => {
-          this.hidePartTooltip();
-          this.startDrag(e, type, thumbs[type]);
-        });
-        grid.appendChild(card);
+        grid.appendChild(this.createPartCardEl(type, thumbs));
+        totalShown++;
       }
       list.appendChild(grid);
+    }
+
+    if (totalShown === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = tr('🔍 Không tìm thấy linh kiện hoặc tên lửa phù hợp', '🔍 No matching parts or rockets found');
+      list.appendChild(empty);
     }
   }
 
@@ -368,9 +566,21 @@ export class BuildScene {
         sel.appendChild(o);
       }
     }
+    const q = this.presetSearchQuery || '';
+    const clearBtn = $('preset-search-clear');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !q.trim());
+
     const pCards = $('preset-cards');
     if (pCards) {
-      pCards.innerHTML = Object.keys(PRESETS).map((name) => {
+      const matching = Object.keys(PRESETS).filter((name) => this.presetMatchesSearch(name, q));
+      const matchingParts = q.trim()
+        ? Object.keys(PARTS).filter((type) => !PARTS[type].hiddenInPalette && this.partMatchesSearch(type, PARTS[type], q))
+        : [];
+      if (matching.length === 0 && matchingParts.length === 0) {
+        pCards.innerHTML = `<div class="search-empty" style="grid-column: 1 / -1;">${tr('🔍 Không tìm thấy mẫu tên lửa hoặc bộ phận phù hợp', '🔍 No matching rocket presets or parts found')}</div>`;
+        return;
+      }
+      pCards.innerHTML = matching.map((name) => {
         const ico = PRESET_ICONS[name] || '🚀';
         const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
         const partCount = PRESETS[name].length;
@@ -384,16 +594,31 @@ export class BuildScene {
       }).join('');
       pCards.querySelectorAll('.preset-card').forEach((el) => {
         el.addEventListener('click', () => {
-          const pName = el.dataset.preset;
-          if (!pName || !PRESETS[pName]) return;
-          this.pushHistory();
-          this.stack = stackFromTypes(PRESETS[pName]);
-          this.select(null);
-          this.rebuild(true);
-          if ($('preset-modal')) $('preset-modal').classList.add('hidden');
-          audio.click();
+          this.loadPresetByName(el.dataset.preset);
         });
       });
+
+      if (matchingParts.length > 0) {
+        const thumbs = this.thumbs || (this.thumbs = this.makeThumbnails());
+        const ph = document.createElement('div');
+        ph.className = 'cat';
+        ph.style.gridColumn = '1 / -1';
+        ph.style.marginTop = matching.length > 0 ? '10px' : '0';
+        ph.textContent = `🧩 ${tr('Các bộ phận phù hợp (Click để lắp vào tên lửa)', 'Matching Parts (Click to add to rocket)')} (${matchingParts.length})`;
+        pCards.appendChild(ph);
+
+        const pGrid = document.createElement('div');
+        pGrid.className = 'part-grid';
+        pGrid.style.gridColumn = '1 / -1';
+        pGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(115px, 1fr))';
+        for (const type of matchingParts) {
+          pGrid.appendChild(this.createPartCardEl(type, thumbs, (t) => {
+            this.smartAdd(t);
+            if ($('preset-modal')) $('preset-modal').classList.add('hidden');
+          }));
+        }
+        pCards.appendChild(pGrid);
+      }
     }
   }
 
@@ -448,24 +673,89 @@ export class BuildScene {
   }
 
   initUI() {
+    this.partSearchQuery = '';
+    this.presetSearchQuery = '';
     this.thumbs = this.makeThumbnails();
     this.renderPalette();
     this.renderPresets();
+
+    // Part search box in left palette
+    const partSearch = $('part-search');
+    const partSearchClear = $('part-search-clear');
+    if (partSearch) {
+      partSearch.addEventListener('input', () => {
+        this.partSearchQuery = partSearch.value;
+        this.renderPalette();
+      });
+      partSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (partSearch.value) {
+            partSearch.value = '';
+            this.partSearchQuery = '';
+            this.renderPalette();
+          } else {
+            partSearch.blur();
+          }
+          e.stopPropagation();
+        }
+      });
+    }
+    if (partSearchClear) {
+      partSearchClear.onclick = () => {
+        if (partSearch) {
+          partSearch.value = '';
+          partSearch.focus();
+        }
+        this.partSearchQuery = '';
+        this.renderPalette();
+      };
+    }
+
+    // Rocket preset search box in preset modal
+    const presetSearch = $('preset-search');
+    const presetSearchClear = $('preset-search-clear');
+    if (presetSearch) {
+      presetSearch.addEventListener('input', () => {
+        this.presetSearchQuery = presetSearch.value;
+        this.renderPresets();
+      });
+      presetSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (presetSearch.value) {
+            presetSearch.value = '';
+            this.presetSearchQuery = '';
+            this.renderPresets();
+            e.stopPropagation();
+          }
+        } else if (e.key === 'Enter') {
+          const firstCard = document.querySelector('#preset-cards .preset-card');
+          if (firstCard) firstCard.click();
+        }
+      });
+    }
+    if (presetSearchClear) {
+      presetSearchClear.onclick = () => {
+        if (presetSearch) {
+          presetSearch.value = '';
+          presetSearch.focus();
+        }
+        this.presetSearchQuery = '';
+        this.renderPresets();
+      };
+    }
+
     const sel = $('preset');
     sel.addEventListener('change', () => {
       if (!sel.value) return;
-      this.pushHistory();
-      this.stack = stackFromTypes(PRESETS[sel.value]);
+      this.loadPresetByName(sel.value);
       sel.value = '';
-      this.select(null);
-      this.rebuild(true);
-      audio.click();
     });
     $('btn-undo').onclick = () => this.undo();
     $('btn-clear').onclick = () => { this.pushHistory(); this.stack = []; this.select(null); this.rebuild(true); };
     $('btn-del').onclick = () => this.deleteSelection();
     if ($('btn-side-toggle')) $('btn-side-toggle').onclick = () => this.toggleSideAttach();
     $('btn-launchpad').onclick = () => {
+      if ($('btn-launchpad').disabled) return;
       audio.init();
       ensureStackHasWeapons(this.stack);
       this.rebuild(true);
@@ -504,7 +794,19 @@ export class BuildScene {
       if ($('preset-modal')) $('preset-modal').classList.add('hidden');
       audio.click();
     };
-    if ($('btn-preset')) $('btn-preset').onclick = () => $('preset-modal')?.classList.remove('hidden');
+    if ($('btn-preset')) {
+      $('btn-preset').onclick = () => {
+        if (presetSearch) {
+          presetSearch.value = '';
+          this.presetSearchQuery = '';
+          this.renderPresets();
+        }
+        $('preset-modal')?.classList.remove('hidden');
+        if (presetSearch && !document.body.classList.contains('touch')) {
+          setTimeout(() => presetSearch.focus(), 30);
+        }
+      };
+    }
     if ($('btn-preset-close')) $('btn-preset-close').onclick = closePresetModal;
     if ($('btn-preset-x')) $('btn-preset-x').onclick = closePresetModal;
     if ($('preset-modal')) {
@@ -525,6 +827,16 @@ export class BuildScene {
     });
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;
+      const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea') {
+        if (e.key === 'Escape') {
+          if ($('preset-modal') && !$('preset-modal').classList.contains('hidden')) {
+            $('preset-modal').classList.add('hidden');
+          }
+          e.target.blur();
+        }
+        return;
+      }
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.selection) { this.deleteSelection(); e.preventDefault(); }
       if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey)) { this.undo(); e.preventDefault(); return; }
       if (e.key === 'Escape') {
@@ -1123,7 +1435,7 @@ export class BuildScene {
     w.innerHTML = st.warnings.length
       ? st.warnings.map((x) => `<div>⚠ ${x}</div>`).join('')
       : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}</div>`;
-    $('btn-launchpad').disabled = !this.stack.length;
+    $('btn-launchpad').disabled = !st.canLaunch;
     this.stats = st;
   }
 

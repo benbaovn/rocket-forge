@@ -13,13 +13,13 @@ import * as TX from '../textures.js';
 import { audio } from '../audio.js';
 import { Vessel } from './vessel.js';
 import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, angOf, predict, bodyRotation, bodyState, coastStep, rk4, refBody, bodyInfo } from '../sim/orbit.js';
-import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI } from '../sim/constants.js';
+import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI, OORT_CLOUD_INNER, OORT_CLOUD_OUTER } from '../sim/constants.js';
 import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById, isMissionCompleted, markMissionCompleted } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
-import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, OLYMPUS_PSI } from '../fx/moon.js';
+import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, createKuiperBeltCanopy, createOortCloudCanopy, OLYMPUS_PSI } from '../fx/moon.js';
 import { createAlienMesh, createBeamVisual, createSupernovaMesh } from '../fx/aliens.js';
 import { tr } from '../i18n.js';
 
@@ -698,12 +698,12 @@ export class LaunchScene {
         items: ['uranus', 'miranda', 'ariel', 'umbriel', 'titania', 'oberon'],
       },
       {
-        title: tr('🔵 Hệ Sao Hải Vương & Sao Diêm Vương', '🔵 Neptune, Triton & Pluto'),
-        items: ['neptune', 'triton', 'pluto'],
+        title: tr('🔵 Hệ Sao Hải Vương & Các Hành Tinh Lùn Vành Đai Kuiper (Pluto, Haumea, Makemake, Eris)', '🔵 Neptune, Triton & Kuiper Belt Dwarf Planets (Pluto, Haumea, Makemake, Eris)'),
+        items: ['neptune', 'triton', 'pluto', 'haumea', 'makemake', 'eris'],
       },
       {
-        title: tr('🌌 Ngoài Hệ Mặt Trời · Không Gian Liên Sao', '🌌 Interstellar Space · Deep Space'),
-        items: ['interstellar', 'royal1b'],
+        title: tr('☄️ Đám Mây Oort & 🌌 Không Gian Liên Sao (Ngoài Hệ Mặt Trời)', '☄️ Oort Cloud & 🌌 Interstellar Space (Beyond Solar System)'),
+        items: ['oort', 'interstellar', 'royal1b'],
       },
     ];
 
@@ -723,11 +723,18 @@ export class LaunchScene {
             <span class="tp-card-sub">${tr('Sao Hỏa · Đỉnh 21,9 km & Miệng núi lửa', 'Mars · 21.9 km Summit & Caldera')}</span>
           </button>`;
         }
+        if (key === 'oort') {
+          const active = curTarget === 'oort' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="oort">
+            <span class="tp-card-top">☄️ ${tr('Đám Mây Oort', 'Oort Cloud')}</span>
+            <span class="tp-card-sub">${tr('Vỏ cầu sao chổi băng 3D (1.120.000 – 1.520.000 km)', '3D Spherical Icy Cometary Shell (1,120,000 – 1,520,000 km)')}</span>
+          </button>`;
+        }
         if (key === 'interstellar') {
           const active = curTarget === 'interstellar' ? 'active' : '';
           return `<button type="button" class="tp-card-btn ${active}" data-tp="interstellar">
             <span class="tp-card-top">🌌 ${tr('Không Gian Liên Sao', 'Interstellar Space')}</span>
-            <span class="tp-card-sub">${tr('Ngoài Hệ Mặt Trời (>830.000 km) · Siêu Tân Tinh (Supernova)', 'Beyond Solar System (>830,000 km) · Supernova Zone')}</span>
+            <span class="tp-card-sub">${tr('Ngoài Đám mây Oort (>1.560.000 km) · Siêu Tân Tinh (Supernova)', 'Beyond Oort Cloud (>1,560,000 km) · Supernova Zone')}</span>
           </button>`;
         }
         if (key === 'royal1b') {
@@ -1298,6 +1305,45 @@ export class LaunchScene {
         tr('⚡🛰️ Đã dịch chuyển tức thời tới Trạm Vũ Trụ Quốc Tế (ISS)!', '⚡🛰️ Teleported directly to the International Space Station (ISS)!'),
         'warn'
       );
+    } else if (target === 'oort') {
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState('sun', this.simT, bp, bv);
+      const r = (OORT_CLOUD_INNER + OORT_CLOUD_OUTER) * 0.5;
+      const ux = Math.sin(sunPhi), uy = Math.cos(sunPhi);
+      const ex = uy, ey = -ux;
+      const vCirc = Math.sqrt(BODIES.sun.mu / r);
+      P.s.x = bp.x + ux * r;
+      P.s.y = bp.y + uy * r;
+      P.s.z = bp.z || 0;
+      P.s.vx = bv.x + ex * vCirc;
+      P.s.vy = bv.y + ey * vCirc;
+      P.s.vz = bv.z || 0;
+      P.beta = wrapPi(sunPhi + Math.PI / 2);
+      P.omega = 0;
+      P.clamped = false;
+      P.landed = null;
+      P.updateFrame(this.simT);
+      P.syncDir3DFromBeta();
+      if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+      this.holdBeta = P.beta;
+      this.phase = 'flight';
+      this.ignited = true;
+      this.released = true;
+      this.lifted = true;
+      this.throttle = 0;
+      P.throttle = 0;
+      P.engineOn = false;
+      this.inAtmoBody = null;
+      this.setFlag('space');
+      this.setFlag('oortCloud');
+      this.milestone(
+        tr('☄️ TIẾN VÀO ĐÁM MÂY OORT!', '☄️ ENTERED THE OORT CLOUD!'),
+        tr('Vỏ cầu sao chổi băng khổng lồ bao quanh rìa Hệ Mặt Trời (1.120.000 – 1.520.000 km)!', 'Giant 3D spherical shell of icy cometary nuclei surrounding the edge of the Solar System (1,120,000 – 1,520,000 km)!')
+      );
+      this.event(
+        tr('⚡☄️ Tàu đã dịch chuyển tới Đám mây Oort — vùng vỏ cầu sao chổi băng ở rìa Hệ Mặt Trời!', '⚡☄️ Teleported into the Oort Cloud — the spherical icy cometary shell at the edge of the Solar System!'),
+        'warn'
+      );
     } else if (target === 'interstellar') {
       const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
       bodyState('sun', this.simT, bp, bv);
@@ -1331,7 +1377,7 @@ export class LaunchScene {
       this.setFlag('interstellarSpace');
       this.milestone(
         tr('🌌 TIẾN VÀO KHÔNG GIAN LIÊN SAO!', '🌌 ENTERED INTERSTELLAR SPACE!'),
-        tr('Tàu đã vượt qua rìa Hệ Mặt Trời (> 830.000 km) · Nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Solar System boundary (> 830,000 km) · Deep space where Supernovas erupt periodically!')
+        tr('Tàu đã vượt qua Đám mây Oort & rìa Hệ Mặt Trời (> 1.560.000 km) · Nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Oort Cloud & Solar System boundary (> 1,560,000 km) · Deep space where Supernovas erupt periodically!')
       );
       this.event(
         tr('🌌✨ Tàu đã dịch chuyển tới Không gian Liên sao ngoài Hệ Mặt Trời!', '🌌✨ Teleported into Interstellar Space beyond the Solar System!'),
@@ -1415,7 +1461,8 @@ export class LaunchScene {
         this.throttle = 0;
         P.throttle = 0;
         P.engineOn = false;
-        this.inAtmoBody = (bodyKey !== 'sun' && orbAlt < Math.max(B.atm || 0, ATM_TOP)) ? bodyKey : null;
+        const hasAtm = (B.atm || 0) > 0 && bodyKey !== 'ceres' && !(B.parent && B.parent !== 'sun');
+      this.inAtmoBody = (hasAtm && orbAlt < B.atm) ? bodyKey : null;
         this.moonPatchPsi = null;
         this.moonPatchBody = null;
         this.rocksFresh = false;
@@ -1504,7 +1551,8 @@ export class LaunchScene {
             how: P.isRover ? 'rover' : P.isPlane ? 'plane' : 'legs',
           };
           P.landedLock = 0.6;
-          this.inAtmoBody = bodyKey;
+          const hasAtm = (B.atm || 0) > 0 && bodyKey !== 'ceres' && !(B.parent && B.parent !== 'sun');
+      this.inAtmoBody = hasAtm ? bodyKey : null;
           this.moonPatchPsi = null;
           this.moonPatchBody = null;
           this.rocksFresh = false;
@@ -1717,6 +1765,10 @@ export class LaunchScene {
     this.scene.add(this.olympusMons.group);
     this.ceresBelt = createCeresAsteroidBelt();
     this.scene.add(this.ceresBelt);
+    this.kuiperBelt = createKuiperBeltCanopy();
+    this.scene.add(this.kuiperBelt);
+    this.oortCloud = createOortCloudCanopy();
+    this.scene.add(this.oortCloud);
     this.issOrbit = new RailOrbit(ISS_R, -0.3);
     this.iss = createISS();
     this.iss.visible = false;
@@ -1993,7 +2045,7 @@ export class LaunchScene {
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
     this.missionCompletedMarked = false;
-    if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500' || this.mission?.id === 'alien5000') this.aliensKilled = 0;
+    this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     if (this.completeTimer) clearTimeout(this.completeTimer);
     this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
@@ -2221,6 +2273,25 @@ export class LaunchScene {
     nv.s.x += ax.x * (nv.com.y - oldCom); nv.s.y += ax.y * (nv.com.y - oldCom);
     v.s.x += ax.x * (v.com.y - oldCom); v.s.y += ax.y * (v.com.y - oldCom);
     nv.s.vx -= ax.x * 3; nv.s.vy -= ax.y * 3;
+    // If Titan IV fairing separates to reveal the final-stage Voyager probe, deploy Voyager's booms & clear the fairing
+    if (this.rocket && this.rocket.partObjs) {
+      const separatedFairing = this.rocket.partObjs.some((po) => po.seg === k && this.stack[po.index]?.type === 'titan4Fairing');
+      if (separatedFairing) {
+        nv.s.x -= ax.x * 7.5; nv.s.y -= ax.y * 7.5;
+        nv.s.vx -= ax.x * 6; nv.s.vy -= ax.y * 6;
+      }
+      const hasFairingLeft = this.rocket.partObjs.some((po) => v.owns(po.seg) && this.stack[po.index]?.type === 'titan4Fairing');
+      if (!hasFairingLeft) {
+        for (const po of this.rocket.partObjs) {
+          if (v.owns(po.seg) && po.obj.userData.voyagerBooms && !po.obj.userData.voyagerBooms.visible) {
+            po.obj.userData.voyagerBooms.visible = true;
+            if (v === this.player) {
+              this.event(tr('Tách chóp mũi Titan IV — Triển khai tàu thăm dò Voyager!', 'Titan IV fairing jettisoned — Voyager spacecraft deployed!'));
+            }
+          }
+        }
+      }
+    }
     nv.landed = v.landed ? null : null;
     nv.updateFrame(T); v.updateFrame(T);
     nv.engineOn = false; nv.throttle = 0;
@@ -2422,117 +2493,127 @@ export class LaunchScene {
     if (!v || this.phase === 'crashed') return;
     const F = this.flags;
     const kills = this.aliensKilled || 0;
-    const alienTarget = this.mission?.id === 'alien5000' ? 5000 : this.mission?.id === 'alien1500' ? 1500 : this.mission?.id === 'alien500' ? 500 : 100;
-    if (kills >= 25 && !F.kill25) {
-      this.setFlag('kill25');
-      this.milestone(
-        tr(`👽 ĐÃ DIỆT 25/${alienTarget} ALIEN!`, `👽 25/${alienTarget} ALIENS ELIMINATED!`),
-        tr(`Tiếp tục truy quét UFO Alien ngoài vũ trụ! (Mục tiêu: ${alienTarget} Alien)`, `Keep hunting Alien UFOs across space! (Target: ${alienTarget} Aliens)`)
-      );
-    }
-    if (kills >= 50 && !F.kill50) {
-      this.setFlag('kill50');
-      this.milestone(
-        tr(`👽 ĐÃ DIỆT 50/${alienTarget} ALIEN!`, `👽 50/${alienTarget} ALIENS ELIMINATED!`),
-        alienTarget === 100
-          ? tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
-          : tr(`Tiếp tục chiến dịch tiêu diệt ${alienTarget} Alien!`, `Keep pushing through the ${alienTarget} Aliens campaign!`)
-      );
-    }
-    if (kills >= 100 && !F.kill100) {
-      this.setFlag('kill100');
-      this.milestone(
-        alienTarget === 100
-          ? tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!')
-          : tr(`👽💥 ĐÃ DIỆT 100/${alienTarget} ALIEN!`, `👽💥 100/${alienTarget} ALIENS ELIMINATED!`),
-        alienTarget === 100
-          ? tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
-          : tr(`Đạt cột mốc 100/${alienTarget} Alien! Tiếp tục chiến dịch!`, `Reached 100/${alienTarget} Aliens milestone! Keep fighting!`)
-      );
-    }
-    if (kills >= 250 && !F.kill250) {
-      this.setFlag('kill250');
-      if (alienTarget === 500) {
+    const alienTarget = this.mission?.id === 'alien5000' ? 5000
+      : this.mission?.id === 'alien1500' ? 1500
+      : this.mission?.id === 'alien500' ? 500
+      : this.mission?.id === 'alien100' ? 100
+      : 0;
+    if (alienTarget > 0) {
+      if (kills >= 25 && !F.kill25) {
+        this.setFlag('kill25');
+        if (alienTarget === 100) {
+          this.milestone(
+            tr(`👽 ĐÃ DIỆT 25/${alienTarget} ALIEN!`, `👽 25/${alienTarget} ALIENS ELIMINATED!`),
+            tr(`Tiếp tục truy quét UFO Alien ngoài vũ trụ! (Mục tiêu: ${alienTarget} Alien)`, `Keep hunting Alien UFOs across space! (Target: ${alienTarget} Aliens)`)
+          );
+        }
+      }
+      if (kills >= 50 && !F.kill50) {
+        this.setFlag('kill50');
+        if (alienTarget === 100) {
+          this.milestone(
+            tr(`👽 ĐÃ DIỆT 50/${alienTarget} ALIEN!`, `👽 50/${alienTarget} ALIENS ELIMINATED!`),
+            tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
+          );
+        }
+      }
+      if (kills >= 100 && !F.kill100 && alienTarget >= 100) {
+        this.setFlag('kill100');
+        if (alienTarget === 100 || alienTarget === 500) {
+          this.milestone(
+            alienTarget === 100
+              ? tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!')
+              : tr(`👽💥 ĐÃ DIỆT 100/${alienTarget} ALIEN!`, `👽💥 100/${alienTarget} ALIENS ELIMINATED!`),
+            alienTarget === 100
+              ? tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
+              : tr(`Đạt cột mốc 100/${alienTarget} Alien! Tiếp tục chiến dịch!`, `Reached 100/${alienTarget} Aliens milestone! Keep fighting!`)
+          );
+        }
+      }
+      if (kills >= 250 && !F.kill250 && alienTarget >= 500) {
+        this.setFlag('kill250');
+        if (alienTarget === 500) {
+          this.milestone(
+            tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
+            tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
+          );
+        }
+      }
+      if (kills >= 300 && !F.kill300 && alienTarget >= 1500) {
+        this.setFlag('kill300');
+        if (alienTarget === 1500) {
+          this.milestone(
+            tr('👽🔥 ĐÃ DIỆT 300/1500 ALIEN!', '👽🔥 300/1500 ALIENS ELIMINATED!'),
+            tr('Đạt cột mốc 300/1500 Alien! Tiến sâu hơn vào vũ trụ để săn thêm Alien!', 'Reached 300/1500 Aliens milestone! Fly deeper into space to hunt more Aliens!')
+          );
+        }
+      }
+      if (kills >= 500 && !F.kill500 && alienTarget >= 500) {
+        this.setFlag('kill500');
+        if (alienTarget === 1500 || alienTarget === 5000) {
+          this.milestone(
+            tr(`👽🔥 ĐÃ DIỆT 500/${alienTarget} ALIEN!`, `👽🔥 500/${alienTarget} ALIENS ELIMINATED!`),
+            alienTarget === 1500
+              ? tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
+              : tr('Đạt cột mốc 500/5000 Alien! Tiếp tục tiến sâu vào vũ trụ!', 'Reached 500/5000 Aliens milestone! Keep pushing into deep space!')
+          );
+        } else if (alienTarget === 500) {
+          this.milestone(
+            tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
+            tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
+          );
+        }
+      }
+      if (kills >= 750 && !F.kill750 && alienTarget >= 1500) {
+        this.setFlag('kill750');
+        if (alienTarget === 1500) {
+          this.milestone(
+            tr('👽⚡ ĐÃ DIỆT 750/1500 ALIEN!', '👽⚡ 750/1500 ALIENS ELIMINATED!'),
+            tr('Đã hoàn thành 50% chặng đường Hủy Diệt 1500 Alien!', 'Halfway through the 1500 Aliens Annihilation War!')
+          );
+        }
+      }
+      if (kills >= 1000 && !F.kill1000 && alienTarget >= 5000) {
+        this.setFlag('kill1000');
+        if (alienTarget === 5000) {
+          this.milestone(
+            tr('👽🔥 ĐÃ DIỆT 1000/5000 ALIEN!', '👽🔥 1000/5000 ALIENS ELIMINATED!'),
+            tr('Đạt cột mốc 1000/5000 Alien! Hãy tiến tới 1.000.000.000 km để săn Vua & Hoàng Hậu!', 'Reached 1000/5000 Aliens milestone! Push toward 1,000,000,000 km to hunt the King & Queen!')
+          );
+        }
+      }
+      if (kills >= 1500 && !F.kill1500 && alienTarget >= 1500) {
+        this.setFlag('kill1500');
+        if (alienTarget === 5000) {
+          this.milestone(
+            tr('👽🔥 ĐÃ DIỆT 1500/5000 ALIEN!', '👽🔥 1500/5000 ALIENS ELIMINATED!'),
+            tr('Tiếp tục đại chiến tiêu diệt đủ 5000 Alien cùng Hoàng Hậu & Vua!', 'Keep fighting to eliminate all 5000 Aliens along with the Queen & King!')
+          );
+        } else if (alienTarget === 1500) {
+          this.milestone(
+            tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
+            tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
+          );
+        }
+      }
+      if (kills >= 2500 && !F.kill2500 && alienTarget >= 5000) {
+        this.setFlag('kill2500');
+        if (alienTarget === 5000) {
+          this.milestone(
+            tr('👽⚡ ĐÃ DIỆT 2500/5000 ALIEN!', '👽⚡ 2500/5000 ALIENS ELIMINATED!'),
+            tr('Đã hoàn thành 50% số lượng UFO Alien trong chiến dịch 5000 Alien!', 'Halfway through the 5000 Alien UFOs target!')
+          );
+        }
+      }
+      if (kills >= 5000 && !F.kill5000 && alienTarget >= 5000) {
+        this.setFlag('kill5000');
         this.milestone(
-          tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
-          tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
+          tr('⚔️🌌💥 ĐẠI THẦN CHIẾN: ĐÃ TIÊU DIỆT ĐỦ 5000 ALIEN!', '⚔️🌌💥 GODSLAYER WAR: 5000 ALIENS ANNIHILATED!'),
+          F.killKing && F.killQueen
+            ? tr('Huyền thoại tối thượng! Đã diệt đủ 5000 Alien cùng cả Hoàng Hậu & Vua Alien!', 'Supreme Legend! Eliminated all 5000 Aliens along with both the Alien Queen & King!')
+            : tr('Đã diệt đủ 5000 UFO Alien! Hãy tiêu diệt nốt Alien Hoàng Hậu & Vua ở độ cao 1.000.000.000 km!', '5000 Alien UFOs destroyed! Now defeat the Alien Queen & King at 1,000,000,000 km!')
         );
       }
-    }
-    if (kills >= 300 && !F.kill300) {
-      this.setFlag('kill300');
-      if (alienTarget === 1500) {
-        this.milestone(
-          tr('👽🔥 ĐÃ DIỆT 300/1500 ALIEN!', '👽🔥 300/1500 ALIENS ELIMINATED!'),
-          tr('Đạt cột mốc 300/1500 Alien! Tiến sâu hơn vào vũ trụ để săn thêm Alien!', 'Reached 300/1500 Aliens milestone! Fly deeper into space to hunt more Aliens!')
-        );
-      }
-    }
-    if (kills >= 500 && !F.kill500) {
-      this.setFlag('kill500');
-      if (alienTarget === 1500 || alienTarget === 5000) {
-        this.milestone(
-          tr(`👽🔥 ĐÃ DIỆT 500/${alienTarget} ALIEN!`, `👽🔥 500/${alienTarget} ALIENS ELIMINATED!`),
-          alienTarget === 1500
-            ? tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
-            : tr('Đạt cột mốc 500/5000 Alien! Tiếp tục tiến sâu vào vũ trụ!', 'Reached 500/5000 Aliens milestone! Keep pushing into deep space!')
-        );
-      } else {
-        this.milestone(
-          tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
-          tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
-        );
-      }
-    }
-    if (kills >= 750 && !F.kill750) {
-      this.setFlag('kill750');
-      if (alienTarget === 1500) {
-        this.milestone(
-          tr('👽⚡ ĐÃ DIỆT 750/1500 ALIEN!', '👽⚡ 750/1500 ALIENS ELIMINATED!'),
-          tr('Đã hoàn thành 50% chặng đường Hủy Diệt 1500 Alien!', 'Halfway through the 1500 Aliens Annihilation War!')
-        );
-      }
-    }
-    if (kills >= 1000 && !F.kill1000) {
-      this.setFlag('kill1000');
-      if (alienTarget === 5000) {
-        this.milestone(
-          tr('👽🔥 ĐÃ DIỆT 1000/5000 ALIEN!', '👽🔥 1000/5000 ALIENS ELIMINATED!'),
-          tr('Đạt cột mốc 1000/5000 Alien! Hãy tiến tới 1.000.000.000 km để săn Vua & Hoàng Hậu!', 'Reached 1000/5000 Aliens milestone! Push toward 1,000,000,000 km to hunt the King & Queen!')
-        );
-      }
-    }
-    if (kills >= 1500 && !F.kill1500) {
-      this.setFlag('kill1500');
-      if (alienTarget === 5000) {
-        this.milestone(
-          tr('👽🔥 ĐÃ DIỆT 1500/5000 ALIEN!', '👽🔥 1500/5000 ALIENS ELIMINATED!'),
-          tr('Tiếp tục đại chiến tiêu diệt đủ 5000 Alien cùng Hoàng Hậu & Vua!', 'Keep fighting to eliminate all 5000 Aliens along with the Queen & King!')
-        );
-      } else {
-        this.milestone(
-          tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
-          tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
-        );
-      }
-    }
-    if (kills >= 2500 && !F.kill2500) {
-      this.setFlag('kill2500');
-      if (alienTarget === 5000) {
-        this.milestone(
-          tr('👽⚡ ĐÃ DIỆT 2500/5000 ALIEN!', '👽⚡ 2500/5000 ALIENS ELIMINATED!'),
-          tr('Đã hoàn thành 50% số lượng UFO Alien trong chiến dịch 5000 Alien!', 'Halfway through the 5000 Alien UFOs target!')
-        );
-      }
-    }
-    if (kills >= 5000 && !F.kill5000) {
-      this.setFlag('kill5000');
-      this.milestone(
-        tr('⚔️🌌💥 ĐẠI THẦN CHIẾN: ĐÃ TIÊU DIỆT ĐỦ 5000 ALIEN!', '⚔️🌌💥 GODSLAYER WAR: 5000 ALIENS ANNIHILATED!'),
-        F.killKing && F.killQueen
-          ? tr('Huyền thoại tối thượng! Đã diệt đủ 5000 Alien cùng cả Hoàng Hậu & Vua Alien!', 'Supreme Legend! Eliminated all 5000 Aliens along with both the Alien Queen & King!')
-          : tr('Đã diệt đủ 5000 UFO Alien! Hãy tiêu diệt nốt Alien Hoàng Hậu & Vua ở độ cao 1.000.000.000 km!', '5000 Alien UFOs destroyed! Now defeat the Alien Queen & King at 1,000,000,000 km!')
-      );
     }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.space) { this.setFlag('space'); this.setFlag('alt70'); }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.orbit) {
@@ -2645,6 +2726,7 @@ export class LaunchScene {
 
   exit() {
     this.archiveSpaceVessels();
+    this.aliensKilled = 0;
     this.active = false;
     this.controls.enabled = false;
     $('launch-ui').classList.add('hidden');
@@ -3304,30 +3386,36 @@ export class LaunchScene {
           if (small) this.milestone(big, small);
         }
       }
-      // Notify whenever the rocket completely exits the atmosphere / low-altitude zone of any planet or moon
+      // Notify whenever the rocket completely exits the atmosphere of a planet that has an atmosphere (moons & Ceres have no atmosphere)
       const curB = BODIES[P.ref] || BODIES.earth;
-      const atmLimit = Math.max(curB.atm || 0, ATM_TOP);
-      if (P.ref !== 'sun' && (P.clamped || P.landed || P.alt < atmLimit - 1500)) {
+      const curHasAtm = (curB.atm || 0) > 0 && P.ref !== 'ceres' && !(curB.parent && curB.parent !== 'sun');
+      const atmLimit = curHasAtm ? curB.atm : 0;
+      if (curHasAtm && (P.clamped || P.landed || P.alt < atmLimit - 1500)) {
         this.inAtmoBody = P.ref;
-      } else if (this.inAtmoBody && (P.ref === 'sun' || P.alt >= atmLimit)) {
+      } else if (this.inAtmoBody) {
         const exitBody = BODIES[this.inAtmoBody] || curB;
-        const exitKm = fmt(Math.max(exitBody.atm || 0, ATM_TOP) / 1000, 0);
-        if (this.inAtmoBody === 'earth') this.flags.alt70000 = true;
-        this.inAtmoBody = null;
-        this.milestone(
-          tr('🌌 ĐÃ THOÁT KHỎI KHÍ QUYỂN!', '🌌 ATMOSPHERE EXITED!'),
-          tr(
-            `Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (${exitKm} km) — Tiến vào không gian vũ trụ!`,
-            `Rocket has completely exited ${exitBody.label}'s atmosphere (${exitKm} km) — Entering outer space!`
-          )
-        );
-        this.event(
-          tr(
-            `🚀🌌 Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (vượt mốc ${exitKm} km) — Đã ra ngoài không gian vũ trụ!`,
-            `🚀🌌 Rocket has completely exited ${exitBody.label}'s atmosphere (above ${exitKm} km) — Now in deep outer space!`
-          ),
-          'warn'
-        );
+        const exitHasAtm = (exitBody.atm || 0) > 0 && this.inAtmoBody !== 'ceres' && !(exitBody.parent && exitBody.parent !== 'sun');
+        if (!exitHasAtm) {
+          this.inAtmoBody = null;
+        } else if (P.ref !== this.inAtmoBody || P.alt >= exitBody.atm) {
+          const exitKm = fmt(exitBody.atm / 1000, 0);
+          if (this.inAtmoBody === 'earth') this.flags.alt70000 = true;
+          this.inAtmoBody = null;
+          this.milestone(
+            tr('🌌 ĐÃ THOÁT KHỎI KHÍ QUYỂN!', '🌌 ATMOSPHERE EXITED!'),
+            tr(
+              `Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (${exitKm} km) — Tiến vào không gian vũ trụ!`,
+              `Rocket has completely exited ${exitBody.label}'s atmosphere (${exitKm} km) — Entering outer space!`
+            )
+          );
+          this.event(
+            tr(
+              `🚀🌌 Tên lửa đã thoát hoàn toàn khỏi bầu khí quyển của ${exitBody.label} (vượt mốc ${exitKm} km) — Đã ra ngoài không gian vũ trụ!`,
+              `🚀🌌 Rocket has completely exited ${exitBody.label}'s atmosphere (above ${exitKm} km) — Now in deep outer space!`
+            ),
+            'warn'
+          );
+        }
       }
       if (this.moonLandT !== null && !this.flagSpot && this.simT - this.moonLandT > 4 && P.landed && P.ref !== 'earth') {
         const B = BODIES[P.ref] || BODIES.moon;
@@ -4263,21 +4351,34 @@ export class LaunchScene {
       }
     }
 
-    // Heliocentric distance to the Sun and Interstellar boundary check
+    // Heliocentric distance to the Sun, Oort Cloud check, and Interstellar boundary check
     const _sunPos = { x: 0, y: 0, z: 0 };
     bodyPos('sun', this.simT, _sunPos);
     const dxSun = P.s.x - _sunPos.x;
     const dySun = P.s.y - _sunPos.y;
     const dzSun = (P.s.z || 0) - (_sunPos.z || 0);
     const rSun = Math.hypot(dxSun, dySun, dzSun);
+    const isInOortCloud = rSun >= OORT_CLOUD_INNER && rSun <= OORT_CLOUD_OUTER;
     const isOutsideSolarSystem = rSun >= SUN_SOI;
+
+    if (isInOortCloud && !this.flags.oortCloud && !P.clamped && !P.landed) {
+      this.setFlag('oortCloud');
+      this.milestone(
+        tr('☄️ TIẾN VÀO ĐÁM MÂY OORT!', '☄️ ENTERED THE OORT CLOUD!'),
+        tr('Vỏ cầu sao chổi băng khổng lồ bao quanh rìa Hệ Mặt Trời (1.120.000 – 1.520.000 km)!', 'Giant 3D spherical shell of icy cometary nuclei surrounding the edge of the Solar System (1,120,000 – 1,520,000 km)!')
+      );
+      this.event(
+        tr('☄️✨ Tàu đã bay vào Đám mây Oort — vùng vỏ cầu sao chổi băng bao quanh Hệ Mặt Trời!', '☄️✨ The craft has entered the Oort Cloud — the spherical icy cometary shell surrounding the Solar System!'),
+        'warn'
+      );
+    }
 
     // Milestone & event when crossing the outer boundary of the Solar System
     if (isOutsideSolarSystem && !this.flags.interstellarSpace && !P.clamped && !P.landed) {
       this.setFlag('interstellarSpace');
       this.milestone(
         tr('🌌 TIẾN VÀO KHÔNG GIAN LIÊN SAO!', '🌌 ENTERED INTERSTELLAR SPACE!'),
-        tr('Tàu đã vượt qua ranh giới Hệ Mặt Trời (> 830.000 km) · Vùng không gian sâu thẳm nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Solar System boundary (> 830,000 km) · Deep space where Supernovas erupt periodically!')
+        tr('Tàu đã vượt qua Đám mây Oort & ranh giới Hệ Mặt Trời (> 1.560.000 km) · Vùng không gian sâu thẳm nơi các Siêu Tân Tinh (Supernova) thi thoảng bùng nổ!', 'Craft passed the Oort Cloud & Solar System boundary (> 1,560,000 km) · Deep space where Supernovas erupt periodically!')
       );
       this.event(
         tr('🌌✨ Tàu đã chính thức rời khỏi Hệ Mặt Trời, tiến vào Không gian Liên sao rộng lớn!', '🌌✨ The craft has officially left the Solar System, venturing into deep Interstellar Space!'),
@@ -4525,6 +4626,9 @@ export class LaunchScene {
         else if (F.ref === 'phobos') u.uTint.value.set(0.68, 0.60, 0.54);
         else if (F.ref === 'deimos') u.uTint.value.set(0.76, 0.70, 0.62);
         else if (F.ref === 'ceres') u.uTint.value.set(0.66, 0.69, 0.74);
+        else if (F.ref === 'haumea') u.uTint.value.set(0.92, 0.96, 1.02);
+        else if (F.ref === 'makemake') u.uTint.value.set(1.02, 0.56, 0.42);
+        else if (F.ref === 'eris') u.uTint.value.set(0.96, 0.98, 1.04);
         else if (F.ref !== 'moon' && BODIES[F.ref]?.hex) {
           const tc = new THREE.Color(BODIES[F.ref].hex);
           u.uTint.value.set(tc.r * 0.80, tc.g * 0.80, tc.b * 0.80);
@@ -4567,6 +4671,25 @@ export class LaunchScene {
       if (showCeresBelt) {
         const driftX = ((this.time * 18) % 8000) - 4000;
         this.ceresBelt.position.set(driftX, -F.alt, -S.z);
+      }
+    }
+    if (this.kuiperBelt) {
+      const showKuiperBelt = (F.ref === 'pluto' || F.ref === 'haumea' || F.ref === 'makemake' || F.ref === 'eris') && F.alt < 90e3;
+      this.kuiperBelt.visible = !!showKuiperBelt;
+      if (showKuiperBelt) {
+        const driftX = ((this.time * 14) % 8000) - 4000;
+        this.kuiperBelt.position.set(driftX, -F.alt, -S.z);
+      }
+    }
+    if (this.oortCloud) {
+      const rSunF = Math.hypot(S.x - sp.x, S.y - sp.y, (S.z || 0) - (sp.z || 0));
+      const showOortCloud = rSunF >= OORT_CLOUD_INNER && rSunF <= OORT_CLOUD_OUTER;
+      this.oortCloud.visible = !!showOortCloud;
+      if (showOortCloud) {
+        const driftX = ((this.time * 12) % 6000) - 3000;
+        const driftY = Math.sin(this.time * 0.15) * 400;
+        this.oortCloud.position.set(driftX, driftY, 0);
+        this.oortCloud.rotation.y = this.time * 0.008;
       }
     }
     if (this.flagSpot) {
@@ -5313,6 +5436,19 @@ export class LaunchScene {
         { id: 'alien_pluto_4', ref: 'pluto', alt: 68e3, e: 0.02, argPe: 0.4, nu0: 4.1, hSign: -1, t0: 0, vi: 'UFO Alien #4 · Diêm Vương', en: 'Alien UFO #4 · Pluto' },
         { id: 'alien_pluto_5', ref: 'pluto', alt: 88e3, e: 0.015, argPe: 1.5, nu0: 5.3, hSign: 1, t0: 0, vi: 'UFO Alien #5 · Diêm Vương', en: 'Alien UFO #5 · Pluto' },
         { id: 'alien_pluto_6', ref: 'pluto', alt: 112e3, e: 0.02, argPe: 2.4, nu0: 6.0, hSign: -1, t0: 0, vi: 'UFO Alien #6 · Diêm Vương', en: 'Alien UFO #6 · Pluto' },
+        // Haumea (Kuiper Belt dwarf planet)
+        { id: 'alien_haumea_1', ref: 'haumea', alt: 22e3, e: 0.015, argPe: 0.6, nu0: 0.8, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Haumea', en: 'Alien UFO #1 · Haumea' },
+        { id: 'alien_haumea_2', ref: 'haumea', alt: 38e3, e: 0.02, argPe: 1.9, nu0: 2.3, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Haumea', en: 'Alien UFO #2 · Haumea' },
+        { id: 'alien_haumea_3', ref: 'haumea', alt: 58e3, e: 0.015, argPe: 2.8, nu0: 4.1, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Haumea', en: 'Alien UFO #3 · Haumea' },
+        { id: 'alien_haumea_4', ref: 'haumea', alt: 82e3, e: 0.018, argPe: 0.3, nu0: 5.5, hSign: -1, t0: 0, vi: 'UFO Alien #4 · Haumea', en: 'Alien UFO #4 · Haumea' },
+        // Makemake & Eris (outer Kuiper Belt & Scattered Disc dwarf planets)
+        { id: 'alien_makemake_1', ref: 'makemake', alt: 24e3, e: 0.015, argPe: 1.1, nu0: 0.9, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Makemake', en: 'Alien UFO #1 · Makemake' },
+        { id: 'alien_makemake_2', ref: 'makemake', alt: 42e3, e: 0.02, argPe: 2.4, nu0: 2.7, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Makemake', en: 'Alien UFO #2 · Makemake' },
+        { id: 'alien_makemake_3', ref: 'makemake', alt: 64e3, e: 0.015, argPe: 0.5, nu0: 4.6, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Makemake', en: 'Alien UFO #3 · Makemake' },
+        { id: 'alien_eris_1', ref: 'eris', alt: 26e3, e: 0.018, argPe: 0.8, nu0: 0.6, hSign: 1, t0: 0, vi: 'UFO Alien #1 · Eris', en: 'Alien UFO #1 · Eris' },
+        { id: 'alien_eris_2', ref: 'eris', alt: 46e3, e: 0.015, argPe: 2.1, nu0: 2.1, hSign: -1, t0: 0, vi: 'UFO Alien #2 · Eris', en: 'Alien UFO #2 · Eris' },
+        { id: 'alien_eris_3', ref: 'eris', alt: 70e3, e: 0.02, argPe: 1.4, nu0: 3.8, hSign: 1, t0: 0, vi: 'UFO Alien #3 · Eris', en: 'Alien UFO #3 · Eris' },
+        { id: 'alien_eris_4', ref: 'eris', alt: 96e3, e: 0.016, argPe: 2.9, nu0: 5.4, hSign: -1, t0: 0, vi: 'UFO Alien #4 · Eris', en: 'Alien UFO #4 · Eris' },
       ];
     }
     const patrolAlienObjs = this.mapAlienFleet.map((pat) => {

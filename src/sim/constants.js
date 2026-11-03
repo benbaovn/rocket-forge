@@ -6,10 +6,14 @@ export const G0 = 9.80665;
 export const R_SUN = 2200e3;                 // radius (m)
 export const G_SUN = 28.0;                   // surface gravity (m/s²)
 export const MU_SUN = G_SUN * R_SUN * R_SUN; // gravitational parameter (m³/s²)
-export const SUN_SOI = 830000e3;             // solar gravity sphere encompassing the entire Solar System out past Pluto (m)
+export const SUN_SOI = 1560000e3;            // solar gravity sphere encompassing the entire Solar System out past the Kuiper Belt & Oort Cloud (m)
 export const OMEGA_SUN = (2 * Math.PI) / 120000;
 export const ASTEROID_BELT_INNER = 98000e3;  // inner edge of Main Asteroid Belt (well outside Mars SOI = 89,200 km)
 export const ASTEROID_BELT_OUTER = 126000e3; // outer edge of Main Asteroid Belt (well inside Jupiter SOI inner edge = 139,000 km)
+export const KUIPER_BELT_INNER = 740000e3;   // inner edge of Kuiper Belt (outside Neptune, encompassing Pluto, Haumea, Makemake & Eris)
+export const KUIPER_BELT_OUTER = 1040000e3;  // outer edge of Kuiper Belt
+export const OORT_CLOUD_INNER = 1120000e3;   // inner edge of Oort Cloud (Hills Cloud & spherical cometary shell beyond Kuiper Belt)
+export const OORT_CLOUD_OUTER = 1520000e3;   // outer edge of Oort Cloud (3D spherical shell at the edge of the Solar System)
 
 // ---- Earth (Trái Đất - orbits Sun)
 export const R_E = 600e3;                    // radius (m)
@@ -131,6 +135,33 @@ export const PLUTO_N = Math.sqrt(MU_SUN / PLUTO_A ** 3);
 export const PLUTO_SOI = 8500e3;
 export const PLUTO_PHASE0 = 2.65;
 
+// ---- Haumea (Hành tinh lùn Haumea - vành đai Kuiper ngoài Sao Diêm Vương, hình bầu dục dẹt có vành đai)
+export const R_HAUMEA = 145e3;
+export const G_HAUMEA = 0.40;
+export const MU_HAUMEA = G_HAUMEA * R_HAUMEA * R_HAUMEA;
+export const HAUMEA_A = 885000e3;            // Kuiper Belt beyond Pluto (gap = 100,000 km)
+export const HAUMEA_N = Math.sqrt(MU_SUN / HAUMEA_A ** 3);
+export const HAUMEA_SOI = 5200e3;
+export const HAUMEA_PHASE0 = -1.75;
+
+// ---- Makemake (Hành tinh lùn Makemake - quỹ đạo sát cạnh Haumea trong vành đai Kuiper)
+export const R_MAKEMAKE = 140e3;
+export const G_MAKEMAKE = 0.50;
+export const MU_MAKEMAKE = G_MAKEMAKE * R_MAKEMAKE * R_MAKEMAKE;
+export const MAKEMAKE_A = 898000e3;          // very close to Haumea (885,000 km -> gap only 13,000 km, right outside combined SOIs)
+export const MAKEMAKE_N = Math.sqrt(MU_SUN / MAKEMAKE_A ** 3);
+export const MAKEMAKE_SOI = 5400e3;
+export const MAKEMAKE_PHASE0 = -1.69;        // positioned right near Haumea (-1.75) along its orbit
+
+// ---- Eris (Hành tinh lùn Eris - hành tinh lùn nặng nhất và xa nhất trong Đĩa Phân Tán, bề mặt băng nitơ trắng sáng)
+export const R_ERIS = 188e3;
+export const G_ERIS = 0.82;
+export const MU_ERIS = G_ERIS * R_ERIS * R_ERIS;
+export const ERIS_A = 1010000e3;             // Scattered Disc beyond Makemake
+export const ERIS_N = Math.sqrt(MU_SUN / ERIS_A ** 3);
+export const ERIS_SOI = 8800e3;
+export const ERIS_PHASE0 = -2.85;
+
 function defMoon(name, label, icon, color, hex, parent, parentMu, R, g, a, soi, phase0, atm = 0, atmH = 1, rho0 = 0) {
   const mu = g * R * R;
   const n = Math.sqrt(parentMu / a ** 3);
@@ -215,7 +246,7 @@ export const BODIES = {
   tethys: defMoon('tethys', 'Tethys', '🧊', '#e2e8f0', 0xcbd5e1, 'saturn', MU_SATURN, 95e3, 0.55, 7400e3, 560e3, -0.9),
   dione: defMoon('dione', 'Dione', '🌕', '#cbd5e1', 0x94a3b8, 'saturn', MU_SATURN, 105e3, 0.62, 10000e3, 640e3, 2.7),
   rhea: defMoon('rhea', 'Rhea', '🌕', '#d6d3d1', 0xa8a29e, 'saturn', MU_SATURN, 130e3, 0.76, 13200e3, 780e3, -2.2),
-  titan: defMoon('titan', 'Titan', '🟠', '#f59e0b', 0xf59e0b, 'saturn', MU_SATURN, 255e3, 1.35, 18000e3, 1650e3, 1.1, 65e3, 8000, 1.5),
+  titan: defMoon('titan', 'Titan', '🟠', '#f59e0b', 0xf59e0b, 'saturn', MU_SATURN, 255e3, 1.35, 18000e3, 1650e3, 1.1),
   iapetus: defMoon('iapetus', 'Iapetus', '🌓', '#d6d3d1', 0xa8a29e, 'saturn', MU_SATURN, 125e3, 0.68, 23500e3, 950e3, -3.0),
 
   uranus: {
@@ -244,9 +275,27 @@ export const BODIES = {
     R: R_PLUTO, g: G_PLUTO, mu: MU_PLUTO, a: PLUTO_A, n: PLUTO_N, phase0: PLUTO_PHASE0, soi: PLUTO_SOI,
     atm: 0, atmH: 1, rho0: 0, omega: PLUTO_N,
   },
+  haumea: {
+    name: 'haumea', label: 'Haumea', icon: '🥚', color: '#f1f5f9', hex: 0xe2e8f0,
+    parent: 'sun',
+    R: R_HAUMEA, g: G_HAUMEA, mu: MU_HAUMEA, a: HAUMEA_A, n: HAUMEA_N, phase0: HAUMEA_PHASE0, soi: HAUMEA_SOI,
+    atm: 0, atmH: 1, rho0: 0, omega: (2 * Math.PI) / 14000,
+  },
+  makemake: {
+    name: 'makemake', label: 'Makemake', icon: '🔶', color: '#fb923c', hex: 0xea580c,
+    parent: 'sun',
+    R: R_MAKEMAKE, g: G_MAKEMAKE, mu: MU_MAKEMAKE, a: MAKEMAKE_A, n: MAKEMAKE_N, phase0: MAKEMAKE_PHASE0, soi: MAKEMAKE_SOI,
+    atm: 0, atmH: 1, rho0: 0, omega: (2 * Math.PI) / 28000,
+  },
+  eris: {
+    name: 'eris', label: 'Eris', icon: '💎', color: '#f8fafc', hex: 0xe2e8f0,
+    parent: 'sun',
+    R: R_ERIS, g: G_ERIS, mu: MU_ERIS, a: ERIS_A, n: ERIS_N, phase0: ERIS_PHASE0, soi: ERIS_SOI,
+    atm: 0, atmH: 1, rho0: 0, omega: ERIS_N,
+  },
 };
 
-export const PLANET_LIST = ['mercury', 'venus', 'mars', 'ceres', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+export const PLANET_LIST = ['mercury', 'venus', 'mars', 'ceres', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'haumea', 'makemake', 'eris'];
 export const EXTRA_MOON_LIST = [
   'phobos', 'deimos',
   'io', 'europa', 'ganymede', 'callisto',

@@ -54,6 +54,11 @@
 
     <aside id="palette" class="glass panel left">
       <h3>🧩 Parts</h3>
+      <div class="search-box" id="part-search-wrap">
+        <span class="search-ico">🔍</span>
+        <input id="part-search" type="text" placeholder="Search parts, rockets…" autocomplete="off" spellcheck="false" />
+        <button id="part-search-clear" class="search-clear hidden" type="button" title="Clear search">✕</button>
+      </div>
       <div id="part-list"></div>
     </aside>
 
@@ -213,6 +218,10 @@
           <button type="button" class="tp-btn" data-tp="neptune">🔵 Neptune</button>
           <button type="button" class="tp-btn" data-tp="triton">❄️ Triton</button>
           <button type="button" class="tp-btn" data-tp="pluto">🟤 Pluto</button>
+          <button type="button" class="tp-btn" data-tp="haumea">🥚 Haumea</button>
+          <button type="button" class="tp-btn" data-tp="makemake">🔶 Makemake</button>
+          <button type="button" class="tp-btn" data-tp="eris">💎 Eris</button>
+          <button type="button" class="tp-btn" data-tp="oort">☄️ Oort Cloud</button>
           <button type="button" class="tp-btn" data-tp="sun">☀️ Sun</button>
           <button type="button" class="tp-btn" data-tp="interstellar">🌌 Deep Space</button>
           <button type="button" class="tp-btn" data-tp="royal1b">👑 1B km</button>
@@ -291,6 +300,10 @@
         <button type="button" class="map-fbtn" data-focus="neptune">🔵 Neptune</button>
         <button type="button" class="map-fbtn" data-focus="triton">❄️ Triton</button>
         <button type="button" class="map-fbtn" data-focus="pluto">🟤 Pluto</button>
+        <button type="button" class="map-fbtn" data-focus="haumea">🥚 Haumea</button>
+        <button type="button" class="map-fbtn" data-focus="makemake">🔶 Makemake</button>
+        <button type="button" class="map-fbtn" data-focus="eris">💎 Eris</button>
+        <button type="button" class="map-fbtn" data-focus="oort">☄️ Oort Cloud</button>
       </div>
       <div id="map-telemetry" class="glass">
         <h4>ORBITAL TELEMETRY</h4>
@@ -372,6 +385,11 @@
     <div class="modal-card glass wide-card">
       <button type="button" id="btn-preset-x" class="modal-close-x" title="Close (Esc)">✕</button>
       <h2 id="preset-modal-title">🚀 Select Rocket Preset</h2>
+      <div class="search-box modal-search-box" id="preset-search-wrap">
+        <span class="search-ico">🔍</span>
+        <input id="preset-search" type="text" placeholder="Type to search rockets (e.g. Apollo, Starship, UFO…)" autocomplete="off" spellcheck="false" />
+        <button id="preset-search-clear" class="search-clear hidden" type="button" title="Clear search">✕</button>
+      </div>
       <div id="preset-cards" class="modal-scroll-list preset-grid"></div>
       <button class="btn wide" id="btn-preset-close">Close</button>
     </div>

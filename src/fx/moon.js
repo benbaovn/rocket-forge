@@ -5,7 +5,7 @@
 // Moon-fixed space = the sphere mesh's object space. All features are a function of the unit
 // direction in that space, so they never swim.
 import * as THREE from 'three';
-import { R_M, R_SUN, R_MARS, R_VENUS, R_MERCURY, R_PHOBOS, R_DEIMOS, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, BODIES } from '../sim/constants.js';
+import { R_M, R_SUN, R_MARS, R_VENUS, R_MERCURY, R_PHOBOS, R_DEIMOS, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, KUIPER_BELT_INNER, KUIPER_BELT_OUTER, OORT_CLOUD_INNER, OORT_CLOUD_OUTER, BODIES } from '../sim/constants.js';
 import { NOISE_GLSL } from './earth.js';
 
 // --------------------------------------------------------------------------------------------
@@ -509,8 +509,84 @@ export function createSunSphere() {
   if (astMesh.instanceColor) astMesh.instanceColor.needsUpdate = true;
   group.add(astMesh);
 
+  // Outer Kuiper Belt (icy KBOs & comets encompassing Pluto, Haumea, Makemake & Eris) in 3D space pass (layer 1)
+  const N_KBO = 1100;
+  const kboMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_KBO);
+  kboMesh.layers.set(1);
+  kboMesh.frustumCulled = false;
+  for (let i = 0; i < N_KBO; i++) {
+    const ang = rnd() * Math.PI * 2;
+    const u = 0.5 + (rnd() - 0.5) * 0.68 + (rnd() - 0.5) * 0.32;
+    const r = KUIPER_BELT_INNER + Math.max(0.01, Math.min(0.99, u)) * (KUIPER_BELT_OUTER - KUIPER_BELT_INNER);
+    const zOff = (rnd() - 0.5) * 8500e3;
+    dummy.position.set(Math.sin(ang) * r, Math.cos(ang) * r, zOff);
+    dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+    const sz = (rnd() < 0.08 ? 280e3 + rnd() * 240e3 : 75e3 + Math.pow(rnd(), 2.0) * 180e3);
+    dummy.scale.set(sz * (0.75 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
+    dummy.updateMatrix();
+    kboMesh.setMatrixAt(i, dummy.matrix);
+    const roll = rnd();
+    if (roll < 0.22) {
+      // Reddish tholin KBO
+      col.setRGB(0.78 + rnd() * 0.18, 0.44 + rnd() * 0.16, 0.34 + rnd() * 0.12);
+    } else {
+      // Icy cyan-white KBO
+      const b = 0.58 + rnd() * 0.36;
+      col.setRGB(b * 0.88, b * 0.96, Math.min(1, b * 1.08));
+    }
+    kboMesh.setColorAt(i, col);
+  }
+  kboMesh.instanceMatrix.needsUpdate = true;
+  if (kboMesh.instanceColor) kboMesh.instanceColor.needsUpdate = true;
+  group.add(kboMesh);
+
+  // Outer 3D Spherical Oort Cloud (Hills torus + spherical cometary shell) in 3D space pass (layer 1)
+  const N_OORT = 1400;
+  const oortMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_OORT);
+  oortMesh.layers.set(1);
+  oortMesh.frustumCulled = false;
+  const oortHillsOuter = OORT_CLOUD_INNER + (OORT_CLOUD_OUTER - OORT_CLOUD_INNER) * 0.42;
+  for (let i = 0; i < N_OORT; i++) {
+    const theta = rnd() * Math.PI * 2;
+    const isHills = i < N_OORT * 0.35;
+    let r, x, y, z;
+    if (isHills) {
+      r = OORT_CLOUD_INNER + Math.pow(rnd(), 0.85) * (oortHillsOuter - OORT_CLOUD_INNER);
+      const lat = (rnd() - 0.5) * 0.55;
+      x = r * Math.cos(lat) * Math.sin(theta);
+      y = r * Math.cos(lat) * Math.cos(theta);
+      z = r * Math.sin(lat);
+    } else {
+      r = OORT_CLOUD_INNER + rnd() * (OORT_CLOUD_OUTER - OORT_CLOUD_INNER);
+      const cosPhi = 2 * rnd() - 1;
+      const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+      x = r * sinPhi * Math.sin(theta);
+      y = r * sinPhi * Math.cos(theta);
+      z = r * cosPhi;
+    }
+    dummy.position.set(x, y, z);
+    dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+    const sz = rnd() < 0.08 ? 420e3 + rnd() * 340e3 : 110e3 + Math.pow(rnd(), 1.8) * 260e3;
+    dummy.scale.set(sz * (0.9 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
+    dummy.updateMatrix();
+    oortMesh.setMatrixAt(i, dummy.matrix);
+    const cRoll = rnd();
+    if (cRoll < 0.3) {
+      col.setRGB(0.75 + rnd() * 0.2, 0.70 + rnd() * 0.22, 0.96 + rnd() * 0.04);
+    } else {
+      const b = 0.68 + rnd() * 0.32;
+      col.setRGB(b * 0.84, b * 0.96, Math.min(1, b * 1.08));
+    }
+    oortMesh.setColorAt(i, col);
+  }
+  oortMesh.instanceMatrix.needsUpdate = true;
+  if (oortMesh.instanceColor) oortMesh.instanceColor.needsUpdate = true;
+  group.add(oortMesh);
+
   group.userData.coreMat = mat;
   group.userData.asteroidBelt = astMesh;
+  group.userData.kuiperBelt = kboMesh;
+  group.userData.oortCloud = oortMesh;
   return group;
 }
 
@@ -520,11 +596,11 @@ export function createSunSphere() {
 export function createPlanetSphere(name) {
   const B = BODIES[name] || BODIES.mercury;
   const R = B.R || R_MERCURY;
-  const isGasOrHaze = ['venus', 'jupiter', 'saturn', 'uranus', 'neptune', 'titan'].includes(name);
-  const pMode = name === 'mars' ? 1 : isGasOrHaze ? 2 : name === 'mercury' ? 3 : name === 'phobos' ? 4 : name === 'ceres' ? 6 : 5;
+  const isGasOrHaze = ['venus', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(name);
+  const pMode = name === 'mars' ? 1 : isGasOrHaze ? 2 : name === 'mercury' ? 3 : name === 'phobos' ? 4 : name === 'ceres' ? 6 : name === 'haumea' ? 7 : name === 'makemake' ? 8 : name === 'eris' ? 9 : 5;
   const c1 = new THREE.Color(B.hex || 0xcbd5e1);
   const c2 = c1.clone().multiplyScalar(0.65);
-  if (name === 'venus' || name === 'titan') { c1.setRGB(0.98, 0.86, 0.58); c2.setRGB(0.76, 0.52, 0.22); }
+  if (name === 'venus') { c1.setRGB(0.98, 0.86, 0.58); c2.setRGB(0.76, 0.52, 0.22); }
   else if (name === 'jupiter') { c1.setRGB(0.96, 0.84, 0.68); c2.setRGB(0.75, 0.42, 0.22); }
   else if (name === 'saturn') { c1.setRGB(0.96, 0.88, 0.64); c2.setRGB(0.76, 0.64, 0.38); }
   else if (name === 'uranus') { c1.setRGB(0.62, 0.94, 0.98); c2.setRGB(0.36, 0.76, 0.86); }
@@ -667,6 +743,52 @@ export function createPlanetSphere(name) {
           return;
         }
 
+        if (uMode == 7) {
+          // HAUMEA: Bright crystalline water-ice regolith + famous Dark Red Spot macula
+          vec3 iceHigh = vec3(0.84, 0.88, 0.94);
+          vec3 iceLow = vec3(0.62, 0.68, 0.76);
+          vec3 baseIce = mix(iceHigh, iceLow, mare);
+          vec3 albedo = baseIce * clamp(0.18 + alb * 0.68, 0.10, 0.64);
+          vec3 spotCenter = normalize(vec3(0.38, 0.86, 0.34));
+          float spotDist = length(n - spotCenter);
+          if (spotDist < 0.28) {
+            float redMask = smoothstep(0.26, 0.06, spotDist) * (0.75 + 0.25 * fbm3(n * 8.0, 3));
+            albedo = mix(albedo, vec3(0.36, 0.12, 0.09), redMask * 0.78);
+          }
+          vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
+          col += albedo * 0.004 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
+          gl_FragColor = vec4(col * uExposure, 1.0);
+          return;
+        }
+
+        if (uMode == 8) {
+          // MAKEMAKE: Reddish-amber tholin & frozen methane/ethane terrain
+          float tholin = fbm3(n * 4.5 + vec3(2.1, 5.3, 1.7), 5);
+          vec3 mHigh = vec3(0.92, 0.54, 0.34);
+          vec3 mLow = vec3(0.56, 0.24, 0.14);
+          vec3 baseM = mix(mLow, mHigh, smoothstep(0.28, 0.74, tholin));
+          baseM = mix(baseM, vec3(0.38, 0.16, 0.10), mare * 0.65);
+          vec3 albedo = baseM * clamp(0.16 + alb * 0.68, 0.08, 0.62);
+          vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
+          col += albedo * 0.004 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
+          gl_FragColor = vec4(col * uExposure, 1.0);
+          return;
+        }
+
+        if (uMode == 9) {
+          // ERIS: Ultra-high albedo snow-white / icy-silver frozen nitrogen & methane surface
+          float frost = fbm3(n * 5.2 + vec3(6.4, 2.8, 3.9), 5);
+          vec3 eHigh = vec3(0.92, 0.95, 1.00);
+          vec3 eLow = vec3(0.70, 0.75, 0.84);
+          vec3 baseE = mix(eLow, eHigh, smoothstep(0.25, 0.75, frost));
+          baseE = mix(baseE, vec3(0.58, 0.64, 0.72), mare * 0.45);
+          vec3 albedo = baseE * clamp(0.22 + alb * 0.66, 0.14, 0.68);
+          vec3 col = albedo * (uSunIntensity * RECIPROCAL_PI) * ll * term;
+          col += albedo * 0.005 * (0.4 + 0.6 * max(dot(Ng, -uSun), 0.0));
+          gl_FragColor = vec4(col * uExposure, 1.0);
+          return;
+        }
+
         if (uMode == 4 || uMode == 5) {
           // Moons & outer worlds with custom surface tint (toned down so icy moons don't glare)
           float grooves = sin((n.x * 22.0 + n.y * 14.0 + fbm3(n * 6.0, 3) * 2.5)) * 0.06;
@@ -688,6 +810,21 @@ export function createPlanetSphere(name) {
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = name;
+  if (name === 'haumea') {
+    const rGeo = new THREE.RingGeometry(R * 1.65, R * 1.88, 96);
+    rGeo.rotateX(Math.PI / 2);
+    const rMat = new THREE.MeshBasicMaterial({
+      color: 0xe2e8f0,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+    });
+    const rMesh = new THREE.Mesh(rGeo, rMat);
+    rMesh.rotation.z = 0.28;
+    rMesh.layers.set(1);
+    mesh.add(rMesh);
+  }
   return mesh;
 }
 
@@ -1293,6 +1430,126 @@ export function createCeresAsteroidBelt() {
       const shade = 0.52 + rnd() * 0.42;
       const warm = (rnd() - 0.3) * 0.08;
       col.setRGB(shade + warm, shade + warm * 0.4, shade - warm * 0.3);
+      im.setColorAt(i, col);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    group.add(im);
+  }
+
+  return group;
+}
+
+/**
+ * 3D Overhead Kuiper Belt icy canopy when flying on/near Kuiper Belt dwarf planets (Pluto, Haumea, Makemake, Eris).
+ */
+export function createKuiperBeltCanopy() {
+  const group = new THREE.Group();
+  group.name = 'kuiperBeltCanopy';
+  group.visible = false;
+
+  const iceMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.55,
+    metalness: 0.15,
+    flatShading: true,
+  });
+
+  const rnd = mulberry(54321);
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const N_PER_SHAPE = 180;
+
+  for (let sIdx = 0; sIdx < 3; sIdx++) {
+    const g = rockGeometry(1, 5.2 + sIdx * 3.1);
+    const im = new THREE.InstancedMesh(g, iceMat, N_PER_SHAPE);
+    im.frustumCulled = false;
+    for (let i = 0; i < N_PER_SHAPE; i++) {
+      const x = (rnd() - 0.5) * 34000;
+      const z = (rnd() - 0.5) * 19000;
+      const archDrop = (x * x) / (2 * 110000);
+      const y = 2800 + Math.pow(rnd(), 1.35) * 9600 - archDrop;
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+      const sz = rnd() < 0.08 ? 90 + rnd() * 120 : 18 + Math.pow(rnd(), 1.8) * 68;
+      dummy.scale.set(
+        sz * (0.75 + rnd() * 0.55),
+        sz * (0.62 + rnd() * 0.45),
+        sz * (0.75 + rnd() * 0.55)
+      );
+      dummy.updateMatrix();
+      im.setMatrixAt(i, dummy.matrix);
+
+      if (rnd() < 0.24) {
+        col.setRGB(0.85 + rnd() * 0.14, 0.52 + rnd() * 0.16, 0.40 + rnd() * 0.12);
+      } else {
+        const shade = 0.68 + rnd() * 0.30;
+        col.setRGB(shade * 0.88, shade * 0.96, Math.min(1, shade * 1.06));
+      }
+      im.setColorAt(i, col);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    group.add(im);
+  }
+
+  return group;
+}
+
+/**
+ * 3D Surrounding Spherical Oort Cloud cometary field when flying inside the Oort Cloud (1.12M - 1.52M km from the Sun).
+ */
+export function createOortCloudCanopy() {
+  const group = new THREE.Group();
+  group.name = 'oortCloudCanopy';
+  group.visible = false;
+
+  const cometMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.48,
+    metalness: 0.18,
+    emissive: 0x1e293b,
+    emissiveIntensity: 0.55,
+    flatShading: true,
+  });
+
+  const rnd = mulberry(86420);
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const N_PER_SHAPE = 210;
+
+  for (let sIdx = 0; sIdx < 3; sIdx++) {
+    const g = rockGeometry(1, 7.4 + sIdx * 3.5);
+    const im = new THREE.InstancedMesh(g, cometMat, N_PER_SHAPE);
+    im.frustumCulled = false;
+    for (let i = 0; i < N_PER_SHAPE; i++) {
+      // Full 3D spherical distribution around the spacecraft (with clear safe zone near origin)
+      const theta = rnd() * Math.PI * 2;
+      const cosPhi = 2 * rnd() - 1;
+      const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+      const r = 180 + Math.pow(rnd(), 0.75) * 18000;
+      dummy.position.set(
+        r * sinPhi * Math.cos(theta),
+        r * cosPhi,
+        r * sinPhi * Math.sin(theta)
+      );
+      dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+      const sz = rnd() < 0.09 ? 65 + rnd() * 95 : 12 + Math.pow(rnd(), 1.8) * 52;
+      dummy.scale.set(
+        sz * (0.95 + rnd() * 0.55),
+        sz * (0.62 + rnd() * 0.42),
+        sz * (0.75 + rnd() * 0.48)
+      );
+      dummy.updateMatrix();
+      im.setMatrixAt(i, dummy.matrix);
+
+      const cPick = rnd();
+      if (cPick < 0.32) {
+        col.setRGB(0.76 + rnd() * 0.2, 0.70 + rnd() * 0.22, 0.98);
+      } else {
+        const shade = 0.72 + rnd() * 0.28;
+        col.setRGB(shade * 0.84, shade * 0.96, Math.min(1, shade * 1.08));
+      }
       im.setColorAt(i, col);
     }
     im.instanceMatrix.needsUpdate = true;

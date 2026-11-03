@@ -21,7 +21,7 @@ export function tr(vi, en) {
   return currentLang === 'en' ? en : vi;
 }
 
-const PART_I18N = {
+export const PART_I18N = {
   nose: {
     vi: { name: 'Mũi khí động', cat: 'Đầu', desc: 'Giảm lực cản không khí' },
     en: { name: 'Aerodynamic Nose Cone', cat: 'Command & Nose', desc: 'Reduces atmospheric drag' },
@@ -414,9 +414,13 @@ const PART_I18N = {
     vi: { name: 'Tầng 1 Delta IV Heavy (3 Lõi Cam CBC Ám Khói Đen, Đai Trắng Giữa & 3× RS-68A)', cat: 'Động cơ', desc: 'Cụm 3 lõi tên lửa đẩy Common Booster Core (CBC) màu cam SOFI đặc trưng với vệt ám khói đen ở đáy, đai trắng giữa viền vàng, 2 chóp mũi phụ trắng, cặp ống dẫn LOX trắng nổi dọc mặt trước, đáy côn xám bạc và 3 siêu động cơ RS-68A' },
     en: { name: 'Delta IV Heavy Triple Orange CBCs (Scorched Base, White Band & 3× RS-68A · Stage 1)', cat: 'Engines', desc: 'Triple Common Booster Cores with burnt-orange SOFI foam, liftoff hydrogen-fireball black scorch gradient at base, white center intertank band with golden-yellow borders, 2 white booster nose cones, twin front white LOX feedlines, conical grey base shields & 3 RS-68A engines' },
   },
+  titan4Voyager: {
+    vi: { name: 'Tàu Thăm Dò Vũ Trụ Voyager 1 / 2 · Titan IV (Tầng 4 – Cuối)', cat: 'Đầu', desc: 'Tàu thăm dò liên sao Voyager (không có động cơ đẩy) với chảo ăng-ten Parabol trắng 3.7m, thân 10 cạnh gắn Đĩa Vàng Golden Record, nguồn đồng vị phóng xạ RTG, cần camera khoa học, cần từ kế và dù hạ cánh' },
+    en: { name: 'Voyager 1 / 2 Interplanetary Probe · Titan IV (Stage 4 – Final)', cat: 'Command & Nose', desc: 'Voyager interstellar probe (unpowered satellite) with 3.7m white High-Gain Parabolic Dish, decagonal bus with the Golden Record, MHW-RTG nuclear boom, science scan platform camera boom, magnetometer lattice boom & parachutes' },
+  },
   titan4Fairing: {
-    vi: { name: 'Chóp Mũi Trắng Dài 5m Titan IV (4 Đốt Gân & Đáy Côn · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi tải trọng 5m (PLF) trắng cao vút của Titan IVB chia 4 đốt trụ có gân dọc, đường ghép giữa, đáy côn thu boat-tail và dù hạ cánh' },
-    en: { name: 'Titan IVB Tall 5m White Payload Fairing (4 Ribbed Bays & Boat-Tail · Stage 3)', cat: 'Command & Nose', desc: 'Tall 5-meter white payload fairing (PLF) of Titan IVB with 4 cylindrical bays, longitudinal trisector seam, fine vertical ribs, conical boat-tail base & parachutes' },
+    vi: { name: 'Chóp Mũi Trắng Dài 5m Titan IV (Khoang Chứa Tàu Voyager · Tầng 3)', cat: 'Nhiên liệu', desc: 'Chóp mũi tải trọng 5m (PLF) trắng cao vút của Titan IVB chia 4 đốt trụ có gân dọc, khoang bảo vệ tàu Voyager bên trong, đáy côn thu boat-tail và tầng đẩy Centaur' },
+    en: { name: 'Titan IVB Tall 5m White Payload Fairing (Voyager Bay · Stage 3)', cat: 'Fuel Tanks', desc: 'Tall 5-meter white payload fairing (PLF) of Titan IVB with 4 cylindrical bays, Voyager payload bay cutaway, fine vertical ribs, conical boat-tail base & Centaur upper stage' },
   },
   titan4Stage2: {
     vi: { name: 'Tầng 2 Titan IV (Ốp Nâu Đỏ Chữ L, Phù Hiệu USAF & Khe Gió Đen · Tầng 2)', cat: 'Nhiên liệu', desc: 'Tầng 2 Titan IV với tấm bọc cách nhiệt màu nâu đỏ hình chữ L, đai bạc хроm kèm phù hiệu Không quân Mỹ (USAF), cổ chuyển tầng gân trắng có 2 cụm khe thoát khí đen và động cơ LR91' },
@@ -936,12 +940,12 @@ const MISSION_I18N = {
   titan: {
     vi: {
       name: 'Hạ cánh lên Titan',
-      desc: 'Thám hiểm Titan – mặt trăng lớn nhất của Sao Thổ có bầu khí quyển dày màu cam vàng và hồ khí mê-tan lỏng.',
+      desc: 'Thám hiểm Titan – mặt trăng lớn nhất của Sao Thổ, vào quỹ đạo và đáp xuống bề mặt cam vàng đặc trưng.',
       objs: { orbit: 'Vào quỹ đạo Trái Đất', titanSOI: 'Vào vùng hấp dẫn Titan', titanOrbit: 'Vào quỹ đạo Titan', titanLanded: 'Hạ cánh xuống Titan' },
     },
     en: {
       name: 'Land on Titan',
-      desc: 'Explore Titan – Saturn’s largest moon with a dense golden-orange atmosphere and hydrocarbon lakes.',
+      desc: 'Explore Titan – Saturn’s largest moon, enter orbit and land safely on its golden-orange surface.',
       objs: { orbit: 'Enter Earth orbit', titanSOI: 'Enter Titan Sphere of Influence', titanOrbit: 'Enter Titan orbit', titanLanded: 'Land safely on Titan' },
     },
   },
@@ -1041,6 +1045,42 @@ const MISSION_I18N = {
       objs: { orbit: 'Enter Earth orbit', plutoSOI: 'Enter Pluto Sphere of Influence', plutoOrbit: 'Enter Pluto orbit', plutoLanded: 'Land safely on Pluto' },
     },
   },
+  haumea: {
+    vi: {
+      name: 'Thám hiểm Hành tinh lùn Haumea',
+      desc: 'Bay tới Vành đai Kuiper ngoài Sao Diêm Vương, vào quỹ đạo và đáp xuống hành tinh lùn Haumea hình bầu dục có vành đai và đốm đỏ băng giá.',
+      objs: { orbit: 'Vào quỹ đạo Trái Đất', haumeaSOI: 'Vào vùng hấp dẫn Haumea', haumeaOrbit: 'Vào quỹ đạo Haumea', haumeaLanded: 'Hạ cánh xuống Haumea' },
+    },
+    en: {
+      name: 'Explore Dwarf Planet Haumea',
+      desc: 'Fly into the Kuiper Belt beyond Pluto, enter orbit and land on the ringed ellipsoid dwarf planet Haumea with its dark red spot.',
+      objs: { orbit: 'Enter Earth orbit', haumeaSOI: 'Enter Haumea Sphere of Influence', haumeaOrbit: 'Enter Haumea orbit', haumeaLanded: 'Land safely on Haumea' },
+    },
+  },
+  makemake: {
+    vi: {
+      name: 'Thám hiểm Hành tinh lùn Makemake',
+      desc: 'Bay sâu vào Vành đai Kuiper ngoài Haumea, vào quỹ đạo và đáp xuống bề mặt băng mê-tan đỏ cam của hành tinh lùn Makemake.',
+      objs: { orbit: 'Vào quỹ đạo Trái Đất', makemakeSOI: 'Vào vùng hấp dẫn Makemake', makemakeOrbit: 'Vào quỹ đạo Makemake', makemakeLanded: 'Hạ cánh xuống Makemake' },
+    },
+    en: {
+      name: 'Explore Dwarf Planet Makemake',
+      desc: 'Fly deep into the Kuiper Belt beyond Haumea, enter orbit and land on the reddish-amber methane-ice dwarf planet Makemake.',
+      objs: { orbit: 'Enter Earth orbit', makemakeSOI: 'Enter Makemake Sphere of Influence', makemakeOrbit: 'Enter Makemake orbit', makemakeLanded: 'Land safely on Makemake' },
+    },
+  },
+  eris: {
+    vi: {
+      name: 'Chinh phục Hành tinh lùn Eris',
+      desc: 'Viễn chinh tới Đĩa Phân Tán ở rìa xa nhất Hệ Mặt Trời, vào quỹ đạo và đáp xuống bề mặt băng nitơ trắng sáng của hành tinh lùn nặng nhất Eris.',
+      objs: { orbit: 'Vào quỹ đạo Trái Đất', erisSOI: 'Vào vùng hấp dẫn Eris', erisOrbit: 'Vào quỹ đạo Eris', erisLanded: 'Hạ cánh xuống Eris' },
+    },
+    en: {
+      name: 'Conquer Dwarf Planet Eris',
+      desc: 'Expedition to the Scattered Disc at the far edge of the Solar System, enter orbit and land on the brilliant white nitrogen-ice dwarf planet Eris.',
+      objs: { orbit: 'Enter Earth orbit', erisSOI: 'Enter Eris Sphere of Influence', erisOrbit: 'Enter Eris orbit', erisLanded: 'Land safely on Eris' },
+    },
+  },
 };
 
 const BODY_LABELS = {
@@ -1075,6 +1115,9 @@ const BODY_LABELS = {
   neptune: { vi: 'Sao Hải Vương', en: 'Neptune' },
   triton: { vi: 'Triton', en: 'Triton' },
   pluto: { vi: 'Sao Diêm Vương', en: 'Pluto' },
+  haumea: { vi: 'Haumea', en: 'Haumea' },
+  makemake: { vi: 'Makemake', en: 'Makemake' },
+  eris: { vi: 'Eris', en: 'Eris' },
 };
 
 export function applyLanguage(lang, app) {
@@ -1149,6 +1192,10 @@ export function applyLanguage(lang, app) {
   setTxt('#btn-preset-close', 'Đóng', 'Close');
   setAttr('#btn-preset-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
   setTxt('#palette h3', '🧩 Linh kiện', '🧩 Parts');
+  setAttr('#preset-search', 'placeholder', 'Gõ tìm tên lửa (VD: Apollo, Starship, UFO…)', 'Type to search rockets (e.g. Apollo, Starship, UFO…)');
+  setAttr('#preset-search-clear', 'title', 'Xóa tìm kiếm', 'Clear search');
+  setAttr('#part-search', 'placeholder', 'Tìm linh kiện, tên lửa…', 'Search parts, rockets…');
+  setAttr('#part-search-clear', 'title', 'Xóa tìm kiếm', 'Clear search');
   setTxt('#stats h3', '📊 Thông số', '📊 Specs');
 
   const statLabels = document.querySelectorAll('#stats .stat-grid .stat label');
@@ -1285,6 +1332,10 @@ export function applyLanguage(lang, app) {
   setTxt('#tp-bar-btns [data-tp="neptune"]', '🔵 Hải Vương', '🔵 Neptune');
   setTxt('#tp-bar-btns [data-tp="triton"]', '❄️ Triton', '❄️ Triton');
   setTxt('#tp-bar-btns [data-tp="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
+  setTxt('#tp-bar-btns [data-tp="haumea"]', '🥚 Haumea', '🥚 Haumea');
+  setTxt('#tp-bar-btns [data-tp="makemake"]', '🔶 Makemake', '🔶 Makemake');
+  setTxt('#tp-bar-btns [data-tp="eris"]', '💎 Eris', '💎 Eris');
+  setTxt('#tp-bar-btns [data-tp="oort"]', '☄️ Đám mây Oort', '☄️ Oort Cloud');
   setTxt('#tp-bar-btns [data-tp="sun"]', '☀️ Mặt Trời', '☀️ Sun');
   setTxt('#tp-bar-btns [data-tp="interstellar"]', '🌌 Liên Sao', '🌌 Deep Space');
   setTxt('#tp-bar-btns [data-tp="royal1b"]', '👑 1 Tỷ km', '👑 1B km');
@@ -1313,6 +1364,10 @@ export function applyLanguage(lang, app) {
   setTxt('#map-focus-bar [data-focus="uranus"]', '🩵 Thiên Vương', '🩵 Uranus');
   setTxt('#map-focus-bar [data-focus="neptune"]', '🔵 Hải Vương', '🔵 Neptune');
   setTxt('#map-focus-bar [data-focus="pluto"]', '🟤 Diêm Vương', '🟤 Pluto');
+  setTxt('#map-focus-bar [data-focus="haumea"]', '🥚 Haumea', '🥚 Haumea');
+  setTxt('#map-focus-bar [data-focus="makemake"]', '🔶 Makemake', '🔶 Makemake');
+  setTxt('#map-focus-bar [data-focus="eris"]', '💎 Eris', '💎 Eris');
+  setTxt('#map-focus-bar [data-focus="oort"]', '☄️ Đám mây Oort', '☄️ Oort Cloud');
 
   setTxt('#map-telemetry h4', 'QUỸ ĐẠO', 'ORBITAL TELEMETRY');
   setTxt('#btn-map-delete', '🗑️ Xóa', '🗑️ Delete');

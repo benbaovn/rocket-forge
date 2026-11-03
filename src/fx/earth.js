@@ -52,47 +52,123 @@ export function createEarth(sunDir) {
       void main() {
         vec3 n = normalize(vObj);
         vec3 N = normalize(vNormalW);
-        float h = fbm3(n * 3.2 + vec3(4.0), 7) - 0.5 - (n.x - 0.004) * 2.2 + 0.03;
-        float detail = fbm3(n * 60.0, 5);
+
+        // Domain-warped global continents + archipelagos all around the orbital track
+        vec3 warp = vec3(
+          fbm3(n * 2.4 + vec3(1.3, 4.7, 2.1), 4) - 0.5,
+          fbm3(n * 2.4 + vec3(8.2, 2.9, 5.4), 4) - 0.5,
+          fbm3(n * 2.4 + vec3(3.7, 7.1, 9.3), 4) - 0.5
+        );
+        vec3 nw = normalize(n + warp * 0.38);
+        float cont = (fbm3(nw * 2.5 + vec3(4.0, 1.5, 2.8), 6) - 0.492) * 2.4;
+        float subCont = (fbm3(nw * 6.5 + vec3(9.1, 3.4, 6.2), 5) - 0.495) * 0.95;
+        float islands = (fbm3(n * 18.0 + vec3(2.3, 5.1, 7.7), 4) - 0.51) * 0.42;
+        float globalH = cont + subCont + islands + 0.025;
+
+        // Keep launchpad local coastline at n.x ≈ 0.004 near (0, 1, 0), blending smoothly into global continents
+        float padDist2 = dot(n.xz, n.xz) + (1.0 - max(n.y, 0.0)) * 2.0;
+        float padZone = exp(-padDist2 * 900.0);
+        float padH = (fbm3(n * 3.2 + vec3(4.0), 6) - 0.5) * 0.4 - (n.x - 0.004) * 2.2;
+        float h = mix(globalH, padH, padZone);
+
+        float detail = fbm3(n * 75.0, 5);
+        float micro = fbm3(n * 240.0, 4);
         vec3 col;
         float spec = 0.0;
         if (h < 0.0) {
-          float depth = clamp(-h * 6.0, 0.0, 1.0);
-          col = mix(vec3(0.03, 0.12, 0.16), vec3(0.004, 0.025, 0.07), depth);
+          float depth = clamp(-h * 3.8, 0.0, 1.0);
+          float shelf = exp(h * 26.0); // bright turquoise continental shelf near coastlines
+          vec3 shallowCol = vec3(0.04, 0.42, 0.48);
+          vec3 midOcean = vec3(0.02, 0.14, 0.28);
+          vec3 deepOcean = vec3(0.008, 0.045, 0.13);
+          col = mix(midOcean, deepOcean, smoothstep(0.15, 0.9, depth));
+          col = mix(col, shallowCol, shelf * 0.75);
           spec = 1.0;
         } else {
-          float m = fbm3(n * 9.0 + 2.0, 6);
-          vec3 green = mix(vec3(0.05, 0.10, 0.03), vec3(0.11, 0.14, 0.05), m);
-          vec3 desert = vec3(0.32, 0.25, 0.15);
-          col = mix(green, desert, smoothstep(0.55, 0.75, fbm3(n * 4.0 + 7.0, 4)));
-          col *= 0.75 + 0.5 * detail;
-          col = mix(vec3(0.55, 0.48, 0.38), col, smoothstep(0.0, 0.012, h)); // beaches
-          col = mix(col, vec3(0.8), smoothstep(0.82, 0.9, abs(n.z)));
+          float elev = clamp(h * 1.9, 0.0, 1.0);
+          float moisture = fbm3(nw * 4.2 + vec3(7.0, 2.0, 5.0), 5);
+          float temp = 1.0 - smoothstep(0.25, 0.88, abs(n.z)) - elev * 0.45;
+
+          // Vibrant biome palette: tropical/temperate forests, grasslands, savannas, deserts, rock, snow
+          vec3 lushForest = vec3(0.09, 0.34, 0.09);
+          vec3 grassland = vec3(0.22, 0.46, 0.14);
+          vec3 savanna = vec3(0.48, 0.47, 0.20);
+          vec3 desert = vec3(0.76, 0.60, 0.36);
+          vec3 redArid = vec3(0.64, 0.38, 0.24);
+          vec3 highland = vec3(0.36, 0.31, 0.25);
+          vec3 snowPeak = vec3(0.92, 0.95, 0.98);
+
+          vec3 veg = mix(lushForest, grassland, smoothstep(0.35, 0.68, fbm3(n * 14.0 + 2.0, 5)));
+          vec3 arid = mix(desert, redArid, smoothstep(0.45, 0.72, fbm3(n * 11.0 + 9.0, 4)));
+          float dryMask = smoothstep(0.44, 0.64, moisture);
+          col = mix(veg, savanna, smoothstep(0.36, 0.52, moisture));
+          col = mix(col, arid, dryMask);
+
+          // Mountain ridges & rocky highlands
+          float ridge = pow(1.0 - abs(fbm3(n * 22.0 + vec3(3.3), 5) * 2.0 - 1.0), 2.2);
+          float mtnMask = smoothstep(0.18, 0.52, elev + ridge * 0.22);
+          col = mix(col, highland, mtnMask * 0.82);
+
+          // Snow caps on high mountain peaks and polar latitudes
+          float snowMask = max(
+            smoothstep(0.48, 0.72, elev + ridge * 0.25 - temp * 0.15),
+            smoothstep(0.76, 0.88, abs(n.z) + (detail - 0.5) * 0.08)
+          );
+          col = mix(col, snowPeak, snowMask);
+
+          // Major river networks cutting through lowlands
+          float riverNoise = abs(fbm3(nw * 19.0 + vec3(6.1, 1.8, 4.4), 4) - 0.5);
+          float river = (1.0 - smoothstep(0.002, 0.009, riverNoise)) * (1.0 - smoothstep(0.0, 0.35, elev)) * (1.0 - snowMask);
+          col = mix(col, vec3(0.05, 0.28, 0.38), river * 0.85);
+
+          // Fine terrain texture & coastal sandy beaches
+          col *= 0.78 + 0.46 * (detail * 0.65 + micro * 0.35);
+          vec3 beachCol = vec3(0.78, 0.70, 0.52);
+          col = mix(beachCol, col, smoothstep(0.0, 0.018, h));
+
+          // Topographic bump shading on land so mountain chains & valleys have crisp 3D relief from orbit
+          float eps = 0.0008;
+          float hx = fbm3((n + vec3(eps, 0.0, 0.0)) * 28.0, 5) - fbm3((n - vec3(eps, 0.0, 0.0)) * 28.0, 5);
+          float hy = fbm3((n + vec3(0.0, eps, 0.0)) * 28.0, 5) - fbm3((n - vec3(0.0, eps, 0.0)) * 28.0, 5);
+          vec3 bumpN = normalize(N + normalize(vec3(hx, hy, 0.0) + 1e-5) * length(vec2(hx, hy)) * 2.4 * (0.4 + elev));
+          float relief = clamp(dot(bumpN, uSun) / max(dot(N, uSun), 0.12), 0.72, 1.32);
+          col *= relief;
         }
-        // clouds
-        vec3 cp = n * 7.0 + vec3(uTime * 0.002, 0.0, uTime * 0.001);
-        float c = fbm3(cp, 7);
-        float cloud = smoothstep(0.52, 0.72, c);
+
+        // Wispy dynamic cloud formations (semi-transparent so continents remain clearly visible underneath)
+        vec3 cp = n * 6.5 + vec3(uTime * 0.0018, -uTime * 0.0007, uTime * 0.001);
+        float cSwirl = fbm3(cp * 0.8 + vec3(5.2), 4) - 0.5;
+        float c = fbm3(cp + cSwirl * 0.9, 6);
+        float cloud = smoothstep(0.58, 0.78, c);
+
         vec3 V = normalize(vWorld - cameraPosition);
         float ndl = dot(N, uSun);
-        float lit = smoothstep(-0.08, 0.25, ndl) * max(ndl, 0.0) * 0.8 + smoothstep(-0.1, 0.1, ndl) * 0.05;
-        vec3 surf = col * lit * 1.55;
+        float lit = smoothstep(-0.08, 0.22, ndl) * max(ndl, 0.0) * 0.88 + smoothstep(-0.12, 0.12, ndl) * 0.06;
+        vec3 surf = col * lit * 1.75;
         if (spec > 0.0) {
           vec3 Rf = reflect(V, N);
-          surf += vec3(1.0, 0.85, 0.6) * pow(max(dot(Rf, uSun), 0.0), 180.0) * 1.8 * (1.0 - cloud) * step(0.0, ndl);
+          surf += vec3(1.0, 0.88, 0.65) * pow(max(dot(Rf, uSun), 0.0), 160.0) * 1.5 * (1.0 - cloud) * step(0.0, ndl);
         }
-        surf = mix(surf, vec3(0.92) * lit * 1.45, cloud * 0.88);
-        // city lights on night side
-        float night = smoothstep(0.05, -0.15, ndl);
-        if (h > 0.0) surf += vec3(1.0, 0.6, 0.25) * night * pow(fbm3(n * 300.0, 3), 6.0) * 2.0 * (1.0 - cloud);
-        // atmosphere between camera and surface
+        surf = mix(surf, vec3(0.95, 0.97, 1.0) * lit * 1.45, cloud * 0.62);
+
+        // City lights on night side
+        float night = smoothstep(0.06, -0.14, ndl);
+        if (h > 0.0) {
+          float cityCluster = smoothstep(0.54, 0.72, fbm3(n * 22.0 + vec3(1.7), 4));
+          float cityGrid = pow(fbm3(n * 280.0, 3), 5.0);
+          surf += vec3(1.0, 0.68, 0.30) * night * cityCluster * cityGrid * 2.6 * (1.0 - cloud * 0.8);
+        }
+
+        // Atmosphere between camera and surface (clear nadir view over continents, glowing blue limb at horizon)
         float dist = length(vWorld - cameraPosition);
         vec3 tr;
-        vec3 ins = atmosphere(V, uCamRel, uSun, 22.0, dist, 12, 6, tr);
-        // sunlight reaching surface (approximate transmittance)
-        float sunPath = 1.0 / max(ndl + 0.12, 0.05);
-        vec3 sunT = exp(-kRlh * shRlh * sunPath - kMie * shMie * sunPath);
-        vec3 color = surf * sunT * tr + ins;
+        vec3 ins = atmosphere(V, uCamRel, uSun, 20.0, dist, 12, 6, tr);
+        float viewNadir = clamp(dot(N, -V), 0.0, 1.0);
+        float hazeWeight = mix(1.0, 0.34, pow(viewNadir, 0.65));
+        float sunPath = 1.0 / max(ndl + 0.15, 0.06);
+        vec3 sunT = exp((-kRlh * shRlh * sunPath - kMie * shMie * sunPath) * 0.65);
+        vec3 transEff = mix(vec3(1.0), tr, hazeWeight);
+        vec3 color = surf * sunT * transEff + ins * hazeWeight;
         gl_FragColor = vec4(color * uExposure, uOpacity);
       }`,
   });

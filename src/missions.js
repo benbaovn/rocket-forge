@@ -237,7 +237,7 @@ export const MISSIONS = [
   },
   {
     id: 'titan', icon: '🟠', name: 'Hạ cánh lên Titan', preset: 'Tàu Phản Trọng Lực Lượng Tử',
-    desc: 'Thám hiểm Titan – mặt trăng lớn nhất của Sao Thổ có bầu khí quyển dày màu cam vàng và hồ khí mê-tan lỏng.',
+    desc: 'Thám hiểm Titan – mặt trăng lớn nhất của Sao Thổ, vào quỹ đạo và đáp xuống bề mặt cam vàng đặc trưng.',
     objectives: [
       { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
       { id: 'titanSOI', text: 'Vào vùng hấp dẫn Titan' },
@@ -323,6 +323,36 @@ export const MISSIONS = [
       { id: 'plutoSOI', text: 'Vào vùng hấp dẫn Pluto' },
       { id: 'plutoOrbit', text: 'Vào quỹ đạo Pluto' },
       { id: 'plutoLanded', text: 'Hạ cánh xuống Pluto' },
+    ],
+  },
+  {
+    id: 'haumea', icon: '🥚', name: 'Thám hiểm Hành tinh lùn Haumea', preset: 'Tàu Phản Trọng Lực Lượng Tử',
+    desc: 'Bay tới Vành đai Kuiper ngoài Sao Diêm Vương, vào quỹ đạo và đáp xuống hành tinh lùn Haumea hình bầu dục có vành đai và đốm đỏ băng giá.',
+    objectives: [
+      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
+      { id: 'haumeaSOI', text: 'Vào vùng hấp dẫn Haumea' },
+      { id: 'haumeaOrbit', text: 'Vào quỹ đạo Haumea' },
+      { id: 'haumeaLanded', text: 'Hạ cánh xuống Haumea' },
+    ],
+  },
+  {
+    id: 'makemake', icon: '🔶', name: 'Thám hiểm Hành tinh lùn Makemake', preset: 'Tàu Phản Trọng Lực Lượng Tử',
+    desc: 'Bay sâu vào Vành đai Kuiper ngoài Haumea, vào quỹ đạo và đáp xuống bề mặt băng mê-tan đỏ cam của hành tinh lùn Makemake.',
+    objectives: [
+      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
+      { id: 'makemakeSOI', text: 'Vào vùng hấp dẫn Makemake' },
+      { id: 'makemakeOrbit', text: 'Vào quỹ đạo Makemake' },
+      { id: 'makemakeLanded', text: 'Hạ cánh xuống Makemake' },
+    ],
+  },
+  {
+    id: 'eris', icon: '💎', name: 'Chinh phục Hành tinh lùn Eris', preset: 'Tàu Phản Trọng Lực Lượng Tử',
+    desc: 'Viễn chinh tới Đĩa Phân Tán ở rìa xa nhất Hệ Mặt Trời, vào quỹ đạo và đáp xuống bề mặt băng nitơ trắng sáng của hành tinh lùn nặng nhất Eris.',
+    objectives: [
+      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
+      { id: 'erisSOI', text: 'Vào vùng hấp dẫn Eris' },
+      { id: 'erisOrbit', text: 'Vào quỹ đạo Eris' },
+      { id: 'erisLanded', text: 'Hạ cánh xuống Eris' },
     ],
   },
 ];

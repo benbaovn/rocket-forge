@@ -135,20 +135,20 @@ export const PART_I18N = {
     en: { name: 'Rover Solar Panels ×2', cat: 'Rovers & Boats', desc: 'Twin solar panels recharging power on the move' },
   },
   cabinBoat: {
-    vi: { name: 'Cabin Canô lướt sóng', cat: 'Xe & Thuyền', desc: 'Cabin lái khí động học của tàu thuyền cao tốc' },
-    en: { name: 'Speedboat Cabin', cat: 'Rovers & Boats', desc: 'Aerodynamic helm cabin for high-speed watercraft' },
+    vi: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Xe & Thuyền', desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
+    en: { name: 'Superyacht Bridge & Sky-Lounge', cat: 'Rovers & Boats', desc: 'Futuristic cruise superyacht upper deck with panoramic smart-glass bridge, solar canopy and dual radar domes' },
   },
   hullBoat: {
-    vi: { name: 'Thân thuyền chữ V', cat: 'Xe & Thuyền', desc: 'Thân tàu đáy chữ V lướt sóng, giữ thăng bằng và nổi trên biển' },
-    en: { name: 'V-Hull Boat Body', cat: 'Rovers & Boats', desc: 'Deep-V wave-piercing hull for buoyancy and stability at sea' },
+    vi: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Xe & Thuyền', desc: 'Thân du thuyền đa tầng siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
+    en: { name: 'Futuristic Luxury Superyacht Hull', cat: 'Rovers & Boats', desc: 'Multi-deck luxury cruise yacht hull with wave-piercing bow, infinity Jacuzzi pool, helipad and neon LED trim' },
   },
   motorBoat: {
-    vi: { name: 'Động cơ chân vịt canô', cat: 'Xe & Thuyền', desc: 'Động cơ chân vịt / phản lực nước chuyên dụng cho thuyền' },
-    en: { name: 'Marine Propeller Motor', cat: 'Rovers & Boats', desc: 'High-thrust waterjet / propeller outboard motor' },
+    vi: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Xe & Thuyền', desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
+    en: { name: 'Twin Azimuth Pod & Plasma Hydro-Jet', cat: 'Rovers & Boats', desc: 'Hydrodynamic underwater keel with twin azimuth pods and plasma water-jet propulsion' },
   },
   floatsBoat: {
-    vi: { name: 'Phao nổi canô ×2', cat: 'Xe & Thuyền', desc: 'Cặp phao phụ hai bên sườn chống lật sóng trên biển' },
-    en: { name: 'Outrigger Pontoon Floats ×2', cat: 'Rovers & Boats', desc: 'Side stabilizing pontoons preventing capsizing' },
+    vi: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Xe & Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
+    en: { name: 'Trimaran Hydrofoil Sponsons ×2', cat: 'Rovers & Boats', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips' },
   },
   cockpitPlane: {
     vi: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
@@ -473,8 +473,7 @@ export const PRESET_ICONS = {
   'Tàu chở khách (ISS)': '👨‍🚀',
   'Apollo (Mặt Trăng)': '🌖',
   'Xe địa hình Rover 4x4': '🛞',
-  'Canô lướt sóng siêu tốc': '🚤',
-  'Thuyền phản lực tên lửa': '🛥️',
+  'Canô lướt sóng siêu tốc': '🛥️',
   'Tiêm kích phản lực F-22': '✈️',
   'Tàu Phản Trọng Lực Lượng Tử': '⚛️',
   'Tàu Chiến Lazer Liên Hành Tinh': '🔫',
@@ -507,8 +506,7 @@ export const PRESET_LABELS = {
   'Tàu chở khách (ISS)': { vi: 'Tàu chở khách (ISS)', en: 'Crew Dragon (ISS)' },
   'Apollo (Mặt Trăng)': { vi: 'Apollo (Mặt Trăng)', en: 'Apollo (Moon & Planets)' },
   'Xe địa hình Rover 4x4': { vi: 'Xe địa hình Rover 4x4', en: '4x4 Planetary Rover' },
-  'Canô lướt sóng siêu tốc': { vi: 'Canô lướt sóng siêu tốc', en: 'High-Speed Wave Boat' },
-  'Thuyền phản lực tên lửa': { vi: 'Thuyền phản lực tên lửa', en: 'Rocket Hydroplane Boat' },
+  'Canô lướt sóng siêu tốc': { vi: 'Siêu Du Thuyền Du Lịch Tương Lai', en: 'Futuristic Luxury Cruise Superyacht' },
   'Tiêm kích phản lực F-22': { vi: 'Tiêm kích phản lực F-22', en: 'F-22 Raptor Fighter Jet' },
   'Tàu Phản Trọng Lực Lượng Tử': { vi: 'Tàu Phản Trọng Lực Lượng Tử', en: 'Quantum Anti-Gravity Ship' },
   'Tàu Chiến Lazer Liên Hành Tinh': { vi: 'Tàu Chiến Lazer Liên Hành Tinh', en: 'Interplanetary Laser Cruiser' },
@@ -1429,10 +1427,13 @@ export function applyLanguage(lang, app) {
   setTxt('#btn-mission-close', 'Đóng', 'Close');
   setAttr('#btn-mission-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
 
-  setTxt('#menu h2', '⏸ Tạm dừng', '⏸ Paused');
+  setTxt('#menu h2', '⚙️ Tùy chọn', '⚙️ Options');
+  setAttr('#btn-menu-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
+  setAttr('#hud-tg-opt', 'title', 'Tùy chọn / Tạm dừng (Esc)', 'Options / Menu (Esc)');
   setTxt('#menu [data-act="resume"]', '▶ Tiếp tục', '▶ Resume');
   setTxt('#menu [data-act="restart"]', '🔁 Phóng lại', '🔁 Relaunch');
   setTxt('#menu [data-act="build"]', '🛠️ Về VAB', '🛠️ Back to VAB');
+  setTxt('#menu [data-act="settings"]', '📊 Thông tin GPU & Cài đặt', '📊 GPU & Settings');
   setTxt('#lbl-quality-1', 'Đồ họa', 'Graphics Quality');
   setTxt('#lbl-lang-1', 'Ngôn ngữ / Language', 'Language / Ngôn ngữ');
 

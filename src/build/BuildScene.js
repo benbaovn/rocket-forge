@@ -931,8 +931,8 @@ export class BuildScene {
         obj = new THREE.Group();
         for (const pl of radialPlacements('gearPlane')) {
           const gp = buildPart('gearPlane');
-          gp.position.set(Math.cos(pl.angle) * 0.45, 0, (pl.offsetZ || 0) * 0.45);
-          gp.rotation.y = -pl.angle;
+          gp.position.set(Math.cos(pl.angle) * 0.45, ((pl.offsetY || 0) - 1.2) * 0.28, (pl.offsetZ || 0) * 0.45);
+          gp.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
           obj.add(gp);
         }
       }

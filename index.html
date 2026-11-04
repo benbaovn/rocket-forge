@@ -398,10 +398,12 @@
   <!-- ================= MODALS ================= -->
   <div id="menu" class="modal hidden">
     <div class="modal-card glass">
-      <h2>⏸ Paused</h2>
+      <button type="button" id="btn-menu-x" class="modal-close-x" title="Close (Esc)">✕</button>
+      <h2>⚙️ Options</h2>
       <button class="btn wide" data-act="resume">▶ Resume</button>
       <button class="btn wide" data-act="restart">🔁 Relaunch</button>
       <button class="btn wide" data-act="build">🛠️ Back to VAB</button>
+      <button class="btn wide" data-act="settings">📊 GPU &amp; Settings</button>
       <div class="setting">
         <label id="lbl-quality-1">Graphics Quality</label>
         <div class="seg" id="quality-seg">

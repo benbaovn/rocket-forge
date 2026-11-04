@@ -30,7 +30,7 @@ export class Vessel {
     this.engineOn = false;
     this.engMode = 'all';
     this.ctl = { input: 0, targetBeta: null, rcs: [0, 0, 0], hold: false };
-    this.legsT = 0; this.legsTarget = 0;
+    this.legsT = this.isPlane ? 1 : 0; this.legsTarget = this.isPlane ? 1 : 0;
     this.finsT = 0; this.finsTarget = 0;
     this.chuteT = 0; this.chuteTarget = 0;
     this.landed = null;          // { body, psi, h } when resting on a surface
@@ -124,7 +124,7 @@ export class Vessel {
 
   /** distance from COM down to the lowest point (legs count once mostly deployed) */
   bottomOffset() {
-    if (this.isPlane) return 1.15;
+    if (this.isPlane) return (this.legsT ?? 1) > 0.1 ? 1.85 : 1.08;
     let low = this.com.minY;
     const lt = THREE.MathUtils.smoothstep(this.legsT, 0.0, 1.0);
     if (this.legBottom < Infinity && lt > 0) low = Math.min(low, this.com.minY + (this.legBottom - this.com.minY) * lt);
@@ -353,6 +353,9 @@ export class Vessel {
       }
     }
     // thrust (along the body axis in 3D)
+    const planeAtmLimit = (B.atm || 0) > 0 ? Math.max(2000, B.atm - 2000) : (B.gasGiant ? 34000 : 18000);
+    const planeAtmFactor = this.isPlane ? THREE.MathUtils.clamp((planeAtmLimit - this.alt) / (planeAtmLimit * 0.22), 0, 1) : 1;
+    if (this.isPlane) thrust *= planeAtmFactor;
     let ax = this.dir3D ? this.dir3D.x : Math.sin(this.ang);
     let au = this.dir3D ? this.dir3D.y : Math.cos(this.ang);
     let az_t = this.dir3D ? this.dir3D.z : 0;
@@ -367,7 +370,10 @@ export class Vessel {
     let ae = (thrust * ax + fe) / mass, au_ = (thrust * au + fu) / mass;
     if (info && info.antiGrav && this.coreFiring) {
       // Anti-gravity field neutralizes local planetary gravity directly while firing
-      au_ += gLocal * 0.92 * thr;
+      au_ += gLocal * 0.92 * thr * planeAtmFactor;
+    }
+    if (this.isPlane && this.alt >= planeAtmLimit * 0.88 && this.vSurf.u > 0) {
+      au_ -= this.vSurf.u * 0.85;
     }
     // RCS translation (body frame: fwd, normal-in-plane, out-of-plane)
     let az = ((thrust * az_t) + (this.isPlane ? (this._lateralLift || 0) : 0)) / mass;
@@ -556,13 +562,14 @@ export class Vessel {
         if (liftForce > weightForce * 0.92 && this.planeRollSpeed > 35) {
           this.landed = null;
           this.landedLock = 0;
+          const prevZ = this.s.z || 0;
           const newSx = this.sx + this.planeRollSpeed * cosH * h;
           const surf = env.surface({ ...this, sx: newSx });
           const targetH = surf.h + this.bottomOffset() + 0.6;
           this.beta = this.phi + Math.PI / 2 - 0.16;
           this.omega = -0.05;
           this.placeOnSurface(this.ref, newSx, targetH, t + h, this.beta);
-          this.s.z += -this.planeRollSpeed * sinH * h;
+          this.s.z = prevZ - this.planeRollSpeed * sinH * h;
           this.s.vz = -this.planeRollSpeed * sinH;
           this.vSurf.e = this.planeRollSpeed * cosH;
           this.vSurf.u = 5.5;
@@ -574,13 +581,14 @@ export class Vessel {
           return;
         }
 
+        const prevZ = this.s.z || 0;
         const newSx = this.sx + this.planeRollSpeed * cosH * h;
         const surf = env.surface({ ...this, sx: newSx });
         const targetH = surf.h + this.bottomOffset();
         this.beta = targetBeta;
         this.omega = 0;
         this.placeOnSurface(this.ref, newSx, targetH, t + h, this.beta);
-        this.s.z += -this.planeRollSpeed * sinH * h;
+        this.s.z = prevZ - this.planeRollSpeed * sinH * h;
         this.s.vz = -this.planeRollSpeed * sinH;
         this.s.vx += this.planeRollSpeed * cosH * this.east.x;
         this.s.vy += this.planeRollSpeed * cosH * this.east.y;
@@ -634,6 +642,29 @@ export class Vessel {
       rk4(this.s, t, h, axE, ayE, az);
     }
     this.updateFrame(t + h);
+
+    // Prevent airplanes from ever leaving the atmosphere of any planet
+    if (this.isPlane && !this.clamped && !this.landed && this.alt > planeAtmLimit) {
+      bodyState(this.ref, t + h, _bp, _bv);
+      const rCeil = B.R + planeAtmLimit;
+      this.s.x = _bp.x + this.up.x * rCeil;
+      this.s.y = _bp.y + this.up.y * rCeil;
+      if (this.vSurf.u > 0) {
+        this.s.vx -= this.vSurf.u * this.up.x;
+        this.s.vy -= this.vSurf.u * this.up.y;
+      }
+      const curPitch = Math.PI / 2 - this.ang;
+      if (curPitch > 0) {
+        this.beta = wrapPi(this.phi + Math.PI / 2);
+        this.omega = Math.min(0, this.omega);
+        this.syncDir3DFromBeta();
+      }
+      this.updateFrame(t + h);
+      if (!this._ceilWarnT || t - this._ceilWarnT > 8) {
+        this._ceilWarnT = t;
+        this.events.push(['atmCeiling']);
+      }
+    }
 
     // ---------- surface contact (gas giants Jupiter, Saturn, Uranus, Neptune have no solid surface and can be flown straight through)
     if (B.gasGiant) {

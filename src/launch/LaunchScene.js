@@ -88,6 +88,7 @@ export class LaunchScene {
     this.initSky();
     this.initGround();
     this.initPad();
+    this.initAirport();
     this.initSites();
     this.initFX();
     this.initUI();
@@ -301,6 +302,7 @@ export class LaunchScene {
       const ang = Math.random() * Math.PI * 2, dist = 160 + Math.pow(Math.random(), 0.7) * 2800;
       const x = Math.cos(ang) * dist, z = Math.sin(ang) * dist;
       if (x > 1800) continue;                      // near coast/ocean
+      if (x > -240 && x < 2300 && Math.abs(z) < 125) continue; // keep airport runway & apron clear
       if (Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
       const cluster = TX.fbm(x / 300 + 50, z / 300 + 50, 1000, 3, 7);
       if (cluster < 0.48) continue;
@@ -432,7 +434,7 @@ export class LaunchScene {
       pole.position.set(Math.cos(a) * 95, 20, Math.sin(a) * 95); pole.castShadow = true;
       const head = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.6), headMat);
       head.position.set(Math.cos(a) * 95, 40, Math.sin(a) * 95); head.lookAt(0, 20, 0);
-      this.world.add(pole, head);
+      pad.add(pole, head);
     }
     // Vehicle Assembly Building (far)
     const vabMat = new THREE.MeshStandardMaterial({ color: 0xc8c6c0, roughness: 0.8 });
@@ -453,6 +455,272 @@ export class LaunchScene {
       this.world.add(b);
     }
     pad.traverse((o) => { if (o.isMesh) o.receiveShadow = true; });
+  }
+
+  initAirport() {
+    const airport = new THREE.Group();
+    airport.visible = false;
+    this.airport = airport;
+
+    const conc = TX.concreteTextures();
+    const asphaltMap = conc.map.clone();
+    asphaltMap.repeat.set(36, 4);
+    asphaltMap.needsUpdate = true;
+    const concMap = conc.map.clone();
+    concMap.repeat.set(16, 6);
+    concMap.needsUpdate = true;
+    const asphaltMat = new THREE.MeshStandardMaterial({ map: asphaltMap, color: 0x2b2e34, roughness: 0.88, metalness: 0.06 });
+    const shoulderMat = new THREE.MeshStandardMaterial({ map: concMap, color: 0x585c64, roughness: 0.9 });
+    const apronMat = new THREE.MeshStandardMaterial({ map: concMap, color: 0x6c7078, roughness: 0.85 });
+    const mastMat = new THREE.MeshStandardMaterial({ color: 0xd9dbe0, metalness: 0.5, roughness: 0.45 });
+    const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff1d6, emissiveIntensity: 25 });
+    const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xf4f6fa });
+    const yellowLineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+    // Main Runway (length 2400m from x=-160 to x=+2240, width 38m, top at y=0.25m)
+    const rwyLen = 2400, rwyW = 38, rwyCenterX = 1040;
+    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(rwyLen + 20, 0.14, rwyW + 10), shoulderMat);
+    shoulder.position.set(rwyCenterX, 0.07, 0);
+    shoulder.receiveShadow = true;
+    airport.add(shoulder);
+
+    const runway = new THREE.Mesh(new THREE.BoxGeometry(rwyLen, 0.25, rwyW), asphaltMat);
+    runway.position.set(rwyCenterX, 0.125, 0);
+    runway.receiveShadow = true;
+    airport.add(runway);
+
+    // Continuous white side stripes along runway edges
+    const sideStripeGeo = new THREE.PlaneGeometry(rwyLen - 40, 0.75);
+    sideStripeGeo.rotateX(-Math.PI / 2);
+    for (const s of [-1, 1]) {
+      const edgeLine = new THREE.Mesh(sideStripeGeo, whiteLineMat);
+      edgeLine.position.set(rwyCenterX, 0.262, s * 17.6);
+      airport.add(edgeLine);
+    }
+
+    // Dashed white centerline along the runway
+    const dashGeo = new THREE.PlaneGeometry(28, 0.85);
+    dashGeo.rotateX(-Math.PI / 2);
+    for (let x = -90; x <= 2160; x += 52) {
+      const dash = new THREE.Mesh(dashGeo, whiteLineMat);
+      dash.position.set(x, 0.264, 0);
+      airport.add(dash);
+    }
+
+    // Threshold "piano key" markings at both ends + touchdown zone & aiming point bars
+    const keyGeo = new THREE.PlaneGeometry(22, 1.35);
+    keyGeo.rotateX(-Math.PI / 2);
+    for (const endX of [-132, 2212]) {
+      for (const s of [-1, 1]) {
+        for (let k = 0; k < 4; k++) {
+          const key = new THREE.Mesh(keyGeo, whiteLineMat);
+          key.position.set(endX, 0.265, s * (3.2 + k * 3.1));
+          airport.add(key);
+        }
+      }
+    }
+    const aimGeo = new THREE.PlaneGeometry(36, 3.6);
+    aimGeo.rotateX(-Math.PI / 2);
+    for (const s of [-1, 1]) {
+      const aim1 = new THREE.Mesh(aimGeo, whiteLineMat);
+      aim1.position.set(190, 0.265, s * 8.5);
+      airport.add(aim1);
+      const aim2 = new THREE.Mesh(aimGeo, whiteLineMat);
+      aim2.position.set(1890, 0.265, s * 8.5);
+      airport.add(aim2);
+    }
+
+    // Concrete Apron & Taxiways on the -Z side (north of runway)
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(380, 0.20, 86), apronMat);
+    apron.position.set(70, 0.10, -64);
+    apron.receiveShadow = true;
+    airport.add(apron);
+
+    // Parallel taxiway & connector taxiways to the runway
+    const parallelTaxi = new THREE.Mesh(new THREE.BoxGeometry(920, 0.20, 18), asphaltMat);
+    parallelTaxi.position.set(340, 0.10, -34);
+    parallelTaxi.receiveShadow = true;
+    airport.add(parallelTaxi);
+
+    const connGeo = new THREE.BoxGeometry(20, 0.22, 24);
+    const holdGeo = new THREE.PlaneGeometry(18, 0.6);
+    holdGeo.rotateX(-Math.PI / 2);
+    const taxiLineGeo = new THREE.PlaneGeometry(0.45, 24);
+    taxiLineGeo.rotateX(-Math.PI / 2);
+    for (const tx of [-35, 85, 235, 520, 760]) {
+      const conn = new THREE.Mesh(connGeo, asphaltMat);
+      conn.position.set(tx, 0.11, -22);
+      conn.receiveShadow = true;
+      airport.add(conn);
+
+      const hold = new THREE.Mesh(holdGeo, yellowLineMat);
+      hold.position.set(tx, 0.258, -19.5);
+      airport.add(hold);
+
+      const tLine = new THREE.Mesh(taxiLineGeo, yellowLineMat);
+      tLine.position.set(tx, 0.225, -22);
+      airport.add(tLine);
+    }
+
+    // Runway Edge Lights (white/amber) & Threshold Lights (green/red)
+    const edgeLightGeo = new THREE.SphereGeometry(0.28, 8, 8);
+    const stemGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.45, 6);
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
+    const whiteLightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff7ed, emissiveIntensity: 8 });
+    const amberLightMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: 8 });
+    const greenLightMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x22c55e, emissiveIntensity: 10 });
+    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 10 });
+
+    for (let x = -150; x <= 2230; x += 50) {
+      const lMat = x > 1750 ? amberLightMat : whiteLightMat;
+      for (const s of [-1, 1]) {
+        const stem = new THREE.Mesh(stemGeo, stemMat);
+        stem.position.set(x, 0.25, s * 19.6);
+        const bulb = new THREE.Mesh(edgeLightGeo, lMat);
+        bulb.position.set(x, 0.52, s * 19.6);
+        airport.add(stem, bulb);
+      }
+    }
+    for (let z = -17.5; z <= 17.5; z += 3.5) {
+      const gBulb = new THREE.Mesh(edgeLightGeo, greenLightMat);
+      gBulb.position.set(-154, 0.36, z);
+      const rBulb = new THREE.Mesh(edgeLightGeo, redLightMat);
+      rBulb.position.set(2234, 0.36, z);
+      airport.add(gBulb, rBulb);
+    }
+
+    // 2 Large Aircraft Hangars on the Apron
+    const hangarWallMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.35, roughness: 0.55 });
+    const hangarRoofMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.45, roughness: 0.45 });
+    const hangarDoorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5, roughness: 0.4 });
+    const hangarGlowMat = new THREE.MeshBasicMaterial({ color: 0xfef3c7 });
+    for (const hx of [-58, 8]) {
+      const hg = new THREE.Group();
+      hg.position.set(hx, 0.2, -72);
+
+      const body = new THREE.Mesh(new THREE.BoxGeometry(46, 14, 36), hangarWallMat);
+      body.position.y = 7;
+      body.castShadow = true;
+      body.receiveShadow = true;
+      hg.add(body);
+
+      const arch = new THREE.Mesh(new THREE.CylinderGeometry(23, 23, 36, 20, 1, false, 0, Math.PI), hangarRoofMat);
+      arch.rotation.z = Math.PI / 2;
+      arch.rotation.y = Math.PI / 2;
+      arch.scale.set(1, 0.34, 1);
+      arch.position.y = 14;
+      arch.castShadow = true;
+      hg.add(arch);
+
+      const doorOpen = new THREE.Mesh(new THREE.PlaneGeometry(36, 11.5), hangarDoorMat);
+      doorOpen.position.set(0, 5.75, 18.08);
+      hg.add(doorOpen);
+
+      const lightStrip = new THREE.Mesh(new THREE.PlaneGeometry(34, 0.8), hangarGlowMat);
+      lightStrip.position.set(0, 11.2, 18.12);
+      hg.add(lightStrip);
+
+      airport.add(hg);
+    }
+
+    // Airport Terminal Building with Glass Curtain Wall & Jetways
+    const termGroup = new THREE.Group();
+    termGroup.position.set(138, 0.2, -76);
+    const termBody = new THREE.Mesh(new THREE.BoxGeometry(96, 13, 32), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.45, metalness: 0.25 }));
+    termBody.position.y = 6.5;
+    termBody.castShadow = true;
+    termBody.receiveShadow = true;
+    termGroup.add(termBody);
+
+    const glassWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(90, 9.5),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, emissiveIntensity: 0.45, roughness: 0.15, metalness: 0.85 })
+    );
+    glassWall.position.set(0, 6.2, 16.08);
+    termGroup.add(glassWall);
+
+    const termRoof = new THREE.Mesh(new THREE.BoxGeometry(104, 1.4, 38), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.4 }));
+    termRoof.position.set(0, 13.7, 1.5);
+    termRoof.castShadow = true;
+    termGroup.add(termRoof);
+
+    // 2 Jetways extending toward the apron
+    for (const jx of [-26, 26]) {
+      const jw = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.4, 18), hangarWallMat);
+      jw.position.set(jx, 5.2, 24);
+      jw.castShadow = true;
+      termGroup.add(jw);
+    }
+    airport.add(termGroup);
+
+    // Air Traffic Control (ATC) Tower with Rotating Radar
+    const atc = new THREE.Group();
+    atc.position.set(58, 0.2, -56);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 4.6, 32, 12), new THREE.MeshStandardMaterial({ color: 0xd6d3d1, roughness: 0.65 }));
+    shaft.position.y = 16;
+    shaft.castShadow = true;
+    atc.add(shaft);
+
+    const cabBase = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 3.8, 3.2, 12), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.5 }));
+    cabBase.position.y = 33.6;
+    atc.add(cabBase);
+
+    const cabGlass = new THREE.Mesh(
+      new THREE.CylinderGeometry(7.4, 6.6, 4.6, 12),
+      new THREE.MeshStandardMaterial({ color: 0x67e8f9, emissive: 0x06b6d4, emissiveIntensity: 0.65, roughness: 0.15, metalness: 0.8 })
+    );
+    cabGlass.position.y = 37.5;
+    atc.add(cabGlass);
+
+    const cabRoof = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 7.8, 1.4, 12), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.5 }));
+    cabRoof.position.y = 40.5;
+    atc.add(cabRoof);
+
+    const radarGroup = new THREE.Group();
+    radarGroup.position.y = 42.2;
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.6, 1.6, 8), hangarDoorMat);
+    const dish = new THREE.Mesh(new THREE.BoxGeometry(6.2, 1.3, 0.45), new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.4, roughness: 0.3 }));
+    dish.position.y = 1.1;
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 8), redLightMat);
+    beacon.position.y = 2.2;
+    radarGroup.add(ped, dish, beacon);
+    this.airportRadar = radarGroup;
+    atc.add(radarGroup);
+    airport.add(atc);
+
+    // Windsock near runway threshold
+    const wsGroup = new THREE.Group();
+    wsGroup.position.set(-28, 0.25, -25);
+    const wsPole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 6.5, 8), mastMat);
+    wsPole.position.y = 3.25;
+    wsGroup.add(wsPole);
+    const sockPivot = new THREE.Group();
+    sockPivot.position.y = 6.3;
+    const sockOrange = new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0xea580c, emissiveIntensity: 0.25, roughness: 0.6 });
+    const sockWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.6 });
+    for (let i = 0; i < 5; i++) {
+      const r1 = 0.55 - i * 0.07, r2 = 0.55 - (i + 1) * 0.07;
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, 0.55, 10, 1, true), i % 2 === 0 ? sockOrange : sockWhite);
+      seg.rotation.z = Math.PI / 2;
+      seg.position.x = 0.35 + i * 0.55;
+      sockPivot.add(seg);
+    }
+    this.airportWindsock = sockPivot;
+    wsGroup.add(sockPivot);
+    airport.add(wsGroup);
+
+    // Apron Floodlight Towers
+    for (const lx of [-85, 35, 195]) {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.4, 28, 8), mastMat);
+      pole.position.set(lx, 14, -104);
+      pole.castShadow = true;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.6, 0.6), headMat);
+      head.position.set(lx, 28, -104);
+      head.lookAt(lx, 0, 0);
+      airport.add(pole, head);
+    }
+
+    this.world.add(airport);
   }
 
   buildArms(height) {
@@ -1222,6 +1490,18 @@ export class LaunchScene {
     const P = this.player;
     if (!P) return;
 
+    if (P.isPlane && (target === 'iss' || target === 'oort' || target === 'interstellar' || target === 'supernova' || target === 'sun')) {
+      this.toggleTeleportModal(false);
+      this.event(
+        tr(
+          '✈️ Máy bay không thể ra khỏi bầu khí quyển — Không thể dịch chuyển ra ngoài không gian vũ trụ!',
+          '✈️ Aircraft cannot leave the atmosphere — Cannot teleport into outer space!'
+        ),
+        'warn'
+      );
+      return;
+    }
+
     // Refill all stages & boosters so the rocket can freely launch from the destination
     for (let k = 0; k < this.fuel.length; k++) this.fuel[k] = this.fuelMax[k];
     for (const b of this.rocket.boosters) b.fuel = b.fuelMax;
@@ -1421,16 +1701,18 @@ export class LaunchScene {
       const isOlympusSummit = target === 'olympus';
       const bodyKey = isOlympusSummit ? 'mars' : target;
       const B = BODIES[bodyKey] || BODIES.earth;
-      const isOrbit = !isOlympusSummit && (mode === 'orbit' || !!B.gasGiant || bodyKey === 'sun');
+      const isOrbit = !isOlympusSummit && (P.isPlane ? !!B.gasGiant : (mode === 'orbit' || !!B.gasGiant || bodyKey === 'sun'));
 
       if (isOrbit) {
-        const orbAlt = bodyKey === 'sun'
-          ? 2200e3
-          : B.gasGiant
-            ? 38e3
-            : bodyKey === 'earth'
-              ? 120e3
-              : Math.max(25e3, (B.atm || 0) + 15e3);
+        const orbAlt = P.isPlane
+          ? 12e3
+          : bodyKey === 'sun'
+            ? 2200e3
+            : B.gasGiant
+              ? 38e3
+              : bodyKey === 'earth'
+                ? 120e3
+                : Math.max(25e3, (B.atm || 0) + 15e3);
         if (bodyKey === 'mars') {
           BODIES.mars.rot0 = wrapPi(sunPhi - OLYMPUS_PSI - BODIES.mars.omega * this.simT);
         }
@@ -1498,13 +1780,13 @@ export class LaunchScene {
           P.updateMass();
           for (const d of this.rocket.deployables) {
             if (d.type === 'legs') {
-              for (const o of d.objs) if (o.userData.setDeploy) o.userData.setDeploy(1);
+              for (const o of d.objs) if (o.userData.setDeploy) o.userData.setDeploy(1, true);
             }
           }
         }
         if (bodyKey === 'earth') {
           const sx = P.isBoat ? (COAST_X + 160) : P.isRover ? 18 : 0;
-          const baseH = P.isBoat ? (P.bottomOffset() - 0.35) : P.isRover ? (6 + P.bottomOffset()) : (PAD_TOP + P.bottomOffset());
+          const baseH = P.isBoat ? (P.bottomOffset() - 0.35) : P.isRover ? (6 + P.bottomOffset()) : P.isPlane ? (0.25 + P.bottomOffset()) : (PAD_TOP + P.bottomOffset());
           P.placeOnSurface('earth', sx, baseH, this.simT);
           if (P.isPlane) {
             P.beta = P.phi + Math.PI / 2;
@@ -1517,7 +1799,7 @@ export class LaunchScene {
             body: 'earth',
             sx,
             h: baseH,
-            site: P.isBoat ? 'sea' : 'pad',
+            site: P.isBoat ? 'sea' : P.isPlane ? 'runway' : 'pad',
             how: P.isBoat ? 'boat' : P.isRover ? 'rover' : P.isPlane ? 'plane' : 'pad',
           };
           P.landedLock = 0.5;
@@ -1958,6 +2240,16 @@ export class LaunchScene {
     $('events').innerHTML = '';
     $('result').classList.add('hidden');
 
+    const isPlaneStack = stack.some((it) => it.type.includes('Plane') || it.attach.some((a) => a.includes('Plane')) || it.type === 'engJet');
+    if (isPlaneStack && !stack.some((it) => it.attach.includes('gearPlane'))) {
+      const target = stack.find((it) => it.type === 'fuselagePlane') || stack.find((it) => it.type === 'cockpitPlane') || stack[0];
+      if (target) target.attach.push('gearPlane');
+    }
+    const isBoatStack = stack.some((it) => it.type.includes('Boat') || it.attach.some((a) => a.includes('Boat')));
+    if (isBoatStack && !stack.some((it) => it.attach.includes('solarPanel') || it.attach.includes('solarRover'))) {
+      const target = stack.find((it) => it.type === 'hullBoat') || stack.find((it) => it.type === 'cabinBoat') || stack[0];
+      if (target) target.attach.push('solarPanel');
+    }
     this.rocket = buildRocket(stack);
     this.scene.add(this.rocket.root);
     this.segs = segments(stack);
@@ -1979,6 +2271,9 @@ export class LaunchScene {
     this.player = new Vessel(this.ctx, this.segs.map((_, k) => k), this.rocket.root, 'player');
     this.vessels = [this.player];
     this.focus = this.player;
+
+    if (this.pad) this.pad.visible = !this.player.isPlane;
+    if (this.airport) this.airport.visible = !!this.player.isPlane;
 
     if (this.player.isBoat) {
       const seaX = COAST_X + 160;
@@ -2004,18 +2299,21 @@ export class LaunchScene {
       this.met = 0;
       this.event(tr('🚙 Xe Rover đã sẵn sàng! Nhấn W/S để chạy tiến/lùi, A/D để quẹo trái/phải.', '🚙 Planetary Rover ready! Press W/S to drive forward/reverse, A/D to steer left/right.'));
     } else if (this.player.isPlane) {
-      this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
+      this.player.legsT = 1;
+      this.player.legsTarget = 1;
+      const rwyH = 0.25 + this.player.bottomOffset();
+      this.player.placeOnSurface('earth', 0, rwyH, this.simT);
       this.player.beta = this.player.phi + Math.PI / 2;
       this.player.updateFrame(this.simT);
       this.player.syncDir3DFromBeta();
       this.player.clamped = false;
-      this.player.clampSpot = { body: 'earth', sx: 0, h: PAD_TOP + this.player.bottomOffset() };
-      this.player.landed = { body: 'earth', sx: 0, h: PAD_TOP + this.player.bottomOffset(), site: 'runway', how: 'plane' };
+      this.player.clampSpot = { body: 'earth', sx: 0, h: rwyH };
+      this.player.landed = { body: 'earth', sx: 0, h: rwyH, site: 'runway', how: 'plane' };
       this.phase = 'flight';
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('✈️ Tiêm kích phản lực đã vào đường băng! Tăng ga bằng Shift / Z để chạy đà, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the runway! Throttle up with Shift / Z to roll, press S to pitch up for takeoff.'));
+      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z để chạy đà trên đường băng, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with Shift / Z to roll down the runway, press S to pitch up for takeoff.'));
     } else {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.clamped = true;
@@ -2031,7 +2329,15 @@ export class LaunchScene {
       this.arms.forEach((a) => (a.target = 1));
       this.clamps.forEach((c) => { c.visible = false; });
     }
-    for (const d of this.rocket.deployables) for (const o of d.objs) o.userData.setDeploy && o.userData.setDeploy(0);
+    for (const d of this.rocket.deployables) {
+      const initDeploy = (this.player.isPlane && d.type === 'legs') ? 1 : 0;
+      for (const o of d.objs) {
+        if (o.userData.setDeploy) {
+          o.userData._dt = initDeploy;
+          o.userData.setDeploy(initDeploy, true);
+        }
+      }
+    }
 
     this.throttle = 1; this.sas = true; this.sasMode = 0; this.warp = 1; this.userWarp = 1; this.autoWarp = 1;
     this.reqWarpNext = null; this.reqWarpPrev = 1;
@@ -2068,7 +2374,7 @@ export class LaunchScene {
       this.camera.position.set(-13, 4.5, 0);
       this.controls.minDistance = 2;
     } else if (this.player.isPlane) {
-      this.camera.position.set(12, 4, 16);
+      this.camera.position.set(-16, 4.5, 16);
       this.controls.minDistance = 2;
     } else {
       this.camera.position.set(h * 0.68 + 12, 1.5, h * 1.18 + 20);
@@ -2435,6 +2741,13 @@ export class LaunchScene {
       return { h: moonHeight(Math.sin(psi), Math.cos(psi), uz, v.ref), water: false, site: v.ref };
     }
     const sx = v.sx, sz = v.s ? (v.s.z || 0) : 0;
+    if (v.isPlane || (this.airport && this.airport.visible)) {
+      if (this.shipX !== null && Math.abs(sx - this.shipX) < 44) return { h: 3.0, water: false, site: 'ship' };
+      if (sx > COAST_X) return { h: 0, water: true, site: 'sea' };
+      if (sx >= -170 && sx <= 2250 && Math.abs(sz) <= 22) return { h: 0.25, water: false, site: 'runway' };
+      if (sx >= -125 && sx <= 820 && sz >= -110 && sz <= -18) return { h: 0.20, water: false, site: 'runway' };
+      return { h: 0, water: false, site: 'land' };
+    }
     const dist = Math.hypot(sx, sz);
     if (!v.isRover && Math.abs(sx) < 7 && Math.abs(sz) < 7) return { h: PAD_TOP, water: false, site: 'pad' };
     if (dist < PAD_RADIUS) return { h: 6, water: false, site: 'pad' };
@@ -3120,7 +3433,18 @@ export class LaunchScene {
           else if (v.ref === 'moon' && this.flags.moonLanded) { this.setFlag('moonLeft'); this.event(tr('Cất cánh khỏi Mặt Trăng!', 'Liftoff from the Moon!')); }
         }
       } else if (type === 'landed') this.onLanded(v, e[1], e[2]);
-      else if (type === 'crash') this.explode(v, e[1]);
+      else if (type === 'atmCeiling') {
+        if (v === this.player) {
+          const curB = BODIES[v.ref] || BODIES.earth;
+          this.event(
+            tr(
+              `✈️ Máy bay đã chạm trần bầu khí quyển của ${curB.label} — Không thể bay ra ngoài không gian vũ trụ!`,
+              `✈️ Aircraft reached ${curB.label}'s atmospheric ceiling — Cannot fly out into outer space!`
+            ),
+            'warn'
+          );
+        }
+      } else if (type === 'crash') this.explode(v, e[1]);
     }
   }
 
@@ -3395,8 +3719,8 @@ export class LaunchScene {
       } else if (this.inAtmoBody) {
         const exitBody = BODIES[this.inAtmoBody] || curB;
         const exitHasAtm = (exitBody.atm || 0) > 0 && this.inAtmoBody !== 'ceres' && !(exitBody.parent && exitBody.parent !== 'sun');
-        if (!exitHasAtm) {
-          this.inAtmoBody = null;
+        if (!exitHasAtm || P.isPlane) {
+          this.inAtmoBody = P.isPlane ? P.ref : null;
         } else if (P.ref !== this.inAtmoBody || P.alt >= exitBody.atm) {
           const exitKm = fmt(exitBody.atm / 1000, 0);
           if (this.inAtmoBody === 'earth') this.flags.alt70000 = true;
@@ -3658,6 +3982,7 @@ export class LaunchScene {
       mapColor,
       hp: maxHp,
       maxHp,
+      regenRate: 10,
       hitFlash: 0,
       orbitAngle,
       orbitRadius,
@@ -3679,8 +4004,8 @@ export class LaunchScene {
         : tr(`trên ${bodyLabel}`, `at ${bodyLabel}`);
       this.event(
         tr(
-          `👽 Phát hiện ${labelVi} (${maxHp} HP) xuất hiện ${locText}! Nhấn phím V để bắn!`,
-          `👽 ${labelEn} (${maxHp} HP) detected ${locText}! Press V to fire!`
+          `👽 Phát hiện ${labelVi} (${maxHp} HP • Tự hồi 10 HP/s) xuất hiện ${locText}! Nhấn phím V để bắn!`,
+          `👽 ${labelEn} (${maxHp} HP • Regen 10 HP/s) detected ${locText}! Press V to fire!`
         ),
         tier === 'boss' ? 'warn' : ''
       );
@@ -3736,6 +4061,7 @@ export class LaunchScene {
       mapColor,
       hp: maxHp,
       maxHp,
+      regenRate: 10,
       hitFlash: 0,
       orbitAngle,
       orbitRadius,
@@ -4067,6 +4393,18 @@ export class LaunchScene {
   triggerSupernova(originRel = null, scale = 1.15, isBossCollapse = false) {
     const P = this.player;
     if (!P) return;
+
+    if (P.isPlane && (target === 'iss' || target === 'oort' || target === 'interstellar' || target === 'supernova' || target === 'sun')) {
+      this.toggleTeleportModal(false);
+      this.event(
+        tr(
+          '✈️ Máy bay không thể ra khỏi bầu khí quyển — Không thể dịch chuyển ra ngoài không gian vũ trụ!',
+          '✈️ Aircraft cannot leave the atmosphere — Cannot teleport into outer space!'
+        ),
+        'warn'
+      );
+      return;
+    }
     // Never allow Supernova on or near any planet or moon (only in outer space >= ATM_TOP or interplanetary space)
     const onPlanetOrMoon = P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
     if (onPlanetOrMoon) return;
@@ -4311,6 +4649,30 @@ export class LaunchScene {
         }
       }
 
+      // Passive Alien self-regeneration: +10 HP/s up to maxHp
+      if (!a.dead && a.hp > 0 && a.hp < a.maxHp) {
+        const regen = (a.regenRate ?? 10) * dt;
+        a.hp = Math.min(a.maxHp, a.hp + regen);
+        if (a.mesh?.userData?.setHp) {
+          a.mesh.userData.setHp(a.hp / a.maxHp);
+        }
+        // Subtle green bio-regeneration sparkles while healing
+        if (a.hitFlash <= 0 && !(a.acidTimer > 0) && Math.random() < dt * 4.5) {
+          const hitX = P.sx + a.relPos.x;
+          const hitY = P.alt + a.relPos.y;
+          const hitZ = (P.s.z || 0) + a.relPos.z;
+          this.fire.emit(
+            hitX + (Math.random() - 0.5) * 2.5,
+            hitY + (Math.random() - 0.5) * 1.4,
+            hitZ + (Math.random() - 0.5) * 2.5,
+            (P.vSurf?.e || 0) + (Math.random() - 0.5) * 3,
+            (P.vSurf?.u || 0) + 4 + Math.random() * 5,
+            (Math.random() - 0.5) * 3,
+            { life: 0.35 + Math.random() * 0.25, size0: 0.9, size1: 2.6, alpha: 0.75, drag: 1.1, buoy: 0.5, color: [0.5, 4.8, 1.8] }
+          );
+        }
+      }
+
       const d = a.relPos.length();
       if (d < bestDist) {
         bestDist = d;
@@ -4475,7 +4837,7 @@ export class LaunchScene {
     for (const d of this.rocket.deployables) {
       const v = owner[d.seg]; if (!v) continue;
       const t = d.type === 'legs' ? v.legsT : v.finsT;
-      for (const o of d.objs) if (o.userData.setDeploy && o.userData._dt !== t) { o.userData._dt = t; o.userData.setDeploy(t); }
+      for (const o of d.objs) if (o.userData.setDeploy && o.userData._dt !== t) { o.userData._dt = t; o.userData.setDeploy(t, true); }
     }
     const cap = this.rocket.capsule;
     if (cap) {
@@ -4483,10 +4845,10 @@ export class LaunchScene {
       const t = v ? v.chuteT : 0;
       if (cap.obj.userData.setChute && cap.obj.userData._ct !== t) { cap.obj.userData._ct = t; cap.obj.userData.setChute(t); }
     }
-    // Rover wheel rotation & front-wheel steering
+    // Rover / Plane wheel rotation & front-wheel steering
     if (this.rocket.wheels) {
       const v = this.player;
-      const spd = v ? (v.groundSpeed || (v.vSurf ? v.vSurf.e : 0)) : 0;
+      const spd = v ? (v.isPlane ? (v.landed ? (v.planeRollSpeed || 0) : 0) : (v.groundSpeed || (v.vSurf ? v.vSurf.e : 0))) : 0;
       const steer = v && v.ctl ? (v.ctl.input || 0) : 0;
       for (const wo of this.rocket.wheels) {
         const wg = wo.userData.wheelGroup;
@@ -4498,6 +4860,13 @@ export class LaunchScene {
           wg.rotation.y += (targetSteer - wg.rotation.y) * 0.25;
         }
       }
+    }
+    if (this.airportRadar && this.airport && this.airport.visible) {
+      this.airportRadar.rotation.y += 0.035;
+    }
+    if (this.airportWindsock && this.airport && this.airport.visible) {
+      this.airportWindsock.rotation.y = Math.sin(this.time * 1.8) * 0.18;
+      this.airportWindsock.rotation.z = -0.12 + Math.sin(this.time * 3.1) * 0.06;
     }
     // Boat propeller rotation
     if (this.rocket.partObjs) {
@@ -4937,7 +5306,12 @@ export class LaunchScene {
     // unrolled-surface world (ground, pad, sites, particles)
     this.world.position.set(-F.sx, -F.alt, -S.z);
     const near = F.ref === 'earth' && F.alt < 60000;
-    for (const c of this.worldStatic) c.visible = near;
+    const isPlaneMode = !!(this.player && this.player.isPlane);
+    for (const c of this.worldStatic) {
+      if (c === this.pad) c.visible = near && !isPlaneMode;
+      else if (c === this.airport) c.visible = near && isPlaneMode;
+      else c.visible = near;
+    }
     this.ship.visible = near && this.shipX !== null;
     this.trees.visible = near && F.alt < 20000;
     this.clouds.visible = near;
@@ -5056,7 +5430,7 @@ export class LaunchScene {
     for (const p of this.plumes) {
       const nz = p.nz, v = owner[nz.seg];
       let on = 0;
-      if (v && !p.detached && !v.crashed && v.engineOn && nz.seg === v.activeSeg) {
+      if (v && !v.isBoat && !p.detached && !v.crashed && v.engineOn && nz.seg === v.activeSeg) {
         if (nz.booster) {
           const b = this.rocket.boosters.find((bb) => bb.objs.includes(nz.booster));
           on = b && b.attached && b.fuel > 0 ? 1 : 0;
@@ -5100,7 +5474,7 @@ export class LaunchScene {
       }
 
       if (v === F && on > 0) focusThr += on * (nz.booster ? 0.8 : 1) * nz.r;
-      if (on <= 0 || !v || nz.style === 'antigrav') continue;
+      if (on <= 0 || !v || v.isBoat || nz.style === 'antigrav') continue;
       nz.node.getWorldPosition(tmp);
       if (v === F) { haze.add(tmp); hazeN++; }
       if (!sameBody(v)) continue;
@@ -5377,7 +5751,7 @@ export class LaunchScene {
         beta: a.orbitAngle,
         ref: P.ref || 'earth',
         kind: 'alien',
-        name: `${aLabel} (${curHp}/${a.maxHp} HP)`,
+        name: `${aLabel} (${curHp}/${a.maxHp} HP • +10 HP/s)`,
         color: a.mapColor || '#4ade80',
         el: null,
         deletable: false,

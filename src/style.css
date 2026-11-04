@@ -1159,19 +1159,20 @@ body.touch .big-btn:hover, body.touch .btn:hover, body.touch .part-card:hover { 
   #h-stages { max-height: 120px; }
   .fuel-row { font-size: 9.5px; margin-bottom: 3px; }
 
-  /* icon row: [📊]  ……  [Fire][Auto][Map][Warp][⛽] */
+  /* icon row: [📊]  ……  [Fire][Auto][Map][Warp][⛽][⚙️] */
   .hud-quick { position: absolute; top: calc(8px + var(--sat)); display: flex; gap: 5px; align-items: center; z-index: 3; }
   .hud-quick.left { left: calc(8px + var(--sal)); }
   .hud-quick.right { right: calc(8px + var(--sar)); }
   .hud-tg {
-    width: 36px; height: 36px; padding: 0; border-radius: 10px; font-size: 16px; cursor: pointer;
+    width: 36px; height: 36px; padding: 0; border-radius: 10px; font-size: 16px; cursor: pointer; flex-shrink: 0;
     display: inline-flex; align-items: center; justify-content: center; color: var(--text);
     background: rgba(14, 20, 32, 0.55); border: 1px solid rgba(160, 200, 255, 0.24);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   }
   .hud-tg.on { background: rgba(79, 216, 255, 0.3); border-color: var(--accent); }
   .hud-quick .hud-actions-grid { display: flex; gap: 4px; margin: 0; }
-  .hud-quick .hud-act-btn { height: 36px; padding: 0 8px; font-size: 9.5px; border-radius: 10px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .hud-quick .hud-act-btn { height: 36px; padding: 0 7px; font-size: 9.5px; border-radius: 10px; justify-content: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .hud-quick .hud-act-btn kbd { display: none; }
 
   #teleport-bar { display: none; }
   #astronaut-bar {

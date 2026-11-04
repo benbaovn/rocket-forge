@@ -35,10 +35,10 @@ export const PARTS = {
   chassisRover: { name: 'Khung gầm Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
   wheelsRover: { name: 'Bánh xe địa hình ×4', cat: 'Xe & Thuyền', kind: 'radial', count: 4, dry: 0.22, desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
   solarRover: { name: 'Tấm pin Rover ×2', cat: 'Xe & Thuyền', kind: 'radial', count: 2, dry: 0.06, desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
-  cabinBoat: { name: 'Cabin Canô lướt sóng', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.9, desc: 'Cabin lái khí động học của tàu thuyền cao tốc' },
-  hullBoat: { name: 'Thân thuyền chữ V', cat: 'Xe & Thuyền', kind: 'stack', height: 3.2, dry: 1.3, fuel: 4.5, desc: 'Thân tàu đáy chữ V lướt sóng, giữ thăng bằng và nổi trên biển' },
-  motorBoat: { name: 'Động cơ chân vịt canô', cat: 'Xe & Thuyền', kind: 'stack', height: 1.4, dry: 0.4, thrustSL: 260, thrustVac: 260, ispSL: 800, ispVac: 400, engines: 1, desc: 'Động cơ chân vịt / phản lực nước chuyên dụng cho thuyền' },
-  floatsBoat: { name: 'Phao nổi canô ×2', cat: 'Xe & Thuyền', kind: 'radial', count: 2, dry: 0.18, desc: 'Cặp phao phụ hai bên sườn chống lật sóng trên biển' },
+  cabinBoat: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.9, desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
+  hullBoat: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Xe & Thuyền', kind: 'stack', height: 1.6, dry: 1.3, fuel: 4.5, desc: 'Thân du thuyền siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
+  motorBoat: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Xe & Thuyền', kind: 'stack', height: 1.4, dry: 0.4, thrustSL: 320, thrustVac: 320, ispSL: 800, ispVac: 400, engines: 1, desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
+  floatsBoat: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Xe & Thuyền', kind: 'radial', count: 2, dry: 0.18, desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
   cockpitPlane: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', kind: 'stack', height: 2.8, dry: 0.85, desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
   fuselagePlane: { name: 'Thân máy bay Jet', cat: 'Máy bay', kind: 'stack', height: 3.8, dry: 1.1, fuel: 5.5, desc: 'Thân máy bay khí động học chứa thùng nhiên liệu JP-8 và cửa hút khí' },
   wingsPlane: { name: 'Cánh nâng phản lực ×2', cat: 'Máy bay', kind: 'radial', count: 2, dry: 0.45, desc: 'Cặp cánh swept-wing tạo lực nâng khí động học cất cánh và lượn trên trời' },
@@ -1702,155 +1702,305 @@ function buildGunElectric() {
   return g;
 }
 
+let _yachtMats = null;
+function getYachtMaterials() {
+  if (_yachtMats) return _yachtMats;
+  _yachtMats = {
+    pearlWhite: new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.28, roughness: 0.18 }),
+    platinum: new THREE.MeshStandardMaterial({ color: 0xdbe4ee, metalness: 0.68, roughness: 0.22 }),
+    obsidianCarbon: new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.55, roughness: 0.25 }),
+    panoGlass: new THREE.MeshStandardMaterial({ color: 0x082f49, emissive: 0x0284c7, emissiveIntensity: 0.32, metalness: 0.92, roughness: 0.08 }),
+    vipWindowCyan: new THREE.MeshStandardMaterial({ color: 0xbae6fd, emissive: 0x38bdf8, emissiveIntensity: 1.8, roughness: 0.15 }),
+    vipWindowGold: new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfacc15, emissiveIntensity: 1.4, roughness: 0.2 }),
+    neonCyan: new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x06b6d4, emissiveIntensity: 3.2, roughness: 0.1 }),
+    neonBlue: new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x2563eb, emissiveIntensity: 2.2, roughness: 0.15 }),
+    teakDeck: new THREE.MeshStandardMaterial({ color: 0xc2844f, metalness: 0.08, roughness: 0.62 }),
+    poolWater: new THREE.MeshStandardMaterial({ color: 0x2dd4bf, emissive: 0x14b8a6, emissiveIntensity: 1.8, metalness: 0.25, roughness: 0.1 }),
+    solarRoof: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, emissive: 0x1d4ed8, emissiveIntensity: 0.35, metalness: 0.85, roughness: 0.15 }),
+    loungeCushion: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5, metalness: 0.05 }),
+  };
+  return _yachtMats;
+}
+
 function buildCabinBoat() {
   const g = new THREE.Group();
-  const H = PARTS.cabinBoat.height;
-  const pts = [
-    new THREE.Vector2(1.15, 0),
-    new THREE.Vector2(1.08, 0.5),
-    new THREE.Vector2(0.82, 1.25),
-    new THREE.Vector2(0.38, H),
-    new THREE.Vector2(0, H),
-  ];
-  const dome = scaleUV(new THREE.LatheGeometry(pts, 48), 2, 1);
-  g.add(mesh(dome, MAT.white, 0, 0, 0));
+  const H = PARTS.cabinBoat.height; // 1.8
+  const ym = getYachtMaterials();
 
-  // Wraparound curved glass
-  const glassGeo = new THREE.CylinderGeometry(0.88, 1.02, 0.62, 32, 1, false, -Math.PI * 0.42, Math.PI * 0.84);
-  const glass = mesh(glassGeo, MAT.glass, 0, 0.82, 0.18);
-  glass.rotation.x = 0.24;
-  g.add(glass);
+  // 1. Lower Sky-Lounge & Bridge Deck Base Platform (y = 0 .. 0.14, elongated along Z)
+  const basePlate = mesh(new THREE.CylinderGeometry(0.96, 1.02, 0.14, 40), ym.pearlWhite, 0, 0.07, 0);
+  basePlate.scale.set(1.0, 1, 1.95);
+  g.add(basePlate);
 
-  // Radar arch
-  const arch = new THREE.Group();
-  const archColGeo = new THREE.CylinderGeometry(0.038, 0.038, 1.05, 8);
+  const baseLed = mesh(new THREE.CylinderGeometry(0.98, 0.98, 0.03, 40), ym.neonCyan, 0, 0.13, 0);
+  baseLed.scale.set(1.0, 1, 1.96);
+  g.add(baseLed);
+
+  // 2. Main Sculpted Futuristic Bridge & Sky-Salon Superstructure (y = 0.14 .. 0.98)
+  const salonCore = mesh(new THREE.CylinderGeometry(0.78, 0.92, 0.82, 40), ym.pearlWhite, 0, 0.55, -0.08);
+  salonCore.scale.set(1.0, 1, 1.85);
+  g.add(salonCore);
+
+  // Wrap-around 360° Panoramic Tinted Smart Glass Band for the Bridge & Sky-Lounge
+  const bridgeGlass = mesh(new THREE.CylinderGeometry(0.80, 0.90, 0.52, 40), ym.panoGlass, 0, 0.58, -0.05);
+  bridgeGlass.scale.set(1.01, 1, 1.86);
+  g.add(bridgeGlass);
+
+  // Glowing interior HUD / Chandelier core visible through the glass
+  const interiorGlow = mesh(new THREE.CylinderGeometry(0.62, 0.68, 0.36, 28), ym.vipWindowGold, 0, 0.56, -0.08);
+  interiorGlow.scale.set(0.88, 1, 1.55);
+  g.add(interiorGlow);
+
+  // Forward Captain's Bridge Visor Brow & Swept Side Buttress Fins (Zaha Hadid style curves)
+  const visor = mesh(new THREE.CylinderGeometry(0.79, 0.85, 0.14, 36), ym.platinum, 0, 0.88, 0.04);
+  visor.scale.set(1.03, 1, 1.92);
+  g.add(visor);
+
   for (const sgn of [-1, 1]) {
-    const col = mesh(archColGeo, MAT.white, sgn * 0.82, 1.05, -0.58);
-    col.rotation.z = -sgn * 0.18;
-    arch.add(col);
-  }
-  arch.add(mesh(new THREE.BoxGeometry(1.5, 0.07, 0.22), MAT.white, 0, 1.55, -0.58));
-  arch.add(mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.12, 20), MAT.white, 0, 1.68, -0.58));
-  g.add(arch);
+    // Swept aerodynamic side wing pillars
+    const pillar = mesh(new THREE.BoxGeometry(0.08, 0.88, 0.42), ym.pearlWhite, sgn * 0.82, 0.58, -0.35);
+    pillar.rotation.x = 0.38;
+    g.add(pillar);
 
-  // Navigation lights: Port = Red, Starboard = Green
-  g.add(mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff1111, emissiveIntensity: 3 }), -0.95, 0.65, 0.38));
-  g.add(mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 0.95, 0.65, 0.38));
+    const accent = mesh(new THREE.BoxGeometry(0.09, 0.84, 0.05), ym.neonCyan, sgn * 0.83, 0.58, -0.14);
+    accent.rotation.x = 0.38;
+    g.add(accent);
+  }
+
+  // 3. Upper Flybridge Sundeck & Cantilevered Solar-Glass Canopy (y = 0.96 .. 1.32)
+  const flyDeck = mesh(new THREE.CylinderGeometry(0.66, 0.76, 0.16, 36), ym.pearlWhite, 0, 1.04, -0.18);
+  flyDeck.scale.set(0.95, 1, 1.65);
+  g.add(flyDeck);
+
+  const solarPanel = mesh(new THREE.CylinderGeometry(0.60, 0.62, 0.04, 32), ym.solarRoof, 0, 1.13, -0.18);
+  solarPanel.scale.set(0.90, 1, 1.55);
+  g.add(solarPanel);
+
+  const haloRing = mesh(new THREE.CylinderGeometry(0.67, 0.67, 0.028, 36), ym.neonCyan, 0, 1.10, -0.18);
+  haloRing.scale.set(0.96, 1, 1.66);
+  g.add(haloRing);
+
+  // 4. Futuristic Gull-Wing Radar Mast, Satcom Domes & Spinning Marine Radar (y = 1.12 .. 1.8)
+  const mastStrut = mesh(new THREE.BoxGeometry(0.16, 0.52, 0.36), ym.platinum, 0, 1.36, -0.32);
+  mastStrut.rotation.x = -0.28;
+  g.add(mastStrut);
+
+  const wingBar = mesh(new THREE.BoxGeometry(1.38, 0.055, 0.24), ym.pearlWhite, 0, 1.56, -0.38);
+  g.add(wingBar);
+  const wingLed = mesh(new THREE.BoxGeometry(1.40, 0.022, 0.25), ym.neonCyan, 0, 1.56, -0.38);
+  g.add(wingLed);
+
+  // Twin Spherical Satcom Domes on the gull-wing tips
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.05, 16), ym.obsidianCarbon, sgn * 0.52, 1.60, -0.38));
+    g.add(mesh(new THREE.SphereGeometry(0.13, 16, 12), ym.pearlWhite, sgn * 0.52, 1.69, -0.38));
+  }
+
+  // Central Rotating Open-Array Marine Radar Scanner
+  g.add(mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.14, 14), ym.obsidianCarbon, 0, 1.64, -0.38));
+  const radarScanner = mesh(new THREE.BoxGeometry(0.76, 0.045, 0.11), ym.pearlWhite, 0, 1.74, -0.38);
+  g.add(radarScanner);
+
+  // Forward Laser Searchlight Pod on the Bridge Nose
+  g.add(mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.14, 14).rotateX(Math.PI / 2), ym.platinum, 0, 0.92, 1.68));
+  g.add(mesh(new THREE.SphereGeometry(0.055, 12, 10), ym.neonCyan, 0, 0.92, 1.75));
+
+  // Port (Red) & Starboard (Green) Navigation Light Pods
+  g.add(mesh(new THREE.BoxGeometry(0.06, 0.05, 0.28), new THREE.MeshStandardMaterial({ color: 0xff1111, emissive: 0xff0000, emissiveIntensity: 3.5 }), -0.88, 0.62, 0.55));
+  g.add(mesh(new THREE.BoxGeometry(0.06, 0.05, 0.28), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3.5 }), 0.88, 0.62, 0.55));
 
   return g;
 }
 
 function buildHullBoat() {
   const g = new THREE.Group();
-  const H = PARTS.hullBoat.height;
-  const pts = [];
-  const N = 32;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const r = Math.max(0.12, R * (0.38 + 0.68 * Math.sin(t * Math.PI * 0.62)));
-    pts.push(new THREE.Vector2(r, t * H));
-  }
-  const hullGeo = scaleUV(new THREE.LatheGeometry(pts, 48), 2, 2);
-  g.add(mesh(hullGeo, MAT.white, 0, 0, 0));
+  const H = PARTS.hullBoat.height; // 3.2
+  const ym = getYachtMaterials();
 
-  // Blue nautical waterline band
-  const bandGeo = new THREE.CylinderGeometry(R * 0.94, R * 0.84, 0.35, 48, 1, true);
-  g.add(mesh(bandGeo, MAT.blue, 0, 0.85, 0));
+  // 1. Sleek Elongated Superyacht Main Hull (y = 0 .. 1.55, stretched along Z with sharp wave-piercing bow)
+  const hullCore = mesh(new THREE.CylinderGeometry(1.10, 0.92, 1.52, 48), ym.pearlWhite, 0, 0.76, 0.12);
+  hullCore.scale.set(1.0, 1, 2.75);
+  g.add(hullCore);
 
-  // Rub rail
-  const railGeo = new THREE.TorusGeometry(R + 0.04, 0.038, 8, 64).rotateX(Math.PI / 2);
-  g.add(mesh(railGeo, MAT.darkMetal, 0, H - 0.04, 0));
+  // Sculpted Wave-Piercing Bow Crest (+Z forward extension up to z = +3.55)
+  const bowCone = mesh(new THREE.ConeGeometry(0.88, 1.65, 32).rotateX(Math.PI / 2), ym.pearlWhite, 0, 0.82, 2.65);
+  bowCone.scale.set(0.72, 0.86, 1.15);
+  g.add(bowCone);
 
-  // Non-skid deck insert
-  g.add(mesh(new THREE.CylinderGeometry(R - 0.05, R - 0.05, 0.08, 48), MAT.titanium, 0, H - 0.04, 0));
+  const bowCrest = mesh(new THREE.BoxGeometry(0.07, 1.38, 0.65), ym.platinum, 0, 0.82, 3.05);
+  bowCrest.rotation.x = -0.32;
+  g.add(bowCrest);
 
-  // Mooring cleats
-  for (const a of [0.4, -0.4, Math.PI - 0.4, -Math.PI + 0.4]) {
-    const cleat = mesh(new THREE.BoxGeometry(0.11, 0.035, 0.045), MAT.silver, Math.sin(a) * (R - 0.14), H + 0.02, Math.cos(a) * (R - 0.14));
-    cleat.rotation.y = a;
-    g.add(cleat);
+  // Continuous Neon Cyan LED Chine & Waterline Accent Strips along the entire yacht hull
+  for (const ly of [0.18, 0.86, 1.50]) {
+    const scZ = ly < 0.3 ? 2.55 : 2.78;
+    const rRing = ly < 0.3 ? 0.95 : 1.11;
+    const ledBand = mesh(new THREE.CylinderGeometry(rRing, rRing, 0.032, 48), ym.neonCyan, 0, ly, 0.12);
+    ledBand.scale.set(1.0, 1, scZ);
+    g.add(ledBand);
   }
 
-  // Stern transom plate
-  g.add(mesh(new THREE.BoxGeometry(1.5, 1.1, 0.07), MAT.darkMetal, 0, 0.65, -R * 0.68));
+  // Illuminated Panoramic VIP Suite Windows along Port & Starboard Hull Flanks
+  for (const sgn of [-1, 1]) {
+    // Upper VIP Master Suite strip
+    const winStrip1 = mesh(new THREE.BoxGeometry(0.05, 0.22, 3.10), ym.obsidianCarbon, sgn * 1.07, 1.16, 0.15);
+    g.add(winStrip1);
+    for (let wz = -1.1; wz <= 1.4; wz += 0.5) {
+      g.add(mesh(new THREE.BoxGeometry(0.06, 0.14, 0.34), ym.vipWindowCyan, sgn * 1.08, 1.16, wz));
+    }
+    // Lower Guest Cabin porthole strip
+    const winStrip2 = mesh(new THREE.BoxGeometry(0.05, 0.15, 2.50), ym.obsidianCarbon, sgn * 1.01, 0.55, 0.05);
+    g.add(winStrip2);
+    for (let wz = -0.9; wz <= 1.0; wz += 0.48) {
+      g.add(mesh(new THREE.BoxGeometry(0.06, 0.09, 0.26), ym.vipWindowGold, sgn * 1.02, 0.55, wz));
+    }
+  }
+
+  // 2. Teak Main Deck, Forward Helipad Lounge (+Z) & Aft Infinity Pool Beach Club (-Z) (y = 1.52 .. 1.66)
+  const mainDeck = mesh(new THREE.CylinderGeometry(1.08, 1.08, 0.08, 48), ym.teakDeck, 0, 1.56, 0.12);
+  mainDeck.scale.set(0.98, 1, 2.72);
+  g.add(mainDeck);
+
+  // Forward Helipad Ring & H-Marking on the Bow Foredeck (z = +2.15)
+  g.add(mesh(new THREE.CylinderGeometry(0.56, 0.58, 0.03, 32), ym.obsidianCarbon, 0, 1.61, 2.12));
+  g.add(mesh(new THREE.TorusGeometry(0.50, 0.022, 8, 32).rotateX(Math.PI / 2), ym.neonCyan, 0, 1.63, 2.12));
+  g.add(mesh(new THREE.BoxGeometry(0.05, 0.02, 0.42), ym.pearlWhite, -0.14, 1.63, 2.12));
+  g.add(mesh(new THREE.BoxGeometry(0.05, 0.02, 0.42), ym.pearlWhite, 0.14, 1.63, 2.12));
+  g.add(mesh(new THREE.BoxGeometry(0.28, 0.02, 0.05), ym.pearlWhite, 0, 1.63, 2.12));
+
+  // Aft Luxury Beach Club Terrace, Swim Platform & Glowing Infinity Jacuzzi Pool (z = -1.65 .. -2.85)
+  const swimPlatform = mesh(new THREE.BoxGeometry(1.55, 0.12, 0.95), ym.teakDeck, 0, 0.28, -2.45);
+  g.add(swimPlatform);
+  const swimGlow = mesh(new THREE.BoxGeometry(1.58, 0.035, 0.98), ym.neonCyan, 0, 0.22, -2.45);
+  g.add(swimGlow);
+
+  // Twin Aft Grand Staircases connecting Swim Platform to Main Deck
+  for (const sgn of [-1, 1]) {
+    for (let st = 0; st < 5; st++) {
+      g.add(mesh(new THREE.BoxGeometry(0.28, 0.08, 0.16), ym.teakDeck, sgn * 0.62, 0.42 + st * 0.22, -2.35 + st * 0.12));
+    }
+  }
+
+  // Glowing Turquoise Infinity Jacuzzi Pool on the Aft Main Deck (z = -1.95)
+  g.add(mesh(new THREE.BoxGeometry(0.96, 0.18, 0.72), ym.pearlWhite, 0, 1.64, -1.92));
+  g.add(mesh(new THREE.BoxGeometry(0.82, 0.06, 0.58), ym.poolWater, 0, 1.71, -1.92));
+  g.add(mesh(new THREE.BoxGeometry(0.98, 0.03, 0.74), ym.neonCyan, 0, 1.73, -1.92));
+
+  // Luxury White Sunpad Loungers flanking the Jacuzzi
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.24, 0.10, 0.56), ym.loungeCushion, sgn * 0.66, 1.64, -1.88));
+  }
+
+  // Top Deck Rim Collar at y = H (1.60) mating directly with CabinBoat (2 tiers lower!)
+  const topCollar = mesh(new THREE.CylinderGeometry(1.02, 1.02, 0.06, 44), ym.pearlWhite, 0, H - 0.03, 0);
+  topCollar.scale.set(1.0, 1, 1.96);
+  g.add(topCollar);
 
   return g;
 }
 
 function buildMotorBoat() {
   const g = new THREE.Group();
-  const H = PARTS.motorBoat.height;
-  // Outboard motor cowling
-  g.add(mesh(new THREE.BoxGeometry(0.76, 0.8, 1.05), MAT.darkMetal, 0, H - 0.48, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.78, 0.18, 1.07), MAT.orange, 0, H - 0.42, 0));
+  const H = PARTS.motorBoat.height; // 1.4
+  const ym = getYachtMaterials();
 
-  // Drive leg
-  g.add(mesh(new THREE.BoxGeometry(0.2, 0.65, 0.42), MAT.metal, 0, 0.38, -0.08));
+  // 1. Futuristic Deep-V Carbon-Titanium Underwater Yacht Keel (y = 0.22 .. H, elongated along Z)
+  const upperKeel = mesh(new THREE.CylinderGeometry(0.92, 0.62, H - 0.24, 40), ym.obsidianCarbon, 0, 0.24 + (H - 0.24) * 0.5, 0.10);
+  upperKeel.scale.set(0.96, 1, 2.55);
+  g.add(upperKeel);
 
-  // Torpedo bullet gearcase
-  g.add(mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.72, 16).rotateX(Math.PI / 2), MAT.metal, 0, 0.14, 0));
+  // Forward Wave-Piercing Bulbous Bow Underwater Torpedo (+Z)
+  const bulbBow = mesh(new THREE.SphereGeometry(0.38, 24, 16), ym.obsidianCarbon, 0, 0.48, 2.15);
+  bulbBow.scale.set(0.75, 0.72, 1.95);
+  g.add(bulbBow);
 
-  // Skeg fin
-  const skegShape = new THREE.Shape();
-  skegShape.moveTo(-0.02, 0.08);
-  skegShape.lineTo(-0.24, -0.2);
-  skegShape.lineTo(0.14, -0.2);
-  skegShape.lineTo(0.14, 0.08);
-  skegShape.closePath();
-  const skegGeo = new THREE.ExtrudeGeometry(skegShape, { depth: 0.028 });
-  skegGeo.rotateY(Math.PI / 2);
-  skegGeo.translate(-0.014, 0, 0);
-  g.add(mesh(skegGeo, MAT.darkMetal));
+  const bulbGlow = mesh(new THREE.TorusGeometry(0.28, 0.022, 8, 24), ym.neonCyan, 0, 0.48, 2.45);
+  g.add(bulbGlow);
 
-  // Propeller group
+  // Underwater Bioluminescent Cyan LED Hull Floodlight Strips along Port & Starboard
+  for (const sgn of [-1, 1]) {
+    const hullLight = mesh(new THREE.BoxGeometry(0.05, 0.06, 3.2), ym.neonCyan, sgn * 0.74, 0.68, 0.1);
+    g.add(hullLight);
+
+    // Underwater Stabilizer Fin
+    const fin = mesh(new THREE.BoxGeometry(0.48, 0.04, 0.65), ym.platinum, sgn * 0.78, 0.42, -0.35);
+    fin.rotation.z = -sgn * 0.25;
+    g.add(fin);
+  }
+
+  // 2. Twin Azimuth Pod Thrusters + Central Plasma Hydro-Jet Drive at the Stern (-Z)
   const propGroup = new THREE.Group();
-  propGroup.position.set(0, 0.14, -0.4);
+  propGroup.position.set(0, 0.32, -1.95);
   g.add(propGroup);
   g.userData.propGroup = propGroup;
 
-  propGroup.add(mesh(new THREE.ConeGeometry(0.085, 0.18, 16).rotateX(-Math.PI / 2), MAT.silver, 0, 0, 0));
+  // Central Plasma Water-Jet Shroud & Impeller
+  g.add(mesh(new THREE.CylinderGeometry(0.26, 0.30, 0.85, 24).rotateX(Math.PI / 2), ym.platinum, 0, 0.32, -1.55));
+  g.add(mesh(new THREE.TorusGeometry(0.27, 0.028, 10, 28), ym.neonCyan, 0, 0.32, -1.96));
 
-  const bladeShape = new THREE.Shape();
-  bladeShape.moveTo(0, 0);
-  bladeShape.quadraticCurveTo(0.11, 0.13, 0.05, 0.3);
-  bladeShape.quadraticCurveTo(-0.07, 0.22, 0, 0);
-  const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, { depth: 0.012 });
-  for (let i = 0; i < 3; i++) {
-    const b = mesh(bladeGeo, MAT.copper, 0, 0, 0);
-    b.rotation.z = (i / 3) * Math.PI * 2;
-    b.rotation.y = 0.4;
-    propGroup.add(b);
+  // Twin Port & Starboard Azimuth Hydro-Pods
+  for (const sgn of [-1, 1]) {
+    const podX = sgn * 0.52;
+    g.add(mesh(new THREE.BoxGeometry(0.10, 0.48, 0.32), ym.platinum, podX, 0.56, -1.55));
+    g.add(mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.72, 20).rotateX(Math.PI / 2), ym.obsidianCarbon, podX, 0.32, -1.58));
+    g.add(mesh(new THREE.TorusGeometry(0.15, 0.018, 8, 20), ym.neonCyan, podX, 0.32, -1.92));
   }
 
-  // Water propulsion nozzle
-  const bellM = bellMaterial(true);
-  addNozzle(g, 0, -0.38, 0.24, [bellM]);
+  // Spinning 5-Blade Titanium-Bronze Impeller Assembly inside propGroup
+  propGroup.add(mesh(new THREE.ConeGeometry(0.11, 0.26, 18).rotateX(-Math.PI / 2), ym.platinum, 0, 0, 0));
+  const bladeShape = new THREE.Shape();
+  bladeShape.moveTo(0, 0);
+  bladeShape.quadraticCurveTo(0.13, 0.15, 0.06, 0.34);
+  bladeShape.quadraticCurveTo(-0.08, 0.24, 0, 0);
+  const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, { depth: 0.014 });
+  for (let i = 0; i < 5; i++) {
+    const b = mesh(bladeGeo, MAT.copper, 0, 0, 0);
+    b.rotation.z = (i / 5) * Math.PI * 2;
+    b.rotation.y = 0.38;
+    propGroup.add(b);
+  }
 
   return g;
 }
 
 function buildFloatsBoat() {
   const g = new THREE.Group();
-  // Outrigger crossbar
-  g.add(mesh(new THREE.CylinderGeometry(0.055, 0.055, 1.15, 12).rotateZ(Math.PI / 2), MAT.metal, 0.58, 0, 0));
-  const brace = mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.85, 10), MAT.metal, 0.48, -0.18, 0);
-  brace.rotation.z = -0.55;
-  g.add(brace);
+  const ym = getYachtMaterials();
 
-  // Hydrodynamic pontoon float
+  // Swept Futuristic Hydrofoil Wing Struts connecting Hull to Trimaran Sponson
+  for (const sz of [-0.55, 0.55]) {
+    const wingStrut = mesh(new THREE.BoxGeometry(1.18, 0.065, 0.36), ym.pearlWhite, 0.56, -0.06, sz);
+    wingStrut.rotation.z = -0.18;
+    g.add(wingStrut);
+
+    const strutLed = mesh(new THREE.BoxGeometry(1.16, 0.022, 0.38), ym.neonCyan, 0.56, -0.06, sz);
+    strutLed.rotation.z = -0.18;
+    g.add(strutLed);
+  }
+
+  // Sleek Wave-Piercing Trimaran Sponson Hull & Underwater Hydrofoil Blade
   const pontoonGroup = new THREE.Group();
-  pontoonGroup.position.set(1.12, -0.28, 0);
+  pontoonGroup.position.set(1.18, -0.22, 0);
   g.add(pontoonGroup);
 
   const pts = [];
-  for (let i = 0; i <= 20; i++) {
-    const t = i / 20;
-    const r = 0.26 * Math.sin(t * Math.PI);
-    pts.push(new THREE.Vector2(Math.max(0.01, r), (t - 0.5) * 2.5));
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    const r = 0.24 * Math.sin(t * Math.PI);
+    pts.push(new THREE.Vector2(Math.max(0.01, r), (t - 0.5) * 3.4));
   }
-  const floatGeo = new THREE.LatheGeometry(pts, 24).rotateX(Math.PI / 2);
-  pontoonGroup.add(mesh(floatGeo, MAT.white, 0, 0, 0));
-  pontoonGroup.add(mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.38, 24).rotateX(Math.PI / 2), MAT.orange, 0, 0, 0.28));
+  const floatGeo = new THREE.LatheGeometry(pts, 28).rotateX(Math.PI / 2);
+  pontoonGroup.add(mesh(floatGeo, ym.pearlWhite, 0, 0, 0));
+
+  // Carbon-black upper deck cap & glowing cyan LED speed stripe along the sponson
+  const capGeo = new THREE.BoxGeometry(0.22, 0.08, 2.45);
+  pontoonGroup.add(mesh(capGeo, ym.obsidianCarbon, 0, 0.18, 0));
+  pontoonGroup.add(mesh(new THREE.BoxGeometry(0.50, 0.03, 2.85), ym.neonCyan, 0, 0.02, 0));
+
+  // Submerged Carbon Hydrofoil Lift Wing beneath the Sponson
+  const foilBlade = mesh(new THREE.BoxGeometry(0.62, 0.03, 0.28), ym.obsidianCarbon, 0, -0.34, 0.15);
+  const foilStrut = mesh(new THREE.BoxGeometry(0.04, 0.32, 0.22), ym.platinum, 0, -0.18, 0.15);
+  pontoonGroup.add(foilStrut, foilBlade);
 
   return g;
 }
@@ -2046,25 +2196,54 @@ function buildEngJet() {
 
 function buildGearPlane() {
   const g = new THREE.Group();
+  const strutPivot = new THREE.Group();
+  g.add(strutPivot);
+
   const legHeight = 1.05;
-  g.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.58, 12), MAT.darkMetal, 0, -0.28, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.48, 12), MAT.silver, 0, -0.62, 0));
+  // Horizontal mounting bracket connecting the strut to the fuselage belly
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.14, 0.14, 0.34), MAT.darkMetal, 0, -0.08, 0.16));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.58, 12), MAT.darkMetal, 0, -0.28, 0));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.48, 12), MAT.silver, 0, -0.62, 0));
 
   const link = mesh(new THREE.BoxGeometry(0.038, 0.2, 0.07), MAT.darkMetal, 0.055, -0.48, 0);
   link.rotation.z = 0.3;
-  g.add(link);
+  strutPivot.add(link);
 
-  g.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.34, 10).rotateZ(Math.PI / 2), MAT.silver, 0, -legHeight, 0));
+  const wheelGroup = new THREE.Group();
+  wheelGroup.position.set(0, -legHeight, 0);
+  strutPivot.add(wheelGroup);
+
+  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.34, 10).rotateZ(Math.PI / 2), MAT.silver, 0, 0, 0));
 
   const wheelGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.11, 24).rotateZ(Math.PI / 2);
   const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.12, 16).rotateZ(Math.PI / 2);
   for (const sgn of [-1, 1]) {
-    g.add(mesh(wheelGeo, MAT.rubber, sgn * 0.11, -legHeight, 0));
-    g.add(mesh(hubGeo, MAT.metal, sgn * 0.11, -legHeight, 0));
+    wheelGroup.add(mesh(wheelGeo, MAT.rubber, sgn * 0.11, 0, 0));
+    wheelGroup.add(mesh(hubGeo, MAT.metal, sgn * 0.11, 0, 0));
   }
 
-  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.055, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, 0.09);
-  g.add(lamp);
+  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.055, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.09);
+  strutPivot.add(lamp);
+
+  g.userData.wheelGroup = wheelGroup;
+  g.userData.footY = -1.32;
+  g.userData.deploy = 1;
+  g.userData.setDeploy = (t, inFlight = false) => {
+    const k = Math.max(0, Math.min(1, t ?? 1));
+    g.userData.deploy = k;
+    strutPivot.visible = k > 0.02;
+    if (inFlight) {
+      // In LaunchScene, aircraft root is rotated horizontal so local -Z points down to the runway
+      strutPivot.position.set(0, 0, g.userData.isFront ? 0.75 : 0.28);
+      strutPivot.rotation.x = k * (Math.PI / 2);
+      strutPivot.scale.set(1, Math.max(0.05, k), 1);
+    } else {
+      strutPivot.position.set(0, 0, 0);
+      strutPivot.rotation.x = 0;
+      strutPivot.scale.set(1, Math.max(0.05, k), 1);
+    }
+  };
+  g.userData.setDeploy(1, false);
 
   return g;
 }
@@ -12900,9 +13079,9 @@ export function radialPlacements(type) {
   }
   if (type === 'gearPlane') {
     return [
-      { angle: 0, dist: 0.95, offsetZ: -0.8 },
-      { angle: Math.PI, dist: 0.95, offsetZ: -0.8 },
-      { angle: Math.PI / 2, dist: 0.0, offsetZ: 1.8 },
+      { angle: 0, dist: 0.95, offsetZ: -0.85, offsetY: 0.25, rotY: 0, isFront: false },
+      { angle: Math.PI, dist: 0.95, offsetZ: -0.85, offsetY: 0.25, rotY: 0, isFront: false },
+      { angle: 0, dist: 0.0, offsetZ: -1.35, offsetY: 3.15, rotY: 0, isFront: true },
     ];
   }
   const def = PARTS[type];

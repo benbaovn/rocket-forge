@@ -384,6 +384,7 @@ class App {
       this.paused = false;
       if (a === 'restart') this.goLaunch(this.launchStack);
       if (a === 'build') this.goBuild();
+      if (a === 'settings') this.toggleSettings(true);
     };
     document.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => act(b.dataset.act)));
     document.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => this.applyQuality(b.dataset.q, true, true)));
@@ -391,6 +392,17 @@ class App {
       this.applyLanguage(b.dataset.lang);
       audio.click();
     }));
+    if ($('btn-menu-x')) $('btn-menu-x').onclick = () => { audio.click(); this.toggleMenu(false); };
+    if ($('menu')) {
+      $('menu').addEventListener('click', (e) => {
+        if (e.target === $('menu')) { audio.click(); this.toggleMenu(false); }
+      });
+    }
+    if ($('settings')) {
+      $('settings').addEventListener('click', (e) => {
+        if (e.target === $('settings')) this.toggleSettings(false);
+      });
+    }
     $('btn-settings').onclick = () => this.toggleSettings(true);
     $('btn-settings-close').onclick = () => this.toggleSettings(false);
     if ($('gpu-badge')) $('gpu-badge').onclick = () => this.toggleSettings(true);

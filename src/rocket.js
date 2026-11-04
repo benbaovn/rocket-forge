@@ -50,8 +50,7 @@ export const PRESETS = {
   'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
   'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon', 'apollo11SM+gunLaser+waterCannon', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
-  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+gunLaser+waterCannon', 'motorBoat'],
-  'Thuyền phản lực tên lửa': ['cabinBoat', 'hullBoat+floatsBoat+gunLaser+waterCannon', 'tankS', 'engReuse'],
+  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel+gunLaser+waterCannon', 'motorBoat'],
   'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tailPlane', 'engJet'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
@@ -61,6 +60,10 @@ export const PRESETS = {
 
 export function ensureStackHasWeapons(stack) {
   if (!Array.isArray(stack) || !stack.length) return stack;
+  const boatHull = stack.find((it) => it.type === 'hullBoat');
+  if (boatHull && !stack.some((it) => it.attach && (it.attach.includes('solarPanel') || it.attach.includes('solarRover')))) {
+    boatHull.attach.push('solarPanel');
+  }
   const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')));
   if (hasWeapon) return stack;
   // Find best upper-stage body/tank part to mount weapons
@@ -158,7 +161,7 @@ export function segmentInfo(stack, idx) {
       s.engCount += d.engines || 1;
       if (d.restart) s.restart = true;
     }
-    const isBatPart = it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery || it.type === 'chassisRover';
+    const isBatPart = it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery || it.type === 'chassisRover' || it.type === 'hullBoat';
     const hasRadialBat = it.attach.some((a) => a === 'batteryPack' || a === 'batteryPackL' || PARTS[a]?.isBattery);
     for (const a of it.attach) {
       const ad = PARTS[a];
@@ -166,7 +169,10 @@ export function segmentInfo(stack, idx) {
       const cnt = ad.count || 2;
       if (a === 'solarPanel' || a === 'solarRover') {
         s.hasSolar = true;
-        if (isBatPart || hasRadialBat) s.solarOnBattery += 1;
+        if (isBatPart || hasRadialBat) {
+          s.solarOnBattery += 1;
+          if (it.type === 'hullBoat' && s.batteryCount === 0) s.batteryCount += 1;
+        }
       }
       if (a === 'booster') {
         s.bDry += ad.dry * cnt; s.bFuel += ad.fuel * cnt;
@@ -204,6 +210,16 @@ export function segmentInfo(stack, idx) {
         if (a === 'gridfins') { s.gridfins = true; s.fins = true; }
       }
     }
+  }
+  const hasBoatPart = idx.some((i) => stack[i]?.type?.includes('Boat') || stack[i]?.attach?.some((a) => a.includes('Boat')));
+  if (hasBoatPart && s.chemEngines === 0 && !s.antiGrav && !s.laser) {
+    s.tChemSL += 260;
+    s.tChemVac += 260;
+    s.mdotChem += 260 / (800 * G0);
+    s.chemEngines++;
+    s.engines++;
+    s.engCount++;
+    if (s.chemFuel <= 0) s.chemFuel = 4.5;
   }
   const hasSciFi = s.antiGrav || s.laser;
   if (hasSciFi && s.batteryFuel <= 0) {
@@ -330,7 +346,7 @@ export function computeStats(stack) {
     (st1Info.bTSL > 0 && st1Info.bFuel > 0) ||
     st1HasRoverDrive
   );
-  const canLaunch = stack.length > 0 && st1HasEngineAndFuel;
+  const canLaunch = stack.length > 0 && (isBoat || st1HasEngineAndFuel);
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
 }
 
@@ -418,7 +434,10 @@ export function buildRocket(stack) {
         } else if (a === 'solarRover') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.65; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'solarPanel') {
-          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.55; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          const isBoatHull = p.item.type === 'hullBoat';
+          posX = Math.cos(pl.angle) * (isBoatHull ? 1.12 : pl.dist);
+          posY = p.y + p.def.height * (isBoatHull ? 0.96 : 0.55);
+          posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gunLaser') {
           const isUfo = p.item.type === 'ufoSaucer';
           const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');
@@ -454,7 +473,10 @@ export function buildRocket(stack) {
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {
-          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.1; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.1 + (pl.offsetY || 0); posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          ao.userData.sideSign = 1;
+          ao.userData.isFront = !!pl.isFront;
+          roverWheels.push(ao);
         } else if (PARTS[a].kind === 'stack') {
           const ad = PARTS[a];
           posX = Math.cos(pl.angle) * pl.dist;
@@ -490,7 +512,7 @@ export function buildRocket(stack) {
 
         const pivot = new THREE.Group();
         pivot.position.set(posX, posY, posZ);
-        pivot.rotation.y = -pl.angle;
+        pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
         pivot.userData.index = p.index;
         pivot.userData.attach = a;
         pivot.userData.itemId = p.item.id;
@@ -510,7 +532,7 @@ export function buildRocket(stack) {
         const ad = PARTS.booster;
         boosters.push({ seg: k, objs: group, fuel: ad.fuel * ad.count, dry: ad.dry * ad.count, count: ad.count, attached: true });
       }
-      if (a === 'legs' || a === 'gridfins') deployables.push({ seg: k, type: a, objs: group, partIndex: p.index });
+      if (a === 'legs' || a === 'gridfins' || a === 'gearPlane') deployables.push({ seg: k, type: a === 'gearPlane' ? 'legs' : a, isGearPlane: a === 'gearPlane', objs: group, partIndex: p.index });
       if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
         for (const ao of group) {
           weapons.push({ seg: k, type: a, weaponType: PARTS[a].weapon, obj: ao, muzzle: ao.userData.muzzle, turret: ao.userData.turret });

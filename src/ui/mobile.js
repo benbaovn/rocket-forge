@@ -30,8 +30,8 @@ export function initMobile(app) {
   }
   // (double-tap zoom on buttons is already disabled via CSS touch-action: manipulation / none)
 
-  // phones: both flight HUD panels collapse into small icons (📊 telemetry / ⛽ stages & systems)
-  initHudToggles();
+  // phones: both flight HUD panels collapse into small icons (📊 telemetry / ⛽ stages & systems / ⚙️ options)
+  const { tgOpt } = initHudToggles(app);
 
   // VAB specs panel toggle (compact screens)
   const statsBtn = $('btn-stats-toggle');
@@ -43,16 +43,19 @@ export function initMobile(app) {
   }
 
   // scene flag for CSS (e.g. landscape hint only during flight) + live state of touch buttons
-  let sasBtn = null, rcsBtn = null;
+  let sasBtn = null, rcsBtn = null, optBtn = null;
   const tick = () => {
     const inLaunch = !!app.launch && app.current === app.launch;
     body.classList.toggle('scene-launch', inLaunch);
     if (inLaunch && sasBtn) sasBtn.classList.toggle('on', !!app.launch.sas);
+    const menuOpen = ($('menu') && !$('menu').classList.contains('hidden')) || ($('settings') && !$('settings').classList.contains('hidden'));
+    if (tgOpt) tgOpt.classList.toggle('on', !!menuOpen);
+    if (optBtn) optBtn.classList.toggle('on', !!menuOpen);
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 
-  ({ sasBtn, rcsBtn } = buildFlightControls(app));
+  ({ sasBtn, rcsBtn, optBtn } = buildFlightControls(app));
 }
 
 /**
@@ -60,19 +63,29 @@ export function initMobile(app) {
  * The Fire / Auto / Map / Warp buttons are moved out of the right panel into the icon row
  * so they stay reachable while the panel is hidden (and moved back on larger screens).
  */
-function initHudToggles() {
+function initHudToggles(app) {
   const root = $('launch-ui');
   const left = root && root.querySelector('.hud-left');
   const right = root && root.querySelector('.hud-right');
   const actions = right && right.querySelector('.hud-actions-grid');
-  if (!left || !right || !actions) return;
+  if (!left || !right || !actions) return {};
   const anchor = right.querySelector('.gpu-launch');   // original spot of the actions grid
 
   const mk = (cls, html) => { const d = document.createElement('div'); d.className = `hud-quick ${cls}`; d.innerHTML = html; root.appendChild(d); return d; };
-  const qLeft = mk('left', '<button type="button" class="hud-tg" id="hud-tg-left" aria-label="Telemetry">📊</button>');
-  const qRight = mk('right', '<button type="button" class="hud-tg" id="hud-tg-right" aria-label="Stages & systems">⛽</button>');
-  const tgLeft = qLeft.querySelector('button');
-  const tgRight = qRight.querySelector('button');
+  const qLeft = mk('left', '<button type="button" class="hud-tg" id="hud-tg-left" aria-label="Telemetry" title="Telemetry">📊</button>');
+  const qRight = mk(
+    'right',
+    '<button type="button" class="hud-tg" id="hud-tg-right" aria-label="Stages & systems" title="Stages & Systems">⛽</button>' +
+    '<button type="button" class="hud-tg" id="hud-tg-opt" aria-label="Options" title="Options / Menu (Esc)">⚙️</button>'
+  );
+  const tgLeft = qLeft.querySelector('#hud-tg-left');
+  const tgRight = qRight.querySelector('#hud-tg-right');
+  const tgOpt = qRight.querySelector('#hud-tg-opt');
+  if (tgOpt) {
+    tgOpt.addEventListener('click', () => {
+      if (app && typeof app.toggleMenu === 'function') app.toggleMenu();
+    });
+  }
 
   // only one panel open at a time
   const pairs = [[tgLeft, left], [tgRight, right]];
@@ -93,12 +106,13 @@ function initHudToggles() {
   };
   place();
   if (window.matchMedia) matchMedia(COMPACT_MQ).addEventListener('change', place);
+  return { tgOpt };
 }
 
 /**
  * On-screen flight buttons (touch only, shown via CSS):
  *  left  – attitude pad (W/A/S/D); centre button switches it to RCS translation (I/K/J/L + H/N) for docking
- *  right – throttle ▲▼ / MAX / 0, STAGE, SAS, SAS-mode, camera, legs/chute, time-warp, pause menu
+ *  right – throttle ▲▼ / MAX / 0, STAGE, SAS, SAS-mode, camera, legs/chute, time-warp, options menu
  * Hold buttons write straight into LaunchScene.keys (same as a held keyboard key);
  * tap buttons dispatch a synthetic keydown/keyup so every existing shortcut keeps a single code path.
  */
@@ -129,7 +143,7 @@ function buildFlightControls(app) {
     <div class="tc-cluster">
       <button type="button" class="tc-btn" data-tap="," aria-label="Warp slower">⏪</button>
       <button type="button" class="tc-btn" data-tap="." aria-label="Warp faster">⏩</button>
-      <button type="button" class="tc-btn" data-tap="Escape" aria-label="Menu">⏸</button>
+      <button type="button" class="tc-btn" id="tc-opt" data-tap="Escape" aria-label="Options">⚙️<small>OPT</small></button>
 
       <button type="button" class="tc-btn" id="tc-sas" data-tap="t">🧭<small>SAS</small></button>
       <button type="button" class="tc-btn" data-tap="f">🎯<small>MODE</small></button>
@@ -183,5 +197,5 @@ function buildFlightControls(app) {
     rcsBtn.classList.toggle('on', on);
   });
 
-  return { sasBtn: wrap.querySelector('#tc-sas'), rcsBtn };
+  return { sasBtn: wrap.querySelector('#tc-sas'), rcsBtn, optBtn: wrap.querySelector('#tc-opt') };
 }

@@ -119,36 +119,36 @@ export const PART_I18N = {
     en: { name: 'Solid Rocket Boosters ×2', cat: 'Engines', desc: 'Solid fuel boosters, auto-jettison on burnout' },
   },
   cockpitRover: {
-    vi: { name: 'Cabin xe Rover', cat: 'Xe & Thuyền', desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
-    en: { name: 'Rover Cockpit', cat: 'Rovers & Boats', desc: 'Exploration cabin with panoramic glass dome & headlights' },
+    vi: { name: 'Cabin xe Rover', cat: 'Xe', desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
+    en: { name: 'Rover Cockpit', cat: 'Rover', desc: 'Exploration cabin with panoramic glass dome & headlights' },
   },
   chassisRover: {
-    vi: { name: 'Khung gầm Rover', cat: 'Xe & Thuyền', desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
-    en: { name: 'Rover Chassis', cat: 'Rovers & Boats', desc: 'Heavy-duty chassis with integrated battery pack & axle mounts' },
+    vi: { name: 'Khung gầm Rover', cat: 'Xe', desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
+    en: { name: 'Rover Chassis', cat: 'Rover', desc: 'Heavy-duty chassis with integrated battery pack & axle mounts' },
   },
   wheelsRover: {
-    vi: { name: 'Bánh xe địa hình ×4', cat: 'Xe & Thuyền', desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
-    en: { name: 'Off-Road Wheels ×4', cat: 'Rovers & Boats', desc: '4 high-grip treaded planetary rover wheels' },
+    vi: { name: 'Bánh xe địa hình ×4', cat: 'Xe', desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
+    en: { name: 'Off-Road Wheels ×4', cat: 'Rover', desc: '4 high-grip treaded planetary rover wheels' },
   },
   solarRover: {
-    vi: { name: 'Tấm pin Rover ×2', cat: 'Xe & Thuyền', desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
-    en: { name: 'Rover Solar Panels ×2', cat: 'Rovers & Boats', desc: 'Twin solar panels recharging power on the move' },
+    vi: { name: 'Tấm pin Rover ×2', cat: 'Xe', desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
+    en: { name: 'Rover Solar Panels ×2', cat: 'Rover', desc: 'Twin solar panels recharging power on the move' },
   },
   cabinBoat: {
-    vi: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Xe & Thuyền', desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
-    en: { name: 'Superyacht Bridge & Sky-Lounge', cat: 'Rovers & Boats', desc: 'Futuristic cruise superyacht upper deck with panoramic smart-glass bridge, solar canopy and dual radar domes' },
+    vi: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Thuyền', desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
+    en: { name: 'Superyacht Bridge & Sky-Lounge', cat: 'Boat', desc: 'Futuristic cruise superyacht upper deck with panoramic smart-glass bridge, solar canopy and dual radar domes' },
   },
   hullBoat: {
-    vi: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Xe & Thuyền', desc: 'Thân du thuyền đa tầng siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
-    en: { name: 'Futuristic Luxury Superyacht Hull', cat: 'Rovers & Boats', desc: 'Multi-deck luxury cruise yacht hull with wave-piercing bow, infinity Jacuzzi pool, helipad and neon LED trim' },
+    vi: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Thuyền', desc: 'Thân du thuyền đa tầng siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
+    en: { name: 'Futuristic Luxury Superyacht Hull', cat: 'Boat', desc: 'Multi-deck luxury cruise yacht hull with wave-piercing bow, infinity Jacuzzi pool, helipad and neon LED trim' },
   },
   motorBoat: {
-    vi: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Xe & Thuyền', desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
-    en: { name: 'Twin Azimuth Pod & Plasma Hydro-Jet', cat: 'Rovers & Boats', desc: 'Hydrodynamic underwater keel with twin azimuth pods and plasma water-jet propulsion' },
+    vi: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Thuyền', desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
+    en: { name: 'Twin Azimuth Pod & Plasma Hydro-Jet', cat: 'Boat', desc: 'Hydrodynamic underwater keel with twin azimuth pods and plasma water-jet propulsion' },
   },
   floatsBoat: {
-    vi: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Xe & Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
-    en: { name: 'Trimaran Hydrofoil Sponsons ×2', cat: 'Rovers & Boats', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips' },
+    vi: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
+    en: { name: 'Trimaran Hydrofoil Sponsons ×2', cat: 'Boat', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips' },
   },
   cockpitPlane: {
     vi: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },

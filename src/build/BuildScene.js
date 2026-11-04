@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
-import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons } from '../rocket.js';
+import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
@@ -223,7 +223,7 @@ export class BuildScene {
     try {
       const raw = JSON.parse(localStorage.getItem('rf-stack') || 'null');
       if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0]])) {
-        return ensureStackHasWeapons(stackFromTypes(raw));
+        return ensureStackHasWeapons(sanitizeStack(stackFromTypes(raw)));
       }
     } catch { /* ignore */ }
     return ensureStackHasWeapons(stackFromTypes(Object.values(PRESETS)[0]));
@@ -242,6 +242,10 @@ export class BuildScene {
   showPartTooltip(def, cardEl) {
     const tip = $('part-tooltip');
     if (!tip || this.drag) return;
+    const type = cardEl?.dataset?.part;
+    const incompat = type && this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)
+      ? `<div class="pt-incompat">🚫 ${getIncompatibilityWarning(type, this.stack)}</div>`
+      : '';
     const totalMass = (def.dry + (def.fuel || 0)).toFixed(2);
     const pills = [
       `<span class="pt-pill">⚖️ <b>${totalMass} t</b>${def.kind === 'radial' ? tr(' / chiếc', ' / ea') : ''}</span>`,
@@ -259,6 +263,7 @@ export class BuildScene {
       </div>
       <div class="pt-specs">${pills.join('')}</div>
       <div class="pt-desc">${def.desc}</div>
+      ${incompat}
     `;
     tip.classList.remove('hidden');
     const rect = cardEl.getBoundingClientRect();
@@ -443,6 +448,9 @@ export class BuildScene {
     const def = PARTS[type];
     const card = document.createElement('div');
     card.className = type === 'ufoSaucer' ? 'part-card part-card-wide' : 'part-card';
+    if (this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) {
+      card.classList.add('part-incompatible');
+    }
     card.dataset.part = type;
     const badgeTxt = def.thrustVac
       ? `🔥${def.thrustVac}`
@@ -1028,7 +1036,13 @@ export class BuildScene {
     this.indicator.visible = false;
     if (d.cand) this.applyCandidate(d.type, d.cand);
     else if (!d.moved) this.smartAdd(d.type);
-    else this.rebuild();
+    else {
+      if (this.stack.length > 0 && !canPartAttachToStack(d.type, this.stack)) {
+        this.flashIncompatibleWarning(d.type);
+      } else {
+        this.rebuild();
+      }
+    }
   }
 
   cancelDrag() {
@@ -1046,13 +1060,15 @@ export class BuildScene {
   }
 
   findCandidate(type, mx, my) {
+    if (this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) return null;
     const def = PARTS[type];
     const lay = layout(this.stack);
-    // 1. Pure radial parts can attach to any part on the rocket
+    // 1. Pure radial parts can attach to any compatible part on the vehicle
     if (def.kind === 'radial') {
       let best = null, bd = 1e9;
       lay.parts.forEach((p) => {
         if (p.item.attach.includes(type)) return;
+        if (!canPartAttachToStack(type, this.stack, p.index)) return;
         const [sx, sy] = this.screenOf(p.y + p.def.height / 2);
         const d = Math.hypot(sx - mx, sy - my);
         if (d < bd) { bd = d; best = { attach: p.index }; }
@@ -1065,6 +1081,7 @@ export class BuildScene {
       let sideBest = null, sideBd = 1e9;
       lay.parts.forEach((p) => {
         if (p.item.attach.includes(type)) return;
+        if (!canPartAttachToStack(type, this.stack, p.index)) return;
         const [sx, sy] = this.screenOf(p.y + p.def.height / 2);
         const dx = Math.abs(mx - sx);
         const dy = Math.abs(my - sy);
@@ -1103,6 +1120,11 @@ export class BuildScene {
   }
 
   applyCandidate(type, cand) {
+    if (this.stack.length > 0 && !canPartAttachToStack(type, this.stack, cand.attach ?? null)) {
+      this.flashIncompatibleWarning(type);
+      return;
+    }
+    this.incompatWarning = null;
     this.pushHistory();
     if (cand.attach !== undefined) this.stack[cand.attach].attach.push(type);
     else this.stack.splice(cand.insert, 0, newItem(type));
@@ -1110,9 +1132,25 @@ export class BuildScene {
     this.rebuild(true);
   }
 
+  flashIncompatibleWarning(type) {
+    this.incompatWarning = getIncompatibilityWarning(type, this.stack);
+    if (this.incompatTimer) clearTimeout(this.incompatTimer);
+    this.incompatTimer = setTimeout(() => {
+      this.incompatWarning = null;
+      this.updateStats();
+    }, 4500);
+    this.rebuild();
+    this.updateStats();
+  }
+
   smartAdd(type) {
     const def = PARTS[type];
     const st = this.stack;
+    if (st.length > 0 && !canPartAttachToStack(type, st)) {
+      this.flashIncompatibleWarning(type);
+      return;
+    }
+    this.incompatWarning = null;
     this.pushHistory();
     const isTank = (i) => !!PARTS[st[i].type].fuel;
     // stage ranges (top -> bottom), split at decouplers
@@ -1419,8 +1457,17 @@ export class BuildScene {
     }
   }
 
+  updatePaletteCompatibility() {
+    document.querySelectorAll('.part-card[data-part]').forEach((card) => {
+      const t = card.dataset.part;
+      const compat = !this.stack || this.stack.length === 0 || canPartAttachToStack(t, this.stack);
+      card.classList.toggle('part-incompatible', !compat);
+    });
+  }
+
   updateStats() {
     const st = computeStats(this.stack);
+    this.updatePaletteCompatibility();
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
     const twr = st.stages[0] ? st.stages[0].twr : 0;
@@ -1432,8 +1479,10 @@ export class BuildScene {
     $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.solarOnBattery ? ' ☀️⚡' : ''}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
-    w.innerHTML = st.warnings.length
-      ? st.warnings.map((x) => `<div>⚠ ${x}</div>`).join('')
+    const allWarnings = [...st.warnings];
+    if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
+    w.innerHTML = allWarnings.length
+      ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
       : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}</div>`;
     $('btn-launchpad').disabled = !st.canLaunch;
     this.stats = st;

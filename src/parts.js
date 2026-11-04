@@ -31,14 +31,14 @@ export const PARTS = {
   gunAcid: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'acid', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° bắn tia dịch độc xanh lục làm tan chảy giáp và rút máu Alien liên tục (Phím V)' },
   gunElectric: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'electric', desc: 'Cặp pháo điện Tesla 1,000,000 WATT xoay 360° phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh (Phím V)' },
   booster: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', kind: 'radial', count: 2, height: 11.8, dry: 1.8, fuel: 14, thrustSL: 1100, thrustVac: 1200, ispSL: 240, ispVac: 265, desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
-  cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
-  chassisRover: { name: 'Khung gầm Rover', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
-  wheelsRover: { name: 'Bánh xe địa hình ×4', cat: 'Xe & Thuyền', kind: 'radial', count: 4, dry: 0.22, desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
-  solarRover: { name: 'Tấm pin Rover ×2', cat: 'Xe & Thuyền', kind: 'radial', count: 2, dry: 0.06, desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
-  cabinBoat: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Xe & Thuyền', kind: 'stack', height: 1.8, dry: 0.9, desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
-  hullBoat: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Xe & Thuyền', kind: 'stack', height: 1.6, dry: 1.3, fuel: 4.5, desc: 'Thân du thuyền siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
-  motorBoat: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Xe & Thuyền', kind: 'stack', height: 1.4, dry: 0.4, thrustSL: 320, thrustVac: 320, ispSL: 800, ispVac: 400, engines: 1, desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
-  floatsBoat: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Xe & Thuyền', kind: 'radial', count: 2, dry: 0.18, desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
+  cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
+  chassisRover: { name: 'Khung gầm Rover', cat: 'Xe', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
+  wheelsRover: { name: 'Bánh xe địa hình ×4', cat: 'Xe', kind: 'radial', count: 4, dry: 0.22, desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
+  solarRover: { name: 'Tấm pin Rover ×2', cat: 'Xe', kind: 'radial', count: 2, dry: 0.06, desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
+  cabinBoat: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Thuyền', kind: 'stack', height: 1.8, dry: 0.9, desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
+  hullBoat: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Thuyền', kind: 'stack', height: 1.6, dry: 1.3, fuel: 4.5, desc: 'Thân du thuyền siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
+  motorBoat: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Thuyền', kind: 'stack', height: 1.4, dry: 0.4, thrustSL: 320, thrustVac: 320, ispSL: 800, ispVac: 400, engines: 1, desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
+  floatsBoat: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Thuyền', kind: 'radial', count: 2, dry: 0.18, desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
   cockpitPlane: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', kind: 'stack', height: 2.8, dry: 0.85, desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
   fuselagePlane: { name: 'Thân máy bay Jet', cat: 'Máy bay', kind: 'stack', height: 3.8, dry: 1.1, fuel: 5.5, desc: 'Thân máy bay khí động học chứa thùng nhiên liệu JP-8 và cửa hút khí' },
   wingsPlane: { name: 'Cánh nâng phản lực ×2', cat: 'Máy bay', kind: 'radial', count: 2, dry: 0.45, desc: 'Cặp cánh swept-wing tạo lực nâng khí động học cất cánh và lượn trên trời' },
@@ -2090,7 +2090,7 @@ function buildFuselagePlane() {
 
 function buildWingsPlane() {
   const g = new THREE.Group();
-  // Swept delta wing planform
+  // Swept delta wing planform oriented vertically along Y in VAB (X = span, Y = chord, Z = thickness)
   const wingShape = new THREE.Shape();
   wingShape.moveTo(0, -1.2);
   wingShape.lineTo(0, 1.5);
@@ -2099,20 +2099,24 @@ function buildWingsPlane() {
   wingShape.closePath();
 
   const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.075, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
-  wingGeo.rotateX(Math.PI / 2);
+  wingGeo.translate(0, 0, -0.0375);
   g.add(mesh(wingGeo, MAT.stealth, 0, 0, 0));
 
-  // Aileron flap
-  g.add(mesh(new THREE.BoxGeometry(1.9, 0.055, 0.22), MAT.darkMetal, 1.75, 0, -0.68));
+  // Aileron / flaperon along trailing edge
+  const flaperon = mesh(new THREE.BoxGeometry(1.9, 0.22, 0.055), MAT.darkMetal, 1.65, -0.82, 0);
+  flaperon.rotation.z = 0.19;
+  g.add(flaperon);
 
-  // Wingtip rail & formation light
-  g.add(mesh(new THREE.BoxGeometry(0.07, 0.07, 1.15), MAT.titanium, 3.15, 0, -0.2));
-  g.add(mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 3.16, 0.05, -0.2));
+  // Wingtip rail & formation light (aligned vertically along Y)
+  g.add(mesh(new THREE.BoxGeometry(0.07, 1.15, 0.07), MAT.titanium, 3.15, -0.22, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 3.18, 0.36, 0));
 
-  // Underwing pylon with external fuel tank
-  g.add(mesh(new THREE.BoxGeometry(0.055, 0.15, 0.75), MAT.darkMetal, 1.45, -0.11, 0));
-  const tankGeo = new THREE.CylinderGeometry(0.13, 0.13, 1.7, 16).rotateX(Math.PI / 2);
-  g.add(mesh(tankGeo, MAT.silver, 1.45, -0.24, 0));
+  // Wing pylon & external supersonic tank (aligned vertically along Y)
+  g.add(mesh(new THREE.BoxGeometry(0.08, 0.85, 0.22), MAT.darkMetal, 1.45, -0.05, 0));
+  const tankGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.55, 16);
+  g.add(mesh(tankGeo, MAT.silver, 1.45, 0.05, 0));
+  const coneGeo = new THREE.ConeGeometry(0.12, 0.38, 16);
+  g.add(mesh(coneGeo, MAT.titanium, 1.45, 1.01, 0));
 
   return g;
 }
@@ -2142,7 +2146,7 @@ function buildTailPlane() {
     g.add(finGroup);
   }
 
-  // All-moving horizontal tailplane elevators
+  // All-moving horizontal tailplane elevators (oriented vertically along Y in VAB to match wingsPlane)
   for (const sgn of [-1, 1]) {
     const stabShape = new THREE.Shape();
     stabShape.moveTo(0, -0.55);
@@ -2150,8 +2154,9 @@ function buildTailPlane() {
     stabShape.lineTo(1.35, -0.08);
     stabShape.lineTo(1.25, -0.48);
     stabShape.closePath();
-    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.038, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 }).rotateX(Math.PI / 2);
-    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.68, 0.22, 0);
+    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.038, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 });
+    stabGeo.translate(0, 0, -0.019);
+    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.58, 0.85, 0);
     stab.rotation.y = sgn > 0 ? 0 : Math.PI;
     g.add(stab);
   }
@@ -13073,8 +13078,8 @@ export function radialPlacements(type) {
   }
   if (type === 'wingsPlane') {
     return [
-      { angle: 0, dist: 1.15, offsetZ: 0 },
-      { angle: Math.PI, dist: 1.15, offsetZ: 0 },
+      { angle: 0, dist: 1.0, offsetZ: 0 },
+      { angle: Math.PI, dist: 1.0, offsetZ: 0 },
     ];
   }
   if (type === 'gearPlane') {

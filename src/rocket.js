@@ -25,6 +25,98 @@ export function stackFromTypes(list) {
   });
 }
 
+/**
+ * Classify which vehicle family a part belongs to:
+ *  - 'rover'  : Rover parts
+ *  - 'boat'   : Boat / Superyacht parts
+ *  - 'plane'  : Airplane / Fighter jet parts
+ *  - 'any'    : Universal accessories (weapons & solar panel)
+ *  - 'rocket' : All rocket stages, tanks, engines, capsules, decouplers, fins, legs, boosters, UFO, etc.
+ */
+export function partVehicleType(type) {
+  if (!type || !PARTS[type]) return 'rocket';
+  if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'solarPanel') {
+    return 'any';
+  }
+  if (type.endsWith('Rover')) return 'rover';
+  if (type.endsWith('Boat')) return 'boat';
+  if (type.endsWith('Plane') || type === 'engJet') return 'plane';
+  return 'rocket';
+}
+
+/** Determine the vehicle family of the current stack ('rocket' | 'rover' | 'boat' | 'plane' | null) */
+export function stackVehicleType(stack) {
+  if (!Array.isArray(stack) || !stack.length) return null;
+  for (const it of stack) {
+    const vt = partVehicleType(it.type);
+    if (vt !== 'any') return vt;
+    if (Array.isArray(it.attach)) {
+      for (const a of it.attach) {
+        const va = partVehicleType(a);
+        if (va !== 'any') return va;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Returns true if `type` is allowed to attach to or be inserted into `stack`.
+ * Rocket parts cannot attach to Rover, Boat, or Plane parts (and vice versa).
+ */
+export function canPartAttachToStack(type, stack, targetIndex = null) {
+  if (!type || !PARTS[type]) return false;
+  const vNew = partVehicleType(type);
+  if (vNew === 'any') return true;
+  if (!Array.isArray(stack) || stack.length === 0) {
+    // Radial-only vehicle parts still require a matching host part if stack is empty
+    return true;
+  }
+  if (targetIndex !== null && stack[targetIndex]) {
+    const vTarget = partVehicleType(stack[targetIndex].type);
+    if (vTarget !== 'any' && vNew !== vTarget) return false;
+  }
+  const vStack = stackVehicleType(stack);
+  if (vStack !== null && vNew !== vStack) return false;
+  return true;
+}
+
+/** Human-readable warning when attempting to mix incompatible vehicle parts */
+export function getIncompatibilityWarning(type, stack) {
+  const vNew = partVehicleType(type);
+  const vStack = stackVehicleType(stack);
+  const nameOf = (v) => {
+    if (v === 'rover') return tr('Xe Rover', 'Rover');
+    if (v === 'boat') return tr('Thuyền', 'Boat');
+    if (v === 'plane') return tr('Máy bay', 'Airplane');
+    return tr('Tên lửa', 'Rocket');
+  };
+  return tr(
+    `Không thể gắn đồ của ${nameOf(vNew)} với đồ của ${nameOf(vStack)}! Hãy xóa thiết kế hiện tại nếu muốn lắp ${nameOf(vNew)}.`,
+    `Cannot attach ${nameOf(vNew)} parts to ${nameOf(vStack)} parts! Clear the current build first to assemble a ${nameOf(vNew)}.`
+  );
+}
+
+/** Remove any incompatible parts from a loaded stack so vehicle types never mix */
+export function sanitizeStack(stack) {
+  if (!Array.isArray(stack) || !stack.length) return stack;
+  const vStack = stackVehicleType(stack);
+  if (!vStack) return stack;
+  const cleaned = [];
+  for (const it of stack) {
+    const vt = partVehicleType(it.type);
+    if (vt !== 'any' && vt !== vStack) continue;
+    if (Array.isArray(it.attach)) {
+      it.attach = it.attach.filter((a) => {
+        const va = partVehicleType(a);
+        return va === 'any' || va === vStack;
+      });
+    }
+    cleaned.push(it);
+  }
+  return cleaned;
+}
+
 export const PRESETS = {
   'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL+fins', 'engAntiGrav'],
   'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon', 'saturnSM+gunLaser+waterCannon', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],

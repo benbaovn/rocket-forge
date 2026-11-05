@@ -1,6 +1,6 @@
 // Bilingual localization (Vietnamese 'vi' <-> English 'en')
 import { PARTS } from './parts.js';
-import { MISSIONS } from './missions.js';
+import { MISSIONS, ROVER_LOOP_SPECS, PLANE_LOOP_SPECS } from './missions.js';
 import { BODIES } from './sim/constants.js';
 
 let currentLang = 'en';
@@ -99,20 +99,24 @@ export const PART_I18N = {
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
   gunLaser: {
-    vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
-    en: { name: 'Twin Plasma Laser Turrets ×2', cat: 'Weapons', desc: '360° gimbaled high-energy laser cannons that vaporize Aliens in space and on planets/moons (Press V to fire)' },
+    vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+    en: { name: 'Twin Plasma Laser Turrets ×2', cat: 'Weapons', desc: '360° gimbaled high-energy laser cannons that vaporize Aliens · Guns only run on Battery (attach Ultra-Tiny Gun Battery on regular-fuel rockets, or use Quantum Battery Pack) (Press V)' },
   },
   waterCannon: {
-    vi: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
-    en: { name: '1,000,000 PSI Water Cannon ×2', cat: 'Weapons', desc: 'Ultra-high-pressure 1,000,000 PSI supersonic hydro-jet cannons that blast and shred Aliens (Press V to fire)' },
+    vi: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương nghiền nát Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+    en: { name: '1,000,000 PSI Water Cannon ×2', cat: 'Weapons', desc: 'Ultra-high-pressure 1,000,000 PSI supersonic hydro-jet cannons that shred Aliens · Guns only run on Battery (attach Ultra-Tiny Gun Battery on regular-fuel rockets, or use Quantum Battery Pack) (Press V)' },
   },
   gunAcid: {
-    vi: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° bắn tia dịch độc xanh lục làm tan chảy giáp và rút máu Alien liên tục (Phím V)' },
-    en: { name: 'Corrosive Acid Cannon ×2', cat: 'Weapons', desc: '360° gimbaled bio-acid sprayers firing pressurized toxic acid streams that melt armor and deal continuous corrosion damage to Aliens (Press V)' },
+    vi: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° làm tan chảy giáp và rút máu Alien liên tục · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+    en: { name: 'Corrosive Acid Cannon ×2', cat: 'Weapons', desc: '360° gimbaled bio-acid sprayers firing toxic acid streams · Guns only run on Battery (attach Ultra-Tiny Gun Battery on regular-fuel rockets, or use Quantum Battery Pack) (Press V)' },
   },
   gunElectric: {
-    vi: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', desc: 'Cặp pháo điện Tesla 1,000,000 WATT xoay 360° phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh (Phím V)' },
-    en: { name: '1,000,000 WATT Electric Cannon ×2', cat: 'Weapons', desc: '360° gimbaled 1,000,000 WATT Tesla arc cannons that unleash high-voltage lightning bolts, stunning the target and chaining electricity to nearby Aliens (Press V)' },
+    vi: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', desc: 'Cặp pháo điện Tesla 1,000,000 WATT phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+    en: { name: '1,000,000 WATT Electric Cannon ×2', cat: 'Weapons', desc: '360° gimbaled 1,000,000 WATT Tesla arc cannons that unleash chain lightning · Guns only run on Battery (attach Ultra-Tiny Gun Battery on regular-fuel rockets, or use Quantum Battery Pack) (Press V)' },
+  },
+  batteryGun: {
+    vi: { name: 'Pin Siêu Siêu Nhỏ (Gắn Súng) ×2', cat: 'Vũ khí', desc: 'Cục pin vi mô siêu siêu nhỏ (0.005 tấn) gắn trực tiếp vào Súng (Lazer / Nước / Acid / Điện) dành riêng cho tên lửa xài nhiên liệu thường (vì súng chỉ hoạt động bằng pin)' },
+    en: { name: 'Ultra-Tiny Gun Battery ×2', cat: 'Weapons', desc: 'Ultra-micro battery pack (0.005t) that attaches directly onto Guns (Laser / Water / Acid / Electric) for regular-fuel rockets (guns only run on battery power)' },
   },
   booster: {
     vi: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
@@ -1079,7 +1083,115 @@ const MISSION_I18N = {
       objs: { orbit: 'Enter Earth orbit', erisSOI: 'Enter Eris Sphere of Influence', erisOrbit: 'Enter Eris orbit', erisLanded: 'Land safely on Eris' },
     },
   },
+  rover_500km: {
+    vi: {
+      name: 'Chạy 500 km (Không tự lái)',
+      desc: 'Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 500 km (Không có chế độ Lái tự động).',
+      objs: {
+        roverDist100: 'Chạy đạt 100 km trên bề mặt',
+        roverDist250: 'Chạy đạt 250 km trên bề mặt',
+        roverDist500: 'Chạy hoàn thành đủ 500 km (Không tự lái)',
+      },
+    },
+    en: {
+      name: 'Drive 500 km (No Autopilot)',
+      desc: 'Manually drive the 4x4 Planetary Rover across the surface for a total distance of 500 km (Autopilot is disabled).',
+      objs: {
+        roverDist100: 'Drive 100 km on the surface',
+        roverDist250: 'Drive 250 km on the surface',
+        roverDist500: 'Complete 500 km drive (No Autopilot)',
+      },
+    },
+  },
+  rover_1000km: {
+    vi: {
+      name: 'Chạy 1000 km (Không tự lái)',
+      desc: 'Hành trình xuyên lục địa: Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 1000 km (Không có chế độ Lái tự động).',
+      objs: {
+        roverDist250: 'Chạy đạt 250 km trên bề mặt',
+        roverDist500: 'Chạy đạt 500 km trên bề mặt',
+        roverDist1000: 'Chạy hoàn thành đủ 1000 km (Không tự lái)',
+      },
+    },
+    en: {
+      name: 'Drive 1000 km (No Autopilot)',
+      desc: 'Cross-continental expedition: Manually drive the 4x4 Planetary Rover across the surface for a total distance of 1000 km (Autopilot is disabled).',
+      objs: {
+        roverDist250: 'Drive 250 km on the surface',
+        roverDist500: 'Drive 500 km on the surface',
+        roverDist1000: 'Complete 1000 km drive (No Autopilot)',
+      },
+    },
+  },
+  rover_2000km: {
+    vi: {
+      name: 'Chạy 2000 km (Không tự lái)',
+      desc: 'Thử thách viễn chinh đường trường: Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 2000 km (Không có chế độ Lái tự động).',
+      objs: {
+        roverDist500: 'Chạy đạt 500 km trên bề mặt',
+        roverDist1000: 'Chạy đạt 1000 km trên bề mặt',
+        roverDist2000: 'Chạy hoàn thành đủ 2000 km (Không tự lái)',
+      },
+    },
+    en: {
+      name: 'Drive 2000 km (No Autopilot)',
+      desc: 'Endurance rally challenge: Manually drive the 4x4 Planetary Rover across the surface for a total distance of 2000 km (Autopilot is disabled).',
+      objs: {
+        roverDist500: 'Drive 500 km on the surface',
+        roverDist1000: 'Drive 1000 km on the surface',
+        roverDist2000: 'Complete 2000 km drive (No Autopilot)',
+      },
+    },
+  },
 };
+
+for (const spec of ROVER_LOOP_SPECS) {
+  const fullKm = Math.round(2 * Math.PI * spec.rKm);
+  const halfKm = Math.round(Math.PI * spec.rKm);
+  const b = spec.body;
+  MISSION_I18N[`rover_loop_${b}`] = {
+    vi: {
+      name: `Chạy một vòng ${spec.viName} (Không tự lái)`,
+      desc: `Tự tay lái Xe địa hình Rover 4x4 chạy trọn 1 vòng chu vi quanh ${spec.viName} (${spec.viSub} · Chu vi ${fullKm} km – Không có chế độ Lái tự động).`,
+      objs: {
+        [`${b}HalfLoop`]: `Chạy được nửa vòng ${spec.viName} (${halfKm} km)`,
+        [`${b}FullLoop`]: `Chạy hoàn thành đủ 1 vòng ${spec.viName} (${fullKm} km)`,
+      },
+    },
+    en: {
+      name: `Drive 1 Lap Around ${spec.enName} (No Autopilot)`,
+      desc: `Manually drive the 4x4 Planetary Rover a full circumference lap around ${spec.enName} (${spec.enSub} · Circumference ${fullKm} km – Autopilot is disabled).`,
+      objs: {
+        [`${b}HalfLoop`]: `Drive half a lap around ${spec.enName} (${halfKm} km)`,
+        [`${b}FullLoop`]: `Complete 1 full lap around ${spec.enName} (${fullKm} km)`,
+      },
+    },
+  };
+}
+
+for (const spec of PLANE_LOOP_SPECS) {
+  const fullKm = Math.round(2 * Math.PI * spec.rKm);
+  const halfKm = Math.round(Math.PI * spec.rKm);
+  const b = spec.body;
+  MISSION_I18N[`plane_loop_${b}`] = {
+    vi: {
+      name: `Bay một vòng ${spec.viName}`,
+      desc: `Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay trọn 1 vòng chu vi trong bầu khí quyển quanh ${spec.viName} (${spec.viSub} · Chu vi ${fullKm} km).`,
+      objs: {
+        [`${b}PlaneHalfLoop`]: `Bay được nửa vòng ${spec.viName} (${halfKm} km)`,
+        [`${b}PlaneFullLoop`]: `Bay hoàn thành đủ 1 vòng ${spec.viName} (${fullKm} km)`,
+      },
+    },
+    en: {
+      name: `Fly 1 Lap Around ${spec.enName}`,
+      desc: `Pilot the F-22 Fighter Jet (or enable Autopilot G) for a full circumference lap through the atmosphere of ${spec.enName} (${spec.enSub} · Circumference ${fullKm} km).`,
+      objs: {
+        [`${b}PlaneHalfLoop`]: `Fly half a lap around ${spec.enName} (${halfKm} km)`,
+        [`${b}PlaneFullLoop`]: `Complete 1 full lap around ${spec.enName} (${fullKm} km)`,
+      },
+    },
+  };
+}
 
 const BODY_LABELS = {
   sun: { vi: 'Mặt Trời', en: 'Sun' },
@@ -1424,6 +1536,9 @@ export function applyLanguage(lang, app) {
 
   // Modals: Mission, Pause (#menu), Settings (#settings), Result (#result)
   setTxt('#mission-modal h2', '🎯 Nhiệm vụ', '🎯 Select Mission');
+  setTxt('#btn-mcat-rocket', '🚀 Nhiệm vụ Tên lửa & Vũ trụ', '🚀 Space & Rocket Missions');
+  setTxt('#btn-mcat-rover', '🚙 Nhiệm vụ Xe Rover', '🚙 Rover Missions');
+  setTxt('#btn-mcat-plane', '✈️ Nhiệm vụ Máy bay', '✈️ Airplane Missions');
   setTxt('#btn-mission-close', 'Đóng', 'Close');
   setAttr('#btn-mission-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
 

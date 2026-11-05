@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
-import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack } from '../rocket.js';
+import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
@@ -454,7 +454,9 @@ export class BuildScene {
     card.dataset.part = type;
     const badgeTxt = def.thrustVac
       ? `🔥${def.thrustVac}`
-      : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+      : def.isGunBattery
+        ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+        : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
     const shortName = this.getPartCardLabel(type, def);
     card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
     card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
@@ -538,6 +540,9 @@ export class BuildScene {
       if (shownParts.has(type)) continue;
       if (!this.partMatchesSearch(type, def, q)) continue;
       (cats[def.cat] = cats[def.cat] || []).push(type);
+      if (type === 'batteryPackL' && !q.trim() && PARTS.batteryGun && !shownParts.has('batteryGun')) {
+        cats[def.cat].push('batteryGun');
+      }
     }
     for (const [cat, types] of Object.entries(cats)) {
       const h = document.createElement('div');
@@ -633,7 +638,12 @@ export class BuildScene {
   renderMissionCards() {
     const cards = $('mission-cards');
     if (!cards) return;
-    cards.innerHTML = MISSIONS.map((m) => {
+    const cat = this.missionCategory || 'rocket';
+    document.querySelectorAll('#mission-cat-seg button[data-mcat]').forEach((btn) => {
+      btn.classList.toggle('on', btn.dataset.mcat === cat);
+    });
+    const list = MISSIONS.filter((m) => (m.category || 'rocket') === cat);
+    cards.innerHTML = list.map((m) => {
       const active = m.id === (this.missionId || 'free') ? 'active' : '';
       const done = isMissionCompleted(m.id);
       const doneClass = done ? 'completed' : '';
@@ -783,12 +793,28 @@ export class BuildScene {
 
     // mission picker & preset modal
     this.missionId = 'free';
+    this.missionCategory = 'rocket';
+    if ($('mission-cat-seg')) {
+      $('mission-cat-seg').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-mcat]');
+        if (!btn) return;
+        this.missionCategory = btn.dataset.mcat || 'rocket';
+        this.renderMissionCards();
+        const cards = $('mission-cards');
+        if (cards) cards.scrollTop = 0;
+        audio.click();
+      });
+    }
     this.renderMissionCards();
     const closeMissionModal = () => {
       $('mission-modal').classList.add('hidden');
       audio.click();
     };
     $('btn-mission').onclick = () => {
+      const curM = missionById(this.missionId || 'free');
+      if (curM && curM.category) {
+        this.missionCategory = curM.category;
+      }
       this.renderMissionCards();
       $('mission-modal').classList.remove('hidden');
     };
@@ -915,6 +941,15 @@ export class BuildScene {
           fl.position.set(Math.cos(pl.angle) * 0.7, 0, 0);
           fl.rotation.y = -pl.angle;
           obj.add(fl);
+        }
+      }
+      else if (type === 'batteryGun') {
+        obj = new THREE.Group();
+        for (const pl of radialPlacements(type)) {
+          const sl = buildPart(type);
+          sl.position.set(-Math.cos(pl.angle) * 0.42, 0.22, 0);
+          sl.rotation.y = -pl.angle;
+          obj.add(sl);
         }
       }
       else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
@@ -1168,6 +1203,26 @@ export class BuildScene {
       // topmost tank of the bottom stage (directly below the lowest decoupler)
       const idx = stages[stages.length - 1] || [];
       for (const i of idx) if (isTank(i)) { if (!st[i].attach.includes('gridfins')) { st[i].attach.push('gridfins'); placed = true; } break; }
+    } else if (type === 'batteryGun') {
+      let firstAttachedIdx = -1;
+      for (let i = 0; i < st.length; i++) {
+        if (canPartAttachToStack('batteryGun', st, i) && !st[i].attach.includes('batteryGun')) {
+          st[i].attach.push('batteryGun');
+          if (firstAttachedIdx < 0) firstAttachedIdx = i;
+          placed = true;
+        }
+      }
+      if (!placed) {
+        const existingIdx = st.findIndex((it) => it.attach && it.attach.includes('batteryGun'));
+        if (existingIdx >= 0) {
+          this.select({ index: existingIdx, attach: 'batteryGun' });
+          audio.click();
+          this.rebuild(true);
+          return;
+        }
+      } else if (firstAttachedIdx >= 0) {
+        this.select({ index: firstAttachedIdx, attach: 'batteryGun' });
+      }
     } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
       // For solarPanel, prefer battery packs first so it recharges battery energy
       if (type === 'solarPanel') {
@@ -1410,6 +1465,13 @@ export class BuildScene {
       const a = this.stack[sel.index].attach;
       a.splice(a.indexOf(sel.attach), 1);
       if (this.stack[sel.index].attachRot) delete this.stack[sel.index].attachRot[sel.attach];
+      if (isWeaponPart(sel.attach) && !a.some(isWeaponPart)) {
+        const bgIdx = a.indexOf('batteryGun');
+        if (bgIdx >= 0) {
+          a.splice(bgIdx, 1);
+          if (this.stack[sel.index].attachRot) delete this.stack[sel.index].attachRot.batteryGun;
+        }
+      }
     } else this.stack.splice(sel.index, 1);
     this.select(null);
     audio.click();
@@ -1476,14 +1538,15 @@ export class BuildScene {
     twrEl.style.color = twr >= 1.2 ? 'var(--ok)' : twr >= 1 ? '#ffd23d' : 'var(--danger)';
     $('st-dv').textContent = Math.round(st.totalDv) + ' m/s';
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
-    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.solarOnBattery ? ' ☀️⚡' : ''}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
+    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.solarOnBattery ? ' ☀️⚡' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
+    const hasGunBat = st.stages.some((s) => s.hasGunBattery);
     const allWarnings = [...st.warnings];
     if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
     w.innerHTML = allWarnings.length
       ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
-      : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}</div>`;
+      : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
     $('btn-launchpad').disabled = !st.canLaunch;
     this.stats = st;
   }

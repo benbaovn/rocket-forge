@@ -35,7 +35,7 @@ export function stackFromTypes(list) {
  */
 export function partVehicleType(type) {
   if (!type || !PARTS[type]) return 'rocket';
-  if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'solarPanel') {
+  if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun' || type === 'solarPanel') {
     return 'any';
   }
   if (type.endsWith('Rover')) return 'rover';
@@ -60,12 +60,37 @@ export function stackVehicleType(stack) {
   return null;
 }
 
+export function isWeaponPart(type) {
+  return type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric';
+}
+
+export function isBigBatteryPart(type) {
+  if (!type || !PARTS[type]) return false;
+  return type === 'batteryPack' || type === 'batteryPackL' || type === 'ufoSaucer' || type === 'chassisRover' || !!PARTS[type].isBattery;
+}
+
 /**
  * Returns true if `type` is allowed to attach to or be inserted into `stack`.
  * Rocket parts cannot attach to Rover, Boat, or Plane parts (and vice versa).
+ * Boats cannot mount weapons (guns) or gun batteries.
+ * Ultra-tiny gun battery (`batteryGun`) attaches onto guns on regular-fuel rockets.
  */
 export function canPartAttachToStack(type, stack, targetIndex = null) {
   if (!type || !PARTS[type]) return false;
+  const vStack = stackVehicleType(stack);
+  if ((isWeaponPart(type) || type === 'batteryGun') && vStack === 'boat') return false;
+  if (targetIndex !== null && stack?.[targetIndex] && (isWeaponPart(type) || type === 'batteryGun') && partVehicleType(stack[targetIndex].type) === 'boat') {
+    return false;
+  }
+  if (type === 'batteryGun') {
+    if (!Array.isArray(stack) || stack.length === 0) return false;
+    if (targetIndex !== null && stack[targetIndex]) {
+      const targetIt = stack[targetIndex];
+      if (isBigBatteryPart(targetIt.type)) return false;
+      return Array.isArray(targetIt.attach) && targetIt.attach.some(isWeaponPart);
+    }
+    return stack.some((it) => !isBigBatteryPart(it.type) && partVehicleType(it.type) !== 'boat' && Array.isArray(it.attach) && it.attach.some(isWeaponPart));
+  }
   const vNew = partVehicleType(type);
   if (vNew === 'any') return true;
   if (!Array.isArray(stack) || stack.length === 0) {
@@ -76,7 +101,6 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
     const vTarget = partVehicleType(stack[targetIndex].type);
     if (vTarget !== 'any' && vNew !== vTarget) return false;
   }
-  const vStack = stackVehicleType(stack);
   if (vStack !== null && vNew !== vStack) return false;
   return true;
 }
@@ -85,6 +109,25 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
 export function getIncompatibilityWarning(type, stack) {
   const vNew = partVehicleType(type);
   const vStack = stackVehicleType(stack);
+  if ((isWeaponPart(type) || type === 'batteryGun') && vStack === 'boat') {
+    return tr(
+      'Thuyền không gắn được súng / vũ khí!',
+      'Boats cannot mount guns / weapons!'
+    );
+  }
+  if (type === 'batteryGun') {
+    const hasOnlyBigBat = Array.isArray(stack) && stack.length > 0 && stack.some((it) => isBigBatteryPart(it.type)) && !stack.some((it) => !isBigBatteryPart(it.type) && Array.isArray(it.attach) && it.attach.some(isWeaponPart));
+    if (hasOnlyBigBat) {
+      return tr(
+        'Pin Siêu Siêu Nhỏ (Gắn Súng) dành cho tên lửa xài nhiên liệu thường! Tàu dùng Cục Pin Năng Lượng / Rover đã có sẵn nguồn pin cho súng.',
+        'Ultra-Tiny Gun Battery is for regular-fuel rockets! Craft with a Quantum Battery Pack / Rover already power their guns.'
+      );
+    }
+    return tr(
+      'Pin Siêu Siêu Nhỏ phải gắn vào Súng! Hãy gắn Súng (Lazer / Nước / Acid / Điện) lên tên lửa nhiên liệu thường trước.',
+      'Ultra-Tiny Gun Battery attaches onto a Gun! Attach a Gun (Laser / Water / Acid / Electric) to your regular-fuel rocket first.'
+    );
+  }
   const nameOf = (v) => {
     if (v === 'rover') return tr('Xe Rover', 'Rover');
     if (v === 'boat') return tr('Thuyền', 'Boat');
@@ -107,7 +150,10 @@ export function sanitizeStack(stack) {
     const vt = partVehicleType(it.type);
     if (vt !== 'any' && vt !== vStack) continue;
     if (Array.isArray(it.attach)) {
+      const hasGun = it.attach.some(isWeaponPart);
       it.attach = it.attach.filter((a) => {
+        if (vStack === 'boat' && (isWeaponPart(a) || a === 'batteryGun')) return false;
+        if (a === 'batteryGun' && (!hasGun || isBigBatteryPart(it.type))) return false;
         const va = partVehicleType(a);
         return va === 'any' || va === vStack;
       });
@@ -142,7 +188,7 @@ export const PRESETS = {
   'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
   'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon', 'apollo11SM+gunLaser+waterCannon', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
-  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel+gunLaser+waterCannon', 'motorBoat'],
+  'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel', 'motorBoat'],
   'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tailPlane', 'engJet'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
@@ -152,16 +198,25 @@ export const PRESETS = {
 
 export function ensureStackHasWeapons(stack) {
   if (!Array.isArray(stack) || !stack.length) return stack;
-  const boatHull = stack.find((it) => it.type === 'hullBoat');
-  if (boatHull && !stack.some((it) => it.attach && (it.attach.includes('solarPanel') || it.attach.includes('solarRover')))) {
-    boatHull.attach.push('solarPanel');
+  const isBoatStack = stack.some((it) => it.type.includes('Boat') || (it.attach && it.attach.some((a) => a.includes('Boat'))));
+  if (isBoatStack) {
+    const boatHull = stack.find((it) => it.type === 'hullBoat');
+    if (boatHull && !stack.some((it) => it.attach && (it.attach.includes('solarPanel') || it.attach.includes('solarRover')))) {
+      boatHull.attach.push('solarPanel');
+    }
+    for (const it of stack) {
+      if (Array.isArray(it.attach)) {
+        it.attach = it.attach.filter((a) => !isWeaponPart(a));
+      }
+    }
+    return stack;
   }
   const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')));
   if (hasWeapon) return stack;
   // Find best upper-stage body/tank part to mount weapons
   let target = stack.find((it) => {
     const d = PARTS[it.type];
-    return d && (d.cat === 'Nhiên liệu' || it.type === 'chassisRover' || it.type === 'hullBoat' || it.type === 'fuselagePlane');
+    return d && (d.cat === 'Nhiên liệu' || it.type === 'chassisRover' || it.type === 'fuselagePlane');
   }) || stack[0];
   if (target) {
     if (!target.attach.includes('gunLaser')) target.attach.push('gunLaser');
@@ -216,7 +271,7 @@ export function segmentInfo(stack, idx) {
     tSL: 0, tVac: 0, mdot: 0,
     tChemSL: 0, tChemVac: 0, mdotChem: 0, chemEngines: 0,
     tAntiGrav: 0, mdotAntiGrav: 0, tLaser: 0, mdotLaser: 0,
-    batteryCount: 0, hasSolar: false, solarOnBattery: 0,
+    batteryCount: 0, hasSolar: false, solarOnBattery: 0, hasGunBattery: false,
     bDry: 0, bFuel: 0, bTSL: 0, bTVac: 0, bMdot: 0,
     fins: false, engines: 0, engCount: 0, restart: false,
     legs: false, gridfins: false, antiGrav: false, laser: false,
@@ -259,6 +314,7 @@ export function segmentInfo(stack, idx) {
       const ad = PARTS[a];
       if (!ad) continue;
       const cnt = ad.count || 2;
+      if (a === 'batteryGun') s.hasGunBattery = true;
       if (a === 'solarPanel' || a === 'solarRover') {
         s.hasSolar = true;
         if (isBatPart || hasRadialBat) {
@@ -303,15 +359,9 @@ export function segmentInfo(stack, idx) {
       }
     }
   }
-  const hasBoatPart = idx.some((i) => stack[i]?.type?.includes('Boat') || stack[i]?.attach?.some((a) => a.includes('Boat')));
-  if (hasBoatPart && s.chemEngines === 0 && !s.antiGrav && !s.laser) {
-    s.tChemSL += 260;
-    s.tChemVac += 260;
-    s.mdotChem += 260 / (800 * G0);
-    s.chemEngines++;
-    s.engines++;
-    s.engCount++;
-    if (s.chemFuel <= 0) s.chemFuel = 4.5;
+  const hasMotorBoat = idx.some((i) => stack[i]?.type === 'motorBoat' || stack[i]?.attach?.includes('motorBoat'));
+  if (hasMotorBoat && s.chemFuel <= 0) {
+    s.chemFuel = 4.5;
   }
   const hasSciFi = s.antiGrav || s.laser;
   if (hasSciFi && s.batteryFuel <= 0) {
@@ -380,7 +430,7 @@ export function computeStats(stack) {
       t += fuelLeft / s.mdot;
     }
     const thrust = first ? s.tSL + s.bTSL : s.tVac + s.bTVac;
-    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0 });
+    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery });
     totalDv += dv;
     remainingAbove -= s.mass;
   }
@@ -394,8 +444,11 @@ export function computeStats(stack) {
     if (!stack.some((it) => it.type === 'cockpitRover')) warnings.push(tr('Xe Rover nên có Cabin xe để điều khiển.', 'Rover should have a Rover Cockpit to steer.'));
     if (!stack.some((it) => it.attach.includes('wheelsRover'))) warnings.push(tr('Xe Rover cần gắn Bánh xe địa hình ×4 để di chuyển.', 'Rover needs Off-Road Wheels ×4 to drive.'));
   } else if (isBoat) {
-    if (!stack.some((it) => it.type === 'cabinBoat')) warnings.push(tr('Thuyền nên có Cabin canô để lái.', 'Boat should have a Speedboat Cabin to steer.'));
-    if (!stack.some((it) => it.type === 'hullBoat')) warnings.push(tr('Thuyền cần có Thân thuyền chữ V để nổi và lướt sóng.', 'Boat needs a V-Hull Boat Body to float on water.'));
+    if (!stack.some((it) => it.type === 'cabinBoat')) warnings.push(tr('Thuyền nên có Đài Chỉ Huy & Sky-Lounge để lái.', 'Boat should have a Superyacht Bridge & Sky-Lounge to steer.'));
+    if (!stack.some((it) => it.type === 'hullBoat')) warnings.push(tr('Thuyền cần có Thân Siêu Du Thuyền để nổi và lướt sóng.', 'Boat needs a Superyacht Hull to float on water.'));
+    if (!stack.some((it) => it.type === 'motorBoat' || it.attach.includes('motorBoat'))) {
+      warnings.push(tr('Thuyền chưa có Động Cơ Hydro-Jet & Chân Vịt Kép!', 'Boat has no Twin Azimuth Pod & Plasma Hydro-Jet Engine!'));
+    }
   } else if (isPlane) {
     if (!stack.some((it) => it.type === 'cockpitPlane')) warnings.push(tr('Máy bay nên có Buồng lái tiêm kích để quan sát và điều khiển.', 'Aircraft should have a Fighter Jet Cockpit.'));
     if (!stack.some((it) => it.attach.includes('wingsPlane'))) warnings.push(tr('Máy bay cần gắn Cánh nâng phản lực ×2 để tạo lực nâng cất cánh.', 'Aircraft needs Swept Jet Wings ×2 for lift.'));
@@ -427,8 +480,18 @@ export function computeStats(stack) {
     const bottom = stack[stack.length - 1];
     if (bottom && !PARTS[bottom.type].thrustVac) warnings.push(tr('Phần dưới cùng nên là động cơ.', 'The bottom part should be an engine.'));
   }
-  if (stack.length && !stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')))) {
+  const hasAnyWeapon = stack.some((it) => it.attach && it.attach.some(isWeaponPart));
+  if (stack.length && !isBoat && !hasAnyWeapon) {
     warnings.push(tr('Tên lửa chưa có vũ khí (Súng Lazer / Máy Phun Nước 1M PSI / Súng Acid / Súng Điện 1M WATT) để bắn Alien!', 'Rocket has no weapons (Laser Gun / 1M PSI Water Cannon / Acid Gun / 1M WATT Electric Gun) to shoot Aliens!'));
+  } else if (stack.length && !isBoat && hasAnyWeapon) {
+    const hasBigBat = stack.some((it) => isBigBatteryPart(it.type) || (it.attach && it.attach.some(isBigBatteryPart)));
+    const hasGunBat = stack.some((it) => it.attach && it.attach.includes('batteryGun'));
+    if (!hasBigBat && !hasGunBat) {
+      warnings.push(tr(
+        'Súng chỉ xài Pin! Tên lửa xài nhiên liệu thường cần gắn thêm "Pin Siêu Siêu Nhỏ (Gắn Súng)" vào súng mới bắn được!',
+        'Guns only run on Battery! Regular-fuel rockets must attach the "Ultra-Tiny Gun Battery" onto their guns to fire!'
+      ));
+    }
   }
   const st1Info = infos[infos.length - 1];
   const st1Seg = segs[segs.length - 1] || [];
@@ -438,7 +501,8 @@ export function computeStats(stack) {
     (st1Info.bTSL > 0 && st1Info.bFuel > 0) ||
     st1HasRoverDrive
   );
-  const canLaunch = stack.length > 0 && (isBoat || st1HasEngineAndFuel);
+  const hasMotorBoat = stack.some((it) => it.type === 'motorBoat' || it.attach.includes('motorBoat'));
+  const canLaunch = stack.length > 0 && (isBoat ? hasMotorBoat : st1HasEngineAndFuel);
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
 }
 
@@ -451,6 +515,24 @@ export function computeStats(stack) {
  *  - nozzles[i].center === true for the engReuse centre engine
  * Coordinates: y = 0 at very bottom of stack.
  */
+function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
+  const isUfo = itemType === 'ufoSaucer';
+  const isBuran = itemType.startsWith('buran') || itemType.startsWith('energia') || itemType.startsWith('shuttle');
+  const isCz5 = itemType.startsWith('cz5') || itemType.startsWith('ariane5') || itemType === 'slsStage2' || itemType === 'slsStage1' || itemType === 'fhFairing' || itemType.startsWith('starship');
+  const isSlsOrion = itemType === 'slsOrion' || itemType.startsWith('atlasV') || itemType.startsWith('f9') || itemType === 'fhStage2' || itemType.startsWith('proton') || itemType.startsWith('d4h') || itemType.startsWith('titan4');
+  const effH = (itemType === 'saturnApollo' || itemType === 'apollo11CM' || itemType === 'soyuzNose' || itemType === 'n1Tower' || itemType === 'buranNose' || itemType === 'energiaNose' || itemType === 'cz5Fairing' || itemType === 'ariane5Fairing' || itemType === 'slsOrion' || itemType === 'atlasVFairing' || itemType === 'fhFairing' || itemType === 'f9Dragon' || itemType === 'shuttleNose' || itemType === 'protonFairing' || itemType === 'd4hFairing' || itemType === 'titan4Fairing' || itemType === 'starshipNose') ? 3.6 : defHeight;
+  let ufoDist = 3.85, ufoY = 1.32, hFrac = 0.72;
+  if (gunType === 'waterCannon') { ufoDist = 3.15; ufoY = 0.62; hFrac = 0.28; }
+  else if (gunType === 'gunAcid') { ufoDist = 3.50; ufoY = 0.98; hFrac = 0.56; }
+  else if (gunType === 'gunElectric') { ufoDist = 3.30; ufoY = 0.80; hFrac = 0.42; }
+  const effDist = isUfo ? ufoDist : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
+  return {
+    posX: Math.cos(pl.angle) * effDist,
+    posY: isUfo ? (pY + ufoY) : (pY + effH * hFrac),
+    posZ: Math.sin(pl.angle) * effDist + (pl.offsetZ || 0),
+  };
+}
+
 export function buildRocket(stack) {
   const root = new THREE.Group();
   const lay = layout(stack);
@@ -496,14 +578,40 @@ export function buildRocket(stack) {
     }
     if (p.item.type === 'dockPort' && !dockPort) dockPort = { obj, seg: k };
     const att = p.item.attach;
+    const isBoatItem = stackVehicleType(stack) === 'boat' || p.item.type.includes('Boat');
     for (const a of att) {
       if (!PARTS[a]) continue;
+      if (isBoatItem && (isWeaponPart(a) || a === 'batteryGun')) continue;
       const attRot = (p.item.attachRot && p.item.attachRot[a]) || [0, 0, 0];
       let places = radialPlacements(a);
       // avoid overlaps when several radial types share one tank
       if (a === 'fins' && att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: i * Math.PI / 2, dist: 0 }));
       if (a === 'gridfins' && att.includes('booster') && !att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: Math.PI / 4 + i * Math.PI / 2, dist: 0 }));
       const group = [];
+      if (a === 'batteryGun') {
+        const gunsOnPart = att.filter(isWeaponPart);
+        const targetGuns = gunsOnPart.length > 0 ? gunsOnPart : ['gunLaser'];
+        for (const gType of targetGuns) {
+          for (const pl of places) {
+            const ao = buildPart('batteryGun');
+            ao.userData.index = p.index;
+            ao.userData.attach = 'batteryGun';
+            ao.userData.itemId = p.item.id;
+            const { posX, posY, posZ } = getGunPlacementCoords(p.item.type, p.def.height, p.y, gType, pl);
+            const pivot = new THREE.Group();
+            pivot.position.set(posX, posY, posZ);
+            pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
+            pivot.userData.index = p.index;
+            pivot.userData.attach = 'batteryGun';
+            pivot.userData.itemId = p.item.id;
+            ao.rotation.set(attRot[0], attRot[1], attRot[2]);
+            pivot.add(ao);
+            segGroups[k].add(pivot);
+            group.push(ao);
+          }
+        }
+        continue;
+      }
       for (const pl of places) {
         const ao = buildPart(a);
         ao.userData.index = p.index;
@@ -626,8 +734,14 @@ export function buildRocket(stack) {
       }
       if (a === 'legs' || a === 'gridfins' || a === 'gearPlane') deployables.push({ seg: k, type: a === 'gearPlane' ? 'legs' : a, isGearPlane: a === 'gearPlane', objs: group, partIndex: p.index });
       if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
+        const segHasBigBat = segs[k].some((idx) => {
+          const stIt = stack[idx];
+          return isBigBatteryPart(stIt?.type) || (stIt?.attach && stIt.attach.some(isBigBatteryPart));
+        });
+        const stackHasGunBat = att.includes('batteryGun') || segs[k].some((idx) => stack[idx]?.attach?.includes('batteryGun')) || stack.some((stIt) => stIt?.attach?.includes('batteryGun'));
+        const powered = segHasBigBat || stackHasGunBat;
         for (const ao of group) {
-          weapons.push({ seg: k, type: a, weaponType: PARTS[a].weapon, obj: ao, muzzle: ao.userData.muzzle, turret: ao.userData.turret });
+          weapons.push({ seg: k, partIndex: p.index, type: a, weaponType: PARTS[a].weapon, obj: ao, muzzle: ao.userData.muzzle, turret: ao.userData.turret, powered, usesBigBattery: segHasBigBat && !stackHasGunBat, hasGunBattery: stackHasGunBat });
         }
       }
     }

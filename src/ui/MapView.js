@@ -2408,13 +2408,14 @@ export class MapView {
     this.telemetryBox.innerHTML = html;
 
     if (this.btnMapTeleport) {
-      if (this.focus === 'iss') {
+      const isPlane = !!S.vessel?.isPlane;
+      if (this.focus === 'iss' && !isPlane) {
         this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới Trạm ISS', '⚡ Teleport Craft to ISS');
         this.btnMapTeleport.classList.remove('hidden');
-      } else if (this.focus === 'oort') {
+      } else if (this.focus === 'oort' && !isPlane) {
         this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới ☄️ Đám mây Oort', '⚡ Teleport Craft to ☄️ Oort Cloud');
         this.btnMapTeleport.classList.remove('hidden');
-      } else if (BODIES[this.focus]) {
+      } else if (BODIES[this.focus] && (!isPlane || (this.focus !== 'sun' && (BODIES[this.focus].atm || 0) > 0 && (BODIES[this.focus].rho0 || 0) > 0))) {
         const fB = BODIES[this.focus];
         this.btnMapTeleport.textContent = `⚡ ${tr('Dịch chuyển tàu tới', 'Teleport Craft to')} ${fB.icon} ${fB.label}`;
         this.btnMapTeleport.classList.remove('hidden');

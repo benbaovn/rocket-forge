@@ -26,10 +26,11 @@ export const PARTS = {
   legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
-  gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien ngoài vũ trụ, trên hành tinh & mặt trăng (Phím V)' },
-  waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương đánh bay và nghiền nát Alien (Phím V)' },
-  gunAcid: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'acid', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° bắn tia dịch độc xanh lục làm tan chảy giáp và rút máu Alien liên tục (Phím V)' },
-  gunElectric: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'electric', desc: 'Cặp pháo điện Tesla 1,000,000 WATT xoay 360° phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh (Phím V)' },
+  gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+  waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương nghiền nát Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+  gunAcid: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'acid', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° làm tan chảy giáp và rút máu Alien liên tục · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+  gunElectric: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'electric', desc: 'Cặp pháo điện Tesla 1,000,000 WATT phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
+  batteryGun: { name: 'Pin Siêu Siêu Nhỏ (Gắn Súng) ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.005, isGunBattery: true, desc: 'Cục pin vi mô siêu siêu nhỏ (0.005 tấn) gắn trực tiếp vào Súng (Lazer / Nước / Acid / Điện) dành riêng cho tên lửa xài nhiên liệu thường (vì súng chỉ hoạt động bằng pin)' },
   booster: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', kind: 'radial', count: 2, height: 11.8, dry: 1.8, fuel: 14, thrustSL: 1100, thrustVac: 1200, ispSL: 240, ispVac: 265, desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
   cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
   chassisRover: { name: 'Khung gầm Rover', cat: 'Xe', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
@@ -320,6 +321,7 @@ const builders = {
   waterCannon() { return buildWaterCannon(); },
   gunAcid() { return buildGunAcid(); },
   gunElectric() { return buildGunElectric(); },
+  batteryGun() { return buildBatteryGun(); },
 
   tankS() { return tank(PARTS.tankS.height, MAT.white, true); },
   tankM() { return tank(PARTS.tankM.height, MAT.checker, false); },
@@ -1699,6 +1701,66 @@ function buildGunElectric() {
   g.userData.turret = turret;
   g.userData.muzzle = muzzle;
   g.userData.weaponType = 'electric';
+  return g;
+}
+
+function buildBatteryGun() {
+  const g = new THREE.Group();
+  const cellCyan = new THREE.MeshStandardMaterial({
+    color: 0x00e5ff,
+    emissive: new THREE.Color(0x00b8d4),
+    emissiveIntensity: 2.35,
+    roughness: 0.15,
+    metalness: 0.3,
+  });
+  const cellEmerald = new THREE.MeshStandardMaterial({
+    color: 0x10b981,
+    emissive: new THREE.Color(0x059669),
+    emissiveIntensity: 2.0,
+    roughness: 0.18,
+    metalness: 0.3,
+  });
+  const cellRuby = new THREE.MeshStandardMaterial({
+    color: 0xff1744,
+    emissive: new THREE.Color(0xd50000),
+    emissiveIntensity: 2.05,
+    roughness: 0.18,
+    metalness: 0.3,
+  });
+
+  // Ultra-tiny micro-battery pack positioned at (0.62, -0.22, 0) so it clamps directly onto the base of the gun turret
+  const pack = new THREE.Group();
+  pack.position.set(0.62, -0.22, 0);
+  g.add(pack);
+
+  // Miniature carbon-titanium battery housing core
+  pack.add(mesh(new THREE.BoxGeometry(0.24, 0.14, 0.28), MAT.carbon, 0, 0, 0));
+  pack.add(mesh(new THREE.BoxGeometry(0.26, 0.032, 0.30), MAT.titanium, 0, 0.068, 0));
+  pack.add(mesh(new THREE.BoxGeometry(0.26, 0.032, 0.30), MAT.titanium, 0, -0.068, 0));
+
+  // 3 glowing quantum micro-cell charge indicator bars along the outer face
+  pack.add(mesh(new THREE.BoxGeometry(0.252, 0.028, 0.062), cellCyan, 0.008, 0, -0.082));
+  pack.add(mesh(new THREE.BoxGeometry(0.252, 0.028, 0.062), cellEmerald, 0.008, 0, 0));
+  pack.add(mesh(new THREE.BoxGeometry(0.252, 0.028, 0.062), cellRuby, 0.008, 0, 0.082));
+
+  // Twin ultra-compact cylindrical supercapacitor cells on front/back flanks with copper micro-coils
+  for (const sz of [-0.155, 0.155]) {
+    pack.add(mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.14, 18), MAT.darkMetal, 0.01, 0, sz));
+    pack.add(mesh(new THREE.CylinderGeometry(0.051, 0.051, 0.042, 18), cellCyan, 0.01, 0, sz));
+    for (const cy of [-0.042, 0.042]) {
+      pack.add(mesh(new THREE.TorusGeometry(0.051, 0.009, 8, 18).rotateX(Math.PI / 2), MAT.copper, 0.01, cy, sz));
+    }
+    pack.add(mesh(new THREE.SphereGeometry(0.048, 12, 10), MAT.gold, 0.01, 0.07, sz));
+    pack.add(mesh(new THREE.SphereGeometry(0.048, 12, 10), MAT.silver, 0.01, -0.07, sz));
+  }
+
+  // Magnetic C-clamp brackets & gold high-voltage terminals plugging directly up into the gun turret base
+  for (const sz of [-0.09, 0.09]) {
+    pack.add(mesh(new THREE.BoxGeometry(0.045, 0.12, 0.036), MAT.titanium, -0.08, 0.10, sz));
+    pack.add(mesh(new THREE.CylinderGeometry(0.020, 0.024, 0.10, 12), MAT.gold, 0.04, 0.11, sz));
+    pack.add(mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.13, 12), cellCyan, 0.04, 0.14, sz));
+  }
+
   return g;
 }
 
@@ -13070,7 +13132,7 @@ export function radialPlacements(type) {
       { angle: Math.PI, dist: 1.12, offsetZ: 0 },
     ];
   }
-  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
+  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun') {
     return [
       { angle: 0, dist: R - 0.05, offsetZ: 0 },
       { angle: Math.PI, dist: R - 0.05, offsetZ: 0 },

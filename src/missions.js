@@ -6,48 +6,6 @@ export const MISSIONS = [
     objectives: [],
   },
   {
-    id: 'alien100', icon: '👽', name: 'Tiêu diệt 100 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
-    noAutopilot: true,
-    desc: 'Tự điều khiển tàu chiến lên vũ trụ hoặc các hành tinh/mặt trăng và tiêu diệt đủ 100 UFO Alien bằng Súng Lazer hoặc Máy Phun Nước 1,000,000 PSI (Không có chế độ Lái tự động).',
-    objectives: [
-      { id: 'kill25', text: 'Tiêu diệt 25 UFO Alien' },
-      { id: 'kill50', text: 'Tiêu diệt 50 UFO Alien' },
-      { id: 'kill100', text: 'Tiêu diệt đủ 100 UFO Alien' },
-    ],
-  },
-  {
-    id: 'alien500', icon: '👾', name: 'Đại chiến 500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
-    noAutopilot: true,
-    desc: 'Chiến dịch quy mô tổng lực: Tự tay lái chiến hạm tiêu diệt đủ 500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
-    objectives: [
-      { id: 'kill100', text: 'Tiêu diệt 100 UFO Alien' },
-      { id: 'kill250', text: 'Tiêu diệt 250 UFO Alien' },
-      { id: 'kill500', text: 'Tiêu diệt toàn bộ 500 UFO Alien' },
-    ],
-  },
-  {
-    id: 'alien1500', icon: '👑', name: 'Hủy diệt 1500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
-    noAutopilot: true,
-    desc: 'Cuộc chiến sinh tồn tối thượng: Tự tay lái chiến hạm tiêu diệt đủ 1500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước, Súng Acid, Súng Điện hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
-    objectives: [
-      { id: 'kill300', text: 'Tiêu diệt 300 UFO Alien' },
-      { id: 'kill750', text: 'Tiêu diệt 750 UFO Alien' },
-      { id: 'kill1500', text: 'Tiêu diệt toàn bộ 1500 UFO Alien' },
-    ],
-  },
-  {
-    id: 'alien5000', icon: '⚔️', name: 'Tiêu diệt 5000 Alien + Hoàng Hậu & Vua (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
-    noAutopilot: true,
-    desc: 'Thánh chiến tận thế: Tự tay lái chiến hạm tiêu diệt đủ 5000 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao, đồng thời hạ gục cả Siêu Trùm Alien Hoàng Hậu (90.500 HP) và Alien Vua (100.000 HP) ở độ cao 1.000.000.000 km (Không có chế độ Lái tự động).',
-    objectives: [
-      { id: 'kill1000', text: 'Tiêu diệt 1000 UFO Alien' },
-      { id: 'kill2500', text: 'Tiêu diệt 2500 UFO Alien' },
-      { id: 'kill5000', text: 'Tiêu diệt toàn bộ 5000 UFO Alien' },
-      { id: 'killQueen', text: 'Tiêu diệt Siêu Trùm Alien Hoàng Hậu (90.500 HP)' },
-      { id: 'killKing', text: 'Tiêu diệt Siêu Trùm Alien Vua (100.000 HP)' },
-    ],
-  },
-  {
     id: 'orbit', icon: '🛰', name: 'Lên quỹ đạo', preset: 'Hai tầng (khuyên dùng)',
     desc: 'Đưa tên lửa vào quỹ đạo ổn định quanh Trái Đất (cận điểm trên 70 km).',
     objectives: [
@@ -126,16 +84,6 @@ export const MISSIONS = [
     ],
   },
   {
-    id: 'ceres', icon: '🪨', name: 'Thám hiểm Tiểu hành tinh Ceres', preset: 'Tàu Phản Trọng Lực Lượng Tử',
-    desc: 'Bay vào Vành đai Tiểu hành tinh chính giữa Sao Hỏa và Sao Mộc, vào quỹ đạo và đáp xuống tiểu hành tinh / hành tinh lùn Ceres với hố va chạm Occator sáng rực.',
-    objectives: [
-      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
-      { id: 'ceresSOI', text: 'Vào vùng hấp dẫn Ceres' },
-      { id: 'ceresOrbit', text: 'Vào quỹ đạo Ceres' },
-      { id: 'ceresLanded', text: 'Hạ cánh xuống Ceres' },
-    ],
-  },
-  {
     id: 'mercury', icon: '⚪', name: 'Hành trình Sao Thủy', preset: 'Apollo (Mặt Trăng)',
     desc: 'Bay xa tới Sao Thủy (Mercury), vào quỹ đạo và đáp xuống bề mặt đầy hố thiên thạch cổ đại.',
     objectives: [
@@ -143,6 +91,16 @@ export const MISSIONS = [
       { id: 'mercurySOI', text: 'Vào vùng hấp dẫn Sao Thủy' },
       { id: 'mercuryOrbit', text: 'Vào quỹ đạo Sao Thủy' },
       { id: 'mercuryLanded', text: 'Hạ cánh xuống Sao Thủy' },
+    ],
+  },
+  {
+    id: 'ceres', icon: '🪨', name: 'Thám hiểm Tiểu hành tinh Ceres', preset: 'Tàu Phản Trọng Lực Lượng Tử',
+    desc: 'Bay vào Vành đai Tiểu hành tinh chính giữa Sao Hỏa và Sao Mộc, vào quỹ đạo và đáp xuống tiểu hành tinh / hành tinh lùn Ceres với hố va chạm Occator sáng rực.',
+    objectives: [
+      { id: 'orbit', text: 'Vào quỹ đạo Trái Đất' },
+      { id: 'ceresSOI', text: 'Vào vùng hấp dẫn Ceres' },
+      { id: 'ceresOrbit', text: 'Vào quỹ đạo Ceres' },
+      { id: 'ceresLanded', text: 'Hạ cánh xuống Ceres' },
     ],
   },
   {
@@ -355,7 +313,169 @@ export const MISSIONS = [
       { id: 'erisLanded', text: 'Hạ cánh xuống Eris' },
     ],
   },
+  {
+    id: 'alien100', icon: '👽', name: 'Tiêu diệt 100 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Tự điều khiển tàu chiến lên vũ trụ hoặc các hành tinh/mặt trăng và tiêu diệt đủ 100 UFO Alien bằng Súng Lazer hoặc Máy Phun Nước 1,000,000 PSI (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill25', text: 'Tiêu diệt 25 UFO Alien' },
+      { id: 'kill50', text: 'Tiêu diệt 50 UFO Alien' },
+      { id: 'kill100', text: 'Tiêu diệt đủ 100 UFO Alien' },
+    ],
+  },
+  {
+    id: 'alien500', icon: '👾', name: 'Đại chiến 500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Chiến dịch quy mô tổng lực: Tự tay lái chiến hạm tiêu diệt đủ 500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill100', text: 'Tiêu diệt 100 UFO Alien' },
+      { id: 'kill250', text: 'Tiêu diệt 250 UFO Alien' },
+      { id: 'kill500', text: 'Tiêu diệt toàn bộ 500 UFO Alien' },
+    ],
+  },
+  {
+    id: 'alien1500', icon: '👑', name: 'Hủy diệt 1500 Alien (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Cuộc chiến sinh tồn tối thượng: Tự tay lái chiến hạm tiêu diệt đủ 1500 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao bằng Súng Lazer, Máy Phun Nước, Súng Acid, Súng Điện hoặc Siêu Tân Tinh (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill300', text: 'Tiêu diệt 300 UFO Alien' },
+      { id: 'kill750', text: 'Tiêu diệt 750 UFO Alien' },
+      { id: 'kill1500', text: 'Tiêu diệt toàn bộ 1500 UFO Alien' },
+    ],
+  },
+  {
+    id: 'alien5000', icon: '⚔️', name: 'Tiêu diệt 5000 Alien + Hoàng Hậu & Vua (Không tự lái)', preset: 'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)',
+    noAutopilot: true,
+    desc: 'Thánh chiến tận thế: Tự tay lái chiến hạm tiêu diệt đủ 5000 UFO Alien trên khắp Hệ Mặt Trời và Không gian Liên sao, đồng thời hạ gục cả Siêu Trùm Alien Hoàng Hậu (90.500 HP) và Alien Vua (100.000 HP) ở độ cao 1.000.000.000 km (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'kill1000', text: 'Tiêu diệt 1000 UFO Alien' },
+      { id: 'kill2500', text: 'Tiêu diệt 2500 UFO Alien' },
+      { id: 'kill5000', text: 'Tiêu diệt toàn bộ 5000 UFO Alien' },
+      { id: 'killQueen', text: 'Tiêu diệt Siêu Trùm Alien Hoàng Hậu (90.500 HP)' },
+      { id: 'killKing', text: 'Tiêu diệt Siêu Trùm Alien Vua (100.000 HP)' },
+    ],
+  },
+  // ================= ROVER MISSIONS (Sorted Easiest -> Hardest) =================
+  {
+    id: 'rover_500km', icon: '🚙', name: 'Chạy 500 km (Không tự lái)', preset: 'Xe địa hình Rover 4x4',
+    category: 'rover', noAutopilot: true, targetDistKm: 500,
+    desc: 'Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 500 km (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'roverDist100', text: 'Chạy đạt 100 km trên bề mặt', targetKm: 100 },
+      { id: 'roverDist250', text: 'Chạy đạt 250 km trên bề mặt', targetKm: 250 },
+      { id: 'roverDist500', text: 'Chạy hoàn thành đủ 500 km (Không tự lái)', targetKm: 500 },
+    ],
+  },
+  {
+    id: 'rover_1000km', icon: '🚙', name: 'Chạy 1000 km (Không tự lái)', preset: 'Xe địa hình Rover 4x4',
+    category: 'rover', noAutopilot: true, targetDistKm: 1000,
+    desc: 'Hành trình xuyên lục địa: Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 1000 km (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'roverDist250', text: 'Chạy đạt 250 km trên bề mặt', targetKm: 250 },
+      { id: 'roverDist500', text: 'Chạy đạt 500 km trên bề mặt', targetKm: 500 },
+      { id: 'roverDist1000', text: 'Chạy hoàn thành đủ 1000 km (Không tự lái)', targetKm: 1000 },
+    ],
+  },
+  {
+    id: 'rover_2000km', icon: '🚙', name: 'Chạy 2000 km (Không tự lái)', preset: 'Xe địa hình Rover 4x4',
+    category: 'rover', noAutopilot: true, targetDistKm: 2000,
+    desc: 'Thử thách viễn chinh đường trường: Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 2000 km (Không có chế độ Lái tự động).',
+    objectives: [
+      { id: 'roverDist500', text: 'Chạy đạt 500 km trên bề mặt', targetKm: 500 },
+      { id: 'roverDist1000', text: 'Chạy đạt 1000 km trên bề mặt', targetKm: 1000 },
+      { id: 'roverDist2000', text: 'Chạy hoàn thành đủ 2000 km (Không tự lái)', targetKm: 2000 },
+    ],
+  },
 ];
+
+// Planetary & Lunar 1-Lap Rover Missions (Sorted from smallest circumference / easiest to largest / hardest)
+export const ROVER_LOOP_SPECS = [
+  { body: 'deimos', icon: '🪨', rKm: 48, viName: 'Deimos', enName: 'Deimos', viSub: 'Vệ tinh Sao Hỏa', enSub: 'Mars Moon' },
+  { body: 'mimas', icon: '🪨', rKm: 55, viName: 'Mimas', enName: 'Mimas', viSub: 'Mặt trăng Sao Thổ', enSub: 'Saturn Moon' },
+  { body: 'miranda', icon: '🪨', rKm: 60, viName: 'Miranda', enName: 'Miranda', viSub: 'Mặt trăng Sao Thiên Vương', enSub: 'Uranus Moon' },
+  { body: 'phobos', icon: '🪨', rKm: 65, viName: 'Phobos', enName: 'Phobos', viSub: 'Vệ tinh Sao Hỏa', enSub: 'Mars Moon' },
+  { body: 'enceladus', icon: '❄️', rKm: 70, viName: 'Enceladus', enName: 'Enceladus', viSub: 'Mặt trăng băng Sao Thổ', enSub: 'Saturn Icy Moon' },
+  { body: 'tethys', icon: '⚪', rKm: 95, viName: 'Tethys', enName: 'Tethys', viSub: 'Mặt trăng Sao Thổ', enSub: 'Saturn Moon' },
+  { body: 'ariel', icon: '🧊', rKm: 95, viName: 'Ariel', enName: 'Ariel', viSub: 'Mặt trăng Sao Thiên Vương', enSub: 'Uranus Moon' },
+  { body: 'umbriel', icon: '🌑', rKm: 95, viName: 'Umbriel', enName: 'Umbriel', viSub: 'Mặt trăng Sao Thiên Vương', enSub: 'Uranus Moon' },
+  { body: 'dione', icon: '⚪', rKm: 105, viName: 'Dione', enName: 'Dione', viSub: 'Mặt trăng Sao Thổ', enSub: 'Saturn Moon' },
+  { body: 'iapetus', icon: '🌗', rKm: 125, viName: 'Iapetus', enName: 'Iapetus', viSub: 'Mặt trăng Sao Thổ', enSub: 'Saturn Moon' },
+  { body: 'rhea', icon: '🌕', rKm: 130, viName: 'Rhea', enName: 'Rhea', viSub: 'Mặt trăng Sao Thổ', enSub: 'Saturn Moon' },
+  { body: 'oberon', icon: '🌑', rKm: 130, viName: 'Oberon', enName: 'Oberon', viSub: 'Mặt trăng Sao Thiên Vương', enSub: 'Uranus Moon' },
+  { body: 'ceres', icon: '🪨', rKm: 135, viName: 'Ceres', enName: 'Ceres', viSub: 'Hành tinh lùn Vành đai Tiểu hành tinh', enSub: 'Asteroid Belt Dwarf Planet' },
+  { body: 'titania', icon: '🌕', rKm: 135, viName: 'Titania', enName: 'Titania', viSub: 'Mặt trăng lớn nhất Sao Thiên Vương', enSub: 'Largest Uranus Moon' },
+  { body: 'makemake', icon: '🔶', rKm: 140, viName: 'Makemake', enName: 'Makemake', viSub: 'Hành tinh lùn Vành đai Kuiper', enSub: 'Kuiper Belt Dwarf Planet' },
+  { body: 'haumea', icon: '🥚', rKm: 145, viName: 'Haumea', enName: 'Haumea', viSub: 'Hành tinh lùn Vành đai Kuiper', enSub: 'Kuiper Belt Dwarf Planet' },
+  { body: 'europa', icon: '🧊', rKm: 160, viName: 'Europa', enName: 'Europa', viSub: 'Mặt trăng băng Sao Mộc', enSub: 'Jupiter Icy Moon' },
+  { body: 'triton', icon: '❄️', rKm: 165, viName: 'Triton', enName: 'Triton', viSub: 'Mặt trăng lớn nhất Sao Hải Vương', enSub: 'Largest Neptune Moon' },
+  { body: 'io', icon: '🌋', rKm: 185, viName: 'Io', enName: 'Io', viSub: 'Mặt trăng núi lửa Sao Mộc', enSub: 'Jupiter Volcanic Moon' },
+  { body: 'eris', icon: '💎', rKm: 188, viName: 'Eris', enName: 'Eris', viSub: 'Hành tinh lùn Đĩa Phân Tán', enSub: 'Scattered Disc Dwarf Planet' },
+  { body: 'pluto', icon: '🪐', rKm: 190, viName: 'Sao Diêm Vương (Pluto)', enName: 'Pluto', viSub: 'Hành tinh lùn rìa Hệ Mặt Trời', enSub: 'Kuiper Belt Dwarf Planet' },
+  { body: 'moon', icon: '🌕', rKm: 200, viName: 'Mặt Trăng', enName: 'the Moon', viSub: 'Vệ tinh tự nhiên của Trái Đất', enSub: "Earth's Natural Satellite" },
+  { body: 'mercury', icon: '⚪', rKm: 240, viName: 'Sao Thủy', enName: 'Mercury', viSub: 'Hành tinh gần Mặt Trời nhất', enSub: 'Innermost Rocky Planet' },
+  { body: 'callisto', icon: '🌑', rKm: 240, viName: 'Callisto', enName: 'Callisto', viSub: 'Mặt trăng Sao Mộc', enSub: 'Jupiter Galilean Moon' },
+  { body: 'titan', icon: '🟠', rKm: 255, viName: 'Titan', enName: 'Titan', viSub: 'Mặt trăng lớn nhất Sao Thổ', enSub: 'Largest Saturn Moon' },
+  { body: 'ganymede', icon: '🌕', rKm: 260, viName: 'Ganymede', enName: 'Ganymede', viSub: 'Mặt trăng lớn nhất Hệ Mặt Trời (Sao Mộc)', enSub: 'Largest Moon in Solar System (Jupiter)' },
+  { body: 'venus', icon: '🟡', rKm: 280, viName: 'Sao Kim', enName: 'Venus', viSub: 'Hành tinh thứ hai tính từ Mặt Trời', enSub: 'Second Planet from the Sun' },
+  { body: 'mars', icon: '🔴', rKm: 340, viName: 'Sao Hỏa', enName: 'Mars', viSub: 'Hành tinh Đỏ có núi lửa Olympus Mons', enSub: 'The Red Planet' },
+];
+
+for (const spec of ROVER_LOOP_SPECS) {
+  const fullKm = Math.round(2 * Math.PI * spec.rKm);
+  const halfKm = Math.round(Math.PI * spec.rKm);
+  const b = spec.body;
+  MISSIONS.push({
+    id: `rover_loop_${b}`,
+    icon: spec.icon,
+    name: `Chạy một vòng ${spec.viName} (Không tự lái)`,
+    preset: 'Xe địa hình Rover 4x4',
+    category: 'rover',
+    noAutopilot: true,
+    targetBody: b,
+    targetDistKm: fullKm,
+    halfDistKm: halfKm,
+    desc: `Tự tay lái Xe địa hình Rover 4x4 chạy trọn 1 vòng chu vi quanh ${spec.viName} (${spec.viSub} · Chu vi ${fullKm} km – Không có chế độ Lái tự động).`,
+    objectives: [
+      { id: `${b}HalfLoop`, text: `Chạy được nửa vòng ${spec.viName} (${halfKm} km)`, targetKm: halfKm, body: b },
+      { id: `${b}FullLoop`, text: `Chạy hoàn thành đủ 1 vòng ${spec.viName} (${fullKm} km)`, targetKm: fullKm, body: b },
+    ],
+  });
+}
+
+// Atmospheric Planetary & Lunar (Titan, Triton) 1-Lap Airplane Missions (Sorted Easiest -> Hardest, with Autopilot)
+export const PLANE_LOOP_SPECS = [
+  { body: 'triton', icon: '❄️', rKm: 165, viName: 'Triton', enName: 'Triton', viSub: 'Mặt trăng có khí quyển của Sao Hải Vương', enSub: 'Atmospheric Moon of Neptune' },
+  { body: 'pluto', icon: '🪐', rKm: 190, viName: 'Sao Diêm Vương (Pluto)', enName: 'Pluto', viSub: 'Hành tinh lùn có khí quyển nitơ', enSub: 'Atmospheric Dwarf Planet' },
+  { body: 'titan', icon: '🟠', rKm: 255, viName: 'Titan', enName: 'Titan', viSub: 'Mặt trăng khí quyển dày đặc của Sao Thổ', enSub: 'Dense-Atmosphere Moon of Saturn' },
+  { body: 'venus', icon: '🟡', rKm: 280, viName: 'Sao Kim', enName: 'Venus', viSub: 'Hành tinh thứ hai tính từ Mặt Trời', enSub: 'Second Planet from the Sun' },
+  { body: 'mars', icon: '🔴', rKm: 340, viName: 'Sao Hỏa', enName: 'Mars', viSub: 'Hành tinh Đỏ có núi lửa Olympus Mons', enSub: 'The Red Planet' },
+  { body: 'neptune', icon: '🔵', rKm: 420, viName: 'Sao Hải Vương', enName: 'Neptune', viSub: 'Hành tinh băng khổng lồ', enSub: 'Outer Ice Giant Planet' },
+  { body: 'uranus', icon: '🩵', rKm: 440, viName: 'Sao Thiên Vương', enName: 'Uranus', viSub: 'Hành tinh băng nghiêng', enSub: 'Tilted Ice Giant Planet' },
+  { body: 'earth', icon: '🌍', rKm: 600, viName: 'Trái Đất', enName: 'Earth', viSub: 'Hành tinh xanh của chúng ta', enSub: 'Our Home Planet' },
+  { body: 'saturn', icon: '🪐', rKm: 620, viName: 'Sao Thổ', enName: 'Saturn', viSub: 'Hành tinh vành đai khổng lồ', enSub: 'Ringed Gas Giant Planet' },
+  { body: 'jupiter', icon: '🟠', rKm: 720, viName: 'Sao Mộc', enName: 'Jupiter', viSub: 'Hành tinh khí khổng lồ lớn nhất Hệ Mặt Trời', enSub: 'Largest Gas Giant Planet in Solar System' },
+];
+
+for (const spec of PLANE_LOOP_SPECS) {
+  const fullKm = Math.round(2 * Math.PI * spec.rKm);
+  const halfKm = Math.round(Math.PI * spec.rKm);
+  const b = spec.body;
+  MISSIONS.push({
+    id: `plane_loop_${b}`,
+    icon: spec.icon,
+    name: `Bay một vòng ${spec.viName}`,
+    preset: 'Tiêm kích phản lực F-22',
+    category: 'plane',
+    targetBody: b,
+    targetDistKm: fullKm,
+    halfDistKm: halfKm,
+    desc: `Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay trọn 1 vòng chu vi trong bầu khí quyển quanh ${spec.viName} (${spec.viSub} · Chu vi ${fullKm} km).`,
+    objectives: [
+      { id: `${b}PlaneHalfLoop`, text: `Bay được nửa vòng ${spec.viName} (${halfKm} km)`, targetKm: halfKm, body: b },
+      { id: `${b}PlaneFullLoop`, text: `Bay hoàn thành đủ 1 vòng ${spec.viName} (${fullKm} km)`, targetKm: fullKm, body: b },
+    ],
+  });
+}
 
 export const missionById = (id) => MISSIONS.find((m) => m.id === id) || MISSIONS[0];
 

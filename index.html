@@ -376,6 +376,13 @@
     <div class="modal-card glass wide-card">
       <button type="button" id="btn-mission-x" class="modal-close-x" title="Close (Esc)">✕</button>
       <h2>🎯 Select Mission</h2>
+      <div class="tp-mode-switch" id="mission-cat-switch" style="justify-content:center;margin-bottom:12px">
+        <div class="seg" id="mission-cat-seg" style="max-width:100%">
+          <button type="button" data-mcat="rocket" class="on" id="btn-mcat-rocket">🚀 Space &amp; Rocket Missions</button>
+          <button type="button" data-mcat="rover" id="btn-mcat-rover">🚙 Rover Missions</button>
+          <button type="button" data-mcat="plane" id="btn-mcat-plane">✈️ Airplane Missions</button>
+        </div>
+      </div>
       <div id="mission-cards" class="modal-scroll-list"></div>
       <button class="btn wide" id="btn-mission-close">Close</button>
     </div>

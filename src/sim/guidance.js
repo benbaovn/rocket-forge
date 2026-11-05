@@ -606,5 +606,74 @@ export class MoonProgram {
   }
 }
 
+export class PlaneLoopProgram {
+  constructor(targetBody = 'earth', targetDistKm = 1000) {
+    this.targetBody = targetBody;
+    this.targetDistKm = targetDistKm;
+    this.phase = 'init';
+  }
+  status() {
+    const B = BODIES[this.targetBody] || BODIES.earth;
+    const distKm = Math.min(this.targetDistKm, this._lastDistKm || 0);
+    const curStr = distKm >= 100 ? Math.floor(distKm) : distKm.toFixed(1);
+    if (this.phase === 'takeoff') {
+      return tr(`Chạy đà & cất cánh trên ${B.label}`, `Takeoff roll & climb on ${B.label}`);
+    }
+    return tr(`Bay hành trình quanh ${B.label}: ${curStr}/${this.targetDistKm} km`, `Cruising around ${B.label}: ${curStr}/${this.targetDistKm} km`);
+  }
+  update(v, sc, dt = 0.02) {
+    const B = BODIES[this.targetBody] || BODIES.earth;
+    const distKm = ((v.planeDistByBody && v.planeDistByBody[this.targetBody]) || 0) / 1000;
+    this._lastDistKm = distKm;
+    if (distKm >= this.targetDistKm) {
+      this.phase = 'done';
+      return 'done';
+    }
+    v.engineOn = true;
+    v.throttle = 1.0;
+    v.ctl.input = 0;
+    v.bank = 0;
+    v.turnYawRate = 0;
+    if (v.landed || v.clamped) {
+      this.phase = 'takeoff';
+      sc.requestWarp(1);
+      const rhoF = v.planeRhoFactor || 1;
+      const minRotateSpd = Math.max(10, 25 * rhoF);
+      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? -1 : 0;
+      return;
+    }
+    if (this.phase !== 'cruise') {
+      this.phase = 'cruise';
+      if (v.legsTarget) v.legsTarget = 0;
+      sc.event(
+        tr(
+          `✈️ Đã cất cánh! Đang bay tự động 1 vòng quanh ${B.label} (${this.targetDistKm} km).`,
+          `✈️ Airborne! Autopilot cruising 1 full lap around ${B.label} (${this.targetDistKm} km).`
+        )
+      );
+    }
+    if (v.legsTarget) v.legsTarget = 0;
+    const cruiseAlt = B.gasGiant
+      ? Math.max(12000, Math.round((B.atm || 60000) * 0.35))
+      : Math.min(2600, Math.max(1800, Math.round((B.atm || 30000) * 0.08)));
+    const altErr = cruiseAlt - v.alt;
+    const targetVu = Math.max(-18, Math.min(28, altErr * 0.16));
+    const vuErr = targetVu - v.vSurf.u;
+    const stepGain = Math.min(1, dt * 4.0);
+    const dvU = vuErr * stepGain;
+    v.s.vx += dvU * v.up.x;
+    v.s.vy += dvU * v.up.y;
+    v.vSurf.u += dvU;
+    const vH = Math.max(25, Math.hypot(v.vSurf.e, v.s.vz || 0));
+    const climbAngle = Math.max(-0.16, Math.min(0.24, Math.atan2(targetVu, vH)));
+    const trimPitch = climbAngle + 0.02;
+    v.beta = wrapPi(v.phi + Math.PI / 2 - trimPitch);
+    v.omega = 0;
+    v.ctl.drive = 0;
+    if (v.syncDir3DFromBeta) v.syncDir3DFromBeta();
+    sc.requestWarp(v.alt > 350 || B.gasGiant ? 100 : 4);
+  }
+}
+
 BoosterRecovery.steerSign = 1;
 

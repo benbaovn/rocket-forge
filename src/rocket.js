@@ -35,7 +35,7 @@ export function stackFromTypes(list) {
  */
 export function partVehicleType(type) {
   if (!type || !PARTS[type]) return 'rocket';
-  if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun' || type === 'solarPanel') {
+  if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun' || type === 'solarPanel' || type === 'solarUltra') {
     return 'any';
   }
   if (type.endsWith('Rover')) return 'rover';
@@ -315,9 +315,9 @@ export function segmentInfo(stack, idx) {
       if (!ad) continue;
       const cnt = ad.count || 2;
       if (a === 'batteryGun') s.hasGunBattery = true;
-      if (a === 'solarPanel' || a === 'solarRover') {
+      if (a === 'solarPanel' || a === 'solarRover' || a === 'solarUltra') {
         s.hasSolar = true;
-        if (isBatPart || hasRadialBat) {
+        if (isBatPart || hasRadialBat || it.attach.includes('batteryGun')) {
           s.solarOnBattery += 1;
           if (it.type === 'hullBoat' && s.batteryCount === 0) s.batteryCount += 1;
         }
@@ -612,6 +612,30 @@ export function buildRocket(stack) {
         }
         continue;
       }
+      if (a === 'solarUltra' && !isBoatItem && (att.some(isWeaponPart) || att.includes('batteryGun'))) {
+        const gunsOnPart = att.filter(isWeaponPart);
+        const targetGuns = gunsOnPart.length > 0 ? gunsOnPart : ['gunLaser'];
+        for (const gType of targetGuns) {
+          for (const pl of places) {
+            const ao = buildPart('solarUltra');
+            ao.userData.index = p.index;
+            ao.userData.attach = 'solarUltra';
+            ao.userData.itemId = p.item.id;
+            const { posX, posY, posZ } = getGunPlacementCoords(p.item.type, p.def.height, p.y, gType, pl);
+            const pivot = new THREE.Group();
+            pivot.position.set(posX, posY, posZ);
+            pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
+            pivot.userData.index = p.index;
+            pivot.userData.attach = 'solarUltra';
+            pivot.userData.itemId = p.item.id;
+            ao.rotation.set(attRot[0], attRot[1], attRot[2]);
+            pivot.add(ao);
+            segGroups[k].add(pivot);
+            group.push(ao);
+          }
+        }
+        continue;
+      }
       for (const pl of places) {
         const ao = buildPart(a);
         ao.userData.index = p.index;
@@ -638,6 +662,12 @@ export function buildRocket(stack) {
           posX = Math.cos(pl.angle) * (isBoatHull ? 1.12 : pl.dist);
           posY = p.y + p.def.height * (isBoatHull ? 0.96 : 0.55);
           posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+        } else if (a === 'solarUltra') {
+          const isBoatHull = p.item.type === 'hullBoat';
+          const hullDist = (isBoatHull ? 1.12 : pl.dist) - 0.68;
+          posX = Math.cos(pl.angle) * hullDist;
+          posY = p.y + p.def.height * (isBoatHull ? 0.96 : 0.55) + 0.22;
+          posZ = Math.sin(pl.angle) * hullDist + (pl.offsetZ || 0);
         } else if (a === 'gunLaser') {
           const isUfo = p.item.type === 'ufoSaucer';
           const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');

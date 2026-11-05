@@ -456,7 +456,9 @@ export class BuildScene {
       ? `🔥${def.thrustVac}`
       : def.isGunBattery
         ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-        : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+        : def.isUltraSolar
+          ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+          : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
     const shortName = this.getPartCardLabel(type, def);
     card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
     card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
@@ -542,6 +544,12 @@ export class BuildScene {
       (cats[def.cat] = cats[def.cat] || []).push(type);
       if (type === 'batteryPackL' && !q.trim() && PARTS.batteryGun && !shownParts.has('batteryGun')) {
         cats[def.cat].push('batteryGun');
+        if (PARTS.solarUltra && !shownParts.has('solarUltra')) {
+          cats[def.cat].push('solarUltra');
+        }
+      }
+      if (type === 'batteryGun' && !q.trim() && PARTS.solarUltra && !shownParts.has('solarUltra')) {
+        cats[def.cat].push('solarUltra');
       }
     }
     for (const [cat, types] of Object.entries(cats)) {
@@ -952,6 +960,15 @@ export class BuildScene {
           obj.add(sl);
         }
       }
+      else if (type === 'solarUltra') {
+        obj = new THREE.Group();
+        for (const pl of radialPlacements(type)) {
+          const sl = buildPart(type);
+          sl.position.set(-Math.cos(pl.angle) * 0.62, 0.22, 0);
+          sl.rotation.y = -pl.angle;
+          obj.add(sl);
+        }
+      }
       else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
         obj = new THREE.Group();
         for (const pl of radialPlacements(type)) {
@@ -1161,7 +1178,12 @@ export class BuildScene {
     }
     this.incompatWarning = null;
     this.pushHistory();
-    if (cand.attach !== undefined) this.stack[cand.attach].attach.push(type);
+    if (cand.attach !== undefined) {
+      this.stack[cand.attach].attach.push(type);
+      if (type === 'batteryGun' || type === 'solarUltra') {
+        this.select({ index: cand.attach, attach: type });
+      }
+    }
     else this.stack.splice(cand.insert, 0, newItem(type));
     audio.click();
     this.rebuild(true);
@@ -1222,6 +1244,52 @@ export class BuildScene {
         }
       } else if (firstAttachedIdx >= 0) {
         this.select({ index: firstAttachedIdx, attach: 'batteryGun' });
+      }
+    } else if (type === 'solarUltra') {
+      let firstAttachedIdx = -1;
+      // 1) Prefer attaching onto parts that have batteryGun or weapons
+      for (let i = 0; i < st.length; i++) {
+        const att = st[i].attach || [];
+        if ((att.includes('batteryGun') || att.some((a) => a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric')) && !att.includes('solarUltra')) {
+          st[i].attach.push('solarUltra');
+          if (firstAttachedIdx < 0) firstAttachedIdx = i;
+          placed = true;
+        }
+      }
+      // 2) Otherwise prefer battery packs / rover / boat hull
+      if (!placed) {
+        for (let i = 0; i < st.length; i++) {
+          const d = PARTS[st[i].type];
+          const isBat = st[i].type === 'batteryPack' || st[i].type === 'batteryPackL' || d?.isBattery || st[i].type === 'chassisRover' || st[i].type === 'hullBoat';
+          if (isBat && !st[i].attach.includes('solarUltra')) {
+            st[i].attach.push('solarUltra');
+            firstAttachedIdx = i;
+            placed = true;
+            break;
+          }
+        }
+      }
+      // 3) Otherwise prefer upper-stage tank or capsule/cabin
+      if (!placed) {
+        for (let i = 0; i < st.length; i++) {
+          if (isTank(i) && !st[i].attach.includes('solarUltra')) {
+            st[i].attach.push('solarUltra');
+            firstAttachedIdx = i;
+            placed = true;
+            break;
+          }
+        }
+      }
+      if (!placed) {
+        const existingIdx = st.findIndex((it) => it.attach && it.attach.includes('solarUltra'));
+        if (existingIdx >= 0) {
+          this.select({ index: existingIdx, attach: 'solarUltra' });
+          audio.click();
+          this.rebuild(true);
+          return;
+        }
+      } else if (firstAttachedIdx >= 0) {
+        this.select({ index: firstAttachedIdx, attach: 'solarUltra' });
       }
     } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
       // For solarPanel, prefer battery packs first so it recharges battery energy

@@ -98,6 +98,10 @@ export const PART_I18N = {
     vi: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
+  solarUltra: {
+    vi: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời vi mô siêu nhỏ (0.004 tấn) · Gắn trực tiếp vào Pin Siêu Siêu Nhỏ của Súng hoặc Cục Pin Năng Lượng để tự động sạc hồi năng lượng pin' },
+    en: { name: 'Ultra-Tiny Solar Panel ×2', cat: 'Structural', desc: 'Ultra-compact micro photovoltaic wings (0.004t) · Attaches directly onto Ultra-Tiny Gun Batteries or Quantum Battery Packs to automatically recharge battery energy' },
+  },
   gunLaser: {
     vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
     en: { name: 'Twin Plasma Laser Turrets ×2', cat: 'Weapons', desc: '360° gimbaled high-energy laser cannons that vaporize Aliens · Guns only run on Battery (attach Ultra-Tiny Gun Battery on regular-fuel rockets, or use Quantum Battery Pack) (Press V)' },

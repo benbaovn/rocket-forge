@@ -26,6 +26,7 @@ export const PARTS = {
   legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
+  solarUltra: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.004, isUltraSolar: true, desc: 'Cặp cánh pin mặt trời vi mô siêu siêu nhỏ (0.004 tấn) gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) hoặc thân tàu để tự động sạc điện liên tục' },
   gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
   waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương nghiền nát Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
   gunAcid: { name: 'Súng Acid Ăn Mòn ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'acid', desc: 'Cặp pháo phun Acid Siêu Ăn Mòn xoay 360° làm tan chảy giáp và rút máu Alien liên tục · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
@@ -317,6 +318,7 @@ const builders = {
   legs() { return buildLeg(); },
   gridfins() { return buildGridFin(); },
   solarPanel() { return buildSolarPanel(); },
+  solarUltra() { return buildSolarUltra(); },
   gunLaser() { return buildGunLaser(); },
   waterCannon() { return buildWaterCannon(); },
   gunAcid() { return buildGunAcid(); },
@@ -1759,6 +1761,79 @@ function buildBatteryGun() {
     pack.add(mesh(new THREE.BoxGeometry(0.045, 0.12, 0.036), MAT.titanium, -0.08, 0.10, sz));
     pack.add(mesh(new THREE.CylinderGeometry(0.020, 0.024, 0.10, 12), MAT.gold, 0.04, 0.11, sz));
     pack.add(mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.13, 12), cellCyan, 0.04, 0.14, sz));
+  }
+
+  return g;
+}
+
+function buildSolarUltra() {
+  const g = new THREE.Group();
+  const cyanGlow = new THREE.MeshStandardMaterial({
+    color: 0x00e5ff,
+    emissive: new THREE.Color(0x00b8d4),
+    emissiveIntensity: 2.3,
+    roughness: 0.16,
+    metalness: 0.28,
+  });
+  const emeraldGlow = new THREE.MeshStandardMaterial({
+    color: 0x10b981,
+    emissive: new THREE.Color(0x059669),
+    emissiveIntensity: 2.1,
+    roughness: 0.18,
+    metalness: 0.28,
+  });
+
+  // Positioned at (0.74, -0.22, 0) so it clamps directly onto the outer face of `batteryGun` (or flush on the hull when offset)
+  const mount = new THREE.Group();
+  mount.position.set(0.74, -0.22, 0);
+  g.add(mount);
+
+  // Micro SADM rotary coupler & magnetic power-transfer clamp
+  mount.add(mesh(new THREE.BoxGeometry(0.06, 0.10, 0.16), MAT.titanium, 0.01, 0, 0));
+  mount.add(mesh(new THREE.CylinderGeometry(0.036, 0.042, 0.08, 16).rotateZ(Math.PI / 2), MAT.gold, 0.055, 0, 0));
+  mount.add(mesh(new THREE.TorusGeometry(0.038, 0.008, 8, 18).rotateY(Math.PI / 2), cyanGlow, 0.085, 0, 0));
+
+  // Twin ultra-compact butterfly photovoltaic micro-wings fanning out on z = ±0.135
+  const wingLen = 0.44;
+  const wingW = 0.19;
+  const cellGeo = scaleUV(new THREE.PlaneGeometry(wingLen - 0.035, wingW - 0.03), 1.5, 1.5);
+
+  for (const sgn of [-1, 1]) {
+    // Micro-yoke strut connecting coupler to wing root
+    const strut = mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8), MAT.silver, 0.11, 0, sgn * 0.065);
+    strut.rotation.x = sgn * 0.65;
+    strut.rotation.z = Math.PI / 4;
+    mount.add(strut);
+
+    const wing = new THREE.Group();
+    wing.position.set(0.14 + wingLen / 2, 0.01, sgn * 0.135);
+    wing.rotation.x = sgn * 0.22;
+    wing.rotation.y = -sgn * 0.08;
+    mount.add(wing);
+
+    // Titanium & carbon micro-frame
+    wing.add(mesh(new THREE.BoxGeometry(wingLen, 0.014, wingW), MAT.silver, 0, 0, 0));
+    wing.add(mesh(new THREE.BoxGeometry(wingLen - 0.016, 0.016, wingW - 0.016), MAT.darkMetal, 0, 0, 0));
+
+    // Top & bottom bifacial monocrystalline solar cells
+    const topCell = mesh(cellGeo, MAT.solar, 0, 0.0095, 0);
+    topCell.rotation.x = -Math.PI / 2;
+    wing.add(topCell);
+
+    const botCell = mesh(cellGeo, MAT.solar, 0, -0.0095, 0);
+    botCell.rotation.x = Math.PI / 2;
+    wing.add(botCell);
+
+    // Glowing cyan micro-busbars across cell surface
+    for (const bx of [-0.11, 0, 0.11]) {
+      wing.add(mesh(new THREE.BoxGeometry(0.006, 0.004, wingW - 0.03), cyanGlow, bx, 0.010, 0));
+    }
+    wing.add(mesh(new THREE.BoxGeometry(wingLen - 0.035, 0.004, 0.008), MAT.gold, 0, 0.010, 0));
+    wing.add(mesh(new THREE.BoxGeometry(wingLen - 0.03, 0.005, 0.038), MAT.gold, 0, -0.009, 0));
+
+    // Outer gold end-bar & glowing emerald charge status tip LED
+    wing.add(mesh(new THREE.BoxGeometry(0.018, 0.020, wingW + 0.012), MAT.gold, wingLen / 2, 0, 0));
+    wing.add(mesh(new THREE.SphereGeometry(0.016, 10, 8), emeraldGlow, wingLen / 2 + 0.012, 0, 0));
   }
 
   return g;
@@ -13132,7 +13207,7 @@ export function radialPlacements(type) {
       { angle: Math.PI, dist: 1.12, offsetZ: 0 },
     ];
   }
-  if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun') {
+  if (type === 'solarPanel' || type === 'solarUltra' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun') {
     return [
       { angle: 0, dist: R - 0.05, offsetZ: 0 },
       { angle: Math.PI, dist: R - 0.05, offsetZ: 0 },

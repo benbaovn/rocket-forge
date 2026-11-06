@@ -99,8 +99,8 @@ export const PART_I18N = {
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
   solarUltra: {
-    vi: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời vi mô siêu nhỏ (0.004 tấn) · Gắn trực tiếp vào Pin Siêu Siêu Nhỏ của Súng hoặc Cục Pin Năng Lượng để tự động sạc hồi năng lượng pin' },
-    en: { name: 'Ultra-Tiny Solar Panel ×2', cat: 'Structural', desc: 'Ultra-compact micro photovoltaic wings (0.004t) · Attaches directly onto Ultra-Tiny Gun Batteries or Quantum Battery Packs to automatically recharge battery energy' },
+    vi: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời vi mô siêu nhỏ (0.004 tấn) · Chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) để tự động sạc hồi năng lượng pin' },
+    en: { name: 'Ultra-Tiny Solar Panel ×2', cat: 'Structural', desc: 'Ultra-compact micro photovoltaic wings (0.004t) · Only attaches directly onto Ultra-Tiny Gun Batteries to automatically recharge battery energy' },
   },
   gunLaser: {
     vi: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },

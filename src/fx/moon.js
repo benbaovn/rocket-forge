@@ -584,6 +584,8 @@ export function createSunSphere() {
   group.add(oortMesh);
 
   group.userData.coreMat = mat;
+  group.userData.coreMesh = coreMesh;
+  group.userData.coronaMesh = coronaMesh;
   group.userData.asteroidBelt = astMesh;
   group.userData.kuiperBelt = kboMesh;
   group.userData.oortCloud = oortMesh;

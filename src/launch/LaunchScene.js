@@ -272,24 +272,36 @@ export class LaunchScene {
       const t = THREE.MathUtils.clamp((x - e0) / (e1 - e0), 0, 1);
       return t * t * (3 - 2 * t);
     };
+    const seed = this.groundWaveSeed || 0.0;
     const landMask = smooth(2520.0, 2220.0, sx);
     const padFlat = 1.0 - showPad * smooth(150.0, 95.0, Math.hypot(sx, sz));
+    const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
     const boxDist = Math.max(-260.0 - sx, sx - 2340.0, -180.0 - sz, sz - 120.0);
     const rwyFlat = smooth(0.0, 70.0, boxDist);
     const lagoonFlat = sx <= 2300.0 ? (1.0 - smooth(0.64, 0.67, this.fbm3JS(sx * 0.0007, -sz * 0.0007, 11.0, 5))) : 1.0;
-    const w = Math.sin(sx * 0.028 + sz * 0.022) * 0.65
-      + Math.cos(sx * 0.016 - sz * 0.031 + 1.1) * 0.48
-      + Math.sin(sx * 0.055 + sz * 0.048 + 2.3) * 0.22;
-    return w * landMask * padFlat * rwyFlat * lagoonFlat;
+    const nAmp1 = this.fbm3JS(sx * 0.0085, sz * 0.0085, seed + 3.7, 3);
+    const nAmp2 = this.fbm3JS(sx * 0.021, sz * 0.021, seed + 17.3, 2);
+    const nHill = this.fbm3JS(sx * 0.013, sz * 0.013, seed + 31.9, 3);
+    const warp = (this.fbm3JS(sx * 0.006, sz * 0.006, seed + 47.1, 2) - 0.5) * 4.2;
+    const amp1 = 0.12 + 3.4 * Math.pow(Math.max(nAmp1, 0), 1.7);
+    const amp2 = 0.08 + 2.8 * Math.pow(Math.max(nAmp2, 0), 1.6);
+    const hillAmp = 0.15 + 4.2 * Math.pow(Math.max(nAmp1, 0), 1.5);
+    const w = Math.sin(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
+      + Math.cos(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
+      + Math.sin(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
+      + (nHill - 0.48) * hillAmp;
+    return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
   }
 
   initGround() {
+    this.groundWaveSeed = Math.random() * 500;
     this.groundUniforms = {
       uTime: { value: 0 },
       uOff: { value: new THREE.Vector2() },
       uBend: { value: BEND },
       uShowPad: { value: 1.0 },
       uShowAirport: { value: 0.0 },
+      uWaveSeed: { value: this.groundWaveSeed },
     };
     const waveGLSL = /* glsl */`
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
@@ -298,13 +310,22 @@ export class LaunchScene {
         float sz = -p.y;
         float landMask = smoothstep(2520.0, 2220.0, sx);
         float padFlat = 1.0 - showPad * smoothstep(150.0, 95.0, length(vec2(sx, sz)));
+        float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
         float boxDist = max(max(-260.0 - sx, sx - 2340.0), max(-180.0 - sz, sz - 120.0));
         float rwyFlat = smoothstep(0.0, 70.0, boxDist);
         float lagoonFlat = 1.0 - smoothstep(0.64, 0.67, fbm3(vec3(p * 0.0007, 11.0), 5)) * step(p.x, 2300.0);
-        float w = sin(sx * 0.028 + sz * 0.022) * 0.65
-                + cos(sx * 0.016 - sz * 0.031 + 1.1) * 0.48
-                + sin(sx * 0.055 + sz * 0.048 + 2.3) * 0.22;
-        return w * landMask * padFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
+        float nAmp1 = fbm3(vec3(sx * 0.0085, sz * 0.0085, uWaveSeed + 3.7), 3);
+        float nAmp2 = fbm3(vec3(sx * 0.021, sz * 0.021, uWaveSeed + 17.3), 2);
+        float nHill = fbm3(vec3(sx * 0.013, sz * 0.013, uWaveSeed + 31.9), 3);
+        float warp = (fbm3(vec3(sx * 0.006, sz * 0.006, uWaveSeed + 47.1), 2) - 0.5) * 4.2;
+        float amp1 = 0.12 + 3.4 * pow(max(nAmp1, 0.0), 1.7);
+        float amp2 = 0.08 + 2.8 * pow(max(nAmp2, 0.0), 1.6);
+        float hillAmp = 0.15 + 4.2 * pow(max(nAmp1, 0.0), 1.5);
+        float w = sin(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
+                + cos(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
+                + sin(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
+                + (nHill - 0.48) * hillAmp;
+        return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
       }
     `;
     const gmat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0, transparent: true });
@@ -314,8 +335,9 @@ export class LaunchScene {
       sh.uniforms.uBend = this.groundUniforms.uBend;
       sh.uniforms.uShowPad = this.groundUniforms.uShowPad;
       sh.uniforms.uShowAirport = this.groundUniforms.uShowAirport;
+      sh.uniforms.uWaveSeed = this.groundUniforms.uWaveSeed;
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform vec2 uOff;\nuniform float uBend;\nuniform float uShowPad;\nuniform float uShowAirport;\n${NOISE_GLSL}\n${waveGLSL}`)
+        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform vec2 uOff;\nuniform float uBend;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}`)
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLocal = position.xy + uOff;')
         .replace('#include <project_vertex>', `
           vec4 mvPosition = vec4( transformed, 1.0 );
@@ -325,33 +347,42 @@ export class LaunchScene {
           mvPosition = viewMatrix * wpB;
           gl_Position = projectionMatrix * mvPosition;`);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform float uTime;\nuniform float uShowPad;\nuniform float uShowAirport;\n${NOISE_GLSL}\n${waveGLSL}\n
+        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform float uTime;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}\n
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
-          float coast = 2600.0;
+          // Cape Canaveral, Florida coastline: 2600m at LC-39A / Airport / Boat dock, with the iconic Cape Canaveral point jutting out SE
+          float capeJut = 1450.0 * exp(-pow((p.y + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(p.y));
+          float coast = 2600.0 + capeJut - 0.045 * max(0.0, abs(p.y) - 3500.0);
           float land = max(smoothstep(coast + 30.0, coast - 30.0, p.x), smoothstep(59950.0, 60050.0, p.x));
+          // Florida west coast (Gulf of Mexico) across the peninsula at far -X
+          land *= smoothstep(-39500.0, -37000.0, p.x);
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
-          vec3 grass = mix(vec3(0.055, 0.085, 0.03), vec3(0.15, 0.15, 0.06), n1);
-          grass = mix(grass, vec3(0.19, 0.16, 0.10), smoothstep(0.55, 0.72, n2) * 0.7);
-          grass = mix(grass, vec3(0.03, 0.06, 0.025), smoothstep(0.6, 0.8, fbm3(vec3(p * 0.004, 8.0), 4)) * 0.8);
-          vec3 sand = vec3(0.6, 0.53, 0.4);
-          float beach = smoothstep(coast - 15.0, coast - 160.0, p.x);
+          vec3 grass = mix(vec3(0.065, 0.125, 0.045), vec3(0.16, 0.21, 0.08), n1);
+          grass = mix(grass, vec3(0.20, 0.18, 0.11), smoothstep(0.55, 0.72, n2) * 0.65);
+          grass = mix(grass, vec3(0.04, 0.095, 0.035), smoothstep(0.6, 0.8, fbm3(vec3(p * 0.004, 8.0), 4)) * 0.8);
+          vec3 sand = vec3(0.68, 0.61, 0.47);
+          float beach = smoothstep(coast - 15.0, coast - 180.0, p.x);
           vec3 landCol = mix(sand, grass, beach);
-          // marsh / lagoons inland
-          float lagoon = smoothstep(0.66, 0.68, fbm3(vec3(p * 0.0007, 11.0), 5)) * step(p.x, coast - 300.0);
-          // roads
-          float road = min(segDist(p, vec2(0.0), vec2(-1500.0, 2500.0)), segDist(p, vec2(-1500.0, 2500.0), vec2(-6000.0, 2600.0)));
+          // Banana River & Indian River Lagoon (Merritt Island / Cape Canaveral, Florida) + Everglades marshes
+          float road = min(segDist(p, vec2(0.0), vec2(-1500.0, 2500.0)), segDist(p, vec2(-1500.0, 2500.0), vec2(-10500.0, 2600.0)));
           road = min(road, segDist(p, vec2(-200.0, -900.0), vec2(-200.0, 6000.0)));
+          float causewayBridge = smoothstep(38.0, 18.0, road);
+          float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 24000.0);
+          float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 32000.0);
+          float lagoon = max(
+            smoothstep(0.66, 0.68, fbm3(vec3(p * 0.0007, 11.0), 5)) * step(p.x, coast - 300.0),
+            max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
+          );
           landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
           float pad = uShowPad * smoothstep(${(PAD_RADIUS + 70).toFixed(1)}, ${(PAD_RADIUS + 55).toFixed(1)}, length(p));
           landCol = mix(landCol, vec3(0.4, 0.39, 0.37) * (0.85 + 0.3 * n2), pad);
           float ghShade = groundWaveHeight(p, uShowPad, uShowAirport);
           landCol *= (0.78 + 0.44 * n3) * (1.0 + ghShade * 0.08);
           float distOff = clamp((p.x - coast) / 4000.0, 0.0, 1.0);
-          vec3 ocean = mix(vec3(0.02, 0.075, 0.085), vec3(0.006, 0.025, 0.055), distOff);
+          vec3 ocean = mix(vec3(0.025, 0.11, 0.13), vec3(0.008, 0.035, 0.075), distOff);
           float oceanMask = max(1.0 - land, lagoon);
           vec3 col = mix(landCol, ocean, oceanMask);
           // surf line
@@ -409,6 +440,7 @@ export class LaunchScene {
     const trees = new THREE.InstancedMesh(treeGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), N);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3();
     this.treeWaveY = [];
+    this.treeSpots = [];
     this.treeGrid = new Map();
     const TREE_CELL = 32;
     let n = 0;
@@ -432,7 +464,9 @@ export class LaunchScene {
         bucket = [];
         this.treeGrid.set(gKey, bucket);
       }
-      bucket.push({ x, z, ty, r: 1.55 * sc, h: 6.9 * sy });
+      const bucketItem = { x, z, ty, r: 1.55 * sc, h: 6.9 * sy };
+      bucket.push(bucketItem);
+      this.treeSpots.push({ x, z, bucketItem });
       v.set(x, ty, z); s.set(sc, sy, sc);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.random() * 6.28);
       m.compose(v, q, s);
@@ -555,8 +589,9 @@ export class LaunchScene {
     wt.position.set(140, wtY, -170);
     wt.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.world.add(wt);
-    this.waveObjects.push({ obj: wt, baseY: 0, waveY: wtY });
-    this.buildingColliders.push({ minX: 140 - 7.5, maxX: 140 + 7.5, minZ: -170 - 7.5, maxZ: -170 + 7.5, maxY: wtY + 64, mode: 'all' });
+    const wtCol = { minX: 140 - 7.5, maxX: 140 + 7.5, minZ: -170 - 7.5, maxZ: -170 + 7.5, maxY: wtY + 64, mode: 'all' };
+    this.buildingColliders.push(wtCol);
+    this.waveObjects.push({ obj: wt, wx: 140, wz: -170, baseY: 0, waveY: wtY, collider: wtCol, colH: 64 });
     // flood light poles
     const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff1d6, emissiveIntensity: 25 });
     for (let i = 0; i < 4; i++) {
@@ -573,14 +608,15 @@ export class LaunchScene {
     const vab = new THREE.Mesh(new THREE.BoxGeometry(160, 160, 130), vabMat);
     vab.position.set(-1500, vabY + 80, -2500); vab.castShadow = true; vab.receiveShadow = true;
     this.world.add(vab);
-    this.waveObjects.push({ obj: vab, baseY: 80, waveY: vabY });
-    this.buildingColliders.push({ minX: -1580, maxX: -1420, minZ: -2565, maxZ: -2435, maxY: vabY + 160, mode: 'all' });
+    const vabCol = { minX: -1580, maxX: -1420, minZ: -2565, maxZ: -2435, maxY: vabY + 160, mode: 'all' };
+    this.buildingColliders.push(vabCol);
+    this.waveObjects.push({ obj: vab, wx: -1500, wz: -2500, baseY: 80, waveY: vabY, collider: vabCol, colH: 160 });
     const door = new THREE.Mesh(new THREE.PlaneGeometry(40, 140), new THREE.MeshStandardMaterial({ color: 0x55575c, roughness: 0.6 }));
     door.position.set(-1500, vabY + 72, -2434.9); this.world.add(door);
-    this.waveObjects.push({ obj: door, baseY: 72, waveY: vabY });
+    this.waveObjects.push({ obj: door, wx: -1500, wz: -2500, baseY: 72, waveY: vabY });
     const stripe = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshStandardMaterial({ map: TX.flagDecal(), transparent: true }));
     stripe.position.set(-1460 + 30, vabY + 120, -2434.8); this.world.add(stripe);
-    this.waveObjects.push({ obj: stripe, baseY: 120, waveY: vabY });
+    this.waveObjects.push({ obj: stripe, wx: -1460 + 30, wz: -2434.8, baseY: 120, waveY: vabY });
     // small buildings
     const bMat = new THREE.MeshStandardMaterial({ color: 0xb0aea8, roughness: 0.8 });
     for (let i = 0; i < 18; i++) {
@@ -594,17 +630,43 @@ export class LaunchScene {
       b.position.set(bx, by + bh / 2, bz);
       b.castShadow = true; b.receiveShadow = true;
       this.world.add(b);
-      this.waveObjects.push({ obj: b, baseY: bh / 2, waveY: by });
-      this.buildingColliders.push({
+      const bCol = {
         minX: bx - bw / 2,
         maxX: bx + bw / 2,
         minZ: bz - bd / 2,
         maxZ: bz + bd / 2,
         maxY: by + bh,
         mode: 'all',
-      });
+      };
+      this.buildingColliders.push(bCol);
+      this.waveObjects.push({ obj: b, wx: bx, wz: bz, baseY: bh / 2, waveY: by, collider: bCol, colH: bh });
     }
     pad.traverse((o) => { if (o.isMesh) o.receiveShadow = true; });
+  }
+
+  randomizeGroundWaves() {
+    this.groundWaveSeed = Math.random() * 500;
+    if (this.groundUniforms && this.groundUniforms.uWaveSeed) {
+      this.groundUniforms.uWaveSeed.value = this.groundWaveSeed;
+    }
+    if (this.waveObjects) {
+      for (const item of this.waveObjects) {
+        if (item.wx !== undefined && item.wz !== undefined) {
+          item.waveY = this.earthGroundWave(item.wx, item.wz, 0, 0);
+          if (item.collider && item.colH !== undefined) {
+            item.collider.maxY = item.waveY + item.colH;
+          }
+        }
+      }
+    }
+    if (this.treeSpots && this.treeWaveY) {
+      for (let i = 0; i < this.treeSpots.length; i++) {
+        const sp = this.treeSpots[i];
+        const ty = this.earthGroundWave(sp.x, sp.z, 0, 0);
+        this.treeWaveY[i] = ty;
+        if (sp.bucketItem) sp.bucketItem.ty = ty;
+      }
+    }
   }
 
   syncAirportFlatGround(isAirport) {
@@ -991,7 +1053,11 @@ export class LaunchScene {
       }
       if (k === 'g') this.toggleAutopilot();
       if (k === 'c') this.cycleCam();
-      if (k === 'm') this.map.toggle();
+      if (k === 'm') {
+        if (!this.map.visible) this.updateMap();
+        this.map.toggle();
+        if (this.map.visible) this.updateMap();
+      }
       if (k === 'y') { e.preventDefault(); audio.init(); this.toggleTeleportModal(); }
       if (k === 'tab') { e.preventDefault(); this.map.cycleFocus(); }
       if (k === 'b') this.toggleBoosterFocus();
@@ -1018,7 +1084,11 @@ export class LaunchScene {
     const btnAp = $('btn-autopilot');
     if (btnAp) btnAp.onclick = () => { audio.init(); this.toggleAutopilot(); };
     const btnMap = $('btn-toggle-map');
-    if (btnMap) btnMap.onclick = () => this.map.toggle();
+    if (btnMap) btnMap.onclick = () => {
+      if (!this.map.visible) this.updateMap();
+      this.map.toggle();
+      if (this.map.visible) this.updateMap();
+    };
     const btnTp = $('btn-teleport');
     if (btnTp) btnTp.onclick = () => { audio.init(); this.toggleTeleportModal(); };
     const btnTpExpand = $('btn-tp-expand');
@@ -2834,6 +2904,7 @@ export class LaunchScene {
       if (this.groundUniforms.uShowPad) this.groundUniforms.uShowPad.value = (this.player.isPlane || this.player.isRover) ? 0.0 : 1.0;
       if (this.groundUniforms.uShowAirport) this.groundUniforms.uShowAirport.value = this.player.isPlane ? 1.0 : 0.0;
     }
+    this.randomizeGroundWaves();
     this.syncAirportFlatGround(!!this.player.isPlane);
     this.updatePlaneTeleportUI();
 
@@ -5810,8 +5881,15 @@ export class LaunchScene {
     if (this.sunSphere) {
       proj(sp.x, sp.y, sp.z, this.sunSphere.position);
       this.sunSphere.rotation.set(0, 0, phi - bodyRotation('sun', t));
-      if (this.sunSphere.userData.coreMat) this.sunSphere.userData.coreMat.uniforms.uTime.value = this.time;
-      if (this.sunSphere.userData.asteroidBelt) this.sunSphere.userData.asteroidBelt.visible = (F.ref === 'sun' || F.ref === 'ceres');
+      const ud = this.sunSphere.userData;
+      if (ud.coreMat) ud.coreMat.uniforms.uTime.value = this.time;
+      if (ud.asteroidBelt) ud.asteroidBelt.visible = (F.ref === 'sun' || F.ref === 'ceres');
+      const atSun = F.ref === 'sun';
+      if (ud.coreMesh) ud.coreMesh.scale.setScalar(atSun ? 1.0 : 0.012);
+      if (ud.coronaMesh) {
+        ud.coronaMesh.visible = atSun;
+        ud.coronaMesh.scale.setScalar(atSun ? 1.0 : 0.012);
+      }
     }
     proj(0, 0, 0, this.earth.position);
     this.earth.rotation.set(0, 0, phi - OMEGA_E * t);
@@ -6621,9 +6699,12 @@ export class LaunchScene {
     const E = P.east, U = P.up;
     const liveAlienMapObjs = (this.aliens || []).map((a, idx) => {
       const rx = a.relPos.x, ry = a.relPos.y, rz = a.relPos.z;
-      const ax = P.s.x + E.x * rx + U.x * ry;
-      const ay = P.s.y + E.y * rx + U.y * ry;
-      const az = (P.s.z || 0) + rz;
+      const relX = E.x * rx + U.x * ry;
+      const relY = E.y * rx + U.y * ry;
+      const relZ = rz || 0;
+      const ax = P.s.x + relX;
+      const ay = P.s.y + relY;
+      const az = (P.s.z || 0) + relZ;
       const curHp = Math.max(0, Math.round(a.hp));
       const aLabel = tr(a.labelVi || `UFO Alien #${idx + 1}`, a.labelEn || `Alien UFO #${idx + 1}`);
       return {
@@ -6631,6 +6712,10 @@ export class LaunchScene {
         x: ax,
         y: ay,
         z: az,
+        relX,
+        relY,
+        relZ,
+        isLiveAlien: true,
         alt: Math.max(0, P.alt + ry),
         speedOrb: P.speedOrb,
         beta: a.orbitAngle,
@@ -6723,6 +6808,7 @@ export class LaunchScene {
         beta: st.beta,
         ref: pat.ref,
         kind: 'alien',
+        isPatrolAlien: true,
         name: tr(pat.vi, pat.en),
         color: '#4ade80',
         el: st.el,

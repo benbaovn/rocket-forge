@@ -1247,37 +1247,11 @@ export class BuildScene {
       }
     } else if (type === 'solarUltra') {
       let firstAttachedIdx = -1;
-      // 1) Prefer attaching onto parts that have batteryGun or weapons
       for (let i = 0; i < st.length; i++) {
-        const att = st[i].attach || [];
-        if ((att.includes('batteryGun') || att.some((a) => a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric')) && !att.includes('solarUltra')) {
+        if (canPartAttachToStack('solarUltra', st, i) && !st[i].attach.includes('solarUltra')) {
           st[i].attach.push('solarUltra');
           if (firstAttachedIdx < 0) firstAttachedIdx = i;
           placed = true;
-        }
-      }
-      // 2) Otherwise prefer battery packs / rover / boat hull
-      if (!placed) {
-        for (let i = 0; i < st.length; i++) {
-          const d = PARTS[st[i].type];
-          const isBat = st[i].type === 'batteryPack' || st[i].type === 'batteryPackL' || d?.isBattery || st[i].type === 'chassisRover' || st[i].type === 'hullBoat';
-          if (isBat && !st[i].attach.includes('solarUltra')) {
-            st[i].attach.push('solarUltra');
-            firstAttachedIdx = i;
-            placed = true;
-            break;
-          }
-        }
-      }
-      // 3) Otherwise prefer upper-stage tank or capsule/cabin
-      if (!placed) {
-        for (let i = 0; i < st.length; i++) {
-          if (isTank(i) && !st[i].attach.includes('solarUltra')) {
-            st[i].attach.push('solarUltra');
-            firstAttachedIdx = i;
-            placed = true;
-            break;
-          }
         }
       }
       if (!placed) {
@@ -1538,6 +1512,13 @@ export class BuildScene {
         if (bgIdx >= 0) {
           a.splice(bgIdx, 1);
           if (this.stack[sel.index].attachRot) delete this.stack[sel.index].attachRot.batteryGun;
+        }
+      }
+      if (!a.includes('batteryGun')) {
+        const suIdx = a.indexOf('solarUltra');
+        if (suIdx >= 0) {
+          a.splice(suIdx, 1);
+          if (this.stack[sel.index].attachRot) delete this.stack[sel.index].attachRot.solarUltra;
         }
       }
     } else this.stack.splice(sel.index, 1);

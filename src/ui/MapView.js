@@ -6,91 +6,38 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { R_E, R_M, R_SUN, EARTH_A, EARTH_SOI, SUN_SOI, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, KUIPER_BELT_INNER, KUIPER_BELT_OUTER, OORT_CLOUD_INNER, OORT_CLOUD_OUTER, MOON_A, MOON_SOI, ATM_TOP, ISS_R, BODIES, NON_EARTH_BODIES } from '../sim/constants.js';
 import { moonPos, moonAngle, bodyPos, bodyAngle, helioPos } from '../sim/orbit.js';
+import { createRealEarthTexture, FLORIDA_LAT_DEG } from '../fx/earth.js';
 import { tr, getLang } from '../i18n.js';
 
-// 1 unit in 3D scene = 1 kilometre (1,000 metres)
+// 1 unit in 3D scene = 1 kilometre (1,000 metres) inside the Solar System.
+// Beyond the Solar System (SUN_SOI), radial distance is smoothly compressed logarithmically
+// so interstellar spacecraft (even at 10^17 km) stay visible right outside the Oort Cloud
+// without shrinking the Solar System into a single pixel or breaking 32-bit WebGL float precision.
 const SCALE = 0.001;
 const CERES_MAP_Y = -3800; // Ceres positioned underneath the Asteroid Belt (Vành đai đá) on the 3D Map
-const to3D = (x, y, z = 0, out = new THREE.Vector3()) => out.set(x * SCALE, (z || 0) * SCALE, -(y || 0) * SCALE);
+const R_INTERSTELLAR_START = SUN_SOI * SCALE * 1.02;
+const R_INTERSTELLAR_SPAN = 220000;
+const to3D = (x, y, z = 0, out = new THREE.Vector3()) => {
+  let vx = x * SCALE;
+  let vy = (z || 0) * SCALE;
+  let vz = -(y || 0) * SCALE;
+  const r = Math.hypot(vx, vy, vz);
+  if (r > R_INTERSTELLAR_START && isFinite(r)) {
+    const excess = (r - R_INTERSTELLAR_START) / R_INTERSTELLAR_START;
+    const rCompressed = R_INTERSTELLAR_START + R_INTERSTELLAR_SPAN * Math.log10(1 + excess);
+    const k = rCompressed / r;
+    vx *= k;
+    vy *= k;
+    vz *= k;
+  }
+  return out.set(vx, vy, vz);
+};
 const fmtKm = (m) => (m >= 1e6 ? (m / 1e6).toFixed(2) + ' Mm' : m >= 1e4 ? (m / 1000).toFixed(0) + ' km' : (m / 1000).toFixed(1) + ' km');
 const fmt = (v, d = 0) => (typeof v === 'number' && isFinite(v) ? v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d }) : '—');
 
-/** Procedural high-contrast Earth surface texture (equirectangular) */
+/** Real-world Earth surface texture (equirectangular, aligned with Cape Canaveral, Florida launchpad) */
 function createEarthTexture() {
-  const w = 1024, h = 512;
-  const cv = document.createElement('canvas');
-  cv.width = w; cv.height = h;
-  const ctx = cv.getContext('2d');
-
-  const img = ctx.createImageData(w, h);
-  const data = img.data;
-
-  for (let y = 0; y < h; y++) {
-    const lat = (y / h - 0.5) * Math.PI; // -PI/2 to PI/2
-    const cosLat = Math.cos(lat);
-    for (let x = 0; x < w; x++) {
-      const lon = (x / w - 0.5) * Math.PI * 2; // -PI to PI
-      const idx = (y * w + x) * 4;
-
-      const nx = cosLat * Math.sin(lon);
-      const ny = Math.sin(lat);
-      const nz = cosLat * Math.cos(lon);
-
-      // Continent & ocean harmonics
-      let n = Math.sin(nx * 2.6 + 0.8) * Math.cos(ny * 2.3) + Math.sin(nz * 2.7) * 0.45;
-      n += Math.sin(nx * 5.2 + ny * 4.1) * 0.22;
-      n += Math.sin(nx * 11.5 + nz * 9.2) * 0.11;
-      n += Math.sin(nx * 23.0 + ny * 21.0) * 0.05;
-
-      const isPolar = Math.abs(lat) > 1.42;
-      const isIceEdge = Math.abs(lat) > 1.34;
-
-      if (isPolar || (isIceEdge && n > -0.15)) {
-        // Ice caps
-        data[idx] = 230; data[idx + 1] = 242; data[idx + 2] = 250; data[idx + 3] = 255;
-      } else if (n > 0.08) {
-        // Land
-        const elev = (n - 0.08) / 0.8;
-        if (elev > 0.55) {
-          // Mountains
-          data[idx] = 145; data[idx + 1] = 135; data[idx + 2] = 120; data[idx + 3] = 255;
-        } else if (elev > 0.28) {
-          // Savanna / Desert
-          data[idx] = 175; data[idx + 1] = 150; data[idx + 2] = 95; data[idx + 3] = 255;
-        } else {
-          // Forest & plains
-          data[idx] = 34; data[idx + 1] = 92; data[idx + 2] = 42; data[idx + 3] = 255;
-        }
-      } else if (n > 0.0) {
-        // Coast / Shallows
-        data[idx] = 20; data[idx + 1] = 105; data[idx + 2] = 150; data[idx + 3] = 255;
-      } else {
-        // Ocean depth gradient
-        const d = Math.min(1, -n * 2.2);
-        data[idx] = Math.round(12 * (1 - d) + 4 * d);
-        data[idx + 1] = Math.round(38 * (1 - d) + 16 * d);
-        data[idx + 2] = Math.round(72 * (1 - d) + 40 * d);
-        data[idx + 3] = 255;
-      }
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-
-  // Soft atmospheric clouds
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-  for (let i = 0; i < 40; i++) {
-    const cx = (i * 93) % w;
-    const cy = 60 + ((i * 127) % (h - 120));
-    const rw = 40 + (i % 7) * 14;
-    const rh = 12 + (i % 5) * 6;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rw, rh, (i % 6) * 0.1, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+  return createRealEarthTexture({ forMapView: true });
 }
 
 /** Procedural lunar surface texture */
@@ -1614,7 +1561,7 @@ export class MapView {
       dist = 2200;
     } else if (this.focus === 'vessel') {
       const r = this.lastState && this.lastState.vessel ? Math.hypot(this.lastState.vessel.x, this.lastState.vessel.y) : R_E;
-      dist = r > 2.5e6 ? 14000 : 2200;
+      dist = r > SUN_SOI ? 180000 : r > 2.5e6 ? 14000 : 2200;
     }
 
     const S = this.lastState;
@@ -1665,6 +1612,14 @@ export class MapView {
       const objId = focusName.slice(4);
       const found = S.others.find((o) => o.id === objId);
       if (found) {
+        if (found.isLiveAlien && S.vessel) {
+          const v = to3D(S.vessel.x + ep.x, S.vessel.y + ep.y, S.vessel.z || 0);
+          if (S.ref === 'ceres') v.y += CERES_MAP_Y;
+          v.x += (found.relX || 0) * SCALE;
+          v.y += (found.relZ || 0) * SCALE;
+          v.z -= (found.relY || 0) * SCALE;
+          return v;
+        }
         const v = to3D(found.x + ep.x, found.y + ep.y, found.z || 0);
         if (found.ref === 'ceres') v.y += CERES_MAP_Y;
         return v;
@@ -1682,8 +1637,8 @@ export class MapView {
   }
 
   draw(S) {
-    if (!this.visible) return;
     this.lastState = S;
+    if (!this.visible) return;
 
     const t = S.t;
     const ep = helioPos('earth', t);
@@ -1712,8 +1667,10 @@ export class MapView {
     }
 
     if (S.padAngle !== undefined) {
-      this.earthMesh.rotation.y = S.padAngle;
       const pa = S.padAngle;
+      this.earthMesh.rotation.order = 'YXZ';
+      this.earthMesh.rotation.y = -pa;
+      this.earthMesh.rotation.x = -(FLORIDA_LAT_DEG * Math.PI) / 180;
       const px = Math.sin(pa) * R_E, py = Math.cos(pa) * R_E;
       to3D(ep.x + px, ep.y + py, 0, this.padMarker.position);
       this.padMarker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to3D(px, py, 0).normalize());
@@ -1776,8 +1733,14 @@ export class MapView {
     for (let i = 0; i < others.length; i++) {
       const o = others[i];
       const slot = this.ensureOtherSlot(i);
-      const oPos = to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
-      if (o.ref === 'ceres') oPos.y += CERES_MAP_Y;
+      const oPos = (o.isLiveAlien && S.vessel)
+        ? new THREE.Vector3(
+            vPos3D.x + (o.relX || 0) * SCALE,
+            vPos3D.y + (o.relZ || 0) * SCALE,
+            vPos3D.z - (o.relY || 0) * SCALE
+          )
+        : to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
+      if (!o.isLiveAlien && o.ref === 'ceres') oPos.y += CERES_MAP_Y;
       slot.group.position.copy(oPos);
       const os = Math.max(0.55, Math.min(this.camera.position.distanceTo(oPos) * 0.00055, 14));
       slot.group.scale.set(os, os, os);
@@ -1910,7 +1873,7 @@ export class MapView {
       const e = Math.max(1.0001, el.e);
       const p = el.pe * (1 + e);
       const vDist = S.vessel ? Math.hypot(S.vessel.x, S.vessel.y) : R;
-      const maxR = Math.max(5e10, vDist * 40);
+      const maxR = Math.min(SUN_SOI * 3.5, Math.max(SUN_SOI * 1.15, vDist * 1.25));
       const cosNuMin = Math.max(-1 + 1e-6, Math.min(1, (p / maxR - 1) / e));
       const nuMax = Math.acos(cosNuMin);
       const dirSign = (el.h !== undefined && el.h > 0) ? -1 : 1;
@@ -2052,31 +2015,57 @@ export class MapView {
     ctx.clearRect(0, 0, W, H);
 
     this.hudTargets = [];
+    this.drawnBadges = [];
 
-    // Sun badge at (0, 0, 0)
+    const camToOrigin = this.camera.position.length();
+    const camToEarth = this.camera.position.distanceTo(earthV3);
+    const camToVessel = this.camera.position.distanceTo(vPos3D);
+    const focusParent = BODIES[this.focus] ? BODIES[this.focus].parent : null;
+
+    // 1. Draw current spacecraft (Tàu hiện tại) first so its badge always gets priority right at the vessel marker
+    const vesselP = this.projectToScreen(vPos3D, W, H);
+    if (vesselP) {
+      const vAltKm = S.vessel.alt ? (S.vessel.alt / 1000).toFixed(1) : null;
+      const sub = vAltKm ? `${vAltKm} km` : null;
+      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, '🚀 ' + (S.name || tr('Tàu vũ trụ', 'Spacecraft')), '#38bdf8', this.focus === 'vessel', sub, true);
+      if (br) {
+        this.hudTargets.push({
+          x: vesselP.x,
+          y: vesselP.y,
+          ...br,
+          focus: 'vessel',
+          objId: 'vessel',
+          deletable: !!(S.vessel && S.vessel.deletable),
+        });
+      }
+    }
+
+    // 2. Sun badge at (0, 0, 0)
     const sunP = this.projectToScreen(new THREE.Vector3(0, 0, 0), W, H);
     if (sunP) {
-      const br = this.drawBadge(ctx, sunP.x, sunP.y, `☀️ ${BODIES.sun.label}`, '#fde047', this.focus === 'sun');
-      this.hudTargets.push({ x: sunP.x, y: sunP.y, ...br, focus: 'sun' });
+      const br = this.drawBadge(ctx, sunP.x, sunP.y, `☀️ ${BODIES.sun.label}`, '#fde047', this.focus === 'sun', null, true);
+      if (br) this.hudTargets.push({ x: sunP.x, y: sunP.y, ...br, focus: 'sun' });
     }
 
-    // Earth badge
+    // 3. Earth badge
     const earthP = this.projectToScreen(earthV3, W, H);
     if (earthP) {
-      const br = this.drawBadge(ctx, earthP.x, earthP.y, `🌍 ${BODIES.earth.label}`, '#38bdf8', this.focus === 'earth');
-      this.hudTargets.push({ x: earthP.x, y: earthP.y, ...br, focus: 'earth' });
+      const br = this.drawBadge(ctx, earthP.x, earthP.y, `🌍 ${BODIES.earth.label}`, '#38bdf8', this.focus === 'earth', null, true);
+      if (br) this.hudTargets.push({ x: earthP.x, y: earthP.y, ...br, focus: 'earth' });
     }
 
-    // Moon badge
-    const moonP = this.projectToScreen(moonV3, W, H);
-    if (moonP) {
-      const moonSub = `${tr('Thân chủ', 'Parent')}: ${BODIES.earth.label}`;
-      const br = this.drawBadge(ctx, moonP.x, moonP.y, `🌕 ${BODIES.moon.label}`, '#f1f5f9', this.focus === 'moon', moonSub);
-      this.hudTargets.push({ x: moonP.x, y: moonP.y, ...br, focus: 'moon' });
+    // 4. Moon badge (hide when zoomed far out from Earth unless focused)
+    const showEarthMoon = this.focus === 'moon' || this.focus === 'earth' || camToEarth < 160000;
+    if (showEarthMoon) {
+      const moonP = this.projectToScreen(moonV3, W, H);
+      if (moonP) {
+        const moonSub = `${tr('Thân chủ', 'Parent')}: ${BODIES.earth.label}`;
+        const br = this.drawBadge(ctx, moonP.x, moonP.y, `🌕 ${BODIES.moon.label}`, '#f1f5f9', this.focus === 'moon', moonSub, true);
+        if (br) this.hudTargets.push({ x: moonP.x, y: moonP.y, ...br, focus: 'moon' });
+      }
     }
 
-    // Planets & Moons HUD badges
-    const focusParent = BODIES[this.focus] ? BODIES[this.focus].parent : null;
+    // 5. Planets & Moons HUD badges
     for (const name of NON_EARTH_BODIES) {
       const B = BODIES[name];
       const isMoon = B.parent && B.parent !== 'sun';
@@ -2092,29 +2081,31 @@ export class MapView {
       const pp = this.projectToScreen(pv3, W, H);
       if (pp) {
         const sub = isMoon && parentB ? `${tr('Thân chủ', 'Parent')}: ${parentB.label}` : null;
-        const br = this.drawBadge(ctx, pp.x, pp.y, `${B.icon} ${B.label}`, B.color, this.focus === name, sub);
-        this.hudTargets.push({ x: pp.x, y: pp.y, ...br, focus: name });
+        const br = this.drawBadge(ctx, pp.x, pp.y, `${B.icon} ${B.label}`, B.color, this.focus === name, sub, true);
+        if (br) this.hudTargets.push({ x: pp.x, y: pp.y, ...br, focus: name });
       }
     }
 
-    // Asteroid Belt label right above Ceres so Ceres sits directly underneath the Asteroid Belt
-    const ceresV3 = planetV3s.ceres;
-    const beltAngle = (S.t || 0) * 1.15e-5 + 0.85;
-    const beltR = ((ASTEROID_BELT_INNER + ASTEROID_BELT_OUTER) * 0.5) * SCALE;
-    const beltV3 = ceresV3
-      ? new THREE.Vector3(ceresV3.x, 1250, ceresV3.z)
-      : new THREE.Vector3(Math.sin(beltAngle) * beltR, 1250, Math.cos(beltAngle) * beltR);
-    const beltP = this.projectToScreen(beltV3, W, H);
-    if (beltP) {
-      let by = beltP.y;
-      if (ceresV3) {
-        const cp = this.projectToScreen(ceresV3, W, H);
-        if (cp && by > cp.y - 28) by = cp.y - 28;
+    // 6. Asteroid Belt label right above Ceres (hide when extremely zoomed out if overlapping Sun/inner system)
+    if (camToOrigin < 2400000 || this.focus === 'ceres') {
+      const ceresV3 = planetV3s.ceres;
+      const beltAngle = (S.t || 0) * 1.15e-5 + 0.85;
+      const beltR = ((ASTEROID_BELT_INNER + ASTEROID_BELT_OUTER) * 0.5) * SCALE;
+      const beltV3 = ceresV3
+        ? new THREE.Vector3(ceresV3.x, 1250, ceresV3.z)
+        : new THREE.Vector3(Math.sin(beltAngle) * beltR, 1250, Math.cos(beltAngle) * beltR);
+      const beltP = this.projectToScreen(beltV3, W, H);
+      if (beltP) {
+        let by = beltP.y;
+        if (ceresV3) {
+          const cp = this.projectToScreen(ceresV3, W, H);
+          if (cp && by > cp.y - 28) by = cp.y - 28;
+        }
+        this.drawBadge(ctx, beltP.x, by, tr('🪨 Vành đai đá (Tiểu hành tinh)', '🪨 Asteroid Belt'), '#d6d3d1', false, null, true);
       }
-      this.drawBadge(ctx, beltP.x, by, tr('🪨 Vành đai đá (Tiểu hành tinh)', '🪨 Asteroid Belt'), '#d6d3d1', false);
     }
 
-    // Kuiper Belt label near Haumea / Makemake in the outer Solar System
+    // 7. Kuiper Belt label near Haumea / Makemake in the outer Solar System
     const haumeaV3 = planetV3s.haumea;
     const kuiperAngle = (S.t || 0) * 1.2e-6 - 1.62;
     const kuiperR = ((KUIPER_BELT_INNER + KUIPER_BELT_OUTER) * 0.5) * SCALE;
@@ -2123,62 +2114,99 @@ export class MapView {
       : new THREE.Vector3(Math.sin(kuiperAngle) * kuiperR, 2400, Math.cos(kuiperAngle) * kuiperR);
     const kuiperP = this.projectToScreen(kuiperV3, W, H);
     if (kuiperP) {
-      this.drawBadge(ctx, kuiperP.x, kuiperP.y - 26, tr('🧊 Vành đai Kuiper (Thiên thể băng)', '🧊 Kuiper Belt'), '#7dd3fc', false);
+      this.drawBadge(ctx, kuiperP.x, kuiperP.y - 26, tr('🧊 Vành đai Kuiper (Thiên thể băng)', '🧊 Kuiper Belt'), '#7dd3fc', false, null, true);
     }
 
-    // Oort Cloud label at the outer spherical cometary shell of the Solar System
+    // 8. Oort Cloud label at the outer spherical cometary shell of the Solar System
     const oortAngle = (S.t || 0) * 8.0e-7 - 2.15;
     const oortR = ((OORT_CLOUD_INNER + OORT_CLOUD_OUTER) * 0.5) * SCALE;
     const oortV3 = new THREE.Vector3(Math.sin(oortAngle) * oortR, oortR * 0.18, Math.cos(oortAngle) * oortR);
     const oortP = this.projectToScreen(oortV3, W, H);
     if (oortP) {
-      const br = this.drawBadge(ctx, oortP.x, oortP.y, tr('☄️ Đám mây Oort (Vỏ cầu sao chổi)', '☄️ Oort Cloud (Cometary Shell)'), '#c084fc', this.focus === 'oort');
-      this.hudTargets.push({ x: oortP.x, y: oortP.y, ...br, focus: 'oort' });
+      const br = this.drawBadge(ctx, oortP.x, oortP.y, tr('☄️ Đám mây Oort (Vỏ cầu sao chổi)', '☄️ Oort Cloud (Cometary Shell)'), '#c084fc', this.focus === 'oort', null, true);
+      if (br) this.hudTargets.push({ x: oortP.x, y: oortP.y, ...br, focus: 'oort' });
     }
 
-    if (issV3) {
+    // 9. ISS badge (only show when near Earth or focused on Earth/ISS)
+    if (issV3 && (this.focus === 'iss' || this.focus === 'earth' || camToEarth < 65000)) {
       const issP = this.projectToScreen(issV3, W, H);
       if (issP) {
-        const br = this.drawBadge(ctx, issP.x, issP.y, '🛰️ ISS', '#34d399', this.focus === 'iss');
-        this.hudTargets.push({ x: issP.x, y: issP.y, ...br, focus: 'iss' });
+        const br = this.drawBadge(ctx, issP.x, issP.y, '🛰️ ISS', '#34d399', this.focus === 'iss', null, true);
+        if (br) this.hudTargets.push({ x: issP.x, y: issP.y, ...br, focus: 'iss' });
       }
     }
 
-    // Draw stage / object badges:
+    // 10. Draw stage / saved rocket / alien badges:
+    // Group unselected live Aliens near the player into 1 summary badge unless zoomed in very close (< 150 units)
+    const unselectedLiveAliens = [];
+    const patrolShownPerBody = {};
     for (const o of S.others || []) {
-      const oV3 = to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
-      if (o.ref === 'ceres') oV3.y += CERES_MAP_Y;
+      const fKey = 'obj:' + o.id;
+      const isFocused = this.focus === fKey || this.selectedObjectId === o.id;
+
+      if (o.isLiveAlien && !isFocused && camToVessel > 150) {
+        unselectedLiveAliens.push(o);
+        continue;
+      }
+
+      if (o.isPatrolAlien && !isFocused) {
+        const refName = o.ref || 'earth';
+        const refV3 = refName === 'earth' ? earthV3 : refName === 'moon' ? moonV3 : planetV3s[refName];
+        const camToRef = refV3 ? this.camera.position.distanceTo(refV3) : Infinity;
+        const refB = BODIES[refName] || BODIES.earth;
+        const showPatrol =
+          this.focus === refName ||
+          focusParent === refName ||
+          camToRef < Math.max((refB.soi || 5e6) * SCALE * 2.5, 25000);
+        if (!showPatrol) continue;
+        // When not zoomed right into low orbit around that body, show at most 1 patrol badge per body
+        if (camToRef > 2400 && (patrolShownPerBody[refName] || 0) >= 1) continue;
+        patrolShownPerBody[refName] = (patrolShownPerBody[refName] || 0) + 1;
+      }
+
+      const oV3 = (o.isLiveAlien && S.vessel)
+        ? new THREE.Vector3(
+            vPos3D.x + (o.relX || 0) * SCALE,
+            vPos3D.y + (o.relZ || 0) * SCALE,
+            vPos3D.z - (o.relY || 0) * SCALE
+          )
+        : to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
+      if (!o.isLiveAlien && o.ref === 'ceres') oV3.y += CERES_MAP_Y;
       const op = this.projectToScreen(oV3, W, H);
       if (op) {
-        const fKey = 'obj:' + o.id;
-        const isFocused = this.focus === fKey || this.selectedObjectId === o.id;
         const oAltKm = o.alt !== undefined ? `${(o.alt / 1000).toFixed(1)} km` : null;
         const icon = o.kind === 'alien' ? '👽' : (o.kind === 'vessel' ? '🚀' : '🛰️');
         const br = this.drawBadge(ctx, op.x, op.y, `${icon} ${o.name}`, o.color || '#ff7a3a', isFocused, oAltKm, true);
-        this.hudTargets.push({
-          x: op.x,
-          y: op.y,
-          ...br,
-          focus: fKey,
-          objId: o.id,
-          deletable: !!o.deletable,
-        });
+        if (br) {
+          this.hudTargets.push({
+            x: op.x,
+            y: op.y,
+            ...br,
+            focus: fKey,
+            objId: o.id,
+            deletable: !!o.deletable,
+          });
+        }
       }
     }
 
-    const vesselP = this.projectToScreen(vPos3D, W, H);
-    if (vesselP) {
-      const vAltKm = S.vessel.alt ? (S.vessel.alt / 1000).toFixed(1) : null;
-      const sub = vAltKm ? `${vAltKm} km` : null;
-      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, '🚀 ' + (S.name || tr('Tàu vũ trụ', 'Spacecraft')), '#38bdf8', this.focus === 'vessel', sub, true);
-      this.hudTargets.push({
-        x: vesselP.x,
-        y: vesselP.y,
-        ...br,
-        focus: 'vessel',
-        objId: 'vessel',
-        deletable: !!(S.vessel && S.vessel.deletable),
-      });
+    if (unselectedLiveAliens.length > 0 && vesselP) {
+      const leadAlien = unselectedLiveAliens[0];
+      const count = unselectedLiveAliens.length;
+      const swarmLabel = count === 1
+        ? `👽 ${leadAlien.name}`
+        : tr(`👽 ${count} UFO Alien quanh tàu`, `👽 ${count} Alien UFOs nearby`);
+      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, swarmLabel, '#4ade80', false, null, true);
+      if (br) {
+        this.hudTargets.push({
+          x: vesselP.x,
+          y: vesselP.y,
+          ...br,
+          focus: 'obj:' + leadAlien.id,
+          objId: leadAlien.id,
+          deletable: false,
+        });
+      }
     }
 
     // Apoapsis & Periapsis Badges (show once in flight/orbit)
@@ -2219,10 +2247,13 @@ export class MapView {
 
     let bx = x + 14;
     let by = y - badgeH / 2;
+    const baseBy = by;
 
-    if (avoidOverlap && this.hudTargets && this.hudTargets.length) {
-      for (let pass = 0; pass < 8; pass++) {
-        const hit = this.hudTargets.find(
+    const obstacles = this.drawnBadges || this.hudTargets || [];
+    if (avoidOverlap && obstacles.length) {
+      let resolved = false;
+      for (let pass = 0; pass < 16; pass++) {
+        const hit = obstacles.find(
           (t) =>
             t.bx !== undefined &&
             bx < t.bx + t.bw + 4 &&
@@ -2230,9 +2261,21 @@ export class MapView {
             by < t.by + t.bh + 4 &&
             by + badgeH + 4 > t.by
         );
-        if (!hit) break;
+        if (!hit) {
+          resolved = true;
+          break;
+        }
         by = hit.by + hit.bh + 5;
       }
+      // Skip non-active badges if the cluster is already full (> 145px vertical stack) or still colliding
+      if (!active && (!resolved || Math.abs(by - baseBy) > 145)) {
+        ctx.restore();
+        return null;
+      }
+    }
+
+    if (this.drawnBadges) {
+      this.drawnBadges.push({ bx, by, bw: badgeW, bh: badgeH });
     }
 
     const cy = by + badgeH / 2;

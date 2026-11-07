@@ -182,31 +182,31 @@ export function sanitizeStack(stack) {
 
 export const PRESETS = {
   'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL+fins', 'engAntiGrav'],
-  'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon', 'saturnSM+gunLaser+waterCannon', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
-  'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
-  'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon', 'soyuzFairing+gunLaser+waterCannon', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
-  'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon', 'n1Fairing+gunLaser+waterCannon', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
-  'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
-  'Tàu con thoi Space Shuttle': ['shuttleNose+gunLaser+waterCannon', 'shuttleOrbiter', 'shuttleSrb'],
-  'Energia – Buran': ['buranNose+gunLaser+waterCannon', 'buranShuttle', 'buranEnergia'],
-  'Tên lửa Energia (Мир-2 / Polyus)': ['energiaNose+gunLaser+waterCannon', 'energiaPolyus', 'energiaCore'],
-  'Proton-M (Nga)': ['protonFairing+gunLaser+waterCannon', 'protonStage3', 'protonStage2', 'protonStage1'],
-  'Ariane 5 (James Webb)': ['ariane5Fairing+gunLaser+waterCannon', 'ariane5Stage2', 'ariane5Stage1'],
-  'Atlas V (Sao Hỏa)': ['atlasVFairing+gunLaser+waterCannon', 'atlasVStage2', 'atlasVStage1'],
-  'Delta IV Heavy': ['d4hFairing+gunLaser+waterCannon', 'd4hStage2', 'd4hStage1'],
-  'Trường Chinh 5 (Long March 5)': ['cz5Fairing+gunLaser+waterCannon', 'cz5Stage2', 'cz5Stage1'],
-  'Falcon 9 (SpaceX)': ['f9Dragon+gunLaser+waterCannon', 'f9Stage2', 'f9Stage1'],
-  'Falcon Heavy (SpaceX)': ['fhFairing+gunLaser+waterCannon', 'fhStage2', 'fhStage1'],
-  'SLS Artemis (NASA)': ['slsOrion+gunLaser+waterCannon', 'slsStage2', 'slsStage1'],
-  'Starship & Super Heavy': ['starshipNose+gunLaser+waterCannon', 'starshipShip', 'starshipBooster'],
-  'Nhỏ gọn': ['nose', 'tankM+gunLaser+waterCannon', 'tankM+fins', 'engMid'],
-  'Siêu nặng (lên quỹ đạo)': ['capsule', 'tankS+gunLaser+waterCannon', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'tankM+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
-  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
-  'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon', 'apollo11SM+gunLaser+waterCannon', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
+  'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon+batteryGun', 'saturnSM+gunLaser+waterCannon+batteryGun', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
+  'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
+  'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon+batteryGun', 'soyuzFairing+gunLaser+waterCannon+batteryGun', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
+  'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon+batteryGun', 'n1Fairing+gunLaser+waterCannon+batteryGun', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
+  'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon+batteryGun', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
+  'Tàu con thoi Space Shuttle': ['shuttleNose+gunLaser+waterCannon+batteryGun', 'shuttleOrbiter', 'shuttleSrb'],
+  'Energia – Buran': ['buranNose+gunLaser+waterCannon+batteryGun', 'buranShuttle', 'buranEnergia'],
+  'Tên lửa Energia (Мир-2 / Polyus)': ['energiaNose+gunLaser+waterCannon+batteryGun', 'energiaPolyus', 'energiaCore'],
+  'Proton-M (Nga)': ['protonFairing+gunLaser+waterCannon+batteryGun', 'protonStage3', 'protonStage2', 'protonStage1'],
+  'Ariane 5 (James Webb)': ['ariane5Fairing+gunLaser+waterCannon+batteryGun', 'ariane5Stage2', 'ariane5Stage1'],
+  'Atlas V (Sao Hỏa)': ['atlasVFairing+gunLaser+waterCannon+batteryGun', 'atlasVStage2', 'atlasVStage1'],
+  'Delta IV Heavy': ['d4hFairing+gunLaser+waterCannon+batteryGun', 'd4hStage2', 'd4hStage1'],
+  'Trường Chinh 5 (Long March 5)': ['cz5Fairing+gunLaser+waterCannon+batteryGun', 'cz5Stage2', 'cz5Stage1'],
+  'Falcon 9 (SpaceX)': ['f9Dragon+gunLaser+waterCannon+batteryGun', 'f9Stage2', 'f9Stage1'],
+  'Falcon Heavy (SpaceX)': ['fhFairing+gunLaser+waterCannon+batteryGun', 'fhStage2', 'fhStage1'],
+  'SLS Artemis (NASA)': ['slsOrion+gunLaser+waterCannon+batteryGun', 'slsStage2', 'slsStage1'],
+  'Starship & Super Heavy': ['starshipNose+gunLaser+waterCannon+batteryGun', 'starshipShip', 'starshipBooster'],
+  'Nhỏ gọn': ['nose', 'tankM+gunLaser+waterCannon+batteryGun', 'tankM+fins', 'engMid'],
+  'Siêu nặng (lên quỹ đạo)': ['capsule', 'tankS+gunLaser+waterCannon+batteryGun', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
+  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
+  'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon+batteryGun', 'apollo11SM+gunLaser+waterCannon+batteryGun', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
   'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel', 'motorBoat'],
-  'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon', 'tailPlane', 'engJet'],
+  'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon+batteryGun', 'tailPlane', 'engJet'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
@@ -229,15 +229,24 @@ export function ensureStackHasWeapons(stack) {
     return stack;
   }
   const hasWeapon = stack.some((it) => it.attach && (it.attach.includes('gunLaser') || it.attach.includes('waterCannon') || it.attach.includes('gunAcid') || it.attach.includes('gunElectric')));
-  if (hasWeapon) return stack;
-  // Find best upper-stage body/tank part to mount weapons
-  let target = stack.find((it) => {
-    const d = PARTS[it.type];
-    return d && (d.cat === 'Nhiên liệu' || it.type === 'chassisRover' || it.type === 'fuselagePlane');
-  }) || stack[0];
-  if (target) {
-    if (!target.attach.includes('gunLaser')) target.attach.push('gunLaser');
-    if (!target.attach.includes('waterCannon')) target.attach.push('waterCannon');
+  if (!hasWeapon) {
+    // Find best upper-stage body/tank part to mount weapons
+    let target = stack.find((it) => {
+      const d = PARTS[it.type];
+      return d && (d.cat === 'Nhiên liệu' || it.type === 'chassisRover' || it.type === 'fuselagePlane');
+    }) || stack[0];
+    if (target) {
+      if (!target.attach.includes('gunLaser')) target.attach.push('gunLaser');
+      if (!target.attach.includes('waterCannon')) target.attach.push('waterCannon');
+    }
+  }
+  const hasBigBat = stack.some((it) => isBigBatteryPart(it.type));
+  if (!hasBigBat) {
+    for (const it of stack) {
+      if (Array.isArray(it.attach) && it.attach.some(isWeaponPart) && !isBigBatteryPart(it.type) && !it.attach.includes('batteryGun')) {
+        it.attach.push('batteryGun');
+      }
+    }
   }
   return stack;
 }

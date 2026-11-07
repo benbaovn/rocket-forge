@@ -328,7 +328,7 @@ export class LaunchScene {
         return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
       }
     `;
-    const gmat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0, transparent: true });
+    const gmat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0, transparent: true, side: THREE.DoubleSide });
     gmat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = this.groundUniforms.uTime;
       sh.uniforms.uOff = this.groundUniforms.uOff;
@@ -6322,6 +6322,11 @@ export class LaunchScene {
 
   /** dual-layer render: far pass (sky, stars, planets) then near pass (ground, vessels) */
   renderView(renderer, target, cam, F, rect) {
+    const minCamY = this.getMinCameraSceneY(cam.position.x, cam.position.z, F);
+    if (cam.position.y < minCamY) {
+      cam.position.y = minCamY;
+      if (cam !== this.camera || this.camMode !== 2) cam.lookAt(0, 0, 0);
+    }
     this.placeScene(F);
     this.scene.updateMatrixWorld(true);
     this.envForView(cam, F);
@@ -6572,6 +6577,38 @@ export class LaunchScene {
   }
 
   // =================================================================== CAMERA
+  getMinCameraSceneY(camX, camZ, F = this.focus) {
+    if (!F || F.ref === 'sun' || BODIES[F.ref]?.gasGiant || F.alt > 25000) return -Infinity;
+    if (F.ref === 'earth') {
+      const camSx = (F.sx || 0) + camX;
+      const camSz = (F.s?.z || 0) + camZ;
+      const showPad = (this.player?.isPlane || this.player?.isRover) ? 0.0 : 1.0;
+      const showAirport = this.player?.isPlane ? 1.0 : 0.0;
+      let surfH = this.earthGroundWave(camSx, camSz, showPad, showAirport);
+      if (showPad > 0.5) {
+        const rPad = Math.hypot(camSx, camSz);
+        if (rPad < PAD_RADIUS + 22) {
+          surfH = Math.max(surfH, 6.0 * THREE.MathUtils.clamp((PAD_RADIUS + 22 - rPad) / 22, 0, 1));
+        }
+      }
+      if (showAirport > 0.5 && camSx > -180 && camSx < 2260 && Math.abs(camSz) < 28) {
+        surfH = Math.max(surfH, 0.28);
+      }
+      if (Math.hypot(camSx - LZ_X, camSz) < 40) {
+        surfH = Math.max(surfH, 1.0);
+      }
+      const bendDrop = (camX * camX + camZ * camZ) * BEND;
+      return (surfH - F.alt - bendDrop) + 1.8;
+    }
+    const B = BODIES[F.ref] || BODIES.moon;
+    const camSx = (F.sx || 0) + camX;
+    const camSz = (F.s?.z || 0) + camZ;
+    const camPsi = (F.phiRot || 0) + camX / B.R;
+    const surf = this.surfaceAt(F.ref, camSx, camPsi, camSz);
+    const bendDrop = (camX * camX + camZ * camZ) / (2 * B.R);
+    return ((surf ? surf.h : 0) - F.alt - bendDrop) + 1.8;
+  }
+
   updateCamera(dt) {
     const cam = this.camera, F = this.focus;
     cam.position.sub(this.shake);
@@ -6584,7 +6621,20 @@ export class LaunchScene {
         cam.position.applyAxisAngle(this._yAxis || (this._yAxis = new THREE.Vector3(0, 1, 0)), F.turnYawRate * followFactor * dt);
       }
       this.controls.target.set(0, 0, 0);
+      const minCamYPre = this.getMinCameraSceneY(cam.position.x, cam.position.z, F);
+      if (isFinite(minCamYPre)) {
+        const dist = Math.max(1, cam.position.length());
+        const cosLim = THREE.MathUtils.clamp((minCamYPre - this.controls.target.y) / dist, -0.98, 0.96);
+        this.controls.maxPolarAngle = Math.acos(cosLim);
+      } else {
+        this.controls.maxPolarAngle = Math.PI;
+      }
       this.controls.update();
+      const minCamYPost = this.getMinCameraSceneY(cam.position.x, cam.position.z, F);
+      if (cam.position.y < minCamYPost) {
+        cam.position.y = minCamYPost;
+        cam.lookAt(this.controls.target);
+      }
     } else if (mode === 1) {
       const dx = -260 - F.sx, dz = 380 - F.s.z;
       cam.position.set(dx, 14 - F.alt - (dx * dx + dz * dz) * BEND, dz);
@@ -6619,6 +6669,11 @@ export class LaunchScene {
     const s = this.shake.set((Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp);
     if (mode === 2) s.multiplyScalar(0.2);
     cam.position.add(s);
+    const minCamYFinal = this.getMinCameraSceneY(cam.position.x, cam.position.z, F);
+    if (cam.position.y < minCamYFinal) {
+      cam.position.y = minCamYFinal;
+      if (mode !== 2) cam.lookAt(0, 0, 0);
+    }
   }
 
   // =================================================================== HUD

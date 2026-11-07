@@ -1631,7 +1631,14 @@ export class BuildScene {
       const nd = d + (this.desiredDist - d) * (1 - Math.exp(-dt * 6));
       this.camera.position.copy(this.controls.target).add(off.multiplyScalar(nd / d));
     }
+    const vabDist = Math.max(1, this.camera.position.distanceTo(this.controls.target));
+    const vabCosLim = THREE.MathUtils.clamp((0.4 - this.controls.target.y) / vabDist, -0.95, 0.95);
+    this.controls.maxPolarAngle = Math.acos(vabCosLim);
     this.controls.update();
+    if (this.camera.position.y < 0.4) {
+      this.camera.position.y = 0.4;
+      this.camera.lookAt(this.controls.target);
+    }
     this.rocketHolder.rotation.y += dt * (this.drag ? 0 : 0.06);
     this.glowRing.material.emissiveIntensity = 5 + Math.sin(this.time * 2) * 1.5;
     this.indicator.material.emissiveIntensity = 6 + Math.sin(this.time * 10) * 3;

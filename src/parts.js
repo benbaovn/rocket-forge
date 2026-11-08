@@ -2374,46 +2374,57 @@ function buildWingsPlane() {
 function buildTailPlane() {
   const g = new THREE.Group();
   const H = PARTS.tailPlane.height; // 1.8
-  // Closed solid cylindrical tail fuselage matching fuselagePlane (top R*1.02) and engJet (bottom 1.02) with 0.04m overlap
+  // Full-girth closed cylindrical tail hull matching fuselagePlane (1.02) and engJet afterburner (1.02)
   const tailBodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.02, 1.02, H + 0.08, 64, 1, false), 2, 1);
   g.add(mesh(tailBodyGeo, MAT.stealth, 0, H / 2, 0));
 
-  // Dorsal & ventral stealth spine fairings continuing from fuselagePlane
-  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.72));
-  g.add(mesh(new THREE.BoxGeometry(1.56, H + 0.04, 0.56), MAT.stealth, 0, H / 2, 0));
+  // Titanium structural collar rings at top & bottom junctions (matching engJet & fuselagePlane)
+  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.03, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, 0.03, 0));
 
-  // Twin canted vertical stabilizers with roots embedded deep inside the tail cylinder
+  // Dorsal spine & muscular lateral tail-boom fairings continuing flush into the afterburner cowling
+  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.75));
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.52, H - 0.06, 0.42), MAT.stealth, sgn * 0.86, H / 2, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.36, H - 0.14, 0.28), MAT.darkMetal, sgn * 0.98, H / 2, 0));
+  }
+
+  // Twin canted vertical stabilizers rising dorsally (+Z) & canted outward (±X) with thick stealth airfoils
   for (const sgn of [-1, 1]) {
     const finGroup = new THREE.Group();
-    finGroup.position.set(sgn * 0.48, 0.12, 0.10);
-    finGroup.rotation.z = -sgn * 0.38;
+    finGroup.position.set(sgn * 0.45, 0, 0.45);
+    finGroup.rotation.y = sgn * 0.38;
 
     const finShape = new THREE.Shape();
-    finShape.moveTo(-0.45, -0.05);
-    finShape.lineTo(-0.45, H * 0.92);
-    finShape.lineTo(0.42, H * 0.86);
-    finShape.lineTo(0.72, -0.05);
+    finShape.moveTo(0, 0.04);
+    finShape.lineTo(0, H - 0.04);
+    finShape.lineTo(0.55, H - 0.06);
+    finShape.lineTo(1.58, 0.96);
+    finShape.lineTo(1.48, 0.16);
     finShape.closePath();
 
-    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.065, bevelEnabled: true, bevelThickness: 0.014, bevelSize: 0.014 });
-    finGeo.translate(0, 0, -0.0325);
-    finGeo.rotateY(Math.PI / 2);
+    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.11, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022, bevelSegments: 2 });
+    finGeo.translate(0, 0, -0.055);
+    finGeo.rotateY(-Math.PI / 2);
     finGroup.add(mesh(finGeo, MAT.stealth, 0, 0, 0));
-    finGroup.add(mesh(new THREE.BoxGeometry(0.075, H * 0.66, 0.24), MAT.darkMetal, 0, H * 0.40, -0.18));
+    // Thick rudder actuator fairing & dark-metal rudder surface
+    finGroup.add(mesh(new THREE.BoxGeometry(0.22, H * 0.82, 0.38), MAT.darkMetal, 0, H * 0.48, 0.52));
+    finGroup.add(mesh(new THREE.BoxGeometry(0.13, 0.72, 0.28), MAT.darkMetal, 0, 0.52, 1.22));
     g.add(finGroup);
   }
 
-  // All-moving horizontal tailplane elevators with root starting at x = -0.45 inside the tail cylinder
+  // Thick, full-span all-moving horizontal tailplane elevators protruding cleanly past the 1.02m tail cylinder
   for (const sgn of [-1, 1]) {
     const stabShape = new THREE.Shape();
-    stabShape.moveTo(-0.45, -0.62);
-    stabShape.lineTo(-0.45, 0.62);
-    stabShape.lineTo(1.38, -0.06);
-    stabShape.lineTo(1.28, -0.50);
+    stabShape.moveTo(0, 0.08);
+    stabShape.lineTo(0, 1.62);
+    stabShape.lineTo(0.62, 1.56);
+    stabShape.lineTo(2.02, 0.68);
+    stabShape.lineTo(1.92, 0.12);
     stabShape.closePath();
-    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.055, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
-    stabGeo.translate(0, 0, -0.0275);
-    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.68, 0.85, 0);
+    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.11, bevelEnabled: true, bevelThickness: 0.024, bevelSize: 0.024, bevelSegments: 2 });
+    stabGeo.translate(0, 0, -0.055);
+    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.42, 0, 0);
     stab.rotation.y = sgn > 0 ? 0 : Math.PI;
     g.add(stab);
   }

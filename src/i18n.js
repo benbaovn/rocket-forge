@@ -1211,6 +1211,106 @@ const MISSION_I18N = {
       },
     },
   },
+  plane_airport_1: {
+    vi: {
+      name: 'Đáp lên 1 sân bay',
+      desc: 'Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) cất cánh và hạ cánh an toàn xuống 1 sân bay.',
+      objs: {
+        planeAirport1: 'Cất cánh và đáp an toàn lên 1 sân bay',
+      },
+    },
+    en: {
+      name: 'Land on 1 Airport',
+      desc: 'Pilot the F-22 Fighter Jet (or enable Autopilot G) to take off and land safely on 1 airport.',
+      objs: {
+        planeAirport1: 'Take off and land safely on 1 airport',
+      },
+    },
+  },
+  plane_airport_2: {
+    vi: {
+      name: 'Đáp lên 2 sân bay',
+      desc: 'Điều khiển Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay và hạ cánh an toàn lên đủ 2 sân bay.',
+      objs: {
+        planeAirport1: 'Đáp an toàn lên sân bay thứ 1',
+        planeAirport2: 'Đáp hoàn thành đủ 2 sân bay',
+      },
+    },
+    en: {
+      name: 'Land on 2 Airports',
+      desc: 'Pilot the F-22 Fighter Jet (or enable Autopilot G) to fly and land safely on 2 airports.',
+      objs: {
+        planeAirport1: 'Land safely on the 1st airport',
+        planeAirport2: 'Complete landings on 2 airports',
+      },
+    },
+  },
+  plane_airport_3: {
+    vi: {
+      name: 'Đáp lên 3 sân bay',
+      desc: 'Điều khiển Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay chuyển tiếp và hạ cánh an toàn lên đủ 3 sân bay.',
+      objs: {
+        planeAirport1: 'Đáp an toàn lên sân bay thứ 1',
+        planeAirport2: 'Đáp an toàn lên sân bay thứ 2',
+        planeAirport3: 'Đáp hoàn thành đủ 3 sân bay',
+      },
+    },
+    en: {
+      name: 'Land on 3 Airports',
+      desc: 'Pilot the F-22 Fighter Jet (or enable Autopilot G) to hop and land safely on 3 airports.',
+      objs: {
+        planeAirport1: 'Land safely on the 1st airport',
+        planeAirport2: 'Land safely on the 2nd airport',
+        planeAirport3: 'Complete landings on 3 airports',
+      },
+    },
+  },
+  plane_airport_4: {
+    vi: {
+      name: 'Đáp lên 4 sân bay',
+      desc: 'Thử thách phi công: Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) hạ cánh chính xác lên đủ 4 sân bay.',
+      objs: {
+        planeAirport1: 'Đáp an toàn lên sân bay thứ 1',
+        planeAirport2: 'Đáp an toàn lên sân bay thứ 2',
+        planeAirport3: 'Đáp an toàn lên sân bay thứ 3',
+        planeAirport4: 'Đáp hoàn thành đủ 4 sân bay',
+      },
+    },
+    en: {
+      name: 'Land on 4 Airports',
+      desc: 'Pilot challenge: Fly the F-22 Fighter Jet (or enable Autopilot G) and land accurately on 4 airports.',
+      objs: {
+        planeAirport1: 'Land safely on the 1st airport',
+        planeAirport2: 'Land safely on the 2nd airport',
+        planeAirport3: 'Land safely on the 3rd airport',
+        planeAirport4: 'Complete landings on 4 airports',
+      },
+    },
+  },
+  plane_airport_5: {
+    vi: {
+      name: 'Đáp lên 5 sân bay',
+      desc: 'Chinh phục toàn bộ 5 sân bay: Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) hạ cánh an toàn lên cả 5 sân bay!',
+      objs: {
+        planeAirport1: 'Đáp an toàn lên sân bay thứ 1',
+        planeAirport2: 'Đáp an toàn lên sân bay thứ 2',
+        planeAirport3: 'Đáp an toàn lên sân bay thứ 3',
+        planeAirport4: 'Đáp an toàn lên sân bay thứ 4',
+        planeAirport5: 'Đáp hoàn thành đủ 5 sân bay',
+      },
+    },
+    en: {
+      name: 'Land on 5 Airports',
+      desc: 'Conquer all 5 airports: Pilot the F-22 Fighter Jet (or enable Autopilot G) and land safely on all 5 airports!',
+      objs: {
+        planeAirport1: 'Land safely on the 1st airport',
+        planeAirport2: 'Land safely on the 2nd airport',
+        planeAirport3: 'Land safely on the 3rd airport',
+        planeAirport4: 'Land safely on the 4th airport',
+        planeAirport5: 'Complete landings on all 5 airports',
+      },
+    },
+  },
 };
 
 for (const spec of ROVER_LOOP_SPECS) {

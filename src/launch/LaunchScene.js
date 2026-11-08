@@ -14,7 +14,7 @@ import { audio } from '../audio.js';
 import { Vessel } from './vessel.js';
 import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, angOf, predict, bodyRotation, bodyState, coastStep, rk4, refBody, bodyInfo } from '../sim/orbit.js';
 import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI, OORT_CLOUD_INNER, OORT_CLOUD_OUTER } from '../sim/constants.js';
-import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, PlaneLoopProgram, BoatCruiseProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
+import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, PlaneLoopProgram, PlaneAirportHopProgram, BoatCruiseProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById, isMissionCompleted, markMissionCompleted } from '../missions.js';
 import { createISS } from '../env/iss.js';
@@ -1594,6 +1594,22 @@ export class LaunchScene {
     return !!(B && !B.gasGiant);
   }
 
+  getCurrentAirportId(v) {
+    if (!v || !this.hasSurfaceAirports(v.ref)) return null;
+    const sx = v.sx || 0;
+    const sz = v.s ? (v.s.z || 0) : 0;
+    const anchor = this.getNearestAirportAnchor(v.ref, sx);
+    const dx = sx - anchor.sx;
+    if (dx < -180 || dx > 2255) return null;
+    for (let i = 0; i < AIRPORT_Z_OFFSETS.length; i++) {
+      const rz = AIRPORT_Z_OFFSETS[i];
+      if (Math.abs(sz - rz) <= 28 || (dx >= -125 && dx <= 820 && sz >= rz - 110 && sz <= rz + 25)) {
+        return `${v.ref}:${anchor.sectorIdx}:${i}`;
+      }
+    }
+    return null;
+  }
+
   getPlanetAirportOrigin(bodyKey) {
     if (!bodyKey || bodyKey === 'earth') return 0;
     if (!this.planetAirportOrigins) this.planetAirportOrigins = {};
@@ -2885,7 +2901,11 @@ export class LaunchScene {
         P.throttle = 0;
         P.engineOn = false;
         if (P.isBoat) P.waterSpeed = 0;
-        if (P.isPlane) P.planeRollSpeed = 0;
+        if (P.isPlane) {
+          P.planeRollSpeed = 0;
+          this.wasAirborneForAirport = false;
+          this.lastLandedAirportId = this.getCurrentAirportId(P) || `${bodyKey}:0:${aIdx}`;
+        }
         if (P.isRover) P.groundSpeed = 0;
         if (hasHarborOpt) {
           this.milestone(
@@ -3476,6 +3496,9 @@ export class LaunchScene {
     this.map.toggle(false);
     this.toggleTeleportModal(false);
     this.updateTeleportActiveButtons('earth');
+    this.airportsLandedSet = new Set();
+    this.wasAirborneForAirport = false;
+    this.lastLandedAirportId = 'earth:0:0';
     if (isSpecial) {
       $('btn-go').classList.add('hidden');
     } else {
@@ -3505,21 +3528,31 @@ export class LaunchScene {
         'warn'
       );
     } else if (this.player.isPlane && this.mission?.category === 'plane') {
-      const tb = this.mission.targetBody || 'earth';
-      if (tb !== 'earth' && BODIES[tb]) {
-        this.teleportToBody(tb, 'surface');
-        if (BODIES[tb].gasGiant) {
-          this.flags[`${tb}InAtmoFlight`] = true;
+      if (this.mission.targetAirports) {
+        this.event(
+          tr(
+            `🛫 Nhiệm vụ: ${this.mission.name} – Nhấn G để bật Lái tự động hoặc tự lái máy bay cất cánh và đáp an toàn lên ${this.mission.targetAirports} sân bay!`,
+            `🛫 Mission: ${this.mission.name} – Press G to enable Autopilot or fly manually to take off and land safely on ${this.mission.targetAirports} airport(s)!`
+          ),
+          'warn'
+        );
+      } else {
+        const tb = this.mission.targetBody || 'earth';
+        if (tb !== 'earth' && BODIES[tb]) {
+          this.teleportToBody(tb, 'surface');
+          if (BODIES[tb].gasGiant) {
+            this.flags[`${tb}InAtmoFlight`] = true;
+          }
         }
+        const tgtB = BODIES[tb] || BODIES.earth;
+        this.event(
+          tr(
+            `✈️ Nhiệm vụ: ${this.mission.name} – Nhấn G để bật Lái tự động hoặc tự lái máy bay hoàn thành 1 vòng quanh ${tgtB.label} (${this.mission.targetDistKm} km – có thể nhấn . để tua thời gian)!`,
+            `✈️ Mission: ${this.mission.name} – Press G to enable Autopilot or fly manually to complete 1 full lap around ${tgtB.label} (${this.mission.targetDistKm} km – press . for Time Warp)!`
+          ),
+          'warn'
+        );
       }
-      const tgtB = BODIES[tb] || BODIES.earth;
-      this.event(
-        tr(
-          `✈️ Nhiệm vụ: ${this.mission.name} – Nhấn G để bật Lái tự động hoặc tự lái máy bay hoàn thành 1 vòng quanh ${tgtB.label} (${this.mission.targetDistKm} km – có thể nhấn . để tua thời gian)!`,
-          `✈️ Mission: ${this.mission.name} – Press G to enable Autopilot or fly manually to complete 1 full lap around ${tgtB.label} (${this.mission.targetDistKm} km – press . for Time Warp)!`
-        ),
-        'warn'
-      );
     }
     this.renderMissionPanel(true);
     this.sc = this.makeContext();
@@ -3547,6 +3580,8 @@ export class LaunchScene {
       flag: (n) => self.setFlag(n),
       jettisonToCapsule: (v) => self.jettisonToCapsule(v),
       dockGeometry: () => self.dockGeometry(),
+      getAirportsLandedCount: () => (self.airportsLandedSet ? self.airportsLandedSet.size : 0),
+      getAirportAnchor: (bKey, sx) => self.getNearestAirportAnchor(bKey, sx),
       get docked() { return self.docked; },
     };
   }
@@ -3652,14 +3687,21 @@ export class LaunchScene {
     }
     const id = this.mission.id;
     if (this.mission.category === 'plane') {
-      const tb = this.mission.targetBody || 'earth';
-      if (this.player.ref !== tb && BODIES[tb]) {
-        this.teleportToBody(tb, 'surface');
+      if (this.mission.targetAirports) {
+        this.throttle = 1;
+        this.player.throttle = 1;
+        this.player.engineOn = true;
+        this.program = new PlaneAirportHopProgram(this.mission.targetAirports);
+      } else {
+        const tb = this.mission.targetBody || 'earth';
+        if (this.player.ref !== tb && BODIES[tb]) {
+          this.teleportToBody(tb, 'surface');
+        }
+        this.throttle = 1;
+        this.player.throttle = 1;
+        this.player.engineOn = true;
+        this.program = new PlaneLoopProgram(tb, this.mission.targetDistKm || 1000);
       }
-      this.throttle = 1;
-      this.player.throttle = 1;
-      this.player.engineOn = true;
-      this.program = new PlaneLoopProgram(tb, this.mission.targetDistKm || 1000);
     } else if (this.mission.category === 'boat') {
       this.throttle = 1;
       this.player.throttle = 1;
@@ -4061,10 +4103,11 @@ export class LaunchScene {
     const roverProgKm = tb ? bodyRoverKm : totalRoverKm;
     const planeProgKm = tb ? bodyPlaneKm : totalPlaneKm;
     const boatProgKm = totalBoatKm;
+    const airportsDone = this.airportsLandedSet ? this.airportsLandedSet.size : 0;
     const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('')
       + (isAlienMission ? `_${kills}` : '')
       + (isRoverMission ? `_${roverProgKm.toFixed(1)}` : '')
-      + (isPlaneMission ? `_${planeProgKm.toFixed(1)}` : '')
+      + (isPlaneMission ? `_${planeProgKm.toFixed(1)}_${airportsDone}` : '')
       + (isBoatMission ? `_${boatProgKm.toFixed(1)}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
@@ -4096,6 +4139,9 @@ export class LaunchScene {
         label = `${o.text} (${this.flags.killQueen ? 1 : 0}/1)`;
       } else if (o.id === 'killKing') {
         label = `${o.text} (${this.flags.killKing ? 1 : 0}/1)`;
+      } else if (o.targetAirports) {
+        const curAp = Math.min(o.targetAirports, airportsDone);
+        label = `${o.text} (${curAp}/${o.targetAirports})`;
       } else if (o.targetKm) {
         const distMap = isPlaneMission ? P?.planeDistByBody : isBoatMission ? P?.boatDistByBody : P?.roverDistByBody;
         const fallbackKm = isPlaneMission ? totalPlaneKm : isBoatMission ? totalBoatKm : totalRoverKm;
@@ -4348,8 +4394,40 @@ export class LaunchScene {
         this.renderMissionPanel();
       }
     }
-    // Airplane planetary & lunar (Titan, Triton) loop missions
+    // Airplane airport landing (1..5 airports) & planetary/lunar loop missions
     if (v.isPlane) {
+      if (!v.landed && !v.clamped && (v.agl || 0) > 3.0) {
+        this.wasAirborneForAirport = true;
+      } else if (v.landed && !v.clamped) {
+        const apId = this.getCurrentAirportId(v);
+        if (apId && (this.wasAirborneForAirport || (apId !== this.lastLandedAirportId && (v.planeDistTotal || 0) > 40))) {
+          this.wasAirborneForAirport = false;
+          this.lastLandedAirportId = apId;
+          if (!this.airportsLandedSet) this.airportsLandedSet = new Set();
+          const keyToAdd = this.airportsLandedSet.has(apId)
+            ? `${apId}_flight_${this.airportsLandedSet.size + 1}`
+            : apId;
+          this.airportsLandedSet.add(keyToAdd);
+          const count = this.airportsLandedSet.size;
+          const targetAp = this.mission?.targetAirports || 0;
+          for (let k = 1; k <= 5; k++) {
+            if (count >= k && !F[`planeAirport${k}`]) {
+              this.setFlag(`planeAirport${k}`);
+              if (targetAp === k) {
+                this.milestone(
+                  tr(`🏆🛫 HOÀN THÀNH ĐÁP LÊN ${k} SÂN BAY!`, `🏆🛫 COMPLETED LANDING ON ${k} AIRPORT${k > 1 ? 'S' : ''}!`),
+                  tr(`Xuất sắc! Máy bay đã hạ cánh an toàn lên đủ ${k}/${k} sân bay!`, `Awesome! Aircraft landed safely on ${k}/${k} airport(s)!`)
+                );
+              } else if (targetAp > k) {
+                this.milestone(
+                  tr(`🛫 ĐÃ ĐÁP LÊN ${k}/${targetAp} SÂN BAY!`, `🛫 LANDED ON ${k}/${targetAp} AIRPORTS!`),
+                  tr(`Tiếp tục cất cánh và đáp lên sân bay tiếp theo (${k}/${targetAp})!`, `Take off and land on the next airport (${k}/${targetAp})!`)
+                );
+              }
+            }
+          }
+        }
+      }
       const tb = this.mission?.targetBody;
       if (tb && v.ref === tb) {
         const bDistKm = ((v.planeDistByBody && v.planeDistByBody[tb]) || 0) / 1000;

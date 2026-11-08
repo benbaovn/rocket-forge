@@ -705,5 +705,110 @@ export class BoatCruiseProgram {
   }
 }
 
+export class PlaneAirportHopProgram {
+  constructor(targetAirports = 1) {
+    this.targetAirports = targetAirports;
+    this.phase = 'takeoff';
+    this.airborneTime = 0;
+  }
+  status() {
+    const doneCount = Math.min(this.targetAirports, this._lastCount || 0);
+    if (this.phase === 'takeoff') {
+      return tr(`Cất cánh tới sân bay tiếp theo (${doneCount}/${this.targetAirports})`, `Taking off to next airport (${doneCount}/${this.targetAirports})`);
+    }
+    if (this.phase === 'land') {
+      return tr(`Đang hạ cánh xuống đường băng (${doneCount}/${this.targetAirports})`, `Landing on runway (${doneCount}/${this.targetAirports})`);
+    }
+    return tr(`Đang bay chuyển tiếp sân bay (${doneCount}/${this.targetAirports})`, `Hopping to airport (${doneCount}/${this.targetAirports})`);
+  }
+  update(v, sc, dt = 0.02) {
+    const Z_OFFSETS = [0, -320, 320, -640, 640];
+    const doneCount = sc.getAirportsLandedCount ? sc.getAirportsLandedCount() : 0;
+    this._lastCount = doneCount;
+    if (doneCount >= this.targetAirports) {
+      this.phase = 'done';
+      v.throttle = 0;
+      v.engineOn = false;
+      v.ctl.drive = 0;
+      v.ctl.input = 0;
+      v.planeRollSpeed = 0;
+      return 'done';
+    }
+    const rwyIdx = (doneCount + 1) % 5;
+    const targetZ = Z_OFFSETS[rwyIdx];
+    const anchor = sc.getAirportAnchor ? sc.getAirportAnchor(v.ref, v.sx || 0) : { sx: 0, h: 0 };
+
+    if (v.landed || v.clamped) {
+      this.phase = 'takeoff';
+      this.airborneTime = 0;
+      sc.requestWarp(1);
+      if ((v.sx || 0) - anchor.sx > 1400 || (v.sx || 0) - anchor.sx < -140) {
+        const shiftX = (anchor.sx + 60) - (v.sx || 0);
+        v.s.x += v.east.x * shiftX;
+        v.s.y += v.east.y * shiftX;
+        v.updateFrame(sc.simT);
+      }
+      v.engineOn = true;
+      v.throttle = 1.0;
+      v.heading = 0;
+      v.ctl.input = 0;
+      const rhoF = v.planeRhoFactor || 1;
+      const minRotateSpd = Math.max(10, 25 * rhoF);
+      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? -1 : 0;
+      return;
+    }
+
+    this.airborneTime = (this.airborneTime || 0) + dt;
+    const zErr = targetZ - (v.s.z || 0);
+    if (this.airborneTime < 2.2 || Math.abs(zErr) > 10) {
+      this.phase = 'hop';
+      sc.requestWarp(2);
+      v.engineOn = true;
+      v.throttle = 0.85;
+      const vzCmd = Math.max(-115, Math.min(115, zErr * 2.4));
+      v.s.vz = vzCmd;
+      v.heading = Math.max(-0.35, Math.min(0.35, -vzCmd / 180));
+      v.bank = Math.max(-0.35, Math.min(0.35, vzCmd / 160));
+      const altErr = (anchor.h + 46) - v.alt;
+      const targetVu = Math.max(-12, Math.min(18, altErr * 0.45));
+      const dvU = (targetVu - v.vSurf.u) * Math.min(1, dt * 5.0);
+      v.s.vx += dvU * v.up.x;
+      v.s.vy += dvU * v.up.y;
+      v.vSurf.u += dvU;
+      v.beta = wrapPi(v.phi + Math.PI / 2 - Math.max(-0.12, Math.min(0.18, targetVu / 90)));
+      v.omega = 0;
+      v.ctl.drive = 0;
+      if (v.syncDir3DFromBeta) v.syncDir3DFromBeta();
+      return;
+    }
+
+    this.phase = 'land';
+    sc.requestWarp(1);
+    v.legsTarget = 1;
+    v.legsT = 1;
+    v.s.z = targetZ;
+    v.s.vz = 0;
+    v.heading = 0;
+    v.bank = 0;
+    if ((v.sx || 0) - anchor.sx > 1650 || (v.sx || 0) - anchor.sx < -50) {
+      const shiftX = (anchor.sx + 250) - (v.sx || 0);
+      v.s.x += v.east.x * shiftX;
+      v.s.y += v.east.y * shiftX;
+      v.updateFrame(sc.simT);
+    }
+    v.engineOn = true;
+    v.throttle = 0.22;
+    const targetVu = -5.5;
+    const dvU = (targetVu - v.vSurf.u) * Math.min(1, dt * 6.0);
+    v.s.vx += dvU * v.up.x;
+    v.s.vy += dvU * v.up.y;
+    v.vSurf.u += dvU;
+    v.beta = wrapPi(v.phi + Math.PI / 2);
+    v.omega = 0;
+    v.ctl.drive = 0;
+    if (v.syncDir3DFromBeta) v.syncDir3DFromBeta();
+  }
+}
+
 BoosterRecovery.steerSign = 1;
 

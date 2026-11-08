@@ -417,6 +417,57 @@ export const MISSIONS = [
       { id: 'boatDist2000', text: 'Đi hoàn thành đủ 2000 km trên mặt biển', targetKm: 2000 },
     ],
   },
+  // ================= AIRPLANE AIRPORT LANDING MISSIONS (1 -> 5 Airports) =================
+  {
+    id: 'plane_airport_1', icon: '🛫', name: 'Đáp lên 1 sân bay', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane', targetAirports: 1,
+    desc: 'Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) cất cánh và hạ cánh an toàn xuống 1 sân bay.',
+    objectives: [
+      { id: 'planeAirport1', text: 'Cất cánh và đáp an toàn lên 1 sân bay', targetAirports: 1 },
+    ],
+  },
+  {
+    id: 'plane_airport_2', icon: '🛫', name: 'Đáp lên 2 sân bay', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane', targetAirports: 2,
+    desc: 'Điều khiển Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay và hạ cánh an toàn lên đủ 2 sân bay.',
+    objectives: [
+      { id: 'planeAirport1', text: 'Đáp an toàn lên sân bay thứ 1', targetAirports: 1 },
+      { id: 'planeAirport2', text: 'Đáp hoàn thành đủ 2 sân bay', targetAirports: 2 },
+    ],
+  },
+  {
+    id: 'plane_airport_3', icon: '🛫', name: 'Đáp lên 3 sân bay', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane', targetAirports: 3,
+    desc: 'Điều khiển Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) bay chuyển tiếp và hạ cánh an toàn lên đủ 3 sân bay.',
+    objectives: [
+      { id: 'planeAirport1', text: 'Đáp an toàn lên sân bay thứ 1', targetAirports: 1 },
+      { id: 'planeAirport2', text: 'Đáp an toàn lên sân bay thứ 2', targetAirports: 2 },
+      { id: 'planeAirport3', text: 'Đáp hoàn thành đủ 3 sân bay', targetAirports: 3 },
+    ],
+  },
+  {
+    id: 'plane_airport_4', icon: '🛫', name: 'Đáp lên 4 sân bay', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane', targetAirports: 4,
+    desc: 'Thử thách phi công: Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) hạ cánh chính xác lên đủ 4 sân bay.',
+    objectives: [
+      { id: 'planeAirport1', text: 'Đáp an toàn lên sân bay thứ 1', targetAirports: 1 },
+      { id: 'planeAirport2', text: 'Đáp an toàn lên sân bay thứ 2', targetAirports: 2 },
+      { id: 'planeAirport3', text: 'Đáp an toàn lên sân bay thứ 3', targetAirports: 3 },
+      { id: 'planeAirport4', text: 'Đáp hoàn thành đủ 4 sân bay', targetAirports: 4 },
+    ],
+  },
+  {
+    id: 'plane_airport_5', icon: '🛫', name: 'Đáp lên 5 sân bay', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane', targetAirports: 5,
+    desc: 'Chinh phục toàn bộ 5 sân bay: Lái Tiêm kích phản lực F-22 (hoặc bật Lái tự động G) hạ cánh an toàn lên cả 5 sân bay!',
+    objectives: [
+      { id: 'planeAirport1', text: 'Đáp an toàn lên sân bay thứ 1', targetAirports: 1 },
+      { id: 'planeAirport2', text: 'Đáp an toàn lên sân bay thứ 2', targetAirports: 2 },
+      { id: 'planeAirport3', text: 'Đáp an toàn lên sân bay thứ 3', targetAirports: 3 },
+      { id: 'planeAirport4', text: 'Đáp an toàn lên sân bay thứ 4', targetAirports: 4 },
+      { id: 'planeAirport5', text: 'Đáp hoàn thành đủ 5 sân bay', targetAirports: 5 },
+    ],
+  },
 ];
 
 // Planetary & Lunar 1-Lap Rover Missions (Sorted from smallest circumference / easiest to largest / hardest)

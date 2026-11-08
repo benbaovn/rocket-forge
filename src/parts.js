@@ -1463,9 +1463,9 @@ function buildGunLaser() {
     metalness: 0.3,
   });
 
-  // Armored side sponson pylon attaching to rocket hull
-  g.add(mesh(new THREE.BoxGeometry(0.22, 0.56, 0.48), MAT.darkMetal, 0.08, 0, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.46, 0.28, 0.34), MAT.carbon, 0.36, -0.06, 0));
+  // Armored side sponson pylon attaching deeply into hull (x = -0.26..+0.20 so curved cylinders have zero gap)
+  g.add(mesh(new THREE.BoxGeometry(0.46, 0.56, 0.48), MAT.darkMetal, -0.03, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.58, 0.28, 0.34), MAT.carbon, 0.30, -0.06, 0));
   // Glowing power conduit cables along pylon
   for (const sz of [-0.14, 0.14]) {
     g.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.48, 12).rotateZ(Math.PI / 2), rubyMat, 0.34, 0.06, sz));
@@ -1523,9 +1523,9 @@ function buildWaterCannon() {
     metalness: 0.4,
   });
 
-  // Heavy-duty reinforced hydro-bracket
-  g.add(mesh(new THREE.BoxGeometry(0.24, 0.64, 0.56), MAT.darkMetal, 0.08, 0, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.52, 0.30, 0.44), MAT.blue, 0.36, -0.08, 0));
+  // Heavy-duty reinforced hydro-bracket extending deeply into hull
+  g.add(mesh(new THREE.BoxGeometry(0.48, 0.64, 0.56), MAT.darkMetal, -0.04, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.64, 0.30, 0.44), MAT.blue, 0.30, -0.08, 0));
 
   // Twin 1,000,000 PSI ultra-pressure water accumulator tanks on sides
   for (const sz of [-0.22, 0.22]) {
@@ -1591,9 +1591,9 @@ function buildGunAcid() {
     opacity: 0.88,
   });
 
-  // Heavy bio-hazard side bracket
-  g.add(mesh(new THREE.BoxGeometry(0.24, 0.62, 0.54), MAT.darkMetal, 0.08, 0, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.50, 0.28, 0.42), MAT.carbon, 0.35, -0.07, 0));
+  // Heavy bio-hazard side bracket extending deeply into hull
+  g.add(mesh(new THREE.BoxGeometry(0.48, 0.62, 0.54), MAT.darkMetal, -0.04, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.62, 0.28, 0.42), MAT.carbon, 0.29, -0.07, 0));
   g.add(mesh(new THREE.BoxGeometry(0.46, 0.06, 0.44), hazardMat, 0.35, -0.07, 0));
 
   // Twin glowing toxic-green pressurized acid canisters on sides
@@ -1659,9 +1659,9 @@ function buildGunElectric() {
     metalness: 0.65,
   });
 
-  // Heavy high-voltage transformer side bracket
-  g.add(mesh(new THREE.BoxGeometry(0.24, 0.64, 0.56), MAT.darkMetal, 0.08, 0, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.52, 0.30, 0.44), MAT.carbon, 0.35, -0.07, 0));
+  // Heavy high-voltage transformer side bracket extending deeply into hull
+  g.add(mesh(new THREE.BoxGeometry(0.48, 0.64, 0.56), MAT.darkMetal, -0.04, 0, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.64, 0.30, 0.44), MAT.carbon, 0.29, -0.07, 0));
 
   // Twin 1,000,000 WATT supercapacitor banks with ribbed ceramic insulators & copper coils
   for (const sz of [-0.21, 0.21]) {
@@ -1736,6 +1736,10 @@ function buildBatteryGun() {
   const pack = new THREE.Group();
   pack.position.set(0.62, -0.22, 0);
   g.add(pack);
+
+  // Solid inner mounting arm connecting the micro-battery pack directly into the hull & gun pylon (zero air gap)
+  pack.add(mesh(new THREE.BoxGeometry(0.76, 0.10, 0.22), MAT.darkMetal, -0.38, 0.02, 0));
+  pack.add(mesh(new THREE.BoxGeometry(0.42, 0.14, 0.24), MAT.carbon, -0.18, 0.08, 0));
 
   // Miniature carbon-titanium battery housing core
   pack.add(mesh(new THREE.BoxGeometry(0.24, 0.14, 0.28), MAT.carbon, 0, 0, 0));
@@ -2224,27 +2228,40 @@ function buildFloatsBoat() {
 function buildCockpitPlane() {
   const g = new THREE.Group();
   const H = PARTS.cockpitPlane.height; // 2.8
-  const pts = [];
-  const N = 24;
-  for (let i = 0; i <= N; i++) {
+  const rBase = R * 1.05;
+  const pts = [
+    new THREE.Vector2(0, -0.04),
+    new THREE.Vector2(rBase, -0.04),
+    new THREE.Vector2(rBase, 0.04),
+  ];
+  const N = 28;
+  for (let i = 1; i <= N; i++) {
     const t = i / N;
-    const r = Math.max(0.02, R * Math.pow(1 - t, 0.75));
+    const r = Math.max(0.018, rBase * Math.pow(1 - t, 0.75));
     pts.push(new THREE.Vector2(r, t * H));
   }
-  const bodyGeo = scaleUV(new THREE.LatheGeometry(pts, 48), 2, 1.2);
+  pts.push(new THREE.Vector2(0, H));
+  const bodyGeo = scaleUV(new THREE.LatheGeometry(pts, 64), 2, 1.2);
   g.add(mesh(bodyGeo, MAT.stealth, 0, 0, 0));
 
-  // Pitot tube needle
-  g.add(mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.5, 8), MAT.silver, 0, H + 0.25, 0));
-  g.add(mesh(new THREE.ConeGeometry(0.015, 0.08, 8), MAT.titanium, 0, H + 0.54, 0));
+  // Solid base collar ring sealing the cockpit-to-fuselage junction
+  g.add(mesh(new THREE.CylinderGeometry(rBase + 0.008, rBase + 0.008, 0.10, 64), MAT.titanium, 0, 0.03, 0));
 
-  // Stealth bubble canopy
-  const canopyGeo = new THREE.CylinderGeometry(0.48, 0.7, 1.35, 32, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
-  const canopy = mesh(canopyGeo, MAT.glass, 0, 1.1, 0.22);
-  canopy.rotation.x = 0.22;
+  // Pitot tube needle (embedded deep into nose tip)
+  g.add(mesh(new THREE.CylinderGeometry(0.015, 0.022, 0.62, 12), MAT.silver, 0, H + 0.19, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.015, 0.08, 12), MAT.titanium, 0, H + 0.54, 0));
+
+  // Closed stealth bubble canopy embedded into the nose cone (no open back/bottom gap)
+  const canopyBase = mesh(new THREE.CylinderGeometry(0.42, 0.64, 1.42, 36, 1, false), MAT.darkMetal, 0, 1.06, 0.12);
+  canopyBase.rotation.x = 0.20;
+  g.add(canopyBase);
+
+  const canopyGeo = new THREE.CylinderGeometry(0.44, 0.66, 1.38, 36, 1, false, -Math.PI * 0.48, Math.PI * 0.96);
+  const canopy = mesh(canopyGeo, MAT.glass, 0, 1.08, 0.14);
+  canopy.rotation.x = 0.20;
   g.add(canopy);
 
-  // Ejection seat & HUD
+  // Ejection seat & HUD inside canopy
   const seat = mesh(new THREE.BoxGeometry(0.36, 0.48, 0.36), MAT.darkMetal, 0, 0.95, 0.08);
   seat.rotation.x = 0.15;
   g.add(seat);
@@ -2252,18 +2269,23 @@ function buildCockpitPlane() {
   hudGlass.rotation.x = 0.3;
   g.add(hudGlass);
 
-  // Forebody chine edges
-  for (const sgn of [-1, 1]) {
-    const chineShape = new THREE.Shape();
-    chineShape.moveTo(0, 0);
-    chineShape.lineTo(0.22, 0.55);
-    chineShape.lineTo(0.02, 1.8);
-    chineShape.lineTo(0, 0);
-    chineShape.closePath();
-    const chineGeo = new THREE.ExtrudeGeometry(chineShape, { depth: 0.035 });
-    chineGeo.rotateY(sgn * Math.PI / 2);
-    g.add(mesh(chineGeo, MAT.darkMetal, sgn * (R * 0.84), 0.3, 0));
+  // Conformal stealth forebody chine ridges (anchored at x = 0 and tapering along the exact nose cone curve so they never float)
+  const chineShape = new THREE.Shape();
+  chineShape.moveTo(0, -0.02);
+  for (let i = 0; i <= 20; i++) {
+    const t = (i / 20) * 0.78;
+    const y = t * H;
+    const r = rBase * Math.pow(1 - t, 0.75) + 0.07 * Math.sin((i / 20) * Math.PI);
+    chineShape.lineTo(r, y);
   }
+  chineShape.lineTo(0, H * 0.78);
+  chineShape.closePath();
+  const chineGeo = new THREE.ExtrudeGeometry(chineShape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015 });
+  chineGeo.translate(0, 0, -0.03);
+  g.add(mesh(chineGeo, MAT.darkMetal, 0, 0, 0));
+  const chineLeft = mesh(chineGeo, MAT.darkMetal, 0, 0, 0);
+  chineLeft.rotation.y = Math.PI;
+  g.add(chineLeft);
 
   return g;
 }
@@ -2271,32 +2293,37 @@ function buildCockpitPlane() {
 function buildFuselagePlane() {
   const g = new THREE.Group();
   const H = PARTS.fuselagePlane.height; // 3.8
-  const bodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.05, R * 0.96, H - 0.2, 48, 1, true), 2, 2);
+  // Closed solid cylindrical fuselage overlapping slightly (+0.04m) at top & bottom so there is zero gap with cockpitPlane or tailPlane
+  const bodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.05, R * 1.02, H + 0.08, 64, 1, false), 2, 2);
   g.add(mesh(bodyGeo, MAT.stealth, 0, H / 2, 0));
 
-  // Dorsal spine
-  g.add(mesh(new THREE.BoxGeometry(0.62, H - 0.1, 0.32), MAT.darkMetal, 0, H / 2, 0.88));
+  // Top & bottom titanium structural seam bands
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.054, R * 1.054, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.04, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.024, R * 1.024, 0.12, 64, 1, false), MAT.titanium, 0, 0.04, 0));
 
-  // Dual Caret air intakes on flanks
+  // Dorsal spine embedded deep into the fuselage cylinder (z = 0.45..1.05) across full height
+  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.75));
+
+  // Dual Caret air intakes on flanks — extending from x = ±0.45 inside the cylinder out to ±1.50 so there is zero gap
   for (const sgn of [-1, 1]) {
     const intakeGroup = new THREE.Group();
-    intakeGroup.position.set(sgn * (R + 0.32), H * 0.55, 0);
-    intakeGroup.rotation.y = -sgn * 0.1;
+    intakeGroup.position.set(sgn * 0.96, H * 0.52, 0);
+    intakeGroup.rotation.y = -sgn * 0.08;
 
-    intakeGroup.add(mesh(new THREE.BoxGeometry(0.52, 1.7, 0.68), MAT.stealth, 0, 0, 0));
-    intakeGroup.add(mesh(new THREE.BoxGeometry(0.54, 0.08, 0.7), MAT.titanium, 0, 0.85, 0));
+    // Solid intake body spanning x_local = -0.52..+0.52 (reaches x = ±0.44 inside the fuselage cylinder)
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.04, 1.85, 0.72), MAT.stealth, 0, 0, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.06, 0.10, 0.74), MAT.titanium, 0, 0.92, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.06, 0.10, 0.74), MAT.darkMetal, 0, -0.92, 0));
 
-    const intGeo = new THREE.PlaneGeometry(0.46, 0.58).rotateX(-Math.PI / 2);
-    intakeGroup.add(mesh(intGeo, new THREE.MeshBasicMaterial({ color: 0x06070a }), 0, 0.83, 0));
+    const intGeo = new THREE.BoxGeometry(0.46, 0.04, 0.60);
+    intakeGroup.add(mesh(intGeo, new THREE.MeshBasicMaterial({ color: 0x06070a }), sgn * 0.24, 0.96, 0));
     g.add(intakeGroup);
   }
 
-  // Vietnamese Air Force insignia
-  const roundel = mesh(new THREE.CircleGeometry(0.32, 32), new THREE.MeshStandardMaterial({ color: 0xda251d, roughness: 0.4 }), 0, H * 0.65, 1.06);
-  roundel.rotation.x = -0.15;
+  // Vietnamese Air Force insignia mounted flush on dorsal spine
+  const roundel = mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xda251d, roughness: 0.4 }), 0, H * 0.65, 1.04);
   g.add(roundel);
-  const yellowStar = mesh(new THREE.CircleGeometry(0.16, 5), new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffdd00, emissiveIntensity: 0.6 }), 0, H * 0.65, 1.065);
-  yellowStar.rotation.x = -0.15;
+  const yellowStar = mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.045, 5).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffdd00, emissiveIntensity: 0.6 }), 0, H * 0.65, 1.045);
   yellowStar.rotation.z = Math.PI / 2;
   g.add(yellowStar);
 
@@ -2305,33 +2332,41 @@ function buildFuselagePlane() {
 
 function buildWingsPlane() {
   const g = new THREE.Group();
-  // Swept delta wing planform oriented vertically along Y in VAB (X = span, Y = chord, Z = thickness)
+  // Swept delta wing planform starting at x = -0.45 so the wing root penetrates 0.45m deep inside the cylindrical fuselage
   const wingShape = new THREE.Shape();
-  wingShape.moveTo(0, -1.2);
-  wingShape.lineTo(0, 1.5);
+  wingShape.moveTo(-0.45, -1.35);
+  wingShape.lineTo(-0.45, 1.65);
+  wingShape.lineTo(0.15, 1.52);
   wingShape.lineTo(3.2, 0.1);
   wingShape.lineTo(3.1, -0.6);
+  wingShape.lineTo(0.15, -1.22);
   wingShape.closePath();
 
-  const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.075, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
-  wingGeo.translate(0, 0, -0.0375);
+  const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.09, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022, bevelSegments: 2 });
+  wingGeo.translate(0, 0, -0.045);
   g.add(mesh(wingGeo, MAT.stealth, 0, 0, 0));
 
-  // Aileron / flaperon along trailing edge
-  const flaperon = mesh(new THREE.BoxGeometry(1.9, 0.22, 0.055), MAT.darkMetal, 1.65, -0.82, 0);
+  // Wing-root strake / fuselage fairing box sealing any curvature along the cylinder flank
+  g.add(mesh(new THREE.BoxGeometry(0.75, 2.75, 0.26), MAT.stealth, -0.12, 0.12, 0));
+
+  // Aileron / flaperon along trailing edge (overlapping into wing trailing edge)
+  const flaperon = mesh(new THREE.BoxGeometry(1.95, 0.28, 0.065), MAT.darkMetal, 1.62, -0.78, 0);
   flaperon.rotation.z = 0.19;
   g.add(flaperon);
 
-  // Wingtip rail & formation light (aligned vertically along Y)
-  g.add(mesh(new THREE.BoxGeometry(0.07, 1.15, 0.07), MAT.titanium, 3.15, -0.22, 0));
-  g.add(mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 3.18, 0.36, 0));
+  // Wingtip rail & formation light (embedded into wingtip at x = 3.12)
+  g.add(mesh(new THREE.BoxGeometry(0.12, 1.15, 0.09), MAT.titanium, 3.12, -0.22, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.05, 12, 10), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 3.15, 0.36, 0));
 
-  // Wing pylon & external supersonic tank (aligned vertically along Y)
-  g.add(mesh(new THREE.BoxGeometry(0.08, 0.85, 0.22), MAT.darkMetal, 1.45, -0.05, 0));
-  const tankGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.55, 16);
+  // Wing pylon & external supersonic tank (connected solidly through the wing)
+  g.add(mesh(new THREE.BoxGeometry(0.12, 0.95, 0.26), MAT.darkMetal, 1.45, -0.02, 0));
+  const tankGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.58, 20);
   g.add(mesh(tankGeo, MAT.silver, 1.45, 0.05, 0));
-  const coneGeo = new THREE.ConeGeometry(0.12, 0.38, 16);
-  g.add(mesh(coneGeo, MAT.titanium, 1.45, 1.01, 0));
+  const coneGeo = new THREE.ConeGeometry(0.12, 0.40, 20);
+  g.add(mesh(coneGeo, MAT.titanium, 1.45, 1.02, 0));
+  const rearConeGeo = new THREE.ConeGeometry(0.12, 0.28, 20);
+  rearConeGeo.rotateX(Math.PI);
+  g.add(mesh(rearConeGeo, MAT.titanium, 1.45, -0.86, 0));
 
   return g;
 }
@@ -2339,39 +2374,46 @@ function buildWingsPlane() {
 function buildTailPlane() {
   const g = new THREE.Group();
   const H = PARTS.tailPlane.height; // 1.8
-  g.add(mesh(new THREE.BoxGeometry(1.15, H, 0.85), MAT.stealth, 0, H / 2, 0));
+  // Closed solid cylindrical tail fuselage matching fuselagePlane (top R*1.02) and engJet (bottom 1.02) with 0.04m overlap
+  const tailBodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.02, 1.02, H + 0.08, 64, 1, false), 2, 1);
+  g.add(mesh(tailBodyGeo, MAT.stealth, 0, H / 2, 0));
 
-  // Twin canted vertical stabilizers
+  // Dorsal & ventral stealth spine fairings continuing from fuselagePlane
+  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.72));
+  g.add(mesh(new THREE.BoxGeometry(1.56, H + 0.04, 0.56), MAT.stealth, 0, H / 2, 0));
+
+  // Twin canted vertical stabilizers with roots embedded deep inside the tail cylinder
   for (const sgn of [-1, 1]) {
     const finGroup = new THREE.Group();
-    finGroup.position.set(sgn * 0.62, 0.2, -0.08);
-    finGroup.rotation.z = -sgn * 0.42;
+    finGroup.position.set(sgn * 0.48, 0.12, 0.10);
+    finGroup.rotation.z = -sgn * 0.38;
 
     const finShape = new THREE.Shape();
-    finShape.moveTo(0, 0);
-    finShape.lineTo(-0.1, H * 0.9);
-    finShape.lineTo(0.38, H * 0.85);
-    finShape.lineTo(0.62, 0);
+    finShape.moveTo(-0.45, -0.05);
+    finShape.lineTo(-0.45, H * 0.92);
+    finShape.lineTo(0.42, H * 0.86);
+    finShape.lineTo(0.72, -0.05);
     finShape.closePath();
 
-    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.045, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
+    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.065, bevelEnabled: true, bevelThickness: 0.014, bevelSize: 0.014 });
+    finGeo.translate(0, 0, -0.0325);
     finGeo.rotateY(Math.PI / 2);
     finGroup.add(mesh(finGeo, MAT.stealth, 0, 0, 0));
-    finGroup.add(mesh(new THREE.BoxGeometry(0.055, H * 0.62, 0.18), MAT.darkMetal, 0, H * 0.38, -0.16));
+    finGroup.add(mesh(new THREE.BoxGeometry(0.075, H * 0.66, 0.24), MAT.darkMetal, 0, H * 0.40, -0.18));
     g.add(finGroup);
   }
 
-  // All-moving horizontal tailplane elevators (oriented vertically along Y in VAB to match wingsPlane)
+  // All-moving horizontal tailplane elevators with root starting at x = -0.45 inside the tail cylinder
   for (const sgn of [-1, 1]) {
     const stabShape = new THREE.Shape();
-    stabShape.moveTo(0, -0.55);
-    stabShape.lineTo(0, 0.55);
-    stabShape.lineTo(1.35, -0.08);
-    stabShape.lineTo(1.25, -0.48);
+    stabShape.moveTo(-0.45, -0.62);
+    stabShape.lineTo(-0.45, 0.62);
+    stabShape.lineTo(1.38, -0.06);
+    stabShape.lineTo(1.28, -0.50);
     stabShape.closePath();
-    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.038, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 });
-    stabGeo.translate(0, 0, -0.019);
-    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.58, 0.85, 0);
+    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.055, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
+    stabGeo.translate(0, 0, -0.0275);
+    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.68, 0.85, 0);
     stab.rotation.y = sgn > 0 ? 0 : Math.PI;
     g.add(stab);
   }
@@ -2382,22 +2424,33 @@ function buildTailPlane() {
 function buildEngJet() {
   const g = new THREE.Group();
   const H = PARTS.engJet.height; // 2.2
+  // Closed top & bottom LatheGeometry overlapping +0.04m into tailPlane so there is zero seam gap
   const pts = [
-    new THREE.Vector2(0.9, 0),
+    new THREE.Vector2(0, 0.02),
+    new THREE.Vector2(0.88, 0.02),
+    new THREE.Vector2(0.90, 0),
     new THREE.Vector2(0.92, 0.28),
     new THREE.Vector2(0.98, 1.15),
     new THREE.Vector2(1.02, H),
+    new THREE.Vector2(1.02, H + 0.04),
+    new THREE.Vector2(0, H + 0.04),
   ];
-  const cowlGeo = scaleUV(new THREE.LatheGeometry(pts, 48), 2, 1);
+  const cowlGeo = scaleUV(new THREE.LatheGeometry(pts, 64), 2, 1);
   g.add(mesh(cowlGeo, MAT.stealth, 0, 0, 0));
 
-  // Nozzle petals
-  const nozzleLength = 0.52;
-  const petalCount = 18;
-  const petalGeo = new THREE.BoxGeometry(0.13, nozzleLength, 0.028);
+  // Titanium top collar ring sealing connection with tailPlane
+  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.02, 0));
+
+  // Solid inner exhaust nozzle cone so there are no gaps between nozzle petals
+  const nozzleLength = 0.54;
+  g.add(mesh(new THREE.CylinderGeometry(0.72, 0.86, nozzleLength + 0.06, 48, 1, false), MAT.darkMetal, 0, nozzleLength / 2, 0));
+
+  // Overlapping nozzle petals around the solid inner cone
+  const petalCount = 24;
+  const petalGeo = new THREE.BoxGeometry(0.22, nozzleLength, 0.045);
   for (let i = 0; i < petalCount; i++) {
     const a = (i / petalCount) * Math.PI * 2;
-    const r = 0.7;
+    const r = 0.78;
     const petal = mesh(petalGeo, i % 2 === 0 ? MAT.titanium : MAT.darkMetal, Math.cos(a) * r, nozzleLength / 2, Math.sin(a) * r);
     petal.rotation.y = -a;
     petal.rotation.x = 0.12;
@@ -2405,8 +2458,8 @@ function buildEngJet() {
   }
 
   // Afterburner spray rings
-  g.add(mesh(new THREE.TorusGeometry(0.46, 0.02, 8, 32).rotateX(Math.PI / 2), MAT.copper, 0, 0.62, 0));
-  g.add(mesh(new THREE.TorusGeometry(0.26, 0.02, 8, 24).rotateX(Math.PI / 2), MAT.copper, 0, 0.62, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.46, 0.025, 10, 32).rotateX(Math.PI / 2), MAT.copper, 0, 0.04, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.26, 0.025, 10, 24).rotateX(Math.PI / 2), MAT.copper, 0, 0.04, 0));
 
   const bellM = bellMaterial(false);
   addNozzle(g, 0, 0, 0.4, [bellM]);
@@ -2420,12 +2473,14 @@ function buildGearPlane() {
   g.add(strutPivot);
 
   const legHeight = 1.05;
-  // Horizontal mounting bracket connecting the strut to the fuselage belly
-  strutPivot.add(mesh(new THREE.BoxGeometry(0.14, 0.14, 0.34), MAT.darkMetal, 0, -0.08, 0.16));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.58, 12), MAT.darkMetal, 0, -0.28, 0));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.48, 12), MAT.silver, 0, -0.62, 0));
+  // Solid landing-gear bay fairing & heavy strut collar extending +0.65m into the fuselage belly (+Z) so it never floats
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.28, 0.66, 0.72), MAT.stealth, 0, -0.24, 0.34));
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.20, 0.22, 0.76), MAT.darkMetal, 0, -0.10, 0.36));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.68, 16).rotateX(Math.PI / 2), MAT.titanium, 0, -0.36, 0.32));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.62, 16), MAT.darkMetal, 0, -0.28, 0));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.52, 16), MAT.silver, 0, -0.62, 0));
 
-  const link = mesh(new THREE.BoxGeometry(0.038, 0.2, 0.07), MAT.darkMetal, 0.055, -0.48, 0);
+  const link = mesh(new THREE.BoxGeometry(0.045, 0.24, 0.08), MAT.darkMetal, 0.055, -0.48, 0);
   link.rotation.z = 0.3;
   strutPivot.add(link);
 
@@ -2433,16 +2488,16 @@ function buildGearPlane() {
   wheelGroup.position.set(0, -legHeight, 0);
   strutPivot.add(wheelGroup);
 
-  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.34, 10).rotateZ(Math.PI / 2), MAT.silver, 0, 0, 0));
+  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.36, 12).rotateZ(Math.PI / 2), MAT.silver, 0, 0, 0));
 
-  const wheelGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.11, 24).rotateZ(Math.PI / 2);
-  const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.12, 16).rotateZ(Math.PI / 2);
+  const wheelGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.12, 24).rotateZ(Math.PI / 2);
+  const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.13, 16).rotateZ(Math.PI / 2);
   for (const sgn of [-1, 1]) {
     wheelGroup.add(mesh(wheelGeo, MAT.rubber, sgn * 0.11, 0, 0));
     wheelGroup.add(mesh(hubGeo, MAT.metal, sgn * 0.11, 0, 0));
   }
 
-  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.055, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.09);
+  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.08, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.07);
   strutPivot.add(lamp);
 
   g.userData.wheelGroup = wheelGroup;
@@ -2454,7 +2509,7 @@ function buildGearPlane() {
     strutPivot.visible = k > 0.02;
     if (inFlight) {
       // In LaunchScene, aircraft root is rotated horizontal so local -Z points down to the runway
-      strutPivot.position.set(0, 0, g.userData.isFront ? 0.75 : 0.28);
+      strutPivot.position.set(0, 0, g.userData.isFront ? 0.38 : 0.22);
       strutPivot.rotation.x = k * (Math.PI / 2);
       strutPivot.scale.set(1, Math.max(0.05, k), 1);
     } else {
@@ -13299,9 +13354,9 @@ export function radialPlacements(type) {
   }
   if (type === 'gearPlane') {
     return [
-      { angle: 0, dist: 0.95, offsetZ: -0.85, offsetY: 0.25, rotY: 0, isFront: false },
-      { angle: Math.PI, dist: 0.95, offsetZ: -0.85, offsetY: 0.25, rotY: 0, isFront: false },
-      { angle: 0, dist: 0.0, offsetZ: -1.35, offsetY: 3.15, rotY: 0, isFront: true },
+      { angle: 0, dist: 0.64, offsetZ: -0.78, offsetY: 0.35, rotY: 0, isFront: false },
+      { angle: Math.PI, dist: 0.64, offsetZ: -0.78, offsetY: 0.35, rotY: 0, isFront: false },
+      { angle: 0, dist: 0.0, offsetZ: -0.98, offsetY: 3.15, rotY: 0, isFront: true },
     ];
   }
   const def = PARTS[type];

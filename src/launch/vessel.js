@@ -606,10 +606,10 @@ export class Vessel {
         const steer = this.ctl.input || 0;
         this.waterSpeed = this.waterSpeed || 0;
         if (drive !== 0) {
-          const accRate = (drive * this.waterSpeed < 0) ? 28.0 : 14.0;
-          this.waterSpeed = THREE.MathUtils.clamp(this.waterSpeed + drive * accRate * h, -12, 38);
+          const accRate = (drive * this.waterSpeed < 0) ? 75.0 : 48.0;
+          this.waterSpeed = THREE.MathUtils.clamp(this.waterSpeed + drive * accRate * h, -35, 120);
         } else if (steer !== 0) {
-          if (this.waterSpeed < 10) this.waterSpeed = Math.min(10, this.waterSpeed + 10.0 * h);
+          if (this.waterSpeed < 28) this.waterSpeed = Math.min(28, this.waterSpeed + 28.0 * h);
           else this.waterSpeed *= Math.exp(-0.8 * h);
         } else {
           this.waterSpeed *= Math.exp(-1.1 * h);
@@ -617,7 +617,7 @@ export class Vessel {
         }
         if (steer !== 0) {
           const revSign = (drive < 0 && this.waterSpeed < -0.5) ? -1 : 1;
-          const turnYawRate = -steer * 1.15 * revSign;
+          const turnYawRate = -steer * 1.45 * revSign;
           const warpScale = Math.max(1, this._warp || 1);
           this.turnYawRate = turnYawRate;
           this.heading = (this.heading || 0) + (turnYawRate / warpScale) * h;
@@ -662,7 +662,7 @@ export class Vessel {
         }
         const wave = Math.sin((t + h) * 2.5) * 0.06;
         const targetH = Math.max(surf.h, 0) + this.bottomOffset() - 0.35 + wave;
-        const pitchUp = THREE.MathUtils.clamp(this.waterSpeed / 36 * 0.1, -0.05, 0.12);
+        const pitchUp = THREE.MathUtils.clamp(this.waterSpeed / 95 * 0.1, -0.05, 0.12);
         const targetBeta = this.phi + pitchUp;
         this.beta = targetBeta;
         this.omega = 0;

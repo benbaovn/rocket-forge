@@ -2759,9 +2759,12 @@ export class LaunchScene {
         this.ignited = true;
         this.released = true;
         this.lifted = true;
-        this.throttle = P.isPlane ? 1 : 0;
-        P.throttle = P.isPlane ? 1 : 0;
-        P.engineOn = !!P.isPlane;
+        this.throttle = 0;
+        P.throttle = 0;
+        P.engineOn = false;
+        if (P.isBoat) P.waterSpeed = 0;
+        if (P.isPlane) P.planeRollSpeed = 0;
+        if (P.isRover) P.groundSpeed = 0;
         if (isOlympusSummit) {
           this.milestone(
             tr('🌋 ĐÃ ĐÁP LÊN ĐỈNH OLYMPUS MONS (21,9 KM)!', '🌋 LANDED ON OLYMPUS MONS SUMMIT (21.9 KM)!'),
@@ -3201,6 +3204,7 @@ export class LaunchScene {
     if (this.player.isBoat) {
       const harborX = COAST_X + 160;
       this.player.heading = 0;
+      this.player.waterSpeed = 0;
       this.player.boatDistTotal = 0;
       this.player.boatDistByBody = {};
       this.player.placeOnSurface('earth', harborX, this.player.bottomOffset() - 0.35, this.simT);
@@ -3216,6 +3220,7 @@ export class LaunchScene {
       const roverX = 0;
       const surfH = this.earthGroundWave(roverX, 0, 0.0, 0.0) + this.player.bottomOffset();
       this.player.heading = Math.PI;
+      this.player.groundSpeed = 0;
       this.player.roverDistTotal = 0;
       this.player.roverDistByBody = {};
       this.player.placeOnSurface('earth', roverX, surfH, this.simT);
@@ -3230,6 +3235,7 @@ export class LaunchScene {
     } else if (this.player.isPlane) {
       this.player.legsT = 1;
       this.player.legsTarget = 1;
+      this.player.planeRollSpeed = 0;
       this.player.planeDistTotal = 0;
       this.player.planeDistByBody = {};
       const rwyH = 0.25 + this.player.bottomOffset();
@@ -3244,7 +3250,7 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z để chạy đà trên đường băng, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with Shift / Z to roll down the runway, press S to pitch up for takeoff.'));
+      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng W / Shift / Z / Space để chạy đà trên đường băng, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with W / Shift / Z / Space to roll down the runway, press S to pitch up for takeoff.'));
     } else {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.clamped = true;
@@ -3253,7 +3259,8 @@ export class LaunchScene {
       this.met = -10;
     }
 
-    this.player.engineOn = this.player.isPlane; this.player.throttle = 1;
+    const startThrottle = (this.player.isBoat || this.player.isPlane || this.player.isRover) ? 0 : 1;
+    this.player.engineOn = false; this.player.throttle = startThrottle;
     this.startAlt = this.player.alt;
     this.buildArms(this.rocketHeight);
     if (this.player.isBoat || this.player.isRover || this.player.isPlane) {
@@ -3270,7 +3277,7 @@ export class LaunchScene {
       }
     }
 
-    this.throttle = 1; this.sas = true; this.sasMode = 0; this.warp = 1; this.userWarp = 1; this.autoWarp = 1;
+    this.throttle = startThrottle; this.sas = true; this.sasMode = 0; this.warp = 1; this.userWarp = 1; this.autoWarp = 1;
     this.reqWarpNext = null; this.reqWarpPrev = 1;
     this.holdBeta = this.player.beta;
     if (this.player.dir3D) this.player.holdDir3D.copy(this.player.dir3D);
@@ -3503,8 +3510,14 @@ export class LaunchScene {
       if (this.player.ref !== tb && BODIES[tb]) {
         this.teleportToBody(tb, 'surface');
       }
+      this.throttle = 1;
+      this.player.throttle = 1;
+      this.player.engineOn = true;
       this.program = new PlaneLoopProgram(tb, this.mission.targetDistKm || 1000);
     } else if (this.mission.category === 'boat') {
+      this.throttle = 1;
+      this.player.throttle = 1;
+      this.player.engineOn = true;
       this.program = new BoatCruiseProgram(this.mission.targetDistKm || 500);
     } else if (id === 'iss') this.program = new RendezvousProgram(this.issOrbit, 85e3);
     else if (BODIES[id] && id !== 'earth' && id !== 'sun' && !BODIES[id].gasGiant) this.program = new MoonProgram(id);
@@ -4867,7 +4880,11 @@ export class LaunchScene {
         const r = this.program.update(P, this.sc, h);
         this.checkAutoStage(P);
         if (r === 'done' && !this.programDone) {
-          this.programDone = true; this.program = null; P.ctl.targetBeta = null; this.holdAttitude(); if (!P.isPlane) P.engineOn = false;
+          this.programDone = true; this.program = null; P.ctl.targetBeta = null; this.holdAttitude();
+          if (!P.isPlane) {
+            P.engineOn = false;
+            if (P.isBoat) { this.throttle = 0; P.throttle = 0; }
+          }
           this.event(tr('Lái tự động hoàn tất nhiệm vụ.', 'Autopilot mission completed.'));
         }
       }
@@ -4905,8 +4922,12 @@ export class LaunchScene {
     if (!this.rocket || !this.player) return;
     const kb = this.keys;
     if (!this.docked) {
-      if (kb['shift']) this.throttle = Math.min(1, this.throttle + dt * 0.8);
-      if (kb['control']) this.throttle = Math.max(0, this.throttle - dt * 0.8);
+      if (kb['shift'] || (this.player?.isPlane && this.player?.landed && (kb['w'] || kb['arrowup']))) {
+        this.throttle = Math.min(1, this.throttle + dt * 0.8);
+      }
+      if (kb['control'] || (this.player?.isPlane && this.player?.landed && (this.player?.planeRollSpeed || 0) < 10 && (kb['s'] || kb['arrowdown']))) {
+        this.throttle = Math.max(0, this.throttle - dt * 0.8);
+      }
     }
     const P = this.player;
 

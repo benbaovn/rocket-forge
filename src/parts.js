@@ -22,6 +22,7 @@ export const PARTS = {
   engAntiGrav: { name: 'Động cơ Phản Trọng Lực', cat: 'Động cơ', kind: 'stack', height: 2.8, dry: 1.5, thrustSL: 2600, thrustVac: 2600, ispSL: 5500, ispVac: 6500, engines: 1, restart: true, desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Đẩy bằng trường phản trọng lực: trọng lực càng mạnh gia tốc càng nhanh' },
   engLaser: { name: 'Động cơ Lazer Năng Lượng Cao', cat: 'Động cơ', kind: 'stack', height: 3.0, dry: 1.4, thrustSL: 2400, thrustVac: 2600, ispSL: 4500, ispVac: 5500, engines: 1, restart: true, desc: 'Bắt buộc dùng Cục Pin Năng Lượng (không dùng bồn nhiên liệu thường) · Phóng tia lazer hội tụ: chỗ càng tối gia tốc càng nhanh' },
   decoupler: { name: 'Bộ tách tầng', cat: 'Cấu trúc', kind: 'stack', height: 0.45, dry: 0.12, desc: 'Tách tầng bằng phím SPACE' },
+  heatShield: { name: 'Khiên chống nhiệt', cat: 'Cấu trúc', kind: 'stack', height: 0.68, dry: 0.35, isHeatShield: true, desc: 'Khiên chống nhiệt màu vàng đậm chịu nhiệt độ cực cao · Chống cháy nổ do lực ma sát không khí và tăng lực cản phanh khí động mỗi khi rơi xuống bầu khí quyển' },
   fins: { name: 'Cánh ổn định ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.08, desc: 'Gắn vào bồn – giữ tên lửa bay thẳng' },
   legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
@@ -314,6 +315,7 @@ const builders = {
   },
 
   dockPort() { return buildDockPort(); },
+  heatShield() { return buildHeatShield(); },
   engReuse() { return buildOctaweb(); },
   legs() { return buildLeg(); },
   gridfins() { return buildGridFin(); },
@@ -1836,6 +1838,82 @@ function buildSolarUltra() {
     wing.add(mesh(new THREE.SphereGeometry(0.016, 10, 8), emeraldGlow, wingLen / 2 + 0.012, 0, 0));
   }
 
+  return g;
+}
+
+function buildHeatShield() {
+  const g = new THREE.Group();
+  const H = PARTS.heatShield.height; // 0.68
+
+  // Rich Dark Yellow / Deep Amber-Gold ablative materials ("màu vàng đậm")
+  const darkYellowShield = new THREE.MeshStandardMaterial({
+    color: 0xd97706,
+    emissive: new THREE.Color(0x92400e),
+    emissiveIntensity: 0.28,
+    roughness: 0.34,
+    metalness: 0.48,
+  });
+  const deepOchreTile = new THREE.MeshStandardMaterial({
+    color: 0xb45309,
+    emissive: new THREE.Color(0x78350f),
+    emissiveIntensity: 0.20,
+    roughness: 0.44,
+    metalness: 0.38,
+  });
+  const brightGoldRim = new THREE.MeshStandardMaterial({
+    color: 0xeab308,
+    emissive: new THREE.Color(0xb45309),
+    emissiveIntensity: 0.36,
+    roughness: 0.24,
+    metalness: 0.65,
+  });
+  const amberGlowRing = new THREE.MeshStandardMaterial({
+    color: 0xf59e0b,
+    emissive: new THREE.Color(0xd97706),
+    emissiveIntensity: 0.95,
+    roughness: 0.20,
+    metalness: 0.45,
+  });
+
+  // 1) Upper structural adapter ring (mates flush with capsule, fuel tank, or decoupler at radius R)
+  g.add(mesh(new THREE.CylinderGeometry(R, R * 1.02, 0.14, 64), deepOchreTile, 0, H - 0.07, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.01, R * 1.01, 0.05, 64), brightGoldRim, 0, H - 0.025, 0));
+
+  // 2) Flared conical dark-yellow ablative skirt (widens from R to R*1.12 to deflect shockwave plasma)
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.02, R * 1.12, 0.32, 64), darkYellowShield, 0, H - 0.30, 0));
+
+  // 3) Thick rounded dark-yellow toroidal shockwave bumper rim
+  g.add(mesh(new THREE.TorusGeometry(R * 1.09, 0.072, 20, 64).rotateX(Math.PI / 2), brightGoldRim, 0, 0.22, 0));
+  g.add(mesh(new THREE.TorusGeometry(R * 1.05, 0.032, 14, 64).rotateX(Math.PI / 2), amberGlowRing, 0, 0.36, 0));
+
+  // 4) Blunt convex ablative bottom dish (concentric stepped thermal rings curving to y = 0)
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.10, R * 0.88, 0.13, 64), darkYellowShield, 0, 0.155, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R * 0.88, R * 0.54, 0.07, 64), deepOchreTile, 0, 0.055, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R * 0.54, R * 0.20, 0.04, 48), brightGoldRim, 0, 0.02, 0));
+
+  // Concentric ablative honeycomb tile ridges on the bottom and side
+  for (const [rRing, yRing] of [[R * 0.96, 0.12], [R * 0.72, 0.06], [R * 0.42, 0.025]]) {
+    g.add(mesh(new THREE.TorusGeometry(rRing, 0.024, 12, 56).rotateX(Math.PI / 2), amberGlowRing, 0, yRing, 0));
+  }
+
+  // 16 radial ablative tile expansion ribs & golden thermal lock bolts around the perimeter
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const ca = Math.cos(a), sa = Math.sin(a);
+    // Side vertical tile seam rib
+    const seam = mesh(new THREE.BoxGeometry(0.055, 0.30, 0.08), i % 2 === 0 ? brightGoldRim : deepOchreTile, ca * (R * 1.06), H - 0.30, sa * (R * 1.06));
+    seam.rotation.y = -a;
+    seam.rotation.z = -0.26;
+    g.add(seam);
+
+    // Bottom radial ablative rib
+    const botRib = mesh(new THREE.BoxGeometry(R * 0.78, 0.032, 0.048), i % 2 === 0 ? brightGoldRim : darkYellowShield, ca * (R * 0.54), 0.08, sa * (R * 0.54));
+    botRib.rotation.y = -a;
+    botRib.rotation.z = 0.16;
+    g.add(botRib);
+  }
+
+  g.userData.shieldGlowMats = [darkYellowShield, deepOchreTile, brightGoldRim, amberGlowRing];
   return g;
 }
 

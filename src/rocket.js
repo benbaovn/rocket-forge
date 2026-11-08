@@ -181,9 +181,9 @@ export function sanitizeStack(stack) {
 }
 
 export const PRESETS = {
-  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL+fins', 'engAntiGrav'],
+  'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)': ['capsule', 'heatShield', 'batteryPackL+solarPanel+gunLaser+waterCannon+gunAcid+gunElectric', 'batteryPackL', 'engLaser', 'decoupler', 'batteryPackL+fins', 'engAntiGrav'],
   'Saturn V (Apollo)': ['saturnApollo+gunLaser+waterCannon+batteryGun', 'saturnSM+gunLaser+waterCannon+batteryGun', 'saturnSLA', 'saturnS4B', 'saturnS4BInter', 'saturnS2', 'saturnS2Inter', 'saturnS1'],
-  'Hai tầng (khuyên dùng)': ['capsule', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
+  'Hai tầng (khuyên dùng)': ['capsule', 'heatShield', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL', 'tankL+fins', 'engHeavy'],
   'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon+batteryGun', 'soyuzFairing+gunLaser+waterCannon+batteryGun', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
   'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon+batteryGun', 'n1Fairing+gunLaser+waterCannon+batteryGun', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
   'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon+batteryGun', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
@@ -199,17 +199,17 @@ export const PRESETS = {
   'Falcon Heavy (SpaceX)': ['fhFairing+gunLaser+waterCannon+batteryGun', 'fhStage2', 'fhStage1'],
   'SLS Artemis (NASA)': ['slsOrion+gunLaser+waterCannon+batteryGun', 'slsStage2', 'slsStage1'],
   'Starship & Super Heavy': ['starshipNose+gunLaser+waterCannon+batteryGun', 'starshipShip', 'starshipBooster'],
-  'Nhỏ gọn': ['nose', 'tankM+gunLaser+waterCannon+batteryGun', 'tankM+fins', 'engMid'],
-  'Siêu nặng (lên quỹ đạo)': ['capsule', 'tankS+gunLaser+waterCannon+batteryGun', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
-  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
-  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'tankM+solarPanel+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
+  'Nhỏ gọn': ['nose', 'heatShield', 'tankM+gunLaser+waterCannon+batteryGun', 'tankM+fins', 'engMid'],
+  'Siêu nặng (lên quỹ đạo)': ['capsule', 'heatShield', 'tankS+gunLaser+waterCannon+batteryGun', 'tankM', 'engVac', 'decoupler', 'tankL', 'tankL', 'tankL+booster+fins', 'engHeavy'],
+  'Đại Bàng 9 (tái sử dụng)': ['capsule', 'heatShield', 'tankM+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL+legs', 'engReuse'],
+  'Tàu chở khách (ISS)': ['dockPort', 'capsule', 'heatShield', 'tankM+solarPanel+gunLaser+waterCannon+batteryGun', 'engVac', 'decoupler', 'tankL+gridfins', 'tankL', 'tankL', 'tankL+legs', 'engReuse'],
   'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon+batteryGun', 'apollo11SM+gunLaser+waterCannon+batteryGun', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
   'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel', 'motorBoat'],
   'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon+batteryGun', 'tailPlane', 'engJet'],
-  'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
-  'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
-  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
+  'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
+  'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
+  'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'heatShield', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
   'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
 };
 
@@ -298,6 +298,7 @@ export function segmentInfo(stack, idx) {
     tChemSL: 0, tChemVac: 0, mdotChem: 0, chemEngines: 0,
     tAntiGrav: 0, mdotAntiGrav: 0, tLaser: 0, mdotLaser: 0,
     batteryCount: 0, hasSolar: false, solarOnBattery: 0, hasGunBattery: false,
+    hasHeatShield: false,
     bDry: 0, bFuel: 0, bTSL: 0, bTVac: 0, bMdot: 0,
     fins: false, engines: 0, engCount: 0, restart: false,
     legs: false, gridfins: false, antiGrav: false, laser: false,
@@ -315,6 +316,7 @@ export function segmentInfo(stack, idx) {
       s.chemFuel += d.fuel || 0;
     }
     if (d.hasFins) s.fins = true;
+    if (it.type === 'heatShield' || d.isHeatShield) s.hasHeatShield = true;
     if (it.type === 'engAntiGrav' || it.type === 'ufoSaucer') {
       s.antiGrav = true;
       s.tAntiGrav += d.thrustVac;
@@ -341,6 +343,7 @@ export function segmentInfo(stack, idx) {
       if (!ad) continue;
       const cnt = ad.count || 2;
       if (a === 'batteryGun') s.hasGunBattery = true;
+      if (a === 'heatShield' || ad.isHeatShield) s.hasHeatShield = true;
       if (a === 'solarUltra') {
         if (it.attach.includes('batteryGun')) {
           s.hasSolar = true;
@@ -577,6 +580,7 @@ export function buildRocket(stack) {
   const deployables = [];
   const roverWheels = [];
   const weapons = [];
+  const heatShields = [];
   let capsule = null, dockPort = null;
   for (const p of lay.parts) {
     const k = segOf.get(p.index);
@@ -596,6 +600,9 @@ export function buildRocket(stack) {
 
     segGroups[k].add(partContainer);
     partObjs.push({ index: p.index, obj, container: partContainer, seg: k, def: p.def, y: p.y });
+    if (p.item.type === 'heatShield' || p.def.isHeatShield) {
+      heatShields.push({ seg: k, obj, shieldGlowMats: obj.userData.shieldGlowMats || [] });
+    }
     if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle, agLight: obj.userData.agLight, cyanGlow: obj.userData.cyanGlow, violetGlow: obj.userData.violetGlow });
     if (p.item.type === 'titan4Voyager' && stack[p.index + 1]?.type === 'titan4Fairing') {
       if (obj.userData.voyagerBooms) obj.userData.voyagerBooms.visible = false;
@@ -778,6 +785,9 @@ export function buildRocket(stack) {
 
         segGroups[k].add(pivot);
         group.push(ao);
+        if (a === 'heatShield' || PARTS[a]?.isHeatShield) {
+          heatShields.push({ seg: k, obj: ao, shieldGlowMats: ao.userData.shieldGlowMats || [] });
+        }
         if (a === 'booster') {
           for (const n of ao.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, def: PARTS.booster, bellMats: ao.userData.bellMats, booster: ao });
         } else if (ao.userData.nozzles) {
@@ -802,7 +812,7 @@ export function buildRocket(stack) {
       }
     }
   }
-  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons };
+  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons, heatShields };
 }
 
 /** Center of mass (y) of the given set of segments, including fuel state */

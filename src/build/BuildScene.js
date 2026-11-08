@@ -458,7 +458,9 @@ export class BuildScene {
         ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
         : def.isUltraSolar
           ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-          : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+          : def.isHeatShield
+            ? `🛡️${(def.dry + (def.fuel || 0)).toFixed(2)}t`
+            : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
     const shortName = this.getPartCardLabel(type, def);
     card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
     card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
@@ -542,6 +544,9 @@ export class BuildScene {
       if (shownParts.has(type)) continue;
       if (!this.partMatchesSearch(type, def, q)) continue;
       (cats[def.cat] = cats[def.cat] || []).push(type);
+      if (type === 'dockPort' && !q.trim() && PARTS.heatShield && !shownParts.has('heatShield')) {
+        cats[def.cat].push('heatShield');
+      }
       if (type === 'batteryPackL' && !q.trim() && PARTS.batteryGun && !shownParts.has('batteryGun')) {
         cats[def.cat].push('batteryGun');
         if (PARTS.solarUltra && !shownParts.has('solarUltra')) {
@@ -1300,6 +1305,22 @@ export class BuildScene {
         }
       }
     } else if (type === 'nose' || type === 'capsule' || type === 'dockPort') st.unshift(newItem(type));
+    else if (type === 'heatShield') {
+      let insIdx = -1;
+      for (let i = 0; i < st.length; i++) {
+        const t = st[i].type;
+        if ((t === 'capsule' || t === 'nose' || t === 'saturnApollo' || t === 'apollo11CM' || t === 'f9Dragon' || t === 'slsOrion' || t === 'soyuzNose') && st[i + 1]?.type !== 'heatShield') {
+          insIdx = i + 1;
+          break;
+        }
+      }
+      if (insIdx < 0) {
+        insIdx = st.length;
+        if (insIdx > 0 && PARTS[st[insIdx - 1].type]?.thrustVac) insIdx--;
+      }
+      st.splice(insIdx, 0, newItem('heatShield'));
+      this.select({ index: insIdx, attach: null });
+    }
     else if (def.thrustVac || type === 'decoupler') st.push(newItem(type));
     else {
       // tanks: above the bottom engine

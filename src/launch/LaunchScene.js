@@ -4609,9 +4609,48 @@ export class LaunchScene {
     if (this.focus.dead) this.focus = P;
     if (!this.docked) this.checkDocking();
 
-    // structural limits
+    // structural & atmospheric friction thermal limits
     for (const v of this.vessels) {
-      if (v.dead || v.crashed || v.chuteT > 0.05 || v.ref !== 'earth' || v.isPlane || v.isRover || v.isBoat) continue;
+      if (v.dead || v.crashed || v.chuteT > 0.05 || v.isPlane || v.isRover || v.isBoat) continue;
+      const vB = BODIES[v.ref] || BODIES.earth;
+      const hasAtm = (vB.atm || 0) > 0 && (vB.rho0 || 0) > 0 && v.alt < vB.atm;
+      if (!hasAtm) continue;
+      if (v === P && v.heatFlux >= 0.45 && v.vSurf.u < -12) {
+        if (v.hasHeatShield()) {
+          if (!this._heatShieldNote) {
+            this._heatShieldNote = true;
+            this.event(
+              tr(
+                `🛡️🔥 Lực ma sát không khí cao (${Math.round(v.reentryTemp || 450)}°C) — Khiên chống nhiệt vàng đậm đang hấp thụ nhiệt ma sát & phanh khí động!`,
+                `🛡️🔥 High atmospheric friction (${Math.round(v.reentryTemp || 450)}°C) — Dark-yellow Heat Shield is absorbing reentry heat & aerobraking!`
+              ),
+              'warn'
+            );
+            setTimeout(() => { this._heatShieldNote = false; }, 6500);
+          }
+        } else if (v.heatLoad > 0.32 && !this._heatWarn) {
+          this._heatWarn = true;
+          this.event(
+            tr(
+              `⚠️🔥 CẢNH BÁO MA SÁT KHÍ QUYỂN (${Math.round(v.reentryTemp || 750)}°C): Tàu đang nóng đỏ do rơi vào khí quyển mà không có Khiên Chống Nhiệt!`,
+              `⚠️🔥 ATMOSPHERIC FRICTION WARNING (${Math.round(v.reentryTemp || 750)}°C): Craft is overheating during atmospheric descent without a Heat Shield!`
+            ),
+            'bad'
+          );
+          setTimeout(() => { this._heatWarn = false; }, 4500);
+        }
+      }
+      if (v === P && !v.hasHeatShield() && (v.heatLoad || 0) >= 1.0 && v.topType() !== 'ufoSaucer') {
+        this.explode(
+          v,
+          tr(
+            'Bốc cháy và nổ tung do lực ma sát không khí khi rơi xuống bầu khí quyển (thiếu Khiên Chống Nhiệt)!',
+            'Burned up and disintegrated from atmospheric friction during reentry (missing Heat Shield)!'
+          )
+        );
+        continue;
+      }
+      if (v.ref !== 'earth') continue;
       const a = Math.abs(v.aoa || 0), off = Math.min(a, Math.PI - a);
       if (v.qNow > 50000 && off > 0.75) this.explode(v, tr('Vỡ cấu trúc do bẻ lái gắt ở áp suất khí động cao!', 'Structural failure from high angle of attack at high dynamic pressure!'));
       else if (v.qNow > 18000 && off > 1.4) this.explode(v, tr('Tên lửa lật nhào và vỡ tung!', 'Rocket tumbled and broke apart!'));
@@ -6523,18 +6562,46 @@ export class LaunchScene {
       }
     }
     for (const v of [...this.trailPrev.keys()]) if (!trails.has(v)) this.trailPrev.delete(v);
-    // re-entry plasma
+    // re-entry atmospheric friction plasma & heat shield glow
+    if (this.rocket && this.rocket.heatShields) {
+      for (const hs of this.rocket.heatShields) {
+        const owner = this.vessels.find((v) => !v.dead && !v.crashed && v.owns(hs.seg));
+        const hf = owner ? Math.min(3, owner.heatFlux || 0) : 0;
+        if (hs.shieldGlowMats) {
+          for (let mi = 0; mi < hs.shieldGlowMats.length; mi++) {
+            const m = hs.shieldGlowMats[mi];
+            if (m) m.emissiveIntensity = (mi === 3 ? 0.95 : 0.28) + hf * 1.45;
+          }
+        }
+      }
+    }
     for (const v of this.vessels) {
-      if (v.dead || v.crashed || v.ref !== F.ref || v.ref !== 'earth' || v.heatFlux < 0.5 || v.alt > 95e3) continue;
+      const vB = BODIES[v.ref] || BODIES.earth;
+      const maxAtm = (vB.atm || 0) > 0 && (vB.rho0 || 0) > 0 ? vB.atm : 0;
+      if (v.dead || v.crashed || v.ref !== F.ref || maxAtm <= 0 || v.heatFlux < 0.32 || v.alt > maxAtm) continue;
       const hf = Math.min(3, v.heatFlux);
-      const n = this.poisson(hf * 60 * qual * simDt);
+      const hasShield = v.hasHeatShield();
+      const n = this.poisson(hf * 75 * qual * simDt);
+      const leadY = v.alt + (v.com ? (v.com.minY - v.com.y) * 0.75 : -1.5);
       for (let i = 0; i < n; i++) {
-        const sp = (Math.random() - 0.5) * 20;
-        this.fire.emit(v.sx + (Math.random() - 0.5) * 3, v.alt + (Math.random() - 0.5) * 3, v.s.z + (Math.random() - 0.5) * 3, v.vSurf.e * 0.05 + sp, v.vSurf.u * 0.05 + sp, sp, { life: 0.8 + Math.random() * 1.2, size0: 5, size1: 16 + hf * 6, alpha: 0.8, drag: 1.2, buoy: 0, color: [5, 2.2 + Math.random(), 0.9] });
+        const sp = (Math.random() - 0.5) * 22;
+        const spread = hasShield ? 3.8 : 2.8;
+        const col = hasShield
+          ? [6.5, 3.6 + Math.random() * 1.2, 0.45] // Rich golden-amber heat shield bow-shock plasma
+          : [6.0, 2.0 + Math.random(), 0.7];
+        this.fire.emit(
+          v.sx + (Math.random() - 0.5) * spread,
+          leadY + (Math.random() - 0.5) * 2.5,
+          (v.s.z || 0) + (Math.random() - 0.5) * spread,
+          v.vSurf.e * 0.06 + sp,
+          v.vSurf.u * 0.06 + sp,
+          sp,
+          { life: 0.65 + Math.random() * 1.0, size0: 4.5, size1: 15 + hf * 6.5, alpha: 0.85, drag: 1.3, buoy: 0, color: col }
+        );
       }
       if (v === F) this.heatGlow = hf;
     }
-    if (!(F.heatFlux > 0.5)) this.heatGlow = 0;
+    if (!(F.heatFlux >= 0.32)) this.heatGlow = 0;
     // countdown venting
     if ((this.phase === 'countdown' && !this.ignited) || this.phase === 'ready') {
       if (Math.random() < 0.35 * qual) {
@@ -6554,7 +6621,7 @@ export class LaunchScene {
     const pr = this.airRatio(F);
     const near = THREE.MathUtils.clamp(1.4 - this.camera.position.length() / 1500, 0.25, 1);
     audio.engine(Math.min(1, focusThr / 1.6), pr, near);
-    audio.wind(F.qNow || 0);
+    audio.wind(Math.max(F.qNow || 0, (F.heatFlux || 0) * 18000));
     const fx = this.app.finalPass.uniforms;
     if (hazeN > 0 && this.camMode !== 2) {
       haze.multiplyScalar(1 / hazeN);
@@ -6937,7 +7004,12 @@ export class LaunchScene {
     $('h-hs').textContent = fmt(ve, 1) + ' m/s';
     $('h-mach').textContent = fmt(P.machNow || 0, 2);
     $('h-g').textContent = fmt(this.released ? P.accelNow || 0 : 1, 2) + ' G';
-    $('h-q').textContent = fmt((P.qNow || 0) / 1000, 1) + ' kPa';
+    if ((P.heatFlux || 0) >= 0.32) {
+      const shieldTag = P.hasHeatShield() ? ' 🛡️' : ' ⚠️';
+      $('h-q').textContent = `${fmt((P.qNow || 0) / 1000, 1)} kPa · 🔥${Math.round(P.reentryTemp || 20)}°C${shieldTag}`;
+    } else {
+      $('h-q').textContent = fmt((P.qNow || 0) / 1000, 1) + ' kPa';
+    }
     $('h-pitch').textContent = fmt(THREE.MathUtils.radToDeg(P.ang), 1) + '°';
     const m = this.met;
     $('h-met').textContent = `T${m < 0 ? '-' : '+'}${String(Math.floor(Math.abs(m) / 3600)).padStart(2, '0')}:${String(Math.floor(Math.abs(m) / 60) % 60).padStart(2, '0')}:${String(Math.floor(Math.abs(m)) % 60).padStart(2, '0')}`;

@@ -82,6 +82,10 @@ export const PART_I18N = {
     vi: { name: 'Bộ tách tầng', cat: 'Cấu trúc', desc: 'Tách tầng bằng phím SPACE' },
     en: { name: 'Stage Decoupler', cat: 'Structural', desc: 'Separates stages with SPACE key' },
   },
+  heatShield: {
+    vi: { name: 'Khiên chống nhiệt', cat: 'Cấu trúc', desc: 'Khiên chống nhiệt màu vàng đậm chịu nhiệt độ cực cao · Chống cháy nổ do lực ma sát không khí và tăng lực cản phanh khí động mỗi khi rơi xuống bầu khí quyển' },
+    en: { name: 'Atmospheric Heat Shield', cat: 'Structural', desc: 'Dark-yellow ablative thermal protection shield · Prevents atmospheric friction burn-up and boosts aerodynamic braking every time you descend into an atmosphere' },
+  },
   fins: {
     vi: { name: 'Cánh ổn định ×4', cat: 'Cấu trúc', desc: 'Gắn vào bồn – giữ tên lửa bay thẳng' },
     en: { name: 'Stabilizer Fins ×4', cat: 'Structural', desc: 'Attaches to tank – keeps rocket aerodynamic' },

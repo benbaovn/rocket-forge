@@ -38,6 +38,7 @@ export class Vessel {
     this.clamped = false;        // held by launch clamps
     this.t = 0;
     this.thrustNow = 0; this.qNow = 0; this.accelNow = 1; this.machNow = 0; this.heatFlux = 0;
+    this.reentryTemp = 20; this.heatLoad = 0; this.atmFrictionNow = 0;
     this.coreFiring = false; this.boosterFiring = false;
     this.events = [];
     this.updateMass();
@@ -53,6 +54,7 @@ export class Vessel {
   hasLegs() { return this.deployables('legs').length > 0; }
   hasGridFins() { return this.deployables('gridfins').length > 0; }
   hasFins() { return this.segIdx.some((k) => this.ctx.segInfo[k].fins); }
+  hasHeatShield() { return this.segIdx.some((k) => this.ctx.segInfo[k]?.hasHeatShield); }
   capsule() { const c = this.ctx.rocket.capsule; return c && this.owns(c.seg) ? c : null; }
   dockPort() { const d = this.ctx.rocket.dockPort; return d && this.owns(d.seg) ? d : null; }
   topType() { const i = this.ctx.segs[this.segIdx[0]][0]; return this.ctx.stack[i].type; }
@@ -321,19 +323,47 @@ export class Vessel {
     if (v > 1) aoa = wrapPi(this.ang - Math.atan2(ve, vu));
     const top = this.topType();
     const tailFirst = Math.abs(aoa) > Math.PI / 2;
+    const hasShield = this.hasHeatShield();
+    const isFallingInAtm = inAtm && vu < -8 && v3D > 18 && !this.isPlane && !this.isRover && !this.isBoat;
     const cd0 = tailFirst ? 1.05 : top === 'nose' ? 0.28 : top === 'capsule' ? 0.42 : top === 'dockPort' ? 0.5 : 0.75;
     let cdA = (cd0 + 1.4 * Math.sin(aoa) ** 2) * area;
     cdA += this.legsT * 6 + this.finsT * 5.0;
+    if (hasShield && vu < -5) cdA += 9.5;
     const chute = this.capsule() ? this.chuteT : 0;
     cdA += chute < 0.35 ? chute * 25 : 9 + (chute - 0.35) / 0.65 * 420;
     const q = 0.5 * rho * v3D * v3D;
     this.qNow = q;
-    this.heatFlux = rho > 0 ? Math.sqrt(rho / RHO0) * (v3D / 1000) ** 3 : 0;   // ~relative stagnation heating
+    const rhoNorm = rho > 0 ? Math.pow(Math.max(1e-5, rho / RHO0), 0.30) : 0;
+    const highSpdFlux = rhoNorm * Math.pow(v3D / 720, 2.4);
+    const descentFlux = isFallingInAtm
+      ? rhoNorm * THREE.MathUtils.clamp((-vu - 10) / 34, 0, 1.55) * THREE.MathUtils.clamp((v3D - 28) / 58, 0, 2.9)
+      : 0;
+    this.heatFlux = rho > 0 ? Math.max(highSpdFlux, descentFlux) : 0;
+    const targetTemp = 20 + this.heatFlux * 950;
+    this.reentryTemp = (this.reentryTemp ?? 20) + (targetTemp - (this.reentryTemp ?? 20)) * Math.min(1, h * 2.5);
+    if (hasShield) {
+      this.heatLoad = Math.min(0.35, this.heatFlux * 0.14);
+    } else if (isFallingInAtm && this.heatFlux > 0.85 && v3D > 130 && vu < -55 && chute < 0.2) {
+      const heatRate = (this.heatFlux - 0.75) * 0.28;
+      this.heatLoad = Math.min(1.0, (this.heatLoad || 0) + heatRate * h);
+    } else {
+      this.heatLoad = Math.max(0, (this.heatLoad || 0) - 0.35 * h);
+    }
     this.machNow = v3D / (340 * Math.max(0.85, pr ** 0.05));
     let fe = 0, fu = 0, fz = 0;                           // aero force (kN) in local (east, up, z)
+    this.atmFrictionNow = 0;
     if (v > 0.5 && q > 0 && !this.isPlane) {
       const dragF = q * cdA / 1000;
       fe -= dragF * ve / v; fu -= dragF * vu / v;
+      if (isFallingInAtm) {
+        const fallFactor = THREE.MathUtils.clamp((-vu - 8) / 55, 0, 1.8);
+        const shieldBrake = hasShield ? 1.65 : 1.0;
+        const frictionArea = area * (0.72 + 0.65 * fallFactor) * shieldBrake;
+        const frictionF = (q * frictionArea) / 1000;
+        fe -= frictionF * (ve / v);
+        fu -= frictionF * (vu / v);
+        this.atmFrictionNow = frictionF;
+      }
       // body normal force (crossflow) – lets guidance steer with angle of attack
       const ax = Math.sin(this.ang), au = Math.cos(this.ang);
       const wx = -ve / v, wu = -vu / v;                   // air flow direction relative to body
@@ -441,9 +471,9 @@ export class Vessel {
       const kp = this.ctl.kp ?? 2.6, kd = this.ctl.kd ?? 3.1;
       angAcc += THREE.MathUtils.clamp(err * kp - this.omega * kd, -auth, auth);
     }
-    // aerodynamic stability: fins (nose-first stable), grid fins deployed / bare stages (tail-first stable)
+    // aerodynamic stability: fins (nose-first stable), grid fins deployed / heatShield / bare stages (tail-first stable)
     let stab = this.hasFins() ? 1.0 : -0.22;
-    if (this.finsT > 0.5) stab = -1.0;
+    if (this.finsT > 0.5 || (hasShield && isFallingInAtm)) stab = -1.2;
     if (chute > 0.05) stab = -3.0 * chute;
     const aeroScale = this.ctl.targetBeta !== null && chute <= 0.05 ? 0.55 : 2.5;
     angAcc += -stab * q * Math.sin(aoa) * aeroScale / (mass * 1000) * (this.height / 20);

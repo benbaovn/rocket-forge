@@ -2484,14 +2484,16 @@ function buildGearPlane() {
   g.add(strutPivot);
 
   const legHeight = 1.05;
-  // Solid landing-gear bay fairing & heavy strut collar extending +0.65m into the fuselage belly (+Z) so it never floats
-  strutPivot.add(mesh(new THREE.BoxGeometry(0.28, 0.66, 0.72), MAT.stealth, 0, -0.24, 0.34));
-  strutPivot.add(mesh(new THREE.BoxGeometry(0.20, 0.22, 0.76), MAT.darkMetal, 0, -0.10, 0.36));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.68, 16).rotateX(Math.PI / 2), MAT.titanium, 0, -0.36, 0.32));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.62, 16), MAT.darkMetal, 0, -0.28, 0));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.52, 16), MAT.silver, 0, -0.62, 0));
+  // Horizontal top mounting bracket & diagonal drag brace extending +0.78m into the fuselage belly (+Z) without covering the strut or wheels
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.18, 0.18, 0.80), MAT.darkMetal, 0, -0.09, 0.38));
+  const dragBrace = mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.82, 12), MAT.titanium, 0, -0.28, 0.36);
+  dragBrace.rotation.x = 1.18;
+  strutPivot.add(dragBrace);
 
-  const link = mesh(new THREE.BoxGeometry(0.045, 0.24, 0.08), MAT.darkMetal, 0.055, -0.48, 0);
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.58, 16), MAT.darkMetal, 0, -0.28, 0));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.50, 16), MAT.silver, 0, -0.62, 0));
+
+  const link = mesh(new THREE.BoxGeometry(0.045, 0.22, 0.075), MAT.darkMetal, 0.055, -0.48, 0);
   link.rotation.z = 0.3;
   strutPivot.add(link);
 
@@ -2508,7 +2510,7 @@ function buildGearPlane() {
     wheelGroup.add(mesh(hubGeo, MAT.metal, sgn * 0.11, 0, 0));
   }
 
-  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.08, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.07);
+  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.06, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.09);
   strutPivot.add(lamp);
 
   g.userData.wheelGroup = wheelGroup;
@@ -2520,7 +2522,7 @@ function buildGearPlane() {
     strutPivot.visible = k > 0.02;
     if (inFlight) {
       // In LaunchScene, aircraft root is rotated horizontal so local -Z points down to the runway
-      strutPivot.position.set(0, 0, g.userData.isFront ? 0.38 : 0.22);
+      strutPivot.position.set(0, 0, g.userData.isFront ? 0.62 : 0.34);
       strutPivot.rotation.x = k * (Math.PI / 2);
       strutPivot.scale.set(1, Math.max(0.05, k), 1);
     } else {
@@ -13365,9 +13367,9 @@ export function radialPlacements(type) {
   }
   if (type === 'gearPlane') {
     return [
-      { angle: 0, dist: 0.64, offsetZ: -0.78, offsetY: 0.35, rotY: 0, isFront: false },
-      { angle: Math.PI, dist: 0.64, offsetZ: -0.78, offsetY: 0.35, rotY: 0, isFront: false },
-      { angle: 0, dist: 0.0, offsetZ: -0.98, offsetY: 3.15, rotY: 0, isFront: true },
+      { angle: 0, dist: 0.88, offsetZ: -1.08, offsetY: 0.28, rotY: 0, isFront: false },
+      { angle: Math.PI, dist: 0.88, offsetZ: -1.08, offsetY: 0.28, rotY: 0, isFront: false },
+      { angle: 0, dist: 0.0, offsetZ: -1.36, offsetY: 3.15, rotY: 0, isFront: true },
     ];
   }
   const def = PARTS[type];

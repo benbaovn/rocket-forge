@@ -1634,7 +1634,7 @@ export class LaunchScene {
 
   getCrewRoleInfo() {
     const P = this.player;
-    if (P?.isRover) {
+    if (P?.isRover || P?.isBoat) {
       return {
         role: 'none',
         hidden: true,
@@ -1642,8 +1642,8 @@ export class LaunchScene {
         nameVi: '',
         nameUpperVi: '',
         crewVi: '',
-        vesselVi: 'xe Rover',
-        vesselUpperVi: 'XE ROVER',
+        vesselVi: P?.isBoat ? 'thuyền' : 'xe Rover',
+        vesselUpperVi: P?.isBoat ? 'THUYỀN' : 'XE ROVER',
         nameEn: '',
         namePluralEn: '',
         nameUpperEn: '',
@@ -1672,26 +1672,6 @@ export class LaunchScene {
         labelEn: '👨‍✈️ Pilots:',
         hudLabelVi: 'Phi công',
         hudLabelEn: 'Pilots',
-      };
-    }
-    if (P?.isBoat) {
-      return {
-        role: 'officer',
-        hidden: false,
-        icon: '👮',
-        nameVi: 'sĩ quan',
-        nameUpperVi: 'SĨ QUAN',
-        crewVi: 'Thủy thủ đoàn',
-        vesselVi: 'thuyền',
-        vesselUpperVi: 'THUYỀN',
-        nameEn: 'officer',
-        namePluralEn: 'officer(s)',
-        nameUpperEn: 'OFFICER(S)',
-        crewEn: 'Naval crew',
-        labelVi: '👮 Sĩ quan:',
-        labelEn: '👮 Officers:',
-        hudLabelVi: 'Sĩ quan',
-        hudLabelEn: 'Officers',
       };
     }
     return {
@@ -1799,98 +1779,6 @@ export class LaunchScene {
       const rGlove = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 10), darkMat);
       rGlove.position.y = -0.62;
       rightArm.add(rSleeve, rPatch, rGlove);
-      rightArm.rotation.z = -2.35;
-      g.add(leftArm, rightArm);
-
-      g.scale.setScalar(1.15);
-      g.userData = { leftLeg, rightLeg, leftArm, rightArm, phaseOffset: index * 1.17, role: resolvedRole };
-      return g;
-    }
-
-    if (resolvedRole === 'officer') {
-      // Naval Officer (Dress White & Navy Officer Uniform, Gold Epaulets & Rank Stripes, Peaked Captain Cap)
-      const uniformColors = [0xf8fafc, 0x0f172a, 0xffffff, 0x1e3a8a, 0xf1f5f9];
-      const pantColors = [0xf8fafc, 0x0f172a, 0x0f172a, 0x1e3a8a, 0xf8fafc];
-      const suitMat = new THREE.MeshStandardMaterial({ color: uniformColors[index % uniformColors.length], roughness: 0.42, metalness: 0.12 });
-      const pantMat = new THREE.MeshStandardMaterial({ color: pantColors[index % pantColors.length], roughness: 0.48, metalness: 0.12 });
-      const navyMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.45, metalness: 0.25 });
-      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.10 });
-      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.22, metalness: 0.85, emissive: 0x78350f, emissiveIntensity: 0.15 });
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xfdba74, roughness: 0.62, metalness: 0.05 });
-
-      const leftLeg = new THREE.Group();
-      leftLeg.position.set(-0.15, 0.95, 0);
-      const lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.09, 0.72, 12), pantMat);
-      lThigh.position.y = -0.36;
-      const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.20, 0.32), navyMat);
-      lShoe.position.set(0, -0.80, 0.05);
-      leftLeg.add(lThigh, lShoe);
-
-      const rightLeg = new THREE.Group();
-      rightLeg.position.set(0.15, 0.95, 0);
-      const rThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.09, 0.72, 12), pantMat);
-      rThigh.position.y = -0.36;
-      const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.20, 0.32), navyMat);
-      rShoe.position.set(0, -0.80, 0.05);
-      rightLeg.add(rThigh, rShoe);
-      g.add(leftLeg, rightLeg);
-
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.24, 0.85, 16), suitMat);
-      torso.position.y = 1.35;
-      const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.252, 0.252, 0.08, 16), navyMat);
-      belt.position.y = 1.02;
-      const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.09, 0.06), goldMat);
-      buckle.position.set(0, 1.02, 0.24);
-      const epL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.045, 0.18), goldMat);
-      epL.position.set(-0.24, 1.77, 0);
-      const epR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.045, 0.18), goldMat);
-      epR.position.set(0.24, 1.77, 0);
-      for (const bx of [-0.07, 0.07]) {
-        for (const by of [1.22, 1.38, 1.54]) {
-          const btn = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), goldMat);
-          btn.position.set(bx, by, 0.255);
-          g.add(btn);
-        }
-      }
-      g.add(torso, belt, buckle, epL, epR);
-
-      // Head, Aviator Sunglasses & Naval Officer Peaked Cap
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.235, 18, 14), skinMat);
-      head.position.y = 2.00;
-      const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.07, 0.06), navyMat);
-      glasses.position.set(0, 2.02, 0.21);
-      const capBand = new THREE.Mesh(new THREE.CylinderGeometry(0.245, 0.235, 0.09, 16), navyMat);
-      capBand.position.set(0, 2.16, 0);
-      const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.305, 0.245, 0.11, 16), whiteMat);
-      capCrown.position.set(0, 2.25, -0.01);
-      capCrown.rotation.x = -0.08;
-      const capBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.235, 0.235, 0.025, 16), navyMat);
-      capBrim.position.set(0, 2.12, 0.11);
-      capBrim.rotation.x = 0.16;
-      const capBadge = new THREE.Mesh(new THREE.SphereGeometry(0.042, 10, 10), goldMat);
-      capBadge.position.set(0, 2.18, 0.245);
-      g.add(head, glasses, capBand, capCrown, capBrim, capBadge);
-
-      const leftArm = new THREE.Group();
-      leftArm.position.set(-0.35, 1.68, 0);
-      const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.08, 0.62, 12), suitMat);
-      lSleeve.position.y = -0.28;
-      const lCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.086, 0.06, 12), goldMat);
-      lCuff.position.y = -0.50;
-      const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), whiteMat);
-      lHand.position.y = -0.62;
-      leftArm.add(lSleeve, lCuff, lHand);
-      leftArm.rotation.z = 0.22;
-
-      const rightArm = new THREE.Group();
-      rightArm.position.set(0.35, 1.68, 0);
-      const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.08, 0.62, 12), suitMat);
-      rSleeve.position.y = -0.28;
-      const rCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.086, 0.06, 12), goldMat);
-      rCuff.position.y = -0.50;
-      const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), whiteMat);
-      rHand.position.y = -0.62;
-      rightArm.add(rSleeve, rCuff, rHand);
       rightArm.rotation.z = -2.35;
       g.add(leftArm, rightArm);
 

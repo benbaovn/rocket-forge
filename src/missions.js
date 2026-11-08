@@ -386,6 +386,37 @@ export const MISSIONS = [
       { id: 'roverDist2000', text: 'Chạy hoàn thành đủ 2000 km (Không tự lái)', targetKm: 2000 },
     ],
   },
+  // ================= BOAT MISSIONS (Sorted Easiest -> Hardest) =================
+  {
+    id: 'boat_500km', icon: '🛥️', name: 'Đi 500 km trên biển', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetDistKm: 500,
+    desc: 'Lái Canô lướt sóng siêu tốc rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
+    objectives: [
+      { id: 'boatDist100', text: 'Đi đạt 100 km trên mặt biển', targetKm: 100 },
+      { id: 'boatDist250', text: 'Đi đạt 250 km trên mặt biển', targetKm: 250 },
+      { id: 'boatDist500', text: 'Đi hoàn thành đủ 500 km trên mặt biển', targetKm: 500 },
+    ],
+  },
+  {
+    id: 'boat_1000km', icon: '🛥️', name: 'Đi 1000 km trên biển', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetDistKm: 1000,
+    desc: 'Hải trình viễn dương: Điều khiển Canô lướt sóng siêu tốc vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
+    objectives: [
+      { id: 'boatDist250', text: 'Đi đạt 250 km trên mặt biển', targetKm: 250 },
+      { id: 'boatDist500', text: 'Đi đạt 500 km trên mặt biển', targetKm: 500 },
+      { id: 'boatDist1000', text: 'Đi hoàn thành đủ 1000 km trên mặt biển', targetKm: 1000 },
+    ],
+  },
+  {
+    id: 'boat_2000km', icon: '🛥️', name: 'Đi 2000 km trên biển', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetDistKm: 2000,
+    desc: 'Thử thách chinh phục đại dương: Lái Canô lướt sóng siêu tốc vượt qua tổng hải trình 2000 km trên biển khơi.',
+    objectives: [
+      { id: 'boatDist500', text: 'Đi đạt 500 km trên mặt biển', targetKm: 500 },
+      { id: 'boatDist1000', text: 'Đi đạt 1000 km trên mặt biển', targetKm: 1000 },
+      { id: 'boatDist2000', text: 'Đi hoàn thành đủ 2000 km trên mặt biển', targetKm: 2000 },
+    ],
+  },
 ];
 
 // Planetary & Lunar 1-Lap Rover Missions (Sorted from smallest circumference / easiest to largest / hardest)

@@ -675,5 +675,35 @@ export class PlaneLoopProgram {
   }
 }
 
+export class BoatCruiseProgram {
+  constructor(targetDistKm = 500) {
+    this.targetDistKm = targetDistKm;
+    this.phase = 'cruise';
+  }
+  status() {
+    const distKm = Math.min(this.targetDistKm, this._lastDistKm || 0);
+    const curStr = distKm >= 100 ? Math.floor(distKm) : distKm.toFixed(1);
+    return tr(`Hải trình trên biển: ${curStr}/${this.targetDistKm} km`, `Ocean voyage: ${curStr}/${this.targetDistKm} km`);
+  }
+  update(v, sc) {
+    const distKm = (v.boatDistTotal || 0) / 1000;
+    this._lastDistKm = distKm;
+    if (distKm >= this.targetDistKm) {
+      this.phase = 'done';
+      v.ctl.drive = 0;
+      v.throttle = 0;
+      v.engineOn = false;
+      return 'done';
+    }
+    v.engineOn = true;
+    v.throttle = 1.0;
+    v.ctl.drive = 1;
+    v.ctl.input = 0;
+    v.heading = 0;
+    v.turnYawRate = 0;
+    sc.requestWarp(distKm > 0.3 ? 100 : 4);
+  }
+}
+
 BoosterRecovery.steerSign = 1;
 

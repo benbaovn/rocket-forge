@@ -825,8 +825,11 @@ export class BuildScene {
     };
     $('btn-mission').onclick = () => {
       const curM = missionById(this.missionId || 'free');
-      if (curM && curM.category) {
+      const vType = stackVehicleType(this.stack);
+      if (curM && curM.id !== 'free' && curM.category) {
         this.missionCategory = curM.category;
+      } else if (vType === 'boat' || vType === 'rover' || vType === 'plane') {
+        this.missionCategory = vType;
       }
       this.renderMissionCards();
       $('mission-modal').classList.remove('hidden');

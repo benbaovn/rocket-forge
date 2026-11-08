@@ -618,14 +618,16 @@ export class Vessel {
         if (steer !== 0) {
           const revSign = (drive < 0 && this.waterSpeed < -0.5) ? -1 : 1;
           const turnYawRate = -steer * 1.15 * revSign;
+          const warpScale = Math.max(1, this._warp || 1);
           this.turnYawRate = turnYawRate;
-          this.heading = (this.heading || 0) + turnYawRate * h;
+          this.heading = (this.heading || 0) + (turnYawRate / warpScale) * h;
         } else {
           this.turnYawRate = 0;
         }
         const cosH = Math.cos(this.heading || 0), sinH = Math.sin(this.heading || 0);
+        const prevSx = this.sx;
         const prevZ = this.s.z || 0;
-        let newSx = this.sx + this.waterSpeed * cosH * h;
+        let newSx = prevSx + this.waterSpeed * cosH * h;
         let newZ = prevZ - this.waterSpeed * sinH * h;
         const moveSign = this.waterSpeed >= 0 ? 1 : -1;
         let surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
@@ -633,22 +635,30 @@ export class Vessel {
         if (this.ref === 'earth' && (!surf.water || !surfEdge.water)) {
           const surfX = env.surface({ ...this, sx: newSx, s: { ...this.s, z: prevZ } });
           const surfXEdge = env.surface({ ...this, sx: newSx + moveSign * 4.5 * cosH, s: { ...this.s, z: prevZ } });
-          const surfZ = env.surface({ ...this, sx: this.sx, s: { ...this.s, z: newZ } });
-          const surfZEdge = env.surface({ ...this, sx: this.sx, s: { ...this.s, z: newZ - moveSign * 4.5 * sinH } });
+          const surfZ = env.surface({ ...this, sx: prevSx, s: { ...this.s, z: newZ } });
+          const surfZEdge = env.surface({ ...this, sx: prevSx, s: { ...this.s, z: newZ - moveSign * 4.5 * sinH } });
           if (surfX.water && surfXEdge.water) {
             newZ = prevZ;
             surf = surfX;
             this.waterSpeed *= 0.5;
           } else if (surfZ.water && surfZEdge.water) {
-            newSx = this.sx;
+            newSx = prevSx;
             surf = surfZ;
             this.waterSpeed *= 0.5;
           } else {
-            newSx = Math.max(this.sx, 2526);
+            newSx = Math.max(prevSx, 2526);
             newZ = prevZ;
             this.waterSpeed = 0;
             surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
           }
+        }
+        const stepDist = this.ref === 'earth'
+          ? Math.hypot(newSx - prevSx, newZ - prevZ)
+          : Math.abs(this.waterSpeed) * h;
+        if (stepDist > 0) {
+          this.boatDistTotal = (this.boatDistTotal || 0) + stepDist;
+          if (!this.boatDistByBody) this.boatDistByBody = {};
+          this.boatDistByBody[this.ref] = (this.boatDistByBody[this.ref] || 0) + stepDist;
         }
         const wave = Math.sin((t + h) * 2.5) * 0.06;
         const targetH = Math.max(surf.h, 0) + this.bottomOffset() - 0.35 + wave;

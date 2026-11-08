@@ -14,7 +14,7 @@ import { audio } from '../audio.js';
 import { Vessel } from './vessel.js';
 import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, angOf, predict, bodyRotation, bodyState, coastStep, rk4, refBody, bodyInfo } from '../sim/orbit.js';
 import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI, OORT_CLOUD_INNER, OORT_CLOUD_OUTER } from '../sim/constants.js';
-import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, PlaneLoopProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
+import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, PlaneLoopProgram, BoatCruiseProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById, isMissionCompleted, markMissionCompleted } from '../missions.js';
 import { createISS } from '../env/iss.js';
@@ -3200,6 +3200,9 @@ export class LaunchScene {
 
     if (this.player.isBoat) {
       const harborX = COAST_X + 160;
+      this.player.heading = 0;
+      this.player.boatDistTotal = 0;
+      this.player.boatDistByBody = {};
       this.player.placeOnSurface('earth', harborX, this.player.bottomOffset() - 0.35, this.simT);
       this.player.clamped = false;
       this.player.clampSpot = { body: 'earth', sx: harborX, h: this.player.bottomOffset() - 0.35 };
@@ -3501,6 +3504,8 @@ export class LaunchScene {
         this.teleportToBody(tb, 'surface');
       }
       this.program = new PlaneLoopProgram(tb, this.mission.targetDistKm || 1000);
+    } else if (this.mission.category === 'boat') {
+      this.program = new BoatCruiseProgram(this.mission.targetDistKm || 500);
     } else if (id === 'iss') this.program = new RendezvousProgram(this.issOrbit, 85e3);
     else if (BODIES[id] && id !== 'earth' && id !== 'sun' && !BODIES[id].gasGiant) this.program = new MoonProgram(id);
     else this.program = new AscentProgram(85e3, 'earth');
@@ -3839,18 +3844,22 @@ export class LaunchScene {
     const isAlienMission = this.mission.id === 'alien100' || this.mission.id === 'alien500' || this.mission.id === 'alien1500' || this.mission.id === 'alien5000';
     const isRoverMission = this.mission.category === 'rover';
     const isPlaneMission = this.mission.category === 'plane';
+    const isBoatMission = this.mission.category === 'boat';
     const P = this.player;
     const totalRoverKm = (P?.roverDistTotal || 0) / 1000;
     const totalPlaneKm = (P?.planeDistTotal || 0) / 1000;
+    const totalBoatKm = (P?.boatDistTotal || 0) / 1000;
     const tb = this.mission.targetBody;
     const bodyRoverKm = tb ? (((P?.roverDistByBody && P.roverDistByBody[tb]) || 0) / 1000) : totalRoverKm;
     const bodyPlaneKm = tb ? (((P?.planeDistByBody && P.planeDistByBody[tb]) || 0) / 1000) : totalPlaneKm;
     const roverProgKm = tb ? bodyRoverKm : totalRoverKm;
     const planeProgKm = tb ? bodyPlaneKm : totalPlaneKm;
+    const boatProgKm = totalBoatKm;
     const sig = objs.map((o) => (this.flags[o.id] ? 1 : 0)).join('')
       + (isAlienMission ? `_${kills}` : '')
       + (isRoverMission ? `_${roverProgKm.toFixed(1)}` : '')
-      + (isPlaneMission ? `_${planeProgKm.toFixed(1)}` : '');
+      + (isPlaneMission ? `_${planeProgKm.toFixed(1)}` : '')
+      + (isBoatMission ? `_${boatProgKm.toFixed(1)}` : '');
     if (!force && sig === this.missionSig) return;
     this.missionSig = sig;
     const doneMark = isMissionCompleted(this.mission.id) ? ' ✔' : '';
@@ -3882,8 +3891,8 @@ export class LaunchScene {
       } else if (o.id === 'killKing') {
         label = `${o.text} (${this.flags.killKing ? 1 : 0}/1)`;
       } else if (o.targetKm) {
-        const distMap = isPlaneMission ? P?.planeDistByBody : P?.roverDistByBody;
-        const fallbackKm = isPlaneMission ? totalPlaneKm : totalRoverKm;
+        const distMap = isPlaneMission ? P?.planeDistByBody : isBoatMission ? P?.boatDistByBody : P?.roverDistByBody;
+        const fallbackKm = isPlaneMission ? totalPlaneKm : isBoatMission ? totalBoatKm : totalRoverKm;
         const curKm = Math.min(o.targetKm, o.body ? (((distMap && distMap[o.body]) || 0) / 1000) : fallbackKm);
         const curStr = curKm >= 100 ? Math.floor(curKm) : curKm.toFixed(1);
         label = `${o.text} (${curStr}/${o.targetKm} km)`;
@@ -4162,6 +4171,69 @@ export class LaunchScene {
         }
       }
       if (this.mission?.category === 'plane') {
+        this.renderMissionPanel();
+      }
+    }
+    // Boat distance missions (500 km, 1000 km, 2000 km)
+    if (v.isBoat) {
+      const totalKm = (v.boatDistTotal || 0) / 1000;
+      const targetDistKm = this.mission?.targetDistKm || 500;
+      if (totalKm >= 100 && !F.boatDist100) {
+        this.setFlag('boatDist100');
+        if (this.mission?.id === 'boat_500km') {
+          this.milestone(
+            tr('🛥️ ĐÃ ĐI 100/500 KM TRÊN BIỂN!', '🛥️ SAILED 100/500 KM AT SEA!'),
+            tr('Tiếp tục lướt sóng để chinh phục cột mốc hải trình 500 km!', 'Keep cruising to conquer the 500 km ocean milestone!')
+          );
+        }
+      }
+      if (totalKm >= 250 && !F.boatDist250) {
+        this.setFlag('boatDist250');
+        if (this.mission?.id === 'boat_500km' || this.mission?.id === 'boat_1000km') {
+          this.milestone(
+            tr(`🛥️ ĐÃ ĐI 250/${targetDistKm} KM TRÊN BIỂN!`, `🛥️ SAILED 250/${targetDistKm} KM AT SEA!`),
+            tr('Đã vượt cột mốc 250 km trên đại dương!', 'Passed the 250 km ocean voyage milestone!')
+          );
+        }
+      }
+      if (totalKm >= 500 && !F.boatDist500) {
+        this.setFlag('boatDist500');
+        if (this.mission?.id === 'boat_500km') {
+          this.milestone(
+            tr('🏆🛥️ HOÀN THÀNH 500 KM TRÊN BIỂN!', '🏆🛥️ 500 KM OCEAN VOYAGE COMPLETE!'),
+            tr('Xuất sắc! Bạn đã lái thuyền vượt qua 500 km trên biển!', 'Awesome! You sailed the boat across 500 km of open ocean!')
+          );
+        } else if (this.mission?.id === 'boat_1000km' || this.mission?.id === 'boat_2000km') {
+          this.milestone(
+            tr(`🛥️ ĐÃ ĐI 500/${targetDistKm} KM TRÊN BIỂN!`, `🛥️ SAILED 500/${targetDistKm} KM AT SEA!`),
+            tr('Tiếp tục hải trình viễn dương!', 'Keep pushing on your transoceanic voyage!')
+          );
+        }
+      }
+      if (totalKm >= 1000 && !F.boatDist1000) {
+        this.setFlag('boatDist1000');
+        if (this.mission?.id === 'boat_1000km') {
+          this.milestone(
+            tr('🏆🛥️ HOÀN THÀNH 1000 KM TRÊN BIỂN!', '🏆🛥️ 1000 KM OCEAN VOYAGE COMPLETE!'),
+            tr('Kỳ tích! Bạn đã lái thuyền chinh phục 1000 km trên đại dương!', 'Incredible feat! You sailed the boat for 1000 km across the ocean!')
+          );
+        } else if (this.mission?.id === 'boat_2000km') {
+          this.milestone(
+            tr('🛥️ ĐÃ ĐI 1000/2000 KM TRÊN BIỂN!', '🛥️ SAILED 1000/2000 KM AT SEA!'),
+            tr('Đã hoàn thành 50% hải trình 2000 km!', 'Halfway through the 2000 km ocean endurance challenge!')
+          );
+        }
+      }
+      if (totalKm >= 2000 && !F.boatDist2000) {
+        this.setFlag('boatDist2000');
+        if (this.mission?.id === 'boat_2000km') {
+          this.milestone(
+            tr('👑🛥️ HUYỀN THOẠI BIỂN KHƠI: ĐÃ ĐI ĐỦ 2000 KM!', '👑🛥️ OCEAN LEGEND: 2000 KM VOYAGE COMPLETE!'),
+            tr('Bậc thầy đại dương! Bạn đã điều khiển thuyền vượt qua 2000 km trên biển!', 'Master of the seas! You sailed the boat across 2000 km of ocean!')
+          );
+        }
+      }
+      if (this.mission?.category === 'boat') {
         this.renderMissionPanel();
       }
     }
@@ -4476,6 +4548,9 @@ export class LaunchScene {
     if (this.player && this.player.isRover && (this.player.ctl?.drive || Math.abs(this.player.groundSpeed || 0) > 0.02)) {
       cap = Math.min(cap, 1000);
     }
+    if (this.player && this.player.isBoat && (this.player.ctl?.drive || Math.abs(this.player.waterSpeed || 0) > 0.02)) {
+      cap = Math.min(cap, 1000);
+    }
     if (this.player && this.player.isPlane) {
       cap = Math.min(cap, 1000);
     }
@@ -4583,7 +4658,7 @@ export class LaunchScene {
         }
       }
     } else {
-      if (input !== 0 || (v.isPlane && drive !== 0)) {
+      if (input !== 0 || ((v.isPlane || v.isBoat) && drive !== 0)) {
         this.holdBeta = v.beta;
         if (this.program && this.phase === 'flight') this.toggleAutopilot();
       }

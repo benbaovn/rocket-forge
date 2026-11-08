@@ -1151,6 +1151,66 @@ const MISSION_I18N = {
       },
     },
   },
+  boat_500km: {
+    vi: {
+      name: 'Đi 500 km trên biển',
+      desc: 'Lái Canô lướt sóng siêu tốc rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
+      objs: {
+        boatDist100: 'Đi đạt 100 km trên mặt biển',
+        boatDist250: 'Đi đạt 250 km trên mặt biển',
+        boatDist500: 'Đi hoàn thành đủ 500 km trên mặt biển',
+      },
+    },
+    en: {
+      name: 'Sail 500 km at Sea',
+      desc: 'Pilot the SuperSpeed Yacht out of the harbor and across the open ocean for a total distance of 500 km.',
+      objs: {
+        boatDist100: 'Sail 100 km across the ocean',
+        boatDist250: 'Sail 250 km across the ocean',
+        boatDist500: 'Complete 500 km ocean voyage',
+      },
+    },
+  },
+  boat_1000km: {
+    vi: {
+      name: 'Đi 1000 km trên biển',
+      desc: 'Hải trình viễn dương: Điều khiển Canô lướt sóng siêu tốc vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
+      objs: {
+        boatDist250: 'Đi đạt 250 km trên mặt biển',
+        boatDist500: 'Đi đạt 500 km trên mặt biển',
+        boatDist1000: 'Đi hoàn thành đủ 1000 km trên mặt biển',
+      },
+    },
+    en: {
+      name: 'Sail 1000 km at Sea',
+      desc: 'Transoceanic voyage: Pilot the SuperSpeed Yacht across the open ocean for a total distance of 1000 km.',
+      objs: {
+        boatDist250: 'Sail 250 km across the ocean',
+        boatDist500: 'Sail 500 km across the ocean',
+        boatDist1000: 'Complete 1000 km ocean voyage',
+      },
+    },
+  },
+  boat_2000km: {
+    vi: {
+      name: 'Đi 2000 km trên biển',
+      desc: 'Thử thách chinh phục đại dương: Lái Canô lướt sóng siêu tốc vượt qua tổng hải trình 2000 km trên biển khơi.',
+      objs: {
+        boatDist500: 'Đi đạt 500 km trên mặt biển',
+        boatDist1000: 'Đi đạt 1000 km trên mặt biển',
+        boatDist2000: 'Đi hoàn thành đủ 2000 km trên mặt biển',
+      },
+    },
+    en: {
+      name: 'Sail 2000 km at Sea',
+      desc: 'Ocean endurance challenge: Pilot the SuperSpeed Yacht across 2000 km of open ocean.',
+      objs: {
+        boatDist500: 'Sail 500 km across the ocean',
+        boatDist1000: 'Sail 1000 km across the ocean',
+        boatDist2000: 'Complete 2000 km ocean voyage',
+      },
+    },
+  },
 };
 
 for (const spec of ROVER_LOOP_SPECS) {
@@ -1547,6 +1607,7 @@ export function applyLanguage(lang, app) {
   setTxt('#btn-mcat-rocket', '🚀 Nhiệm vụ Tên lửa & Vũ trụ', '🚀 Space & Rocket Missions');
   setTxt('#btn-mcat-rover', '🚙 Nhiệm vụ Xe Rover', '🚙 Rover Missions');
   setTxt('#btn-mcat-plane', '✈️ Nhiệm vụ Máy bay', '✈️ Airplane Missions');
+  setTxt('#btn-mcat-boat', '🛥️ Nhiệm vụ Thuyền', '🛥️ Boat Missions');
   setTxt('#btn-mission-close', 'Đóng', 'Close');
   setAttr('#btn-mission-x', 'title', 'Đóng (Esc)', 'Close (Esc)');
 

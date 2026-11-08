@@ -34,8 +34,8 @@ export const PARTS = {
   gunElectric: { name: 'Súng Điện 1,000,000 WATT ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'electric', desc: 'Cặp pháo điện Tesla 1,000,000 WATT phóng tia hồ quang sấm sét giật tê liệt & truyền điện lan sang các Alien xung quanh · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
   batteryGun: { name: 'Pin Siêu Siêu Nhỏ (Gắn Súng) ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.005, isGunBattery: true, desc: 'Cục pin vi mô siêu siêu nhỏ (0.005 tấn) gắn trực tiếp vào Súng (Lazer / Nước / Acid / Điện) dành riêng cho tên lửa xài nhiên liệu thường (vì súng chỉ hoạt động bằng pin)' },
   booster: { name: 'Tên lửa đẩy phụ ×2', cat: 'Động cơ', kind: 'radial', count: 2, height: 11.8, dry: 1.8, fuel: 14, thrustSL: 1100, thrustVac: 1200, ispSL: 240, ispVac: 265, desc: 'Nhiên liệu rắn, tự tách khi cháy hết' },
-  cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe', kind: 'stack', height: 1.6, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
-  chassisRover: { name: 'Khung gầm Rover', cat: 'Xe', kind: 'stack', height: 1.8, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
+  cockpitRover: { name: 'Cabin xe Rover', cat: 'Xe', kind: 'stack', height: 0.8, dry: 0.7, desc: 'Khoang lái thám hiểm với vòm kính quan sát và đèn pha' },
+  chassisRover: { name: 'Khung gầm Rover', cat: 'Xe', kind: 'stack', height: 0.9, dry: 0.8, fuel: 1.2, desc: 'Khung gầm chịu lực tích hợp khối pin năng lượng và khớp gắn trục' },
   wheelsRover: { name: 'Bánh xe địa hình ×4', cat: 'Xe', kind: 'radial', count: 4, dry: 0.22, desc: '4 bánh xe lốp cao su gai bám đường địa hình hành tinh' },
   solarRover: { name: 'Tấm pin Rover ×2', cat: 'Xe', kind: 'radial', count: 2, dry: 0.06, desc: 'Cặp pin mặt trời tự động sạc điện khi di chuyển' },
   cabinBoat: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Thuyền', kind: 'stack', height: 1.8, dry: 0.9, desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
@@ -1200,60 +1200,60 @@ function buildGridFin() {
 // ---------------------------------------------------------------- rover & boat builders
 function buildCockpitRover() {
   const g = new THREE.Group();
-  const H = PARTS.cockpitRover.height;
-  // Cabin main body (aerodynamic explorer cab)
-  const bodyGeo = new THREE.BoxGeometry(2.1, H - 0.2, 1.9);
+  const H = PARTS.cockpitRover.height; // 0.8 (half height low-profile rover cabin)
+  // Cabin main body (low-profile aerodynamic explorer cab)
+  const bodyGeo = new THREE.BoxGeometry(2.1, H - 0.1, 1.9);
   g.add(mesh(bodyGeo, MAT.white, 0, H / 2, 0));
 
   // Forward nose wedge
   const noseShape = new THREE.Shape();
   noseShape.moveTo(-1.05, 0);
   noseShape.lineTo(1.05, 0);
-  noseShape.lineTo(0.85, 0.75);
-  noseShape.lineTo(-0.85, 0.75);
+  noseShape.lineTo(0.85, 0.38);
+  noseShape.lineTo(-0.85, 0.38);
   noseShape.closePath();
-  const noseGeo = new THREE.ExtrudeGeometry(noseShape, { depth: 0.55, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04 });
+  const noseGeo = new THREE.ExtrudeGeometry(noseShape, { depth: 0.38, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025 });
   noseGeo.rotateX(Math.PI / 2);
-  const noseM = mesh(noseGeo, MAT.darkMetal, 0, 0.75, 0.95);
+  const noseM = mesh(noseGeo, MAT.darkMetal, 0, 0.38, 0.95);
   g.add(noseM);
 
-  // Large panoramic windshield (tilted glass dome)
-  const winGeo = new THREE.CylinderGeometry(0.92, 1.02, 0.68, 32, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
+  // Large panoramic windshield (sleek low-profile glass dome)
+  const winGeo = new THREE.CylinderGeometry(0.92, 1.02, 0.36, 32, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
   const win = mesh(winGeo, MAT.glass, 0, H * 0.58, 0.1);
   win.rotation.x = 0.22;
   g.add(win);
 
   // Interior seats & dashboard
-  const seatGeo = new THREE.BoxGeometry(0.46, 0.55, 0.46);
-  g.add(mesh(seatGeo, MAT.darkMetal, -0.38, 0.48, 0.08));
-  g.add(mesh(seatGeo, MAT.darkMetal, 0.38, 0.48, 0.08));
+  const seatGeo = new THREE.BoxGeometry(0.46, 0.28, 0.46);
+  g.add(mesh(seatGeo, MAT.darkMetal, -0.38, 0.24, 0.08));
+  g.add(mesh(seatGeo, MAT.darkMetal, 0.38, 0.24, 0.08));
 
   // Roof tubular bars
-  const barGeo = new THREE.CylinderGeometry(0.035, 0.035, 1.7, 8);
+  const barGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.7, 8);
   for (const sgn of [-1, 1]) {
-    const bar = mesh(barGeo, MAT.darkMetal, sgn * 1.0, H - 0.05, 0);
+    const bar = mesh(barGeo, MAT.darkMetal, sgn * 1.0, H - 0.03, 0);
     bar.rotation.x = Math.PI / 2;
     g.add(bar);
   }
 
   // Roof comm antenna dish
-  const mast = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.55, 8), MAT.metal, 0.65, H + 0.22, -0.55);
+  const mast = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.30, 8), MAT.metal, 0.65, H + 0.12, -0.55);
   g.add(mast);
-  const dish = mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), MAT.silver, 0.65, H + 0.46, -0.55);
+  const dish = mesh(new THREE.SphereGeometry(0.16, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), MAT.silver, 0.65, H + 0.26, -0.55);
   dish.rotation.x = -0.5;
   dish.material.side = THREE.DoubleSide;
   g.add(dish);
 
   // Dual high-power LED headlights
-  const lampGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.08, 16).rotateX(Math.PI / 2);
+  const lampGeo = new THREE.CylinderGeometry(0.10, 0.12, 0.08, 16).rotateX(Math.PI / 2);
   const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcfe8ff, emissiveIntensity: 3 });
   for (const sgn of [-1, 1]) {
-    g.add(mesh(lampGeo, lampMat, sgn * 0.72, 0.42, 1.0));
-    g.add(mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 20), MAT.metal, sgn * 0.72, 0.42, 1.01));
+    g.add(mesh(lampGeo, lampMat, sgn * 0.72, 0.22, 1.0));
+    g.add(mesh(new THREE.TorusGeometry(0.11, 0.018, 8, 20), MAT.metal, sgn * 0.72, 0.22, 1.01));
   }
 
   // Side accents
-  const decalGeo = new THREE.BoxGeometry(0.05, 0.3, 1.3);
+  const decalGeo = new THREE.BoxGeometry(0.05, 0.16, 1.3);
   for (const sgn of [-1, 1]) g.add(mesh(decalGeo, MAT.orange, sgn * 1.06, H * 0.5, 0));
 
   return g;
@@ -1261,30 +1261,30 @@ function buildCockpitRover() {
 
 function buildChassisRover() {
   const g = new THREE.Group();
-  const H = PARTS.chassisRover.height;
+  const H = PARTS.chassisRover.height; // 0.9 (half height low-profile rover chassis)
   // Central core frame
-  const frameGeo = new THREE.BoxGeometry(2.2, H - 0.1, 2.1);
+  const frameGeo = new THREE.BoxGeometry(2.2, H - 0.06, 2.1);
   g.add(mesh(frameGeo, MAT.darkMetal, 0, H / 2, 0));
 
   // Skid plate underneath
-  const skidGeo = new THREE.BoxGeometry(2.1, 0.08, 2.2);
-  g.add(mesh(skidGeo, MAT.titanium, 0, 0.04, 0));
+  const skidGeo = new THREE.BoxGeometry(2.1, 0.05, 2.2);
+  g.add(mesh(skidGeo, MAT.titanium, 0, 0.025, 0));
 
   // High capacity battery cells on flanks
-  const battGeo = new THREE.BoxGeometry(0.32, 0.62, 1.6);
+  const battGeo = new THREE.BoxGeometry(0.32, 0.34, 1.6);
   for (const sgn of [-1, 1]) {
     g.add(mesh(battGeo, MAT.orange, sgn * 1.15, H / 2, 0));
-    const indGeo = new THREE.BoxGeometry(0.02, 0.1, 1.1);
+    const indGeo = new THREE.BoxGeometry(0.02, 0.06, 1.1);
     const indMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 2 });
     g.add(mesh(indGeo, indMat, sgn * 1.32, H / 2, 0));
   }
 
   // Suspension crossbars
-  const beamGeo = new THREE.CylinderGeometry(0.07, 0.07, 2.6, 12).rotateZ(Math.PI / 2);
-  for (const z of [-0.65, 0.65]) g.add(mesh(beamGeo, MAT.metal, 0, 0.35, z));
+  const beamGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 12).rotateZ(Math.PI / 2);
+  for (const z of [-0.65, 0.65]) g.add(mesh(beamGeo, MAT.metal, 0, 0.22, z));
 
   // Rear hazard stripes
-  const hzGeo = new THREE.PlaneGeometry(1.5, 0.28);
+  const hzGeo = new THREE.PlaneGeometry(1.5, 0.16);
   const hzM = mesh(hzGeo, new THREE.MeshStandardMaterial({ map: TX.hazardMap(), roughness: 0.5 }), 0, H * 0.6, -1.06);
   hzM.rotation.y = Math.PI;
   g.add(hzM);

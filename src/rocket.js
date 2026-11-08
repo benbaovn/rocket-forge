@@ -688,7 +688,7 @@ export function buildRocket(stack) {
         } else if (a === 'gridfins') {
           posX = 0; posY = p.y + p.def.height - 0.5; posZ = 0;
         } else if (a === 'wheelsRover') {
-          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.35; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.22; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
           ao.userData.sideSign = Math.cos(pl.angle) >= 0 ? 1 : -1;
           ao.userData.isFront = (pl.offsetZ || 0) > 0;
           roverWheels.push(ao);

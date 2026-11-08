@@ -92,7 +92,7 @@ export class Vessel {
         m += pm; my += pm * (p.y + p.def.height / 2);
         minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.def.height);
         if (p.item.attach && p.item.attach.includes('wheelsRover')) {
-          minY = Math.min(minY, p.y - 0.19);
+          minY = Math.min(minY, p.y - 0.32);
         }
         for (const a of p.item.attach) {
           if (a === 'booster') continue;

@@ -1587,6 +1587,13 @@ export class LaunchScene {
     return (B.atm || 0) > 0 && (B.rho0 || 0) > 0;
   }
 
+  hasSurfaceAirports(target) {
+    if (!this.canPlaneTeleportTo(target)) return false;
+    const bodyKey = target === 'olympus' ? 'mars' : target;
+    const B = BODIES[bodyKey];
+    return !!(B && !B.gasGiant);
+  }
+
   getPlanetAirportOrigin(bodyKey) {
     if (!bodyKey || bodyKey === 'earth') return 0;
     if (!this.planetAirportOrigins) this.planetAirportOrigins = {};
@@ -1746,14 +1753,16 @@ export class LaunchScene {
         }
         const B = BODIES[key] || BODIES.earth;
         const active = curTarget === key ? 'active' : '';
-        const has5Airports = this.canPlaneTeleportTo(key);
-        const forceOrb = isOrb || (!!B.gasGiant && !has5Airports) || key === 'sun';
+        const has5Airports = this.hasSurfaceAirports(key);
+        const forceOrb = isOrb || !!B.gasGiant || key === 'sun';
         const modeDesc = has5Airports
           ? tr('🛬 5 Sân bay', '🛬 5 Airports') + (key === 'earth' ? tr(' · ⚓ 5 Cảng', ' · ⚓ 5 Harbors') : '')
-          : (forceOrb ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit') : tr('🛬 Đáp bề mặt', '🛬 Land on Surface'));
+          : isPlane
+            ? tr('✈️ Bay trong khí quyển', '✈️ Atmospheric Flight')
+            : (forceOrb ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit') : tr('🛬 Đáp bề mặt', '🛬 Land on Surface'));
         const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
         const parentTag = parentB ? `${tr('Thân chủ', 'Parent')}: ${parentB.label} · ` : '';
-        const atmTag = has5Airports ? ` · ρ₀ = ${B.rho0} kg/m³` : '';
+        const atmTag = this.canPlaneTeleportTo(key) ? ` · ρ₀ = ${B.rho0} kg/m³` : '';
         const airportSubBtns = has5Airports
           ? `<div class="tp-sub-row">
               ${[0, 1, 2, 3, 4].map((idx) => {
@@ -2678,11 +2687,11 @@ export class LaunchScene {
       const isOlympusSummit = target === 'olympus';
       const bodyKey = isOlympusSummit ? 'mars' : target;
       const B = BODIES[bodyKey] || BODIES.earth;
-      const hasAirportOpt = opts && opts.airportIdx !== undefined;
+      const hasAirportOpt = opts && opts.airportIdx !== undefined && !B.gasGiant;
       const hasHarborOpt = opts && opts.harborIdx !== undefined;
       const isOrbit = !isOlympusSummit && !hasAirportOpt && !hasHarborOpt && (
         P.isPlane
-          ? false
+          ? !!B.gasGiant
           : (mode === 'orbit' || !!B.gasGiant || bodyKey === 'sun')
       );
 
@@ -2826,7 +2835,7 @@ export class LaunchScene {
           const sx = phiRot * B.R;
           const sz = toAirport ? (AIRPORT_Z_OFFSETS[aIdx] || 0) : 0;
           if (!this.planetAirportOrigins) this.planetAirportOrigins = {};
-          if (!isOlympusSummit && this.canPlaneTeleportTo(bodyKey)) {
+          if (!isOlympusSummit && this.hasSurfaceAirports(bodyKey)) {
             this.planetAirportOrigins[bodyKey] = toAirport ? sx : (sx + 190);
           }
           if (toAirport) {
@@ -2887,7 +2896,7 @@ export class LaunchScene {
             tr(`⚓🚢 Đã dịch chuyển tới Cảng biển #${hIdx + 1}/5 trên Trái Đất!`, `⚓🚢 Teleported to Harbor #${hIdx + 1}/5 on Earth!`),
             'warn'
           );
-        } else if (hasAirportOpt || (P.isPlane && this.canPlaneTeleportTo(bodyKey))) {
+        } else if (hasAirportOpt || (P.isPlane && this.hasSurfaceAirports(bodyKey))) {
           this.milestone(
             `🛫 ${B.icon} ${tr(`SÂN BAY #${aIdx + 1}/5 — ${B.label.toUpperCase()}!`, `AIRPORT #${aIdx + 1}/5 — ${B.label.toUpperCase()}!`)}`,
             tr(
@@ -3872,10 +3881,10 @@ export class LaunchScene {
       return { sx, sz, hit: false, hitX: 0, hitZ: 0 };
     }
     const isEarth = v.ref === 'earth';
-    if (!isEarth && !this.canPlaneTeleportTo(v.ref)) {
+    if (!isEarth && !this.hasSurfaceAirports(v.ref)) {
       return { sx, sz, hit: false, hitX: 0, hitZ: 0 };
     }
-    const anchor = this.canPlaneTeleportTo(v.ref) ? this.getNearestAirportAnchor(v.ref, sx) : { sx: 0, h: 0 };
+    const anchor = this.hasSurfaceAirports(v.ref) ? this.getNearestAirportAnchor(v.ref, sx) : { sx: 0, h: 0 };
     const apOffX = anchor.sx || 0;
     const apOffY = anchor.h || 0;
     const isPlaneMode = !!(v.isPlane || (this.airport && this.airport.visible));
@@ -3977,7 +3986,7 @@ export class LaunchScene {
       const B = BODIES[v.ref] || BODIES.moon;
       const sx = v.sx !== undefined ? v.sx : (v.phiRot || 0) * B.R;
       const sz = v.s ? (v.s.z || 0) : 0;
-      if (this.canPlaneTeleportTo(v.ref)) {
+      if (this.hasSurfaceAirports(v.ref)) {
         const anchor = this.getNearestAirportAnchor(v.ref, sx);
         const dx = sx - anchor.sx;
         const rwyH = this.isPointOnAirportSurface(dx, sz);
@@ -6907,7 +6916,7 @@ export class LaunchScene {
       if (this.groundUniforms.uShowPad) this.groundUniforms.uShowPad.value = (isPlaneMode || isRoverMode) ? 0.0 : 1.0;
       if (this.groundUniforms.uShowAirport) this.groundUniforms.uShowAirport.value = isPlaneMode ? 1.0 : 0.0;
     }
-    const hasAtmoAirports = this.canPlaneTeleportTo(F.ref);
+    const hasAtmoAirports = this.hasSurfaceAirports(F.ref);
     const apAnchor = hasAtmoAirports ? this.getNearestAirportAnchor(F.ref, F.sx || 0) : { sx: 0, h: 0 };
     const showAirport = hasAtmoAirports && Math.abs(F.alt - apAnchor.h) < 60000 && Math.abs((F.sx || 0) - apAnchor.sx) < 55000;
     if (this.airport) {

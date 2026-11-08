@@ -864,12 +864,12 @@ export class Vessel {
       }
     }
 
-    // ---------- surface contact (gas giants Jupiter, Saturn, Uranus, Neptune have no solid surface except on their 5 floating cloud-deck airports)
-    const surf = env.surface(this);
-    if (B.gasGiant && surf.site !== 'runway') {
+    // ---------- surface contact (gas giants Jupiter, Saturn, Uranus, Neptune have no solid surface and can be flown straight through)
+    if (B.gasGiant) {
       this.agl = Math.max(0, this.alt);
       return;
     }
+    const surf = env.surface(this);
     const bottom = this.alt - this.bottomOffset() * Math.cos(this.ang) - surf.h;
     this.agl = bottom;
     if (bottom <= 0) {

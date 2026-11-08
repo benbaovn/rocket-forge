@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
-import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart } from '../rocket.js';
+import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
@@ -1612,12 +1612,30 @@ export class BuildScene {
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
     const hasGunBat = st.stages.some((s) => s.hasGunBattery);
+    const vType = stackVehicleType(this.stack);
+    const readyLabel = vType === 'boat'
+      ? tr('Sẵn sàng ra cảng!', 'Ready for the harbor!')
+      : vType === 'plane'
+        ? tr('Sẵn sàng ra sân bay!', 'Ready for the airport!')
+        : vType === 'rover'
+          ? tr('Sẵn sàng lăn bánh!', 'Ready to deploy rover!')
+          : tr('Sẵn sàng phóng!', 'Ready for launch!');
     const allWarnings = [...st.warnings];
     if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
     w.innerHTML = allWarnings.length
       ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
-      : `<div class="ok">✔ ${tr('Sẵn sàng phóng!', 'Ready for launch!')}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
-    $('btn-launchpad').disabled = !st.canLaunch;
+      : `<div class="ok">✔ ${readyLabel}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
+    const btnLaunch = $('btn-launchpad');
+    if (btnLaunch) {
+      btnLaunch.disabled = !st.canLaunch;
+      btnLaunch.textContent = vType === 'boat'
+        ? tr('⚓ RA CẢNG', '⚓ TO HARBOR')
+        : vType === 'plane'
+          ? tr('✈️ RA SÂN BAY', '✈️ TO AIRPORT')
+          : vType === 'rover'
+            ? tr('🚙 LĂN BÁNH', '🚙 DEPLOY ROVER')
+            : tr('🚀 PHÓNG', '🚀 LAUNCH');
+    }
     this.stats = st;
   }
 

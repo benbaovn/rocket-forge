@@ -89,6 +89,7 @@ export class LaunchScene {
     this.initGround();
     this.initPad();
     this.initAirport();
+    this.initHarbor();
     this.initSites();
     this.initFX();
     this.initUI();
@@ -984,6 +985,294 @@ export class LaunchScene {
     this.world.add(airport);
   }
 
+  initHarbor() {
+    const harbor = new THREE.Group();
+    harbor.visible = false;
+    this.harbor = harbor;
+
+    const concreteMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.82, metalness: 0.12 });
+    const darkQuayMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.18 });
+    const woodDeckMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.72, metalness: 0.10 });
+    const pilingMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.88, metalness: 0.20 });
+    const bollardGoldMat = new THREE.MeshStandardMaterial({ color: 0xd97706, emissive: 0x78350f, emissiveIntensity: 0.22, roughness: 0.35, metalness: 0.65 });
+    const fenderMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, metalness: 0.25 });
+    const hazardYellowMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.38, metalness: 0.22 });
+    const redLighthouseMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0x7f1d1d, emissiveIntensity: 0.18, roughness: 0.42, metalness: 0.25 });
+    const glassCurtainMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.55, roughness: 0.14, metalness: 0.88 });
+    const craneOrangeMat = new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.45, metalness: 0.50 });
+    const lampGlowMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfacc15, emissiveIntensity: 4.5, roughness: 0.2 });
+    const greenBuoyMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 3.5, roughness: 0.3 });
+    const redBuoyMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, emissiveIntensity: 3.5, roughness: 0.3 });
+
+    const H_X = COAST_X + 115; // 2615: main harbor seawall edge (boat spawns at x = 2660, z = 0)
+
+    // 1. Main Concrete Seawall & Quayside Promenade (x = 2525..2615, z = -155..+155)
+    const quayPromenade = new THREE.Mesh(new THREE.BoxGeometry(90, 2.2, 310), concreteMat);
+    quayPromenade.position.set(H_X - 45, 0.55, 0);
+    quayPromenade.receiveShadow = true;
+    harbor.add(quayPromenade);
+
+    const quayEdgeWall = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.6, 310), darkQuayMat);
+    quayEdgeWall.position.set(H_X - 1.2, 0.65, 0);
+    harbor.add(quayEdgeWall);
+
+    const quayHazardLine = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 306), hazardYellowMat);
+    quayHazardLine.rotation.x = -Math.PI / 2;
+    quayHazardLine.position.set(H_X - 0.6, 1.97, 0);
+    harbor.add(quayHazardLine);
+
+    // 2. North Pier (z = -16) & South VIP Boarding Pontoon Pier (z = +8.6) flanking the boat berth at (2660, 0)
+    const pierLen = 132; // x = 2615 to 2747
+    const pierCenterX = H_X + pierLen / 2 - 2; // 2679
+
+    // North Pier (z = -16, width 7.5m, height y = 1.65m)
+    const northPier = new THREE.Mesh(new THREE.BoxGeometry(pierLen, 0.75, 7.5), concreteMat);
+    northPier.position.set(pierCenterX, 1.35, -16);
+    northPier.castShadow = true;
+    northPier.receiveShadow = true;
+    harbor.add(northPier);
+
+    const northDeck = new THREE.Mesh(new THREE.BoxGeometry(pierLen - 2, 0.14, 6.2), woodDeckMat);
+    northDeck.position.set(pierCenterX, 1.78, -16);
+    northDeck.receiveShadow = true;
+    harbor.add(northDeck);
+
+    // South VIP Boarding Pontoon Pier (z = +8.6, width 7.2m, low-profile floating marina dock y = 0.42m so officers walk right onto the boat)
+    const southPier = new THREE.Mesh(new THREE.BoxGeometry(pierLen, 0.75, 7.2), darkQuayMat);
+    southPier.position.set(pierCenterX, 0.15, 8.6);
+    southPier.castShadow = true;
+    southPier.receiveShadow = true;
+    harbor.add(southPier);
+
+    const southDeck = new THREE.Mesh(new THREE.BoxGeometry(pierLen - 1.6, 0.12, 6.2), woodDeckMat);
+    southDeck.position.set(pierCenterX, 0.56, 8.6);
+    southDeck.receiveShadow = true;
+    harbor.add(southDeck);
+
+    // VIP Boarding Gangway Ramp right next to the boat at x = 2660, z = +4.2
+    const gangway = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.14, 2.4), woodDeckMat);
+    gangway.position.set(COAST_X + 160, 0.58, 4.2);
+    harbor.add(gangway);
+    for (const gx of [-2.6, 2.6]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 8), bollardGoldMat);
+      post.position.set(COAST_X + 160 + gx, 1.12, 4.2);
+      harbor.add(post);
+    }
+
+    // Pilings, Golden Mooring Bollards, Black Rubber Fenders & Dockside LED Lamps along both piers
+    const pilingGeo = new THREE.CylinderGeometry(0.32, 0.36, 5.5, 10);
+    const bollardBaseGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.52, 10);
+    const bollardCapGeo = new THREE.CylinderGeometry(0.32, 0.24, 0.14, 10);
+    const fenderGeo = new THREE.CylinderGeometry(0.28, 0.28, 1.35, 10);
+    const lampPoleGeo = new THREE.CylinderGeometry(0.09, 0.12, 4.6, 8);
+    const lampBulbGeo = new THREE.SphereGeometry(0.28, 10, 8);
+
+    for (let px = H_X + 8; px <= H_X + pierLen - 6; px += 14) {
+      // North pier pilings, bollards, fenders & lamps
+      for (const dz of [-18.8, -13.2]) {
+        const pile = new THREE.Mesh(pilingGeo, pilingMat);
+        pile.position.set(px, -0.8, dz);
+        harbor.add(pile);
+      }
+      const bN = new THREE.Mesh(bollardBaseGeo, bollardGoldMat);
+      bN.position.set(px, 2.08, -12.8);
+      const bCapN = new THREE.Mesh(bollardCapGeo, bollardGoldMat);
+      bCapN.position.set(px, 2.38, -12.8);
+      const fN = new THREE.Mesh(fenderGeo, fenderMat);
+      fN.position.set(px, 1.15, -12.15);
+      harbor.add(bN, bCapN, fN);
+
+      const poleN = new THREE.Mesh(lampPoleGeo, pilingMat);
+      poleN.position.set(px, 4.1, -18.8);
+      const bulbN = new THREE.Mesh(lampBulbGeo, lampGlowMat);
+      bulbN.position.set(px, 6.45, -18.8);
+      harbor.add(poleN, bulbN);
+
+      // South VIP pier pilings, bollards, fenders & lamps
+      for (const dz of [5.6, 11.6]) {
+        const pile = new THREE.Mesh(pilingGeo, pilingMat);
+        pile.position.set(px, -1.5, dz);
+        harbor.add(pile);
+      }
+      const bS = new THREE.Mesh(bollardBaseGeo, bollardGoldMat);
+      bS.position.set(px, 0.85, 5.5);
+      const bCapS = new THREE.Mesh(bollardCapGeo, bollardGoldMat);
+      bCapS.position.set(px, 1.15, 5.5);
+      const fS = new THREE.Mesh(fenderGeo, fenderMat);
+      fS.position.set(px, 0.25, 4.9);
+      harbor.add(bS, bCapS, fS);
+
+      const poleS = new THREE.Mesh(lampPoleGeo, pilingMat);
+      poleS.position.set(px, 2.9, 11.6);
+      const bulbS = new THREE.Mesh(lampBulbGeo, lampGlowMat);
+      bulbS.position.set(px, 5.25, 11.6);
+      harbor.add(poleS, bulbS);
+    }
+
+    // 3. Port Authority Terminal & Harbor Control Tower (x = 2572, z = -46)
+    const termGroup = new THREE.Group();
+    termGroup.position.set(H_X - 42, 1.65, -48);
+    const termMain = new THREE.Mesh(new THREE.BoxGeometry(44, 14, 62), whiteMat);
+    termMain.position.y = 7.0;
+    termMain.castShadow = true;
+    termMain.receiveShadow = true;
+    termGroup.add(termMain);
+
+    const termGlassEast = new THREE.Mesh(new THREE.PlaneGeometry(58, 10.5), glassCurtainMat);
+    termGlassEast.rotation.y = Math.PI / 2;
+    termGlassEast.position.set(22.08, 7.2, 0);
+    termGroup.add(termGlassEast);
+
+    const termGlassSouth = new THREE.Mesh(new THREE.PlaneGeometry(40, 10.5), glassCurtainMat);
+    termGlassSouth.position.set(0, 7.2, 31.08);
+    termGroup.add(termGlassSouth);
+
+    const termRoof = new THREE.Mesh(new THREE.BoxGeometry(50, 1.6, 68), darkQuayMat);
+    termRoof.position.set(1.5, 14.8, 0);
+    termRoof.castShadow = true;
+    termGroup.add(termRoof);
+
+    // Harbor Master Control Tower atop Terminal
+    const hTowerShaft = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 4.8, 22, 12), whiteMat);
+    hTowerShaft.position.set(6, 25, 18);
+    hTowerShaft.castShadow = true;
+    termGroup.add(hTowerShaft);
+
+    const hTowerCab = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 5.8, 4.5, 12), glassCurtainMat);
+    hTowerCab.position.set(6, 37.5, 18);
+    termGroup.add(hTowerCab);
+
+    const hTowerRoof = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 7.4, 1.4, 12), darkQuayMat);
+    hTowerRoof.position.set(6, 40.4, 18);
+    termGroup.add(hTowerRoof);
+
+    const hRadar = new THREE.Group();
+    hRadar.position.set(6, 41.8, 18);
+    const rPed = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.55, 1.5, 8), darkQuayMat);
+    const rBar = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.1, 0.45), bollardGoldMat);
+    rBar.position.y = 1.0;
+    hRadar.add(rPed, rBar);
+    this.harborRadar = hRadar;
+    termGroup.add(hRadar);
+    harbor.add(termGroup);
+
+    // 4. 2 Giant Ship-to-Shore Port Gantry Cranes & Container Stacks on South Cargo Quay (z = +38..+125)
+    for (const cz of [48, 92]) {
+      const crane = new THREE.Group();
+      crane.position.set(H_X - 10, 1.65, cz);
+      // 4 legs
+      for (const [lx, lz] of [[-7, -7], [7, -7], [-7, 7], [7, 7]]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(1.4, 32, 1.4), craneOrangeMat);
+        leg.position.set(lx, 16, lz);
+        leg.castShadow = true;
+        crane.add(leg);
+      }
+      // Cross beams
+      const crossTop = new THREE.Mesh(new THREE.BoxGeometry(16, 2.2, 16), craneOrangeMat);
+      crossTop.position.set(0, 31, 0);
+      crane.add(crossTop);
+      // Long horizontal boom extending over the harbor water (+X)
+      const boom = new THREE.Mesh(new THREE.BoxGeometry(56, 2.0, 3.6), craneOrangeMat);
+      boom.position.set(16, 33, 0);
+      boom.castShadow = true;
+      crane.add(boom);
+      // Apex A-frame tower & cables
+      const apex = new THREE.Mesh(new THREE.BoxGeometry(2.2, 12, 10), craneOrangeMat);
+      apex.position.set(-2, 39, 0);
+      crane.add(apex);
+      // Spreader trolley & suspended container
+      const trolley = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.4, 3.8), darkQuayMat);
+      trolley.position.set(24, 31.2, 0);
+      const cont = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.6, 12.2), bollardGoldMat);
+      cont.position.set(24, 21.0, 0);
+      crane.add(trolley, cont);
+      harbor.add(crane);
+    }
+
+    // Colorful Stacked Shipping Containers on South Cargo Yard
+    const contCols = [0x2563eb, 0xdc2626, 0x16a34a, 0xd97706, 0x9333ea];
+    const contMats = contCols.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.35 }));
+    const contGeo = new THREE.BoxGeometry(12.2, 3.2, 3.4);
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 5; col++) {
+        const stackH = 1 + ((row + col) % 3);
+        for (let hIdx = 0; hIdx < stackH; hIdx++) {
+          const cm = contMats[(row * 3 + col + hIdx) % contMats.length];
+          const box = new THREE.Mesh(contGeo, cm);
+          box.position.set(H_X - 36 - row * 14, 1.65 + 1.6 + hIdx * 3.25, 36 + col * 4.2);
+          box.castShadow = true;
+          box.receiveShadow = true;
+          harbor.add(box);
+        }
+      }
+    }
+
+    // 5. North & South Stone Breakwater Jetties + Iconic Red-and-White Striped Harbor Lighthouse
+    const bwLen = 158;
+    for (const sSign of [-1, 1]) {
+      const bw = new THREE.Mesh(new THREE.BoxGeometry(bwLen, 2.8, 10.5), darkQuayMat);
+      bw.position.set(H_X + bwLen / 2 - 4, 0.6, sSign * 56);
+      bw.receiveShadow = true;
+      harbor.add(bw);
+    }
+
+    // Lighthouse at end of North Breakwater (x = H_X + 148 = 2763, z = -56)
+    const lhGroup = new THREE.Group();
+    lhGroup.position.set(H_X + 148, 1.8, -56);
+    const lhBase = new THREE.Mesh(new THREE.CylinderGeometry(4.8, 5.6, 4.0, 16), concreteMat);
+    lhBase.position.y = 2.0;
+    lhGroup.add(lhBase);
+    for (let seg = 0; seg < 6; seg++) {
+      const rBot = 4.2 - seg * 0.32;
+      const rTop = 4.2 - (seg + 1) * 0.32;
+      const stripe = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, 4.2, 16), seg % 2 === 0 ? redLighthouseMat : whiteMat);
+      stripe.position.y = 4.0 + seg * 4.2 + 2.1;
+      stripe.castShadow = true;
+      lhGroup.add(stripe);
+    }
+    const gallery = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 2.6, 1.2, 16), darkQuayMat);
+    gallery.position.y = 29.6;
+    const lantern = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 3.6, 16), lampGlowMat);
+    lantern.position.y = 32.0;
+    const lhDome = new THREE.Mesh(new THREE.SphereGeometry(2.35, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), redLighthouseMat);
+    lhDome.position.y = 33.8;
+    lhGroup.add(gallery, lantern, lhDome);
+
+    const lhBeacon = new THREE.Group();
+    lhBeacon.position.y = 32.0;
+    const beamGeo = new THREE.ConeGeometry(4.5, 42, 16, 1, true);
+    beamGeo.translate(0, -21, 0);
+    beamGeo.rotateZ(Math.PI / 2);
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false });
+    const beam1 = new THREE.Mesh(beamGeo, beamMat);
+    const beam2 = new THREE.Mesh(beamGeo, beamMat);
+    beam2.rotation.y = Math.PI;
+    lhBeacon.add(beam1, beam2);
+    this.harborLighthouseBeacon = lhBeacon;
+    lhGroup.add(lhBeacon);
+    harbor.add(lhGroup);
+
+    // 6. Red & Green Channel Navigation Buoys leading out from the Harbor to the open ocean
+    const buoyFloatGeo = new THREE.CylinderGeometry(1.4, 1.1, 1.2, 12);
+    const buoyTowerGeo = new THREE.ConeGeometry(0.75, 2.8, 8);
+    for (const bx of [H_X + 168, H_X + 235, H_X + 305]) {
+      for (const [bz, bMat] of [[-24, greenBuoyMat], [24, redBuoyMat]]) {
+        const bg = new THREE.Group();
+        bg.position.set(bx, 0.2, bz);
+        const fl = new THREE.Mesh(buoyFloatGeo, bMat);
+        const tw = new THREE.Mesh(buoyTowerGeo, bMat);
+        tw.position.y = 1.8;
+        const topLight = new THREE.Mesh(lampBulbGeo, bMat);
+        topLight.position.y = 3.3;
+        bg.add(fl, tw, topLight);
+        harbor.add(bg);
+      }
+    }
+
+    this.world.add(harbor);
+  }
+
   buildArms(height) {
     for (const a of this.arms) this.pad.remove(a.pivot);
     this.arms = [];
@@ -1866,7 +2155,7 @@ export class LaunchScene {
         );
       } else if (P.isBoat) {
         this.event(
-          tr('⚠️ Thuyền phải ở trên mặt nước mới có thể đón sĩ quan lên tàu!', '⚠️ Boat must be on the water surface to board naval officers!'),
+          tr('⚠️ Thuyền phải đậu tại Cảng hoặc trên mặt nước mới có thể đón sĩ quan lên tàu!', '⚠️ Boat must be docked at the Harbor or on the water surface to board naval officers!'),
           'warn'
         );
       } else {
@@ -1901,7 +2190,7 @@ export class LaunchScene {
     const stagger = 0.20;
     const boardDur = 1.22;
     const baseX = P.sx || 0;
-    const baseY = P.isPlane ? 0.25 : P.isBoat ? 0.0 : PAD_TOP;
+    const baseY = P.isPlane ? 0.25 : P.isBoat ? 0.56 : PAD_TOP;
     const baseZ = P.s?.z || 0;
     for (let i = 0; i < added; i++) {
       const idx = prevAboard + i;
@@ -2418,7 +2707,7 @@ export class LaunchScene {
             body: 'earth',
             sx,
             h: baseH,
-            site: P.isBoat ? 'sea' : P.isPlane ? 'runway' : P.isRover ? 'land' : 'pad',
+            site: P.isBoat ? 'harbor' : P.isPlane ? 'runway' : P.isRover ? 'land' : 'pad',
             how: P.isBoat ? 'boat' : P.isRover ? 'rover' : P.isPlane ? 'plane' : 'pad',
           };
           P.landedLock = 0.5;
@@ -2900,6 +3189,7 @@ export class LaunchScene {
 
     if (this.pad) this.pad.visible = !this.player.isPlane && !this.player.isRover;
     if (this.airport) this.airport.visible = !!this.player.isPlane;
+    if (this.harbor) this.harbor.visible = !this.player.isPlane && !this.player.isRover;
     if (this.groundUniforms) {
       if (this.groundUniforms.uShowPad) this.groundUniforms.uShowPad.value = (this.player.isPlane || this.player.isRover) ? 0.0 : 1.0;
       if (this.groundUniforms.uShowAirport) this.groundUniforms.uShowAirport.value = this.player.isPlane ? 1.0 : 0.0;
@@ -2909,16 +3199,16 @@ export class LaunchScene {
     this.updatePlaneTeleportUI();
 
     if (this.player.isBoat) {
-      const seaX = COAST_X + 160;
-      this.player.placeOnSurface('earth', seaX, this.player.bottomOffset() - 0.35, this.simT);
+      const harborX = COAST_X + 160;
+      this.player.placeOnSurface('earth', harborX, this.player.bottomOffset() - 0.35, this.simT);
       this.player.clamped = false;
-      this.player.clampSpot = { body: 'earth', sx: seaX, h: this.player.bottomOffset() - 0.35 };
-      this.player.landed = { body: 'earth', sx: seaX, h: this.player.bottomOffset() - 0.35, site: 'sea', how: 'boat' };
+      this.player.clampSpot = { body: 'earth', sx: harborX, h: this.player.bottomOffset() - 0.35 };
+      this.player.landed = { body: 'earth', sx: harborX, h: this.player.bottomOffset() - 0.35, site: 'harbor', how: 'boat' };
       this.phase = 'flight';
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('🛥️ Canô đã hạ thủy ra biển! Nhấn W/S hoặc tăng ga để lướt sóng, A/D bẻ lái.', '🛥️ Speedboat launched at sea! Press W/S or throttle up to ride the waves, A/D to steer.'));
+      this.event(tr('🛥️⚓ Du thuyền đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Superyacht moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
     } else if (this.player.isRover) {
       const roverX = 0;
       const surfH = this.earthGroundWave(roverX, 0, 0.0, 0.0) + this.player.bottomOffset();
@@ -3012,7 +3302,7 @@ export class LaunchScene {
       this.camera.position.set(13, 4.5, 0);
       this.controls.minDistance = 2;
     } else if (this.player.isBoat) {
-      this.camera.position.set(-13, 4.5, 0);
+      this.camera.position.set(-16, 5.8, -8);
       this.controls.minDistance = 2;
     } else if (this.player.isPlane) {
       this.camera.position.set(-16, 4.5, 16);
@@ -5843,6 +6133,12 @@ export class LaunchScene {
     if (this.airportRadar && this.airport && this.airport.visible) {
       this.airportRadar.rotation.y += 0.035;
     }
+    if (this.harborRadar && this.harbor && this.harbor.visible) {
+      this.harborRadar.rotation.y += 0.032;
+    }
+    if (this.harborLighthouseBeacon && this.harbor && this.harbor.visible) {
+      this.harborLighthouseBeacon.rotation.y += 0.024;
+    }
     if (this.airportWindsock && this.airport && this.airport.visible) {
       this.airportWindsock.rotation.y = Math.sin(this.time * 1.8) * 0.18;
       this.airportWindsock.rotation.z = -0.12 + Math.sin(this.time * 3.1) * 0.06;
@@ -6310,6 +6606,7 @@ export class LaunchScene {
     for (const c of this.worldStatic) {
       if (c === this.pad) c.visible = near && !isPlaneMode && !isRoverMode;
       else if (c === this.airport) c.visible = near && isPlaneMode;
+      else if (c === this.harbor) c.visible = near && !isPlaneMode && !isRoverMode;
       else c.visible = near;
     }
     this.ship.visible = near && this.shipX !== null;

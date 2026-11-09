@@ -14,7 +14,7 @@ import { tr, getLang } from '../i18n.js';
 // so interstellar spacecraft (even at 10^17 km) stay visible right outside the Oort Cloud
 // without shrinking the Solar System into a single pixel or breaking 32-bit WebGL float precision.
 const SCALE = 0.001;
-const CERES_MAP_Y = -3800; // Ceres positioned underneath the Asteroid Belt (Vành đai đá) on the 3D Map
+const CERES_MAP_Y = -22800; // Ceres positioned 6x lower underneath the Asteroid Belt (Vành đai đá) on the 3D Map
 const R_INTERSTELLAR_START = SUN_SOI * SCALE * 1.02;
 const R_INTERSTELLAR_SPAN = 220000;
 const to3D = (x, y, z = 0, out = new THREE.Vector3()) => {

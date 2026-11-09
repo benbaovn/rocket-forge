@@ -822,12 +822,12 @@ export class PlaneAirportHopProgram {
 
     if (!onFinal && dist > 140) {
       this.phase = 'hop';
-      sc.requestWarp(dist > 900 ? 4 : 2);
+      sc.requestWarp(dist > 4500 ? 10 : dist > 900 ? 4 : 2);
       v.engineOn = true;
       v.throttle = 0.88;
       const ux = dx / Math.max(1, dist);
       const uz = dz / Math.max(1, dist);
-      const cruiseSpd = Math.min(185, Math.max(68, dist * 0.35));
+      const cruiseSpd = Math.min(260, Math.max(72, dist * 0.35));
       const targetVe = cruiseSpd * ux;
       const targetVz = cruiseSpd * uz;
       const dvE = (targetVe - v.vSurf.e) * Math.min(1, dt * 4.0);

@@ -28,11 +28,11 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: 0,      dz: 0 },      // Airport #1 (East / Central)
-  { dx: -3600,  dz: -3200 },  // Airport #2 (Northwest — ~4.8 km away)
-  { dx: -7200,  dz: 3400 },   // Airport #3 (Southwest — ~7.5 km from AP2)
-  { dx: -11600, dz: -2600 },  // Airport #4 (Far Northwest — ~7.4 km from AP3)
-  { dx: -15600, dz: 3000 },   // Airport #5 (Far Southwest — ~6.9 km from AP4)
+  { dx: 0,       dz: 0,      planetDz: 0 },      // Airport #1 (East / Central Base)
+  { dx: -25000,  dz: -14000, planetDz: -900 },   // Airport #2 (Northwest — ~25-29 km away)
+  { dx: -52000,  dz: 16000,  planetDz: 900 },    // Airport #3 (Southwest — ~27-40 km from AP2)
+  { dx: -82000,  dz: -18000, planetDz: -1100 },  // Airport #4 (Far Northwest — ~30-45 km from AP3)
+  { dx: -115000, dz: 15000,  planetDz: 1100 },   // Airport #5 (Far Southwest — ~33-47 km from AP4)
 ];
 const HARBOR_SCATTER_Z = [0, -2600, 2400, -5400, 5600];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
@@ -328,10 +328,10 @@ export class LaunchScene {
     const waveGLSL = /* glsl */`
       float airportBoxDistGLSL(float sx, float sz) {
         float d0 = max(max(-260.0 - sx, sx - 2460.0), max(-190.0 - sz, sz - 130.0));
-        float d1 = max(max(-260.0 - (sx + 3600.0), (sx + 3600.0) - 2460.0), max(-190.0 - (sz + 3200.0), (sz + 3200.0) - 130.0));
-        float d2 = max(max(-260.0 - (sx + 7200.0), (sx + 7200.0) - 2460.0), max(-190.0 - (sz - 3400.0), (sz - 3400.0) - 130.0));
-        float d3 = max(max(-260.0 - (sx + 11600.0), (sx + 11600.0) - 2460.0), max(-190.0 - (sz + 2600.0), (sz + 2600.0) - 130.0));
-        float d4 = max(max(-260.0 - (sx + 15600.0), (sx + 15600.0) - 2460.0), max(-190.0 - (sz - 3000.0), (sz - 3000.0) - 130.0));
+        float d1 = max(max(-260.0 - (sx + 25000.0), (sx + 25000.0) - 2460.0), max(-190.0 - (sz + 14000.0), (sz + 14000.0) - 130.0));
+        float d2 = max(max(-260.0 - (sx + 52000.0), (sx + 52000.0) - 2460.0), max(-190.0 - (sz - 16000.0), (sz - 16000.0) - 130.0));
+        float d3 = max(max(-260.0 - (sx + 82000.0), (sx + 82000.0) - 2460.0), max(-190.0 - (sz + 18000.0), (sz + 18000.0) - 130.0));
+        float d4 = max(max(-260.0 - (sx + 115000.0), (sx + 115000.0) - 2460.0), max(-190.0 - (sz - 15000.0), (sz - 15000.0) - 130.0));
         return min(d0, min(min(d1, d2), min(d3, d4)));
       }
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
@@ -385,8 +385,8 @@ export class LaunchScene {
           float capeJut = 1450.0 * exp(-pow((p.y + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(p.y));
           float coast = 2600.0 + capeJut - 0.045 * max(0.0, abs(p.y) - 3500.0);
           float land = max(smoothstep(coast + 30.0, coast - 30.0, p.x), smoothstep(59950.0, 60050.0, p.x));
-          // Florida west coast (Gulf of Mexico) across the peninsula at far -X
-          land *= smoothstep(-39500.0, -37000.0, p.x);
+          // Continental west coast across the mainland at far -X
+          land *= smoothstep(-149500.0, -147000.0, p.x);
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
@@ -1654,7 +1654,7 @@ export class LaunchScene {
     const B = BODIES[bodyKey] || BODIES.mars;
     const originSx = this.getPlanetAirportOrigin(bodyKey);
     const sx = originSx + sc.dx;
-    const sz = sc.dz;
+    const sz = sc.planetDz !== undefined ? sc.planetDz : sc.dz;
     if (B.gasGiant) {
       return { sx, sz, h: 0, aIdx: idx };
     }
@@ -1669,7 +1669,7 @@ export class LaunchScene {
         const mh = moonHeight(Math.sin(psi), Math.cos(psi), uz, bodyKey);
         if (mh > maxH) maxH = mh;
       }
-      h = maxH;
+      h = maxH - (sz * sz) / (2 * B.R);
       this._planetApHeightCache[cacheKey] = h;
     }
     return { sx, sz, h, aIdx: idx };
@@ -4133,7 +4133,8 @@ export class LaunchScene {
       }
       const psi = sx / B.R;
       const uz = sz / B.R;
-      return { h: B.gasGiant ? 0 : moonHeight(Math.sin(psi), Math.cos(psi), uz, v.ref), water: false, site: v.ref };
+      const zDrop = (sz * sz) / (2 * B.R);
+      return { h: B.gasGiant ? 0 : (moonHeight(Math.sin(psi), Math.cos(psi), uz, v.ref) - zDrop), water: false, site: v.ref };
     }
     const sx = v.sx, sz = v.s ? (v.s.z || 0) : 0;
     if (this.buildingColliders && this.buildingColliders.length && v.alt !== undefined) {

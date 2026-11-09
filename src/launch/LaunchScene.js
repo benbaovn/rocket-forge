@@ -7835,10 +7835,11 @@ export class LaunchScene {
       $('pip-status').textContent = `${b.rec ? b.rec.status() : ''} · ${tgt === b ? fmt(b.alt / 1000, 1) + ' km' : fmt(b.alt) + ' m'} · ${fmt(b.speedSurf)} m/s`;
     }
     const low = (P.ref === 'earth' && P.alt < ATM_TOP) || (P.ref !== 'earth' && P.alt < Math.max(30000, P.body.atm || 0));
-    let altV = P.ref === 'earth' ? Math.max(0, P.alt - this.startAlt) : Math.max(0, P.alt);
-    if (P.ref !== 'earth' && P.agl !== undefined && P.agl < 20000) altV = Math.max(0, P.agl);
+    const altV = P.ref === 'earth'
+      ? (P.alt - this.startAlt)
+      : (P.alt - (P.bottomOffset ? P.bottomOffset() : 0));
     const altEl = $('h-alt');
-    if (altV >= 10000) { altEl.textContent = fmt(altV / 1000, 2); $('h-alt-u').textContent = 'km'; }
+    if (Math.abs(altV) >= 10000) { altEl.textContent = fmt(altV / 1000, 2); $('h-alt-u').textContent = 'km'; }
     else { altEl.textContent = fmt(altV, 0); $('h-alt-u').textContent = 'm'; }
     $('h-vel-l').textContent = low ? tr('⚡ MẶT ĐẤT', '⚡ SURF') : tr('⚡ QUỸ ĐẠO', '⚡ ORB');
     $('h-vel').textContent = fmt(low ? P.speedSurf : P.speedOrb);

@@ -866,7 +866,7 @@ export class Vessel {
 
     // ---------- surface contact (gas giants Jupiter, Saturn, Uranus, Neptune have no solid surface and can be flown straight through)
     if (B.gasGiant) {
-      this.agl = Math.max(0, this.alt);
+      this.agl = this.alt;
       return;
     }
     const surf = env.surface(this);

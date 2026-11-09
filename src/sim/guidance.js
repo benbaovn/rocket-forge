@@ -758,7 +758,7 @@ export class BoatHarborHopProgram {
     v.ctl.input = 0;
     v.heading = Math.atan2(-dz, dx);
     v.turnYawRate = 0;
-    sc.requestWarp(dist > 450 ? 4 : 2);
+    sc.requestWarp(dist > 3500 ? 10 : dist > 550 ? 4 : 2);
   }
 }
 

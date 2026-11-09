@@ -34,7 +34,7 @@ const AIRPORT_SCATTER_OFFSETS = [
   { dx: -82000,  dz: -18000, planetDz: -1100 },  // Airport #4 (Far Northwest — ~30-45 km from AP3)
   { dx: -115000, dz: 15000,  planetDz: 1100 },   // Airport #5 (Far Southwest — ~33-47 km from AP4)
 ];
-const HARBOR_SCATTER_Z = [0, -2600, 2400, -5400, 5600];
+const HARBOR_SCATTER_Z = [0, -18000, -38000, 20000, 42000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
 const fmt = (v, d = 0) => v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d });
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -381,9 +381,11 @@ export class LaunchScene {
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
-          // Cape Canaveral, Florida coastline: 2600m at LC-39A / Airport / Boat dock, with the iconic Cape Canaveral point jutting out SE
+          // Cape Canaveral, Florida & Atlantic coastline with bays and peninsulas extending +/-45 km North/South
           float capeJut = 1450.0 * exp(-pow((p.y + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(p.y));
-          float coast = 2600.0 + capeJut - 0.045 * max(0.0, abs(p.y) - 3500.0);
+          float coastWave = 1100.0 * sin(p.y * 0.00016) * smoothstep(2000.0, 5000.0, abs(p.y));
+          float coastRecede = 0.025 * min(45000.0, max(0.0, abs(p.y) - 3500.0));
+          float coast = 2600.0 + capeJut + coastWave - coastRecede;
           float land = max(smoothstep(coast + 30.0, coast - 30.0, p.x), smoothstep(59950.0, 60050.0, p.x));
           // Continental west coast across the mainland at far -X
           land *= smoothstep(-149500.0, -147000.0, p.x);
@@ -1615,7 +1617,11 @@ export class LaunchScene {
     const s = THREE.MathUtils.clamp((Math.abs(py) - 650.0) / (1500.0 - 650.0), 0, 1);
     const sm = s * s * (3 - 2 * s);
     const capeJut = 1450.0 * Math.exp(-Math.pow((py + 2200.0) / 3800.0, 2.0)) * sm;
-    return 2600.0 + capeJut - 0.045 * Math.max(0.0, Math.abs(py) - 3500.0);
+    const sw = THREE.MathUtils.clamp((Math.abs(py) - 2000.0) / (5000.0 - 2000.0), 0, 1);
+    const smW = sw * sw * (3 - 2 * sw);
+    const coastWave = 1100.0 * Math.sin(py * 0.00016) * smW;
+    const coastRecede = 0.025 * Math.min(45000.0, Math.max(0.0, Math.abs(py) - 3500.0));
+    return 2600.0 + capeJut + coastWave - coastRecede;
   }
 
   getHarborSite(hIdx = 0) {

@@ -417,6 +417,57 @@ export const MISSIONS = [
       { id: 'boatDist2000', text: 'Đi hoàn thành đủ 2000 km trên mặt biển', targetKm: 2000 },
     ],
   },
+  // ================= BOAT HARBOR MISSIONS (1 -> 5 Harbors) =================
+  {
+    id: 'boat_harbor_1', icon: '⚓', name: 'Tới 1 cảng', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetHarbors: 1,
+    desc: 'Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
+    objectives: [
+      { id: 'boatHarbor1', text: 'Di chuyển và cập bến an toàn tại 1 cảng biển', targetHarbors: 1 },
+    ],
+  },
+  {
+    id: 'boat_harbor_2', icon: '⚓', name: 'Tới 2 cảng', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetHarbors: 2,
+    desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
+    objectives: [
+      { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
+      { id: 'boatHarbor2', text: 'Tới hoàn thành đủ 2 cảng biển', targetHarbors: 2 },
+    ],
+  },
+  {
+    id: 'boat_harbor_3', icon: '⚓', name: 'Tới 3 cảng', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetHarbors: 3,
+    desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
+    objectives: [
+      { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
+      { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },
+      { id: 'boatHarbor3', text: 'Tới hoàn thành đủ 3 cảng biển', targetHarbors: 3 },
+    ],
+  },
+  {
+    id: 'boat_harbor_4', icon: '⚓', name: 'Tới 4 cảng', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetHarbors: 4,
+    desc: 'Hải trình liên cảng: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
+    objectives: [
+      { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
+      { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },
+      { id: 'boatHarbor3', text: 'Tới cảng biển thứ 3', targetHarbors: 3 },
+      { id: 'boatHarbor4', text: 'Tới hoàn thành đủ 4 cảng biển', targetHarbors: 4 },
+    ],
+  },
+  {
+    id: 'boat_harbor_5', icon: '⚓', name: 'Tới 5 cảng', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat', targetHarbors: 5,
+    desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
+    objectives: [
+      { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
+      { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },
+      { id: 'boatHarbor3', text: 'Tới cảng biển thứ 3', targetHarbors: 3 },
+      { id: 'boatHarbor4', text: 'Tới cảng biển thứ 4', targetHarbors: 4 },
+      { id: 'boatHarbor5', text: 'Tới hoàn thành đủ 5 cảng biển', targetHarbors: 5 },
+    ],
+  },
   // ================= AIRPLANE AIRPORT LANDING MISSIONS (1 -> 5 Airports) =================
   {
     id: 'plane_airport_1', icon: '🛫', name: 'Đáp lên 1 sân bay', preset: 'Tiêm kích phản lực F-22',

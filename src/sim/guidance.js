@@ -705,6 +705,63 @@ export class BoatCruiseProgram {
   }
 }
 
+export class BoatHarborHopProgram {
+  constructor(targetHarbors = 1) {
+    this.targetHarbors = targetHarbors;
+    this.phase = 'depart';
+  }
+  status() {
+    const doneCount = Math.min(this.targetHarbors, this._lastCount || 0);
+    if (this.phase === 'dock') {
+      return tr(`Đang cập cảng biển (${doneCount}/${this.targetHarbors})`, `Docking at harbor (${doneCount}/${this.targetHarbors})`);
+    }
+    return tr(`Đang di chuyển tới cảng tiếp theo (${doneCount}/${this.targetHarbors})`, `Sailing to next harbor (${doneCount}/${this.targetHarbors})`);
+  }
+  update(v, sc) {
+    const doneCount = sc.getHarborsVisitedCount ? sc.getHarborsVisitedCount() : 0;
+    this._lastCount = doneCount;
+    if (doneCount >= this.targetHarbors) {
+      this.phase = 'done';
+      v.ctl.drive = 0;
+      v.ctl.input = 0;
+      v.throttle = 0;
+      v.engineOn = false;
+      v.waterSpeed = 0;
+      return 'done';
+    }
+    const harborIdx = (doneCount + 1) % 5;
+    const site = sc.getHarborSite
+      ? sc.getHarborSite(harborIdx)
+      : { seawallX: sc.coastX + 115, berthX: sc.coastX + 160, sz: 0 };
+    const curX = v.sx || 0;
+    const curZ = v.s.z || 0;
+    const zErr = site.sz - curZ;
+    const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 200);
+    let wpX;
+    let wpZ;
+    if (Math.abs(zErr) > 55) {
+      this.phase = 'cruise';
+      const safeChannelX = Math.max(curCoastX + 220, site.berthX + 140, 4180);
+      wpX = curX < curCoastX + 140 ? curCoastX + 240 : safeChannelX;
+      wpZ = site.sz;
+    } else {
+      this.phase = 'dock';
+      wpX = site.berthX;
+      wpZ = site.sz;
+    }
+    const dx = wpX - curX;
+    const dz = wpZ - curZ;
+    const dist = Math.hypot(dx, dz);
+    v.engineOn = true;
+    v.throttle = 1.0;
+    v.ctl.drive = 1;
+    v.ctl.input = 0;
+    v.heading = Math.atan2(-dz, dx);
+    v.turnYawRate = 0;
+    sc.requestWarp(dist > 450 ? 4 : 2);
+  }
+}
+
 export class PlaneAirportHopProgram {
   constructor(targetAirports = 1) {
     this.targetAirports = targetAirports;
@@ -722,7 +779,6 @@ export class PlaneAirportHopProgram {
     return tr(`Đang bay chuyển tiếp sân bay (${doneCount}/${this.targetAirports})`, `Hopping to airport (${doneCount}/${this.targetAirports})`);
   }
   update(v, sc, dt = 0.02) {
-    const Z_OFFSETS = [0, -320, 320, -640, 640];
     const doneCount = sc.getAirportsLandedCount ? sc.getAirportsLandedCount() : 0;
     this._lastCount = doneCount;
     if (doneCount >= this.targetAirports) {
@@ -735,19 +791,14 @@ export class PlaneAirportHopProgram {
       return 'done';
     }
     const rwyIdx = (doneCount + 1) % 5;
-    const targetZ = Z_OFFSETS[rwyIdx];
-    const anchor = sc.getAirportAnchor ? sc.getAirportAnchor(v.ref, v.sx || 0) : { sx: 0, h: 0 };
+    const site = sc.getAirportSite
+      ? sc.getAirportSite(v.ref, rwyIdx)
+      : { sx: 0, sz: 0, h: 0 };
 
     if (v.landed || v.clamped) {
       this.phase = 'takeoff';
       this.airborneTime = 0;
       sc.requestWarp(1);
-      if ((v.sx || 0) - anchor.sx > 1400 || (v.sx || 0) - anchor.sx < -140) {
-        const shiftX = (anchor.sx + 60) - (v.sx || 0);
-        v.s.x += v.east.x * shiftX;
-        v.s.y += v.east.y * shiftX;
-        v.updateFrame(sc.simT);
-      }
       v.engineOn = true;
       v.throttle = 1.0;
       v.heading = 0;
@@ -759,23 +810,42 @@ export class PlaneAirportHopProgram {
     }
 
     this.airborneTime = (this.airborneTime || 0) + dt;
-    const zErr = targetZ - (v.s.z || 0);
-    if (this.airborneTime < 2.2 || Math.abs(zErr) > 10) {
+    const entryX = site.sx + 220;
+    const entryZ = site.sz;
+    const dx = entryX - (v.sx || 0);
+    const dz = entryZ - (v.s.z || 0);
+    const dist = Math.hypot(dx, dz);
+    const onFinal = this.airborneTime >= 2.2 &&
+      (v.sx || 0) >= site.sx - 60 &&
+      (v.sx || 0) <= site.sx + 1650 &&
+      Math.abs((v.s.z || 0) - site.sz) <= 18;
+
+    if (!onFinal && dist > 140) {
       this.phase = 'hop';
-      sc.requestWarp(2);
+      sc.requestWarp(dist > 900 ? 4 : 2);
       v.engineOn = true;
-      v.throttle = 0.85;
-      const vzCmd = Math.max(-115, Math.min(115, zErr * 2.4));
-      v.s.vz = vzCmd;
-      v.heading = Math.max(-0.35, Math.min(0.35, -vzCmd / 180));
-      v.bank = Math.max(-0.35, Math.min(0.35, vzCmd / 160));
-      const altErr = (anchor.h + 46) - v.alt;
-      const targetVu = Math.max(-12, Math.min(18, altErr * 0.45));
+      v.throttle = 0.88;
+      const ux = dx / Math.max(1, dist);
+      const uz = dz / Math.max(1, dist);
+      const cruiseSpd = Math.min(185, Math.max(68, dist * 0.35));
+      const targetVe = cruiseSpd * ux;
+      const targetVz = cruiseSpd * uz;
+      const dvE = (targetVe - v.vSurf.e) * Math.min(1, dt * 4.0);
+      v.s.vx += dvE * v.east.x;
+      v.s.vy += dvE * v.east.y;
+      v.vSurf.e += dvE;
+      v.s.vz = (v.s.vz || 0) + (targetVz - (v.s.vz || 0)) * Math.min(1, dt * 4.0);
+      const desiredHeading = Math.atan2(-(v.s.vz || 0), v.vSurf.e || 1);
+      const hErr = wrapPi(Math.atan2(-dz, dx) - desiredHeading);
+      v.heading = desiredHeading;
+      v.bank = Math.max(-0.38, Math.min(0.38, -hErr * 1.2));
+      const altErr = (site.h + 62) - v.alt;
+      const targetVu = Math.max(-16, Math.min(20, altErr * 0.45));
       const dvU = (targetVu - v.vSurf.u) * Math.min(1, dt * 5.0);
       v.s.vx += dvU * v.up.x;
       v.s.vy += dvU * v.up.y;
       v.vSurf.u += dvU;
-      v.beta = wrapPi(v.phi + Math.PI / 2 - Math.max(-0.12, Math.min(0.18, targetVu / 90)));
+      v.beta = wrapPi(v.phi + Math.PI / 2 - Math.max(-0.14, Math.min(0.18, targetVu / 90)));
       v.omega = 0;
       v.ctl.drive = 0;
       if (v.syncDir3DFromBeta) v.syncDir3DFromBeta();
@@ -786,16 +856,20 @@ export class PlaneAirportHopProgram {
     sc.requestWarp(1);
     v.legsTarget = 1;
     v.legsT = 1;
-    v.s.z = targetZ;
+    v.s.z = site.sz;
     v.s.vz = 0;
     v.heading = 0;
     v.bank = 0;
-    if ((v.sx || 0) - anchor.sx > 1650 || (v.sx || 0) - anchor.sx < -50) {
-      const shiftX = (anchor.sx + 250) - (v.sx || 0);
+    if ((v.sx || 0) - site.sx > 1650 || (v.sx || 0) - site.sx < -60) {
+      const shiftX = (site.sx + 220) - (v.sx || 0);
       v.s.x += v.east.x * shiftX;
       v.s.y += v.east.y * shiftX;
       v.updateFrame(sc.simT);
     }
+    const dvE = (68 - v.vSurf.e) * Math.min(1, dt * 5.0);
+    v.s.vx += dvE * v.east.x;
+    v.s.vy += dvE * v.east.y;
+    v.vSurf.e += dvE;
     v.engineOn = true;
     v.throttle = 0.22;
     const targetVu = -5.5;

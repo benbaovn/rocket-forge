@@ -646,7 +646,7 @@ export class Vessel {
             surf = surfZ;
             this.waterSpeed *= 0.5;
           } else {
-            newSx = Math.max(prevSx, 2526);
+            newSx = prevSx;
             newZ = prevZ;
             this.waterSpeed = 0;
             surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });

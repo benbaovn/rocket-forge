@@ -1211,6 +1211,106 @@ const MISSION_I18N = {
       },
     },
   },
+  boat_harbor_1: {
+    vi: {
+      name: 'Tới 1 cảng',
+      desc: 'Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
+      objs: {
+        boatHarbor1: 'Di chuyển và cập bến an toàn tại 1 cảng biển',
+      },
+    },
+    en: {
+      name: 'Reach 1 Harbor',
+      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) to depart and arrive safely at 1 harbor.',
+      objs: {
+        boatHarbor1: 'Sail and arrive safely at 1 harbor',
+      },
+    },
+  },
+  boat_harbor_2: {
+    vi: {
+      name: 'Tới 2 cảng',
+      desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
+      objs: {
+        boatHarbor1: 'Tới cảng biển thứ 1',
+        boatHarbor2: 'Tới hoàn thành đủ 2 cảng biển',
+      },
+    },
+    en: {
+      name: 'Reach 2 Harbors',
+      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) to sail and arrive at 2 harbors.',
+      objs: {
+        boatHarbor1: 'Reach the 1st harbor',
+        boatHarbor2: 'Complete arrival at 2 harbors',
+      },
+    },
+  },
+  boat_harbor_3: {
+    vi: {
+      name: 'Tới 3 cảng',
+      desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
+      objs: {
+        boatHarbor1: 'Tới cảng biển thứ 1',
+        boatHarbor2: 'Tới cảng biển thứ 2',
+        boatHarbor3: 'Tới hoàn thành đủ 3 cảng biển',
+      },
+    },
+    en: {
+      name: 'Reach 3 Harbors',
+      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) across the coast to reach 3 harbors.',
+      objs: {
+        boatHarbor1: 'Reach the 1st harbor',
+        boatHarbor2: 'Reach the 2nd harbor',
+        boatHarbor3: 'Complete arrival at 3 harbors',
+      },
+    },
+  },
+  boat_harbor_4: {
+    vi: {
+      name: 'Tới 4 cảng',
+      desc: 'Hải trình liên cảng: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
+      objs: {
+        boatHarbor1: 'Tới cảng biển thứ 1',
+        boatHarbor2: 'Tới cảng biển thứ 2',
+        boatHarbor3: 'Tới cảng biển thứ 3',
+        boatHarbor4: 'Tới hoàn thành đủ 4 cảng biển',
+      },
+    },
+    en: {
+      name: 'Reach 4 Harbors',
+      desc: 'Coastal harbor tour: Pilot the SuperSpeed Yacht (or enable Autopilot G) to reach 4 harbors.',
+      objs: {
+        boatHarbor1: 'Reach the 1st harbor',
+        boatHarbor2: 'Reach the 2nd harbor',
+        boatHarbor3: 'Reach the 3rd harbor',
+        boatHarbor4: 'Complete arrival at 4 harbors',
+      },
+    },
+  },
+  boat_harbor_5: {
+    vi: {
+      name: 'Tới 5 cảng',
+      desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
+      objs: {
+        boatHarbor1: 'Tới cảng biển thứ 1',
+        boatHarbor2: 'Tới cảng biển thứ 2',
+        boatHarbor3: 'Tới cảng biển thứ 3',
+        boatHarbor4: 'Tới cảng biển thứ 4',
+        boatHarbor5: 'Tới hoàn thành đủ 5 cảng biển',
+      },
+    },
+    en: {
+      name: 'Reach 5 Harbors',
+      desc: 'Conquer all 5 harbors: Pilot the SuperSpeed Yacht (or enable Autopilot G) to reach all 5 harbors!',
+      objs: {
+        boatHarbor1: 'Reach the 1st harbor',
+        boatHarbor2: 'Reach the 2nd harbor',
+        boatHarbor3: 'Reach the 3rd harbor',
+        boatHarbor4: 'Reach the 4th harbor',
+        boatHarbor5: 'Complete arrival at all 5 harbors',
+      },
+    },
+  },
   plane_airport_1: {
     vi: {
       name: 'Đáp lên 1 sân bay',

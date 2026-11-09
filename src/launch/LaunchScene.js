@@ -2580,6 +2580,12 @@ export class LaunchScene {
     // Reset flight & mission UI states
     this.program = null;
     this.programDone = false;
+    this.autopilotOutcomeRolled = false;
+    this.autopilotWillFail = false;
+    this.autopilotActiveSec = 0;
+    this.autopilotFailSec = 0;
+    this.autopilotWarned = false;
+    P._autopilotMalfunction = false;
     this.docked = null;
     clearTimeout(this.completeTimer);
     this.completeTimer = null;
@@ -3534,6 +3540,9 @@ export class LaunchScene {
     this.holdBeta = this.player.beta;
     if (this.player.dir3D) this.player.holdDir3D.copy(this.player.dir3D);
     this.program = null; this.programDone = false; this.autoShootAliens = false;
+    this.autopilotOutcomeRolled = false; this.autopilotWillFail = false;
+    this.autopilotActiveSec = 0; this.autopilotFailSec = 0; this.autopilotWarned = false;
+    this.player._autopilotMalfunction = false;
     this.docked = null;
     this.ignited = this.player.isBoat || this.player.isRover || this.player.isPlane;
     this.released = this.player.isBoat || this.player.isRover || this.player.isPlane;
@@ -3818,7 +3827,19 @@ export class LaunchScene {
     this.program.label = `${this.mission.icon} ${this.mission.name}`;
     this.programDone = false;
     this.autoShootAliens = true;
-    this.event(tr('🤖 Bật lái tự động & tự động bắn Alien: ', '🤖 Mission Autopilot & Auto-Turret ON: ') + this.program.label + '.');
+    if (!this.autopilotOutcomeRolled) {
+      this.autopilotOutcomeRolled = true;
+      this.autopilotWillFail = Math.random() >= 0.85; // 85% mission success rate, 15% failure rate
+      this.autopilotActiveSec = 0;
+      this.autopilotFailSec = 10 + Math.random() * 14; // 10–24s of active autopilot flight before malfunction
+      this.autopilotWarned = false;
+    }
+    this.event(
+      tr(
+        '🤖 Bật lái tự động (Tỷ lệ thành công 85%) & tự động bắn Alien: ',
+        '🤖 Mission Autopilot (85% Success Rate) & Auto-Turret ON: '
+      ) + this.program.label + '.'
+    );
     if (this.phase === 'ready') {
       this.startCountdown();
     }
@@ -4766,6 +4787,18 @@ export class LaunchScene {
     const P = this.player;
     const d = snap?.details || P?.crashDetails || null;
 
+    if (P?._autopilotMalfunction) {
+      reasons.push(tr(
+        'Máy tính Lái tự động (Autopilot) có tỷ lệ thành công 85% và 15% rủi ro gặp sự cố hệ thống dẫn đường.',
+        'The Autopilot guidance computer has an 85% mission success rate and a 15% risk of guidance system malfunction.'
+      ));
+      reasons.push(tr(
+        'Mẹo: Nhấn "Thử lại" để bay lại (85% cơ hội thành công với Tự lái) hoặc tự điều khiển thủ công để làm chủ 100% hành trình!',
+        'Tip: Click "Retry" to fly again (85% success chance with Autopilot) or pilot manually for 100% control!'
+      ));
+      return reasons;
+    }
+
     if (!this.lifted && this.met > 35) {
       const st0 = P ? this.segInfo[P.activeSeg] : null;
       const twr = this.thrustTotalSL() / ((P?.com?.mass || 1) * G_E);
@@ -5402,6 +5435,39 @@ export class LaunchScene {
     this.debris = this.debris.filter((d) => { if (d.dead) { d.obj.parent && d.obj.parent.remove(d.obj); return false; } return true; });
     if (this.focus.dead) this.focus = P;
     if (!this.docked) this.checkDocking();
+
+    // Autopilot 85% mission success rate check (15% chance of guidance malfunction during mission)
+    if (this.program && this.phase === 'flight' && this.lifted && !P.crashed && !this.resultShown && !this.missionCompletedMarked) {
+      this.autopilotActiveSec = (this.autopilotActiveSec || 0) + Math.min(dt, 0.1);
+      if (this.autopilotWillFail) {
+        const nearFinalTarget =
+          (P.isPlane && this.program.phase === 'land' && P.agl < 25) ||
+          (P.isBoat && this.program.phase === 'dock');
+        if (!this.autopilotWarned && (this.autopilotActiveSec >= this.autopilotFailSec - 2.5 || nearFinalTarget)) {
+          this.autopilotWarned = true;
+          this.event(
+            tr(
+              '⚠️🤖 CẢNH BÁO: Máy tính Lái tự động (Autopilot) đang gặp nhiễu tín hiệu điều khiển!',
+              '⚠️🤖 WARNING: Autopilot guidance computer is experiencing control signal instability!'
+            ),
+            'warn'
+          );
+        }
+        if (this.autopilotActiveSec >= this.autopilotFailSec || nearFinalTarget) {
+          this.program = null;
+          this.autoShootAliens = false;
+          P._autopilotMalfunction = true;
+          this.milestone(tr('💥🤖 LỖI LÁI TỰ ĐỘNG (15% RỦI RO)!', '💥🤖 AUTOPILOT MALFUNCTION (15% RISK)!'));
+          this.explode(
+            P,
+            tr(
+              'Hệ thống Lái tự động (Autopilot) gặp sự cố mất kiểm soát (tỷ lệ thành công 85%)!',
+              'Autopilot guidance system suffered a critical malfunction (85% success rate)!'
+            )
+          );
+        }
+      }
+    }
 
     // structural & atmospheric friction thermal limits
     for (const v of this.vessels) {
@@ -7920,9 +7986,9 @@ export class LaunchScene {
         btnAp.style.cursor = 'not-allowed';
       } else {
         btnAp.innerHTML = this.program
-          ? `🤖 ${tr('Đang lái', 'Active')} <kbd>G</kbd>`
-          : `🤖 ${tr('Tự lái', 'Auto')} <kbd>G</kbd>`;
-        btnAp.title = tr('Bật/tắt tự lái nhiệm vụ (G)', 'Toggle Mission Autopilot (G)');
+          ? `🤖 ${tr('Đang lái (85%)', 'Active (85%)')} <kbd>G</kbd>`
+          : `🤖 ${tr('Tự lái (85%)', 'Auto (85%)')} <kbd>G</kbd>`;
+        btnAp.title = tr('Bật/tắt tự lái nhiệm vụ — Tỷ lệ thành công 85% (G)', 'Toggle Mission Autopilot — 85% Success Rate (G)');
         btnAp.style.background = this.program ? 'rgba(74,222,128,0.28)' : 'rgba(74,222,128,0.12)';
         btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.8)' : 'rgba(74,222,128,0.38)';
         btnAp.style.color = '#86efac';

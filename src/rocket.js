@@ -805,7 +805,42 @@ export function buildRocket(stack) {
       }
     }
   }
-  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons, heatShields };
+  const specialMats = new Set();
+  for (const hs of heatShields) {
+    if (hs.shieldGlowMats) for (const m of hs.shieldGlowMats) if (m) specialMats.add(m);
+  }
+  for (const nz of nozzles) {
+    if (nz.bellMats) for (const m of nz.bellMats) if (m) specialMats.add(m);
+  }
+  const partGlowMats = [];
+  for (let k = 0; k < segGroups.length; k++) {
+    const segMatMap = new Map();
+    const cloneOrGet = (mat) => {
+      if (!mat || !mat.emissive || !mat.color || specialMats.has(mat)) return mat;
+      let cloned = segMatMap.get(mat);
+      if (!cloned) {
+        cloned = mat.clone();
+        cloned.userData = {
+          ...mat.userData,
+          _baseColor: cloned.color.clone(),
+          _baseEmissive: cloned.emissive.clone(),
+          _baseEmissiveIntensity: cloned.emissiveIntensity ?? 0,
+        };
+        segMatMap.set(mat, cloned);
+        partGlowMats.push({ seg: k, mat: cloned });
+      }
+      return cloned;
+    };
+    segGroups[k].traverse((node) => {
+      if (!node.isMesh || !node.material) return;
+      if (Array.isArray(node.material)) {
+        node.material = node.material.map(cloneOrGet);
+      } else {
+        node.material = cloneOrGet(node.material);
+      }
+    });
+  }
+  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons, heatShields, partGlowMats };
 }
 
 /** Center of mass (y) of the given set of segments, including fuel state */

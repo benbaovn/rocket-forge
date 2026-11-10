@@ -5534,17 +5534,18 @@ export class LaunchScene {
           setTimeout(() => { this._heatWarn = false; }, 4500);
         }
       }
-      if (v === P && !v.hasHeatShield() && (v.heatLoad || 0) >= 1.0 && v.topType() !== 'ufoSaucer') {
+      if (!v.hasHeatShield() && (v.heatLoad || 0) >= 1.0 && v.topType() !== 'ufoSaucer') {
         this.explode(
           v,
           tr(
-            'Bốc cháy và nổ tung do lực ma sát không khí khi rơi xuống bầu khí quyển (thiếu Khiên Chống Nhiệt)!',
-            'Burned up and disintegrated from atmospheric friction during reentry (missing Heat Shield)!'
+            'Bốc cháy và nổ tung do rơi xuống bầu khí quyển tốc độ quá cao mà không có Khiên Chống Nhiệt che chắn!',
+            'Burned up and exploded from falling through the atmosphere at high speed without a Heat Shield!'
           )
         );
         continue;
       }
       if (v.ref !== 'earth') continue;
+      if (v.hasHeatShield() && v.vSurf.u < 0) continue;
       const a = Math.abs(v.aoa || 0), off = Math.min(a, Math.PI - a);
       if (v.qNow > 50000 && off > 0.75) this.explode(v, tr('Vỡ cấu trúc do bẻ lái gắt ở áp suất khí động cao!', 'Structural failure from high angle of attack at high dynamic pressure!'));
       else if (v.qNow > 18000 && off > 1.4) this.explode(v, tr('Tên lửa lật nhào và vỡ tung!', 'Rocket tumbled and broke apart!'));
@@ -7420,7 +7421,8 @@ export class LaunchScene {
           nz.agLight.intensity = isFiring ? (2.8e4 * on * (0.92 + Math.random() * 0.16)) : 0;
         }
       } else {
-        for (const m of nz.bellMats) m.emissiveIntensity = Math.pow(p.heat, 2) * 2.5;
+        const bellDescentGlow = v ? (v.descentGlow || 0) * 1.65 : 0;
+        for (const m of nz.bellMats) m.emissiveIntensity = Math.pow(p.heat, 2) * 2.5 + bellDescentGlow;
       }
 
       if (v === F && on > 0) focusThr += on * (nz.booster ? 0.8 : 1) * nz.r;
@@ -7505,15 +7507,67 @@ export class LaunchScene {
       }
     }
     for (const v of [...this.trailPrev.keys()]) if (!trails.has(v)) this.trailPrev.delete(v);
-    // re-entry atmospheric friction plasma & heat shield glow
-    if (this.rocket && this.rocket.heatShields) {
-      for (const hs of this.rocket.heatShields) {
-        const owner = this.vessels.find((v) => !v.dead && !v.crashed && v.owns(hs.seg));
-        const hf = owner ? Math.min(3, owner.heatFlux || 0) : 0;
-        if (hs.shieldGlowMats) {
-          for (let mi = 0; mi < hs.shieldGlowMats.length; mi++) {
-            const m = hs.shieldGlowMats[mi];
-            if (m) m.emissiveIntensity = (mi === 3 ? 0.95 : 0.28) + hf * 1.45;
+    // re-entry atmospheric friction plasma & descent-speed glow for heat shields and all rocket parts
+    if (this.rocket) {
+      this._hsColdCol = this._hsColdCol || [
+        new THREE.Color(0x5c2406),
+        new THREE.Color(0x451a03),
+        new THREE.Color(0x78350f),
+        new THREE.Color(0x92400e),
+      ];
+      this._hsWarmCol = this._hsWarmCol || new THREE.Color(0xf59e0b);
+      this._hsHotCol = this._hsHotCol || new THREE.Color(0xfef08a);
+      this._hsEmissiveDark = this._hsEmissiveDark || new THREE.Color(0x3b1502);
+      this._hsEmissiveMid = this._hsEmissiveMid || new THREE.Color(0xff9e00);
+      this._hsEmissiveHot = this._hsEmissiveHot || new THREE.Color(0xfffbeb);
+      this._tmpGlowCol = this._tmpGlowCol || new THREE.Color();
+
+      if (this.rocket.heatShields) {
+        for (const hs of this.rocket.heatShields) {
+          const owner = this.vessels.find((v) => !v.dead && !v.crashed && v.owns(hs.seg));
+          const dg = owner ? Math.min(4.5, owner.descentGlow || 0) : 0;
+          if (hs.shieldGlowMats) {
+            const tWarm = THREE.MathUtils.clamp(dg / 1.4, 0, 1);
+            const tHot = THREE.MathUtils.clamp((dg - 1.1) / 2.2, 0, 1);
+            for (let mi = 0; mi < hs.shieldGlowMats.length; mi++) {
+              const m = hs.shieldGlowMats[mi];
+              if (!m) continue;
+              const baseCol = this._hsColdCol[mi] || this._hsColdCol[0];
+              m.color.copy(baseCol).lerp(this._hsWarmCol, tWarm).lerp(this._hsHotCol, tHot * 0.75);
+              m.emissive.copy(this._hsEmissiveDark).lerp(this._hsEmissiveMid, tWarm).lerp(this._hsEmissiveHot, tHot);
+              const scale = mi === 3 ? 1.35 : mi === 2 ? 1.15 : mi === 0 ? 1.0 : 0.85;
+              // Darker when slow/stopped (0.0), brighter the faster the rocket falls through the atmosphere
+              m.emissiveIntensity = dg <= 0.002 ? 0.0 : dg * 2.05 * scale;
+            }
+          }
+        }
+      }
+
+      if (this.rocket.partGlowMats) {
+        for (const pg of this.rocket.partGlowMats) {
+          const m = pg.mat;
+          if (!m || !m.userData) continue;
+          const owner = this.vessels.find((v) => !v.dead && !v.crashed && v.owns(pg.seg));
+          const dg = owner ? Math.min(4.5, owner.descentGlow || 0) : 0;
+          if (dg <= 0.002) {
+            if (m.userData._wasGlowing) {
+              if (m.userData._baseColor) m.color.copy(m.userData._baseColor);
+              if (m.userData._baseEmissive) m.emissive.copy(m.userData._baseEmissive);
+              m.emissiveIntensity = m.userData._baseEmissiveIntensity ?? 0;
+              m.userData._wasGlowing = false;
+            }
+          } else {
+            m.userData._wasGlowing = true;
+            const tWarm = THREE.MathUtils.clamp(dg / 1.3, 0, 1);
+            const tHot = THREE.MathUtils.clamp((dg - 1.0) / 2.2, 0, 1);
+            this._tmpGlowCol.copy(this._hsEmissiveDark).lerp(this._hsEmissiveMid, tWarm).lerp(this._hsEmissiveHot, tHot);
+            if (m.userData._baseColor) {
+              m.color.copy(m.userData._baseColor).lerp(this._tmpGlowCol, THREE.MathUtils.clamp(dg * 0.38, 0, 0.72));
+            }
+            if (m.userData._baseEmissive) {
+              m.emissive.copy(m.userData._baseEmissive).lerp(this._tmpGlowCol, THREE.MathUtils.clamp(dg * 1.35, 0, 1));
+            }
+            m.emissiveIntensity = (m.userData._baseEmissiveIntensity ?? 0) + dg * 1.75;
           }
         }
       }

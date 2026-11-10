@@ -1851,31 +1851,31 @@ function buildHeatShield() {
 
   // Rich Dark Yellow / Deep Amber-Gold ablative materials ("màu vàng đậm")
   const darkYellowShield = new THREE.MeshStandardMaterial({
-    color: 0xd97706,
-    emissive: new THREE.Color(0x92400e),
-    emissiveIntensity: 0.28,
-    roughness: 0.34,
-    metalness: 0.48,
+    color: 0xb45309,
+    emissive: new THREE.Color(0x451a03),
+    emissiveIntensity: 0.06,
+    roughness: 0.36,
+    metalness: 0.45,
   });
   const deepOchreTile = new THREE.MeshStandardMaterial({
-    color: 0xb45309,
-    emissive: new THREE.Color(0x78350f),
-    emissiveIntensity: 0.20,
-    roughness: 0.44,
-    metalness: 0.38,
+    color: 0x92400e,
+    emissive: new THREE.Color(0x3b1502),
+    emissiveIntensity: 0.04,
+    roughness: 0.46,
+    metalness: 0.36,
   });
   const brightGoldRim = new THREE.MeshStandardMaterial({
-    color: 0xeab308,
-    emissive: new THREE.Color(0xb45309),
-    emissiveIntensity: 0.36,
-    roughness: 0.24,
-    metalness: 0.65,
+    color: 0xd97706,
+    emissive: new THREE.Color(0x78350f),
+    emissiveIntensity: 0.08,
+    roughness: 0.26,
+    metalness: 0.62,
   });
   const amberGlowRing = new THREE.MeshStandardMaterial({
-    color: 0xf59e0b,
-    emissive: new THREE.Color(0xd97706),
-    emissiveIntensity: 0.95,
-    roughness: 0.20,
+    color: 0xeab308,
+    emissive: new THREE.Color(0x92400e),
+    emissiveIntensity: 0.12,
+    roughness: 0.22,
     metalness: 0.45,
   });
 

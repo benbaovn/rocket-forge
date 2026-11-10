@@ -38,7 +38,7 @@ export class Vessel {
     this.clamped = false;        // held by launch clamps
     this.t = 0;
     this.thrustNow = 0; this.qNow = 0; this.accelNow = 1; this.machNow = 0; this.heatFlux = 0;
-    this.reentryTemp = 20; this.heatLoad = 0; this.atmFrictionNow = 0;
+    this.descentGlow = 0; this.reentryTemp = 20; this.heatLoad = 0; this.atmFrictionNow = 0;
     this.coreFiring = false; this.boosterFiring = false;
     this.events = [];
     this.updateMass();
@@ -346,7 +346,7 @@ export class Vessel {
     const top = this.topType();
     const tailFirst = Math.abs(aoa) > Math.PI / 2;
     const hasShield = this.hasHeatShield();
-    const isFallingInAtm = inAtm && vu < -8 && v3D > 18 && !this.isPlane && !this.isRover && !this.isBoat;
+    const isFallingInAtm = inAtm && vu < -1.5 && !this.landed && !this.clamped && !this.isPlane && !this.isRover && !this.isBoat;
     const cd0 = tailFirst ? 1.05 : top === 'nose' ? 0.28 : top === 'capsule' ? 0.42 : top === 'dockPort' ? 0.5 : 0.75;
     let bodyCdA = (cd0 + 1.4 * Math.sin(aoa) ** 2) * area;
     bodyCdA += this.legsT * 6 + this.finsT * 5.0;
@@ -365,21 +365,27 @@ export class Vessel {
     const cdA = bodyCdA + chuteCdA;
     const q = 0.5 * rho * v3D * v3D;
     this.qNow = q;
-    const rhoNorm = rho > 0 ? Math.pow(Math.max(1e-5, rho / RHO0), 0.30) : 0;
-    const highSpdFlux = rhoNorm * Math.pow(v3D / 720, 2.4);
-    const descentFlux = isFallingInAtm
-      ? rhoNorm * THREE.MathUtils.clamp((-vu - 10) / 34, 0, 1.55) * THREE.MathUtils.clamp((v3D - 28) / 58, 0, 2.9)
+    const rhoNorm = rho > 0 ? Math.pow(Math.max(1e-5, rho / RHO0), 0.26) : 0;
+    const downSpd = Math.max(0, -vu);
+    const effDescentSpd = downSpd + 0.28 * Math.max(0, v3D - downSpd) * THREE.MathUtils.clamp(downSpd / 10, 0, 1);
+    const spdNorm = isFallingInAtm ? Math.max(0, (effDescentSpd - 1.5) / 62.0) : 0;
+    const targetDescentGlow = isFallingInAtm
+      ? rhoNorm * (spdNorm * 1.15 + Math.pow(spdNorm, 1.75) * 2.25)
       : 0;
-    this.heatFlux = rho > 0 ? Math.max(highSpdFlux, descentFlux) : 0;
+    this.descentGlow = (this.descentGlow ?? 0) + (targetDescentGlow - (this.descentGlow ?? 0)) * Math.min(1, h * 8.0);
+    if (this.descentGlow < 0.002 || this.landed || this.clamped || !inAtm || vu >= -0.5) this.descentGlow = 0;
+
+    const highSpdFlux = (inAtm && vu < -1.5) ? rhoNorm * Math.pow(v3D / 650, 2.3) : 0;
+    this.heatFlux = rho > 0 ? Math.max(this.descentGlow, highSpdFlux) : 0;
     const targetTemp = 20 + this.heatFlux * 950;
     this.reentryTemp = (this.reentryTemp ?? 20) + (targetTemp - (this.reentryTemp ?? 20)) * Math.min(1, h * 2.5);
     if (hasShield) {
-      this.heatLoad = Math.min(0.35, this.heatFlux * 0.14);
-    } else if (isFallingInAtm && this.heatFlux > 0.85 && v3D > 130 && vu < -55 && chute < 0.2) {
-      const heatRate = (this.heatFlux - 0.75) * 0.28;
+      this.heatLoad = Math.min(0.35, this.heatFlux * 0.12);
+    } else if (isFallingInAtm && this.descentGlow > 0.90 && effDescentSpd > 52 && vu < -38 && chute < 0.25) {
+      const heatRate = (this.descentGlow - 0.78) * 0.58 + (effDescentSpd > 95 ? 0.65 : 0);
       this.heatLoad = Math.min(1.0, (this.heatLoad || 0) + heatRate * h);
     } else {
-      this.heatLoad = Math.max(0, (this.heatLoad || 0) - 0.35 * h);
+      this.heatLoad = Math.max(0, (this.heatLoad || 0) - 0.45 * h);
     }
     this.machNow = v3D / (340 * Math.max(0.85, pr ** 0.05));
     let fe = 0, fu = 0, fz = 0;                           // aero force (kN) in local (east, up, z)

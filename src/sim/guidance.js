@@ -729,7 +729,7 @@ export class BoatHarborHopProgram {
       v.waterSpeed = 0;
       return 'done';
     }
-    const harborIdx = (doneCount + 1) % 5;
+    const harborIdx = (doneCount + 1) % 6;
     const site = sc.getHarborSite
       ? sc.getHarborSite(harborIdx)
       : { seawallX: sc.coastX + 115, berthX: sc.coastX + 160, sz: 0 };

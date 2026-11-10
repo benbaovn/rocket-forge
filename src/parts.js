@@ -98,8 +98,8 @@ export const PARTS = {
   f9Dragon: { name: 'Tàu Vũ Trụ Crew Dragon & Khoang Trunk Đen-Trắng (Falcon 9 · Tầng 3)', cat: 'Đầu', kind: 'stack', height: 5.8, dry: 1.1, fuel: 6.5, thrustSL: 160, thrustVac: 325, ispSL: 265, ispVac: 365, engines: 1, hasFins: true, desc: 'Tàu Crew Dragon đầu vòm trắng có 4 hốc động cơ thoát hiểm SuperDraco, Cờ Mỹ, nối liền khoang dịch vụ Trunk chia 2 nửa Đen-Trắng có 4 cánh ổn định và dù hạ cánh' },
   f9Stage2: { name: 'Tầng 2 Trắng & Khoang Interstage Đen Falcon 9 Block 5 (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 8.2, dry: 1.9, fuel: 21.0, thrustSL: 800, thrustVac: 1250, ispSL: 285, ispVac: 370, engines: 1, autoStage: true, hasFins: true, desc: 'Bồn nhiên liệu Tầng 2 màu trắng bóng kết hợp khoang chuyển tầng Interstage sợi carbon đen tuyền đặc trưng của Falcon 9 Block 5 và động cơ Merlin Vacuum' },
   f9Stage1: { name: 'Tầng 1 Falcon 9 Block 5 (Logo FALCON 9, Chữ Dọc SPACEX & 9 Merlin 1D)', cat: 'Động cơ', kind: 'stack', height: 17.6, dry: 4.8, fuel: 62.0, thrustSL: 4650, thrustVac: 5350, ispSL: 290, ispVac: 340, engines: 9, autoStage: true, hasFins: true, desc: 'Tầng 1 Falcon 9 Block 5 màu trắng in logo cánh chim đỏ FALCON 9, Cờ Mỹ, dòng chữ dọc SPACEX xanh đậm, 4 cánh lưới Titanium đen, 4 chân đáp đen tạo khe chữ V trắng và 9 loa phụt Merlin 1D bạc' },
-  shuttleNose: { name: 'Chóp Mũi Bồn Cam ET & Đai Gân Vàng Intertank (Space Shuttle · Tầng 3)', cat: 'Đầu', kind: 'stack', height: 12.5, dry: 1.5, fuel: 9.0, thrustSL: 200, thrustVac: 360, ispSL: 265, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi khí động bồn nhiên liệu ngoài (External Tank) màu cam đất kèm cột thu lôi, đường ống cáp đen dọc mũi, cổ gân vàng nâu Intertank và dù hạ cánh' },
-  shuttleOrbiter: { name: 'Tàu Con Thoi Discovery (STS) & Thân Giữa Bồn Cam ET (Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 14.5, dry: 3.5, fuel: 32.0, thrustSL: 1280, thrustVac: 1760, ispSL: 285, ispVac: 375, engines: 3, autoStage: true, hasFins: true, desc: 'Tàu vũ trụ con thoi Discovery gắn lưng bồn cam ET với mũi gạch đen RCC, cụm RCS mũi, kính buồng lái 6 ô, chữ United States + Cờ Mỹ + logo NASA + Discovery trên cánh tam giác kép và 3 động cơ chính RS-25 (SSME)' },
+  shuttleOrbiter: { name: 'Tàu Con Thoi Discovery (STS · Tầng 3 – Cuối)', cat: 'Đầu', kind: 'stack', height: 25.0, dry: 2.4, fuel: 18.0, thrustSL: 780, thrustVac: 1320, ispSL: 285, ispVac: 380, engines: 3, hasFins: true, isHeatShield: true, desc: 'Tàu vũ trụ con thoi Discovery của NASA (Tầng 3 – Cuối) với mũi & bụng gạch chịu nhiệt đen RCC, cụm RCS mũi, kính buồng lái 6 ô, chữ United States + Cờ Mỹ + logo NASA + Discovery trên cánh tam giác kép, 3 động cơ chính RS-25 (SSME), 2 động cơ OMS và dù hạ cánh' },
+  shuttleNose: { name: 'Bồn Nhiên Liệu Ngoài Cam ET & Đai Gân Intertank (Space Shuttle · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 27.0, dry: 3.2, fuel: 32.0, thrustSL: 1280, thrustVac: 1760, ispSL: 285, ispVac: 375, engines: 3, autoStage: true, hasFins: true, desc: 'Thân chính và chóp mũi khí động bồn nhiên liệu ngoài (External Tank – ET) màu cam đất kèm cột thu lôi, đường ống LOX & cáp đen dọc thân, cổ gân vàng nâu Intertank và khung giằng đỡ tàu con thoi' },
   shuttleSrb: { name: 'Đáy Bồn Cam ET & 2 Tên Lửa Đẩy Phụ Trắng SRB (Space Shuttle · Tầng 1)', cat: 'Động cơ', kind: 'stack', height: 15.0, dry: 6.2, fuel: 70.0, thrustSL: 5250, thrustVac: 6050, ispSL: 290, ispVac: 335, engines: 5, autoStage: true, hasFins: true, desc: 'Phần dưới bồn nhiên liệu ngoài màu cam đáy vòm tròn kèm 2 tên lửa đẩy nhiên liệu rắn SRB màu trắng mũi nhọn có đai đen-cam, 3 vòng gân vàng ở váy đáy và cặp loa phụt khổng lồ' },
   protonFairing: { name: 'Chóp Mũi Proton-M / Briz-M (Logo ESA ExoMars · Tầng 4)', cat: 'Đầu', kind: 'stack', height: 9.0, dry: 1.2, fuel: 6.5, thrustSL: 160, thrustVac: 330, ispSL: 265, ispVac: 365, engines: 1, hasFins: true, desc: 'Chóp mũi khí động Proton-M / Briz-M sơn trắng bóng in logo ESA xanh đậm, dải cờ sứ mệnh ExoMars, hàng ngàm tách dọc mũi, cổ chuyển tầng xám gân và dù hạ cánh' },
   protonStage3: { name: 'Tầng 3 Proton-M (Logo Roscosmos, Cờ Nga & Hốc Chữ U · Tầng 3)', cat: 'Nhiên liệu', kind: 'stack', height: 5.4, dry: 1.6, fuel: 15.0, thrustSL: 520, thrustVac: 860, ispSL: 275, ispVac: 360, engines: 1, autoStage: true, hasFins: true, desc: 'Tầng 3 tên lửa Proton-M màu trắng có đai gân dọc trên/dưới, in Quốc kỳ Nga, logo Roscosmos, hốc chữ U xám đen đặc trưng, ống cáp nổi và động cơ RD-0210' },
@@ -9915,11 +9915,11 @@ function getShuttleMaterials() {
   return _shuttleMats;
 }
 
-// Stage 3 (Top): Space Shuttle External Tank (ET) Burnt-Orange Ogive Nose Cone &
-// Golden-Tan Ribbed Intertank Collar (H = 12.5m)
+// Stage 2 (Middle): Space Shuttle External Tank (ET) Burnt-Orange Middle Barrel,
+// Golden-Tan Ribbed Intertank Collar & Burnt-Orange Ogive Nose Cone (H = 27.0m)
 function buildShuttleNose() {
   const g = new THREE.Group();
-  const H = PARTS.shuttleNose.height; // 12.5
+  const H = PARTS.shuttleNose.height; // 27.0
   const {
     etOrangeMat,
     etDarkOrangeMat,
@@ -9930,16 +9930,53 @@ function buildShuttleNose() {
     ssmeDarkMat,
   } = getShuttleMaterials();
 
-  const yIntertankTop = 4.10;
-  const yOgiveTop = 12.05;
+  const yMidH = 14.50;
+  const yIntertankBot = yMidH;
+  const yIntertankH = 4.10;
+  const yIntertankTop = yIntertankBot + yIntertankH; // 18.60
+  const yOgiveTop = yMidH + 12.05; // 26.55
 
   // =========================================================================
-  // 1. GOLDEN-TAN RIBBED INTERTANK COLLAR (y = 0.0 -> 4.10, r = R_STS_ET = 1.92)
+  // 1. BURNT-ORANGE EXTERNAL TANK (ET) MIDDLE BARREL (y = 0.0 -> 14.50)
   // =========================================================================
-  g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.008, R_STS_ET + 0.008, yIntertankTop, 64), etIntertankGoldMat, 0, yIntertankTop * 0.5, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R_STS_ET, R_STS_ET, yMidH, 64), etOrangeMat, 0, yMidH * 0.5, 0));
+
+  // Horizontal foam structural ring ridges along the orange middle barrel
+  for (const ry of [0.08, 3.65, 7.25, 10.85, yMidH - 0.08]) {
+    g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.018, R_STS_ET + 0.018, 0.09, 64), etDarkOrangeMat, 0, ry, 0));
+  }
+
+  // External vertical LOX feedline & pressurization cable tray running down the front of the ET
+  const feedAng = -0.09;
+  const fx = Math.sin(feedAng) * (R_STS_ET + 0.09);
+  const fz = Math.cos(feedAng) * (R_STS_ET + 0.09);
+  g.add(mesh(new THREE.CylinderGeometry(0.10, 0.10, yMidH, 20), etOrangeMat, fx, yMidH * 0.5, fz));
+  for (let py = 0.9; py < yMidH; py += 1.65) {
+    const clamp = mesh(new THREE.BoxGeometry(0.24, 0.09, 0.20), blackTileMat, fx, py, fz - 0.02);
+    clamp.rotation.y = feedAng;
+    g.add(clamp);
+  }
+
+  // Forward Bipod V-Struts connecting the ET (y = 11.25) to the Orbiter nose underside
+  for (const sgn of [-1, 1]) {
+    const strut = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.95, 12), etDarkOrangeMat, sgn * 0.32, 11.25, R_STS_ET + 0.25);
+    strut.rotation.x = Math.PI * 0.42;
+    strut.rotation.z = sgn * 0.32;
+    g.add(strut);
+  }
+  // Aft Orbiter-to-ET structural attachment struts (y = -8.40 & y = 1.85)
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.20, 0.30, 0.72), ssmeDarkMat, sgn * 0.86, 1.85, R_STS_ET + 0.20));
+    g.add(mesh(new THREE.BoxGeometry(0.24, 0.36, 0.78), ssmeDarkMat, sgn * 0.92, -8.40, R_STS_ET + 0.22));
+  }
+
+  // =========================================================================
+  // 2. GOLDEN-TAN RIBBED INTERTANK COLLAR (y = 14.50 -> 18.60, r = R_STS_ET = 1.92)
+  // =========================================================================
+  g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.008, R_STS_ET + 0.008, yIntertankH, 64), etIntertankGoldMat, 0, yIntertankBot + yIntertankH * 0.5, 0));
 
   // Horizontal structural flange rings on the Intertank (bottom, middle, top)
-  for (const ry of [0.07, 2.02, yIntertankTop - 0.06]) {
+  for (const ry of [yIntertankBot + 0.07, yIntertankBot + 2.02, yIntertankTop - 0.06]) {
     g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.028, R_STS_ET + 0.028, 0.10, 64), etIntertankGoldMat, 0, ry, 0));
   }
   g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.022, R_STS_ET + 0.022, 0.05, 64), etDarkOrangeMat, 0, yIntertankTop, 0));
@@ -9949,7 +9986,7 @@ function buildShuttleNose() {
     const a = (i / 76) * Math.PI * 2;
     const rx = Math.sin(a) * (R_STS_ET + 0.016);
     const rz = Math.cos(a) * (R_STS_ET + 0.016);
-    const rib = mesh(new THREE.BoxGeometry(0.036, yIntertankTop - 0.12, 0.026), etIntertankGoldMat, rx, yIntertankTop * 0.5, rz);
+    const rib = mesh(new THREE.BoxGeometry(0.036, yIntertankH - 0.12, 0.026), etIntertankGoldMat, rx, yIntertankBot + yIntertankH * 0.5, rz);
     rib.rotation.y = a;
     g.add(rib);
   }
@@ -9958,29 +9995,26 @@ function buildShuttleNose() {
   const doorAng = -0.22;
   const dxDoor = Math.sin(doorAng) * (R_STS_ET + 0.024);
   const dzDoor = Math.cos(doorAng) * (R_STS_ET + 0.024);
-  const doorFrame = mesh(new THREE.BoxGeometry(0.54, 0.78, 0.04), etDarkOrangeMat, dxDoor, 3.22, dzDoor);
+  const doorFrame = mesh(new THREE.BoxGeometry(0.54, 0.78, 0.04), etDarkOrangeMat, dxDoor, yIntertankBot + 3.22, dzDoor);
   doorFrame.rotation.y = doorAng;
   g.add(doorFrame);
-  const doorPanel = mesh(new THREE.BoxGeometry(0.44, 0.68, 0.048), etIntertankGoldMat, dxDoor, 3.22, dzDoor);
+  const doorPanel = mesh(new THREE.BoxGeometry(0.44, 0.68, 0.048), etIntertankGoldMat, dxDoor, yIntertankBot + 3.22, dzDoor);
   doorPanel.rotation.y = doorAng;
   g.add(doorPanel);
 
-  // Upper start of the External LOX Feedline / Pressurization Pipe on the Intertank front (y = 0.0 -> 2.75)
-  const feedAng = -0.09;
-  const fx = Math.sin(feedAng) * (R_STS_ET + 0.09);
-  const fz = Math.cos(feedAng) * (R_STS_ET + 0.09);
-  g.add(mesh(new THREE.CylinderGeometry(0.10, 0.10, 2.55, 20), etOrangeMat, fx, 1.28, fz));
-  // Dark-grey conical aerodynamic fairing cap at the top of the intertank pipe (y = 2.55 -> 2.85, visible in photo!)
-  g.add(mesh(new THREE.CylinderGeometry(0.03, 0.11, 0.32, 20), srbNozzleGreyMat, fx, 2.70, fz));
+  // Upper start of the External LOX Feedline / Pressurization Pipe on the Intertank front (y = 14.50 -> 17.25)
+  g.add(mesh(new THREE.CylinderGeometry(0.10, 0.10, 2.55, 20), etOrangeMat, fx, yIntertankBot + 1.28, fz));
+  // Dark-grey conical aerodynamic fairing cap at the top of the intertank pipe (y = 17.05 -> 17.35, visible in photo!)
+  g.add(mesh(new THREE.CylinderGeometry(0.03, 0.11, 0.32, 20), srbNozzleGreyMat, fx, yIntertankBot + 2.70, fz));
   // Dark horizontal pipe clamp bands along the intertank pipe
   for (const py of [0.35, 1.15, 1.95, 2.48]) {
-    const clamp = mesh(new THREE.BoxGeometry(0.24, 0.09, 0.22), blackTileMat, fx, py, fz - 0.02);
+    const clamp = mesh(new THREE.BoxGeometry(0.24, 0.09, 0.22), blackTileMat, fx, yIntertankBot + py, fz - 0.02);
     clamp.rotation.y = feedAng;
     g.add(clamp);
   }
 
   // =========================================================================
-  // 2. BURNT-ORANGE OGIVE LOX NOSE CONE (y = 4.10 -> 12.05) + LIGHTNING ROD TIP
+  // 3. BURNT-ORANGE OGIVE LOX NOSE CONE (y = 18.60 -> 26.55) + LIGHTNING ROD TIP
   // =========================================================================
   const ogivePts = [];
   const nOgive = 40;
@@ -9991,19 +10025,20 @@ function buildShuttleNose() {
   }
   g.add(mesh(new THREE.LatheGeometry(ogivePts, 64), etOrangeMat));
 
-  // Pointed aerodynamic nose cap & silver lightning rod spike at the very top (y = 12.05 -> 12.50)
-  g.add(mesh(new THREE.CylinderGeometry(0.035, 0.12, 0.30, 28), srbNozzleGreyMat, 0, 12.20, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.012, 0.035, 0.20, 16), silverMetalMat, 0, 12.40, 0));
+  // Pointed aerodynamic nose cap & silver lightning rod spike at the very top (y = 26.55 -> 27.00)
+  g.add(mesh(new THREE.CylinderGeometry(0.035, 0.12, 0.30, 28), srbNozzleGreyMat, 0, yMidH + 12.20, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.012, 0.035, 0.20, 16), silverMetalMat, 0, yMidH + 12.40, 0));
 
   // Prominent Dark-Brown / Black External Cable Tray & Pressurization Line running up the
-  // front-left of the burnt-orange ogive nose cone from y = 2.80 all the way to the tip (y = 12.05)!
+  // front-left of the burnt-orange ogive nose cone from y = 17.30 all the way to the tip (y = 26.55)!
+  const yTrayStart = yIntertankBot + 2.80;
   const nTraySegs = 24;
   for (let i = 0; i < nTraySegs; i++) {
     const t0 = i / nTraySegs;
     const t1 = (i + 1) / nTraySegs;
     const tm = (t0 + t1) * 0.5;
-    const y0 = 2.80 + t0 * (yOgiveTop - 2.80);
-    const y1 = 2.80 + t1 * (yOgiveTop - 2.80);
+    const y0 = yTrayStart + t0 * (yOgiveTop - yTrayStart);
+    const y1 = yTrayStart + t1 * (yOgiveTop - yTrayStart);
     const ym = (y0 + y1) * 0.5;
     const rm = ym <= yIntertankTop
       ? R_STS_ET + 0.02
@@ -10016,25 +10051,40 @@ function buildShuttleNose() {
     g.add(seg);
   }
 
-  // Internal stage propulsion nozzle & recovery parachutes
+  // Stage 2 Propulsion Nozzles (both at the ET base and at the Orbiter's 3× RS-25 main engines!)
   g.add(mesh(new THREE.CylinderGeometry(R_STS_ET * 0.82, R_STS_ET * 0.82, 0.14, 48), ssmeDarkMat, 0, 0.07, 0));
-  const mBell = bellMaterial(true);
-  g.add(mesh(bellGeometry(0.16, 0.42, 0.58, 32), mBell, 0, 0, 0));
-  addNozzle(g, 0, 0, 0.42, [mBell]);
-  addParachutes(g, 11.6);
+  for (const [nx, nz] of [[0.0, 0.55], [-0.65, -0.35], [0.65, -0.35]]) {
+    const mBell = bellMaterial(false);
+    g.add(mesh(bellGeometry(0.18, 0.44, 0.65, 28), mBell, nx, 0, nz));
+    addNozzle(g, nx, nz, 0.44, [mBell]);
+  }
+  for (const [sx, sy, sz] of [
+    [0.0, -12.75, 3.22],
+    [-0.70, -13.05, 2.46],
+    [0.70, -13.05, 2.46],
+  ]) {
+    const mSsme = bellMaterial(true);
+    const nNode = new THREE.Object3D();
+    nNode.position.set(sx, sy, sz);
+    nNode.userData.r = 0.56;
+    nNode.userData.style = 'default';
+    g.add(nNode);
+    if (!g.userData.nozzles) g.userData.nozzles = [];
+    g.userData.nozzles.push(nNode);
+    if (!g.userData.bellMats) g.userData.bellMats = [];
+    g.userData.bellMats.push(mSsme);
+  }
+  addParachutes(g, H - 1.0);
   if (g.userData.chutePack) g.remove(g.userData.chutePack);
 
   return g;
 }
 
-// Stage 2 (Middle): Burnt-Orange External Tank (ET) Middle Barrel + Complete Piggyback
-// Space Shuttle Orbiter "Discovery" (H = 14.5m)
+// Stage 3 (Top / Final Stage): Complete 3D Space Shuttle Orbiter "Discovery" (H = 25.0m)
 function buildShuttleOrbiter() {
   const g = new THREE.Group();
-  const H = PARTS.shuttleOrbiter.height; // 14.5
+  const H = PARTS.shuttleOrbiter.height; // 25.0
   const {
-    etOrangeMat,
-    etDarkOrangeMat,
     orbiterWhiteMat,
     omsCreamMat,
     blackTileMat,
@@ -10049,43 +10099,12 @@ function buildShuttleOrbiter() {
   } = getShuttleMaterials();
 
   // =========================================================================
-  // 1. BURNT-ORANGE EXTERNAL TANK (ET) MIDDLE BARREL (y = 0.0 -> 14.50)
-  // =========================================================================
-  g.add(mesh(new THREE.CylinderGeometry(R_STS_ET, R_STS_ET, H, 64), etOrangeMat, 0, H * 0.5, 0));
-
-  // Horizontal foam structural ring ridges along the orange tank
-  for (const ry of [0.08, 3.65, 7.25, 10.85, H - 0.08]) {
-    g.add(mesh(new THREE.CylinderGeometry(R_STS_ET + 0.018, R_STS_ET + 0.018, 0.09, 64), etDarkOrangeMat, 0, ry, 0));
-  }
-
-  // External vertical LOX feedline & pressurization cable tray running down the front of the ET
-  const feedAng = -0.09;
-  const fx = Math.sin(feedAng) * (R_STS_ET + 0.09);
-  const fz = Math.cos(feedAng) * (R_STS_ET + 0.09);
-  g.add(mesh(new THREE.CylinderGeometry(0.10, 0.10, H, 20), etOrangeMat, fx, H * 0.5, fz));
-  for (let py = 0.9; py < H; py += 1.65) {
-    const clamp = mesh(new THREE.BoxGeometry(0.24, 0.09, 0.20), blackTileMat, fx, py, fz - 0.02);
-    clamp.rotation.y = feedAng;
-    g.add(clamp);
-  }
-
-  // Forward Bipod V-Struts connecting the ET (y = 11.20) to the Orbiter nose underside
-  for (const sgn of [-1, 1]) {
-    const strut = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.95, 12), etDarkOrangeMat, sgn * 0.32, 11.25, R_STS_ET + 0.25);
-    strut.rotation.x = Math.PI * 0.42;
-    strut.rotation.z = sgn * 0.32;
-    g.add(strut);
-  }
-  // Aft Orbiter-to-ET structural attachment struts (y = -8.20 & y = 1.80)
-  for (const sgn of [-1, 1]) {
-    g.add(mesh(new THREE.BoxGeometry(0.20, 0.30, 0.72), ssmeDarkMat, sgn * 0.86, 1.85, R_STS_ET + 0.20));
-    g.add(mesh(new THREE.BoxGeometry(0.24, 0.36, 0.78), ssmeDarkMat, sgn * 0.92, -8.40, R_STS_ET + 0.22));
-  }
-
-  // =========================================================================
-  // 2. COMPLETE 3D SPACE SHUTTLE ORBITER "DISCOVERY" (y = -11.80 -> +13.15 on +Z)
+  // COMPLETE 3D SPACE SHUTTLE ORBITER "DISCOVERY"
+  // Shifted by y = +11.85 so stern (yFuseBot = -11.80) sits at y = 0.05m
+  // and nose tip (yNoseTip = +13.12) sits at y = 24.97m (H = 25.0m)
   // =========================================================================
   const orbiter = new THREE.Group();
+  orbiter.position.y = 11.85;
   g.add(orbiter);
 
   const yFuseBot = -11.80;
@@ -10427,13 +10446,26 @@ function buildShuttleOrbiter() {
     orbiter.add(engGrp);
   }
 
-  // Stage 2 Propulsion Nozzles & Recovery Parachutes
-  for (const [nx, nz] of [[0.0, 0.55], [-0.65, -0.35], [0.65, -0.35]]) {
-    const mBell = bellMaterial(false);
-    g.add(mesh(bellGeometry(0.18, 0.44, 0.65, 28), mBell, nx, 0, nz));
-    addNozzle(g, nx, nz, 0.44, [mBell]);
+  // Stage 3 (Final Stage) Propulsion Nozzles at the 3× RS-25 (SSME) & 2× OMS Engines + Recovery Parachutes
+  for (const [sx, sy, sz, sr] of [
+    [0.0, 11.85 - 12.75, 3.22, 0.56],
+    [-0.70, 11.85 - 13.05, 2.46, 0.56],
+    [0.70, 11.85 - 13.05, 2.46, 0.56],
+    [-1.18, 11.85 - 12.25, 3.02, 0.28],
+    [1.18, 11.85 - 12.25, 3.02, 0.28],
+  ]) {
+    const mSsme = bellMaterial(true);
+    const nNode = new THREE.Object3D();
+    nNode.position.set(sx, sy, sz);
+    nNode.userData.r = sr;
+    nNode.userData.style = 'default';
+    g.add(nNode);
+    if (!g.userData.nozzles) g.userData.nozzles = [];
+    g.userData.nozzles.push(nNode);
+    if (!g.userData.bellMats) g.userData.bellMats = [];
+    g.userData.bellMats.push(mSsme);
   }
-  addParachutes(g, 13.0);
+  addParachutes(g, 24.0);
   if (g.userData.chutePack) g.remove(g.userData.chutePack);
 
   return g;
@@ -11979,6 +12011,314 @@ function getTitan4Materials() {
     clearcoatRoughness: 0.22,
   });
 
+  // 4. Voyager Golden Record Cover Texture (1024x1024):
+  //    Authentic astronomical & scientific diagrams designed by Carl Sagan & Frank Drake:
+  //    - Top-Left: Phonograph record, stylus position & binary rotation period (3.6s) + side-view & U-238 clock
+  //    - Top-Right: Video calibration target (circle in square), analog scan waveform & 512-line raster scan diagram
+  //    - Bottom-Left: 14-Pulsar Sun location map ("Bản đồ 14 Pulsar") with binary frequency tick marks along each ray
+  //    - Bottom-Right: Hydrogen-1 hyperfine spin-flip transition (two H atoms with proton/electron spin arrows)
+  const goldenRecordTex = makeProcTex(1024, 1024, (ctx, w, h) => {
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+    const R = w * 0.485;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Metallic 24k gold disc background with anisotropic sheen
+    const bgGrad = ctx.createRadialGradient(cx - R * 0.22, cy - R * 0.24, R * 0.04, cx, cy, R);
+    bgGrad.addColorStop(0.0, '#fef08a');
+    bgGrad.addColorStop(0.32, '#facc15');
+    bgGrad.addColorStop(0.68, '#eab308');
+    bgGrad.addColorStop(0.92, '#ca8a04');
+    bgGrad.addColorStop(1.0, '#854d0e');
+    ctx.fillStyle = bgGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fine concentric brushed lathe grooves across the gold cover
+    ctx.save();
+    for (let r = 28; r < R - 14; r += 6) {
+      ctx.strokeStyle = r % 12 === 0 ? 'rgba(113, 63, 18, 0.16)' : 'rgba(254, 249, 195, 0.14)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Outer beveled dark-gold rim & inner framing ring
+    ctx.strokeStyle = '#422006';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 14, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const etchDark = '#1c1002';
+    const etchGlow = 'rgba(254, 249, 195, 0.72)';
+
+    // Helper for crisp engraved lines with gold bevel highlight
+    const strokeEngraved = (drawPathFn, lineW = 4.6) => {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.translate(1.8, 1.8);
+      ctx.strokeStyle = etchGlow;
+      ctx.lineWidth = lineW + 1.4;
+      drawPathFn();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = etchDark;
+      ctx.lineWidth = lineW;
+      drawPathFn();
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // =========================================================================
+    // A. TOP-LEFT: Phonograph Record, Stylus & Binary Rotation Period Diagram
+    // =========================================================================
+    const recX = 315;
+    const recY = 285;
+    const recR = 102;
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.arc(recX, recY, recR, 0, Math.PI * 2);
+      ctx.moveTo(recX + 20, recY);
+      ctx.arc(recX, recY, 20, 0, Math.PI * 2);
+    }, 5.0);
+
+    // 8 radial slot cutouts on the inner record diagram
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      strokeEngraved(() => {
+        ctx.beginPath();
+        ctx.arc(recX, recY, recR * 0.68, a - 0.14, a + 0.14);
+        ctx.arc(recX, recY, recR * 0.42, a + 0.14, a - 0.14, true);
+        ctx.closePath();
+      }, 3.4);
+    }
+
+    // Stylus cartridge at upper-right of the record diagram
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.rect(recX + recR * 0.68, recY - recR * 0.72, 34, 18);
+      ctx.moveTo(recX + recR * 0.68, recY - recR * 0.63);
+      ctx.lineTo(recX + recR * 0.48, recY - recR * 0.48);
+    }, 4.2);
+
+    // Binary rotation speed ticks around the record diagram perimeter
+    const binBits = '10011000110000000000000000000000';
+    for (let i = 0; i < binBits.length; i++) {
+      const a = -Math.PI * 0.5 + (i / binBits.length) * Math.PI * 1.65;
+      const bit = binBits[i] === '1';
+      strokeEngraved(() => {
+        ctx.beginPath();
+        if (bit) {
+          ctx.moveTo(recX + Math.cos(a) * (recR + 8), recY + Math.sin(a) * (recR + 8));
+          ctx.lineTo(recX + Math.cos(a) * (recR + 22), recY + Math.sin(a) * (recR + 22));
+        } else {
+          const tx = -Math.sin(a) * 6;
+          const ty = Math.cos(a) * 6;
+          const mx = recX + Math.cos(a) * (recR + 15);
+          const my = recY + Math.sin(a) * (recR + 15);
+          ctx.moveTo(mx - tx, my - ty);
+          ctx.lineTo(mx + tx, my + ty);
+        }
+      }, 3.6);
+    }
+
+    // Side-elevation view of record + stylus below top-left circle (y = 428)
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.rect(recX - 104, 424, 208, 12);
+      ctx.rect(recX - 16, 412, 32, 34);
+      // Stylus arm on right edge with inward arrow
+      ctx.rect(recX + 74, 396, 28, 16);
+      ctx.moveTo(recX + 84, 412);
+      ctx.lineTo(recX + 84, 424);
+      ctx.moveTo(recX + 66, 404);
+      ctx.lineTo(recX + 34, 404);
+      ctx.lineTo(recX + 44, 398);
+      ctx.moveTo(recX + 34, 404);
+      ctx.lineTo(recX + 44, 410);
+    }, 4.2);
+
+    // =========================================================================
+    // B. TOP-RIGHT: Video Waveform, Calibration Target & 512-Line Raster Diagram
+    // =========================================================================
+    // 1. Calibration Target (Circle inside Square at 565, 225)
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.rect(525, 185, 80, 80);
+      ctx.moveTo(593, 225);
+      ctx.arc(565, 225, 28, 0, Math.PI * 2);
+    }, 4.4);
+
+    // 2. Video Scan Waveform Signal (x = 625 -> 825, y = 225)
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.moveTo(625, 240);
+      ctx.lineTo(642, 240);
+      ctx.lineTo(642, 195);
+      ctx.lineTo(656, 195);
+      ctx.lineTo(656, 252);
+      ctx.quadraticCurveTo(675, 198, 694, 242);
+      ctx.lineTo(710, 242);
+      ctx.lineTo(710, 195);
+      ctx.lineTo(724, 195);
+      ctx.lineTo(724, 255);
+      ctx.bezierCurveTo(738, 192, 756, 260, 770, 240);
+      ctx.lineTo(784, 240);
+      ctx.lineTo(784, 195);
+      ctx.lineTo(798, 195);
+      ctx.lineTo(798, 252);
+      ctx.lineTo(822, 220);
+    }, 4.2);
+
+    // 3. Vertical Raster Scan Frame (x = 548 -> 798, y = 310 -> 435)
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.rect(548, 315, 236, 118);
+      for (let sx = 568; sx <= 764; sx += 28) {
+        ctx.moveTo(sx, 315);
+        ctx.lineTo(sx + 10, 433);
+        ctx.lineTo(sx + 20, 315);
+      }
+    }, 3.8);
+
+    // =========================================================================
+    // C. BOTTOM-LEFT: Iconic 14-Pulsar Sun Location Starburst Map ("Bản đồ Pulsar")
+    // =========================================================================
+    const pOx = 382;
+    const pOy = 648;
+    // 14 pulsar rays [angleRad, lengthPx] + 15th reference line to Galactic Center (angle 0, len 228)
+    const pulsarRays = [
+      [0.0, 228],
+      [-0.32, 148],
+      [-0.74, 172],
+      [-1.18, 136],
+      [-1.62, 168],
+      [-2.12, 196],
+      [-2.42, 224],
+      [-2.78, 182],
+      [2.95, 242],
+      [2.58, 190],
+      [2.18, 152],
+      [1.76, 212],
+      [1.24, 164],
+      [0.72, 144],
+      [0.28, 118],
+    ];
+
+    for (let rIdx = 0; rIdx < pulsarRays.length; rIdx++) {
+      const [ang, len] = pulsarRays[rIdx];
+      const ex = pOx + Math.cos(ang) * len;
+      const ey = pOy + Math.sin(ang) * len;
+      strokeEngraved(() => {
+        ctx.beginPath();
+        ctx.moveTo(pOx, pOy);
+        ctx.lineTo(ex, ey);
+      }, 4.8);
+
+      // Binary period tick marks along the outer 60% of each pulsar ray
+      const nx = -Math.sin(ang);
+      const ny = Math.cos(ang);
+      const numTicks = 7 + (rIdx % 5);
+      for (let t = 0; t < numTicks; t++) {
+        const d = len * (0.36 + (t / numTicks) * 0.58);
+        const isOne = ((rIdx * 7 + t * 3) % 3) !== 0;
+        if (isOne) {
+          const tx = pOx + Math.cos(ang) * d;
+          const ty = pOy + Math.sin(ang) * d;
+          strokeEngraved(() => {
+            ctx.beginPath();
+            ctx.moveTo(tx - nx * 8, ty - ny * 8);
+            ctx.lineTo(tx + nx * 8, ty + ny * 8);
+          }, 3.6);
+        }
+      }
+    }
+
+    // Bright center Sun marker at origin of the Pulsar Map
+    ctx.fillStyle = etchDark;
+    ctx.beginPath();
+    ctx.arc(pOx, pOy, 9.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // =========================================================================
+    // D. BOTTOM-RIGHT: Hydrogen-1 Hyperfine Transition Diagram (2 H Atoms)
+    // =========================================================================
+    const hY = 742;
+    const hX1 = 632;
+    const hX2 = 754;
+    const hR = 44;
+
+    for (const [hx, flipSpin] of [[hX1, false], [hX2, true]]) {
+      strokeEngraved(() => {
+        // Electron orbital circle
+        ctx.beginPath();
+        ctx.arc(hx, hY, hR, 0, Math.PI * 2);
+        // Central proton spin shaft + dot
+        ctx.moveTo(hx, hY - 18);
+        ctx.lineTo(hx, hY + 18);
+        // Top orbital electron spin shaft
+        ctx.moveTo(hx, hY - hR - 18);
+        ctx.lineTo(hx, hY - hR + 18);
+      }, 4.6);
+
+      // Proton & electron dots + spin arrowheads
+      ctx.fillStyle = etchDark;
+      ctx.beginPath();
+      ctx.arc(hx, hY, 7, 0, Math.PI * 2);
+      ctx.arc(hx, hY - hR, 7, 0, Math.PI * 2);
+      // Proton spin arrow (up)
+      ctx.moveTo(hx, hY - 23);
+      ctx.lineTo(hx - 6, hY - 12);
+      ctx.lineTo(hx + 6, hY - 12);
+      // Electron spin arrow (down on left atom, up on right atom)
+      const eyTip = flipSpin ? (hY - hR - 23) : (hY - hR + 23);
+      const eyBase = flipSpin ? (hY - hR - 12) : (hY - hR + 12);
+      ctx.moveTo(hx, eyTip);
+      ctx.lineTo(hx - 6, eyBase);
+      ctx.lineTo(hx + 6, eyBase);
+      ctx.fill();
+    }
+
+    // Horizontal hyperfine transition bracket & binary '1' between the two H atoms
+    const hMidX = (hX1 + hX2) * 0.5;
+    strokeEngraved(() => {
+      ctx.beginPath();
+      ctx.moveTo(hX1 + 14, hY - hR - 26);
+      ctx.lineTo(hX2 - 14, hY - hR - 26);
+      // Binary '1' vertical bar above the bracket midpoint
+      ctx.moveTo(hMidX, hY - hR - 42);
+      ctx.lineTo(hMidX, hY - hR - 16);
+    }, 4.4);
+  });
+
+  const goldenRecordCoverMat = physical({
+    map: goldenRecordTex,
+    color: 0xffffff,
+    emissive: new THREE.Color(0xca8a04),
+    emissiveMap: goldenRecordTex,
+    emissiveIntensity: 0.42,
+    roughness: 0.15,
+    metalness: 0.88,
+    clearcoat: 0.45,
+    clearcoatRoughness: 0.14,
+  });
+
   _titan4Mats = {
     plfWhiteMat,
     srmuCreamMat,
@@ -11991,6 +12331,7 @@ function getTitan4Materials() {
     blackVentMat,
     stage2BodyMat,
     stage1CoreDecalMat,
+    goldenRecordCoverMat,
   };
   return _titan4Mats;
 }
@@ -12008,6 +12349,7 @@ function buildTitan4Voyager() {
     chromeSilverMat,
     srbNozzleGreyMat,
     blackVentMat,
+    goldenRecordCoverMat,
   } = getTitan4Materials();
 
   const goldFoilMat = new THREE.MeshStandardMaterial({
@@ -12018,9 +12360,16 @@ function buildTitan4Voyager() {
   const goldenRecordMat = new THREE.MeshStandardMaterial({
     color: 0xfde047,
     emissive: new THREE.Color(0xca8a04),
-    emissiveIntensity: 0.45,
+    emissiveIntensity: 0.48,
     roughness: 0.14,
     metalness: 0.92,
+  });
+  const goldenEtchMat = new THREE.MeshStandardMaterial({
+    color: 0x3b2106,
+    emissive: new THREE.Color(0x78350f),
+    emissiveIntensity: 0.2,
+    roughness: 0.35,
+    metalness: 0.65,
   });
   const rtgGlowMat = new THREE.MeshStandardMaterial({
     color: 0xf97316,
@@ -12073,13 +12422,58 @@ function buildTitan4Voyager() {
     g.add(mesh(new THREE.CylinderGeometry(0.024, 0.024, hBus + 0.04, 8), chromeSilverMat, Math.sin(ca) * (rBus + 0.01), yBusBot + hBus * 0.5, Math.cos(ca) * (rBus + 0.01)));
   }
 
-  // Famous Voyager Golden Record ("Đĩa Vàng Voyager") mounted prominently on the Front (+Z) Face!
+  // Famous Voyager Golden Record ("Đĩa Vàng Voyager") — Oversized & Detailed Astronomical Cover on Front (+Z) Face!
   const yRec = yBusBot + hBus * 0.5;
-  const zRec = rBus + 0.025;
-  g.add(mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.032, 36).rotateX(Math.PI / 2), goldenRecordMat, 0, yRec, zRec));
-  g.add(mesh(new THREE.TorusGeometry(0.20, 0.010, 8, 32), blackVentMat, 0, yRec, zRec + 0.016));
-  g.add(mesh(new THREE.TorusGeometry(0.12, 0.008, 8, 28), blackVentMat, 0, yRec, zRec + 0.016));
-  g.add(mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.036, 20).rotateX(Math.PI / 2), goldFoilMat, 0, yRec, zRec + 0.002));
+  const zRec = rBus + 0.048;
+  const rRec = 0.46; // 0.92m diameter (much larger & prominent!)
+
+  // Gold mounting backing bracket & beveled outer gold cover case
+  g.add(mesh(new THREE.CylinderGeometry(rRec + 0.03, rRec + 0.04, 0.042, 48).rotateX(Math.PI / 2), goldFoilMat, 0, yRec, zRec - 0.016));
+  g.add(mesh(new THREE.CylinderGeometry(rRec, rRec, 0.046, 64).rotateX(Math.PI / 2), goldenRecordMat, 0, yRec, zRec));
+  g.add(mesh(new THREE.TorusGeometry(rRec - 0.008, 0.016, 12, 64), goldenRecordMat, 0, yRec, zRec + 0.020));
+
+  // High-resolution engraved Golden Record Cover face with Pulsar map, H2 hyperfine atoms, record & video diagrams
+  g.add(mesh(new THREE.CircleGeometry(rRec * 0.965, 64), goldenRecordCoverMat, 0, yRec, zRec + 0.0245));
+
+  // 6 silver mounting bolts around the Golden Record perimeter flange
+  for (let b = 0; b < 6; b++) {
+    const ba = (b / 6) * Math.PI * 2 + Math.PI / 6;
+    const bx = Math.cos(ba) * (rRec + 0.014);
+    const by = yRec + Math.sin(ba) * (rRec + 0.014);
+    g.add(mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.024, 10).rotateX(Math.PI / 2), chromeSilverMat, bx, by, zRec + 0.008));
+  }
+
+  // 3D Raised Relief Engravings on the Golden Record Cover Face (+Z = zRec + 0.026)
+  const zEtch = zRec + 0.026;
+  // 1. Top-Left Phonograph Record & Stylus 3D Relief Ring
+  const tlX = -rRec * 0.38;
+  const tlY = yRec + rRec * 0.42;
+  g.add(mesh(new THREE.TorusGeometry(rRec * 0.20, 0.0055, 8, 36), goldenEtchMat, tlX, tlY, zEtch));
+  g.add(mesh(new THREE.CylinderGeometry(rRec * 0.04, rRec * 0.04, 0.008, 16).rotateX(Math.PI / 2), goldenEtchMat, tlX, tlY, zEtch));
+  // 2. Top-Right Video Calibration Frame & Raster 3D Relief
+  g.add(mesh(new THREE.TorusGeometry(rRec * 0.056, 0.0045, 8, 24), goldenEtchMat, rRec * 0.11, yRec + rRec * 0.54, zEtch));
+  // 3. Bottom-Left 14-Pulsar Sun Location Starburst 3D Relief Rays
+  const p3dX = -rRec * 0.25;
+  const p3dY = yRec - rRec * 0.26;
+  g.add(mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.010, 16).rotateX(Math.PI / 2), goldenEtchMat, p3dX, p3dY, zEtch));
+  const reliefPulsarRays = [
+    [0.0, 0.44], [-0.32, 0.29], [-0.74, 0.33], [-1.18, 0.26], [-1.62, 0.32],
+    [-2.12, 0.38], [-2.42, 0.43], [-2.78, 0.35], [2.95, 0.46], [2.58, 0.36],
+    [2.18, 0.29], [1.76, 0.40], [1.24, 0.31], [0.72, 0.28], [0.28, 0.23],
+  ];
+  for (const [ang, relLen] of reliefPulsarRays) {
+    const rayLen = rRec * relLen;
+    const rx = p3dX + Math.cos(ang) * (rayLen * 0.5);
+    const ry = p3dY - Math.sin(ang) * (rayLen * 0.5);
+    const rayBar = mesh(new THREE.BoxGeometry(rayLen, 0.0065, 0.006), goldenEtchMat, rx, ry, zEtch);
+    rayBar.rotation.z = -ang;
+    g.add(rayBar);
+  }
+  // 4. Bottom-Right Two Hydrogen-1 Hyperfine Spin-State 3D Relief Rings
+  for (const hxOff of [rRec * 0.23, rRec * 0.47]) {
+    g.add(mesh(new THREE.TorusGeometry(rRec * 0.086, 0.005, 8, 28), goldenEtchMat, hxOff, yRec - rRec * 0.45, zEtch));
+    g.add(mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.009, 12).rotateX(Math.PI / 2), goldenEtchMat, hxOff, yRec - rRec * 0.45, zEtch));
+  }
 
   // Stowed-compatible Side Equipment Pods at x = +-0.78 (visible even inside fairing cutaway)
   g.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.52, 16).rotateZ(Math.PI / 2), blackVentMat, -0.76, yRec, 0));

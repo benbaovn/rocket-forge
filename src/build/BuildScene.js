@@ -39,7 +39,7 @@ export class BuildScene {
     this.controls = new OrbitControls(this.camera, app.canvas);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.07;
-    this.controls.minDistance = 6;
+    this.controls.minDistance = 1.6;
     this.controls.maxDistance = 180;
     this.controls.maxPolarAngle = Math.PI * 0.53;
     this.controls.target.set(0, 6, 0);
@@ -329,9 +329,9 @@ export class BuildScene {
       f9Dragon: ['Falcon 9 · Tàu Dragon', 'Falcon 9 · Crew Dragon'],
       f9Stage2: ['Falcon 9 · Tầng 2 Đen-Trắng', 'Falcon 9 · Stage 2'],
       f9Stage1: ['Falcon 9 · Tầng 1 Block 5', 'Falcon 9 · Stage 1 (9×M)'],
-      shuttleNose: ['Space Shuttle · Mũi Cam ET', 'Shuttle · Orange ET Nose'],
-      shuttleOrbiter: ['Space Shuttle · Discovery', 'Shuttle · Discovery STS'],
-      shuttleSrb: ['Space Shuttle · Đáy + 2 SRB', 'Shuttle · ET + 2× SRB'],
+      shuttleOrbiter: ['Space Shuttle · Discovery (T3)', 'Shuttle · Discovery (S3)'],
+      shuttleNose: ['Space Shuttle · Bồn Cam ET (T2)', 'Shuttle · Orange ET (S2)'],
+      shuttleSrb: ['Space Shuttle · Đáy + 2 SRB (T1)', 'Shuttle · ET + 2× SRB (S1)'],
       protonFairing: ['Proton-M · Chóp ExoMars', 'Proton-M · Briz Fairing'],
       protonStage3: ['Proton-M · Tầng 3 Roscosmos', 'Proton-M · Stage 3'],
       protonStage2: ['Proton-M · Tầng 2 Giàn Hở', 'Proton-M · Stage 2 Truss'],
@@ -1353,12 +1353,21 @@ export class BuildScene {
     this.applyHighlight();
     const box = $('sel-box');
     if (!sel) {
+      if (this.rocket?.layout) {
+        this.desiredTarget.set(0, Math.max(3, this.rocket.layout.height * 0.45), 0);
+      }
       box.classList.add('hidden');
       this.updateRotUI();
       return;
     }
     const it = this.stack[sel.index];
     if (!it) { box.classList.add('hidden'); return; }
+    if (this.rocket?.partObjs) {
+      const pObj = this.rocket.partObjs.find((p) => p.index === sel.index);
+      if (pObj) {
+        this.desiredTarget.set(0, pObj.y + pObj.def.height * 0.5, 0);
+      }
+    }
     const def = PARTS[sel.attach || it.type];
     $('sel-name').textContent = def.name;
     $('sel-desc').textContent = def.desc;

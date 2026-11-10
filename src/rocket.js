@@ -177,6 +177,18 @@ export function sanitizeStack(stack) {
     }
     cleaned.push(it);
   }
+  for (let i = 0; i < cleaned.length - 1; i++) {
+    if (cleaned[i].type === 'shuttleNose' && cleaned[i + 1].type === 'shuttleOrbiter') {
+      const noseIt = cleaned[i];
+      const orbIt = cleaned[i + 1];
+      if (Array.isArray(noseIt.attach) && noseIt.attach.length > 0 && (!orbIt.attach || orbIt.attach.length === 0)) {
+        orbIt.attach = noseIt.attach.slice();
+        noseIt.attach = [];
+      }
+      cleaned[i] = orbIt;
+      cleaned[i + 1] = noseIt;
+    }
+  }
   return cleaned;
 }
 
@@ -187,7 +199,7 @@ export const PRESETS = {
   'Soyuz / R-7 Semyorka': ['soyuzNose+gunLaser+waterCannon+batteryGun', 'soyuzFairing+gunLaser+waterCannon+batteryGun', 'soyuzBlockI', 'soyuzCore', 'soyuzBooster'],
   'N1 Liên Xô (Mặt Trăng)': ['n1Tower+gunLaser+waterCannon+batteryGun', 'n1Fairing+gunLaser+waterCannon+batteryGun', 'n1BlockV', 'n1BlockB', 'n1BlockA'],
   'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon+batteryGun', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
-  'Tàu con thoi Space Shuttle': ['shuttleNose+gunLaser+waterCannon+batteryGun', 'shuttleOrbiter', 'shuttleSrb'],
+  'Tàu con thoi Space Shuttle': ['shuttleOrbiter+gunLaser+waterCannon+batteryGun', 'shuttleNose', 'shuttleSrb'],
   'Energia – Buran': ['buranNose+gunLaser+waterCannon+batteryGun', 'buranShuttle', 'buranEnergia'],
   'Tên lửa Energia (Мир-2 / Polyus)': ['energiaNose+gunLaser+waterCannon+batteryGun', 'energiaPolyus', 'energiaCore'],
   'Proton-M (Nga)': ['protonFairing+gunLaser+waterCannon+batteryGun', 'protonStage3', 'protonStage2', 'protonStage1'],
@@ -259,6 +271,8 @@ export function layout(stack) {
     const def = PARTS[stack[i].type];
     if (stack[i].type === 'titan4Voyager' && stack[i + 1]?.type === 'titan4Fairing') {
       out[i] = { item: stack[i], def, y: out[i + 1].y + 6.65, index: i };
+    } else if (stack[i].type === 'shuttleOrbiter' && stack[i + 1]?.type === 'shuttleNose') {
+      out[i] = { item: stack[i], def, y: Math.max(0, out[i + 1].y - 11.85), index: i };
     } else {
       out[i] = { item: stack[i], def, y, index: i };
       y += def.height;
@@ -550,15 +564,23 @@ export function computeStats(stack) {
  * Coordinates: y = 0 at very bottom of stack.
  */
 function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
+  let ufoDist = 3.85, ufoY = 1.32, hFrac = 0.72;
+  if (gunType === 'waterCannon') { ufoDist = 3.15; ufoY = 0.62; hFrac = 0.28; }
+  else if (gunType === 'gunAcid') { ufoDist = 3.50; ufoY = 0.98; hFrac = 0.56; }
+  else if (gunType === 'gunElectric') { ufoDist = 3.30; ufoY = 0.80; hFrac = 0.42; }
+  if (itemType === 'shuttleOrbiter') {
+    const effDist = 1.64;
+    return {
+      posX: Math.cos(pl.angle) * effDist,
+      posY: pY + 8.5 + 9.5 * hFrac,
+      posZ: Math.sin(pl.angle) * effDist + 2.65 + (pl.offsetZ || 0),
+    };
+  }
   const isUfo = itemType === 'ufoSaucer';
   const isBuran = itemType.startsWith('buran') || itemType.startsWith('energia') || itemType.startsWith('shuttle');
   const isCz5 = itemType.startsWith('cz5') || itemType.startsWith('ariane5') || itemType === 'slsStage2' || itemType === 'slsStage1' || itemType === 'fhFairing' || itemType.startsWith('starship');
   const isSlsOrion = itemType === 'slsOrion' || itemType.startsWith('atlasV') || itemType.startsWith('f9') || itemType === 'fhStage2' || itemType.startsWith('proton') || itemType.startsWith('d4h') || itemType.startsWith('titan4');
   const effH = (itemType === 'saturnApollo' || itemType === 'apollo11CM' || itemType === 'soyuzNose' || itemType === 'n1Tower' || itemType === 'buranNose' || itemType === 'energiaNose' || itemType === 'cz5Fairing' || itemType === 'ariane5Fairing' || itemType === 'slsOrion' || itemType === 'atlasVFairing' || itemType === 'fhFairing' || itemType === 'f9Dragon' || itemType === 'shuttleNose' || itemType === 'protonFairing' || itemType === 'd4hFairing' || itemType === 'titan4Fairing' || itemType === 'starshipNose') ? 3.6 : defHeight;
-  let ufoDist = 3.85, ufoY = 1.32, hFrac = 0.72;
-  if (gunType === 'waterCannon') { ufoDist = 3.15; ufoY = 0.62; hFrac = 0.28; }
-  else if (gunType === 'gunAcid') { ufoDist = 3.50; ufoY = 0.98; hFrac = 0.56; }
-  else if (gunType === 'gunElectric') { ufoDist = 3.30; ufoY = 0.80; hFrac = 0.42; }
   const effDist = isUfo ? ufoDist : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
   return {
     posX: Math.cos(pl.angle) * effDist,
@@ -701,38 +723,9 @@ export function buildRocket(stack) {
           posX = Math.cos(pl.angle) * (isBoatHull ? 1.12 : pl.dist);
           posY = p.y + p.def.height * (isBoatHull ? 0.96 : 0.55);
           posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
-        } else if (a === 'gunLaser') {
-          const isUfo = p.item.type === 'ufoSaucer';
-          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');
-          const isCz5 = p.item.type.startsWith('cz5') || p.item.type.startsWith('ariane5') || p.item.type === 'slsStage2' || p.item.type === 'slsStage1' || p.item.type === 'fhFairing' || p.item.type.startsWith('starship');
-          const isSlsOrion = p.item.type === 'slsOrion' || p.item.type.startsWith('atlasV') || p.item.type.startsWith('f9') || p.item.type === 'fhStage2' || p.item.type.startsWith('proton') || p.item.type.startsWith('d4h') || p.item.type.startsWith('titan4');
-          const effDist = isUfo ? 3.85 : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
-          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose' || p.item.type === 'cz5Fairing' || p.item.type === 'ariane5Fairing' || p.item.type === 'slsOrion' || p.item.type === 'atlasVFairing' || p.item.type === 'fhFairing' || p.item.type === 'f9Dragon' || p.item.type === 'shuttleNose' || p.item.type === 'protonFairing' || p.item.type === 'd4hFairing' || p.item.type === 'titan4Fairing' || p.item.type === 'starshipNose') ? 3.6 : p.def.height;
-          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 1.32) : (p.y + effH * 0.72); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
-        } else if (a === 'waterCannon') {
-          const isUfo = p.item.type === 'ufoSaucer';
-          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');
-          const isCz5 = p.item.type.startsWith('cz5') || p.item.type.startsWith('ariane5') || p.item.type === 'slsStage2' || p.item.type === 'slsStage1' || p.item.type === 'fhFairing' || p.item.type.startsWith('starship');
-          const isSlsOrion = p.item.type === 'slsOrion' || p.item.type.startsWith('atlasV') || p.item.type.startsWith('f9') || p.item.type === 'fhStage2' || p.item.type.startsWith('proton') || p.item.type.startsWith('d4h') || p.item.type.startsWith('titan4');
-          const effDist = isUfo ? 3.15 : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
-          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose' || p.item.type === 'cz5Fairing' || p.item.type === 'ariane5Fairing' || p.item.type === 'slsOrion' || p.item.type === 'atlasVFairing' || p.item.type === 'fhFairing' || p.item.type === 'f9Dragon' || p.item.type === 'shuttleNose' || p.item.type === 'protonFairing' || p.item.type === 'd4hFairing' || p.item.type === 'titan4Fairing' || p.item.type === 'starshipNose') ? 3.6 : p.def.height;
-          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.62) : (p.y + effH * 0.28); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
-        } else if (a === 'gunAcid') {
-          const isUfo = p.item.type === 'ufoSaucer';
-          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');
-          const isCz5 = p.item.type.startsWith('cz5') || p.item.type.startsWith('ariane5') || p.item.type === 'slsStage2' || p.item.type === 'slsStage1' || p.item.type === 'fhFairing' || p.item.type.startsWith('starship');
-          const isSlsOrion = p.item.type === 'slsOrion' || p.item.type.startsWith('atlasV') || p.item.type.startsWith('f9') || p.item.type === 'fhStage2' || p.item.type.startsWith('proton') || p.item.type.startsWith('d4h') || p.item.type.startsWith('titan4');
-          const effDist = isUfo ? 3.50 : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
-          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose' || p.item.type === 'cz5Fairing' || p.item.type === 'ariane5Fairing' || p.item.type === 'slsOrion' || p.item.type === 'atlasVFairing' || p.item.type === 'fhFairing' || p.item.type === 'f9Dragon' || p.item.type === 'shuttleNose' || p.item.type === 'protonFairing' || p.item.type === 'd4hFairing' || p.item.type === 'titan4Fairing' || p.item.type === 'starshipNose') ? 3.6 : p.def.height;
-          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.98) : (p.y + effH * 0.56); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
-        } else if (a === 'gunElectric') {
-          const isUfo = p.item.type === 'ufoSaucer';
-          const isBuran = p.item.type.startsWith('buran') || p.item.type.startsWith('energia') || p.item.type.startsWith('shuttle');
-          const isCz5 = p.item.type.startsWith('cz5') || p.item.type.startsWith('ariane5') || p.item.type === 'slsStage2' || p.item.type === 'slsStage1' || p.item.type === 'fhFairing' || p.item.type.startsWith('starship');
-          const isSlsOrion = p.item.type === 'slsOrion' || p.item.type.startsWith('atlasV') || p.item.type.startsWith('f9') || p.item.type === 'fhStage2' || p.item.type.startsWith('proton') || p.item.type.startsWith('d4h') || p.item.type.startsWith('titan4');
-          const effDist = isUfo ? 3.30 : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
-          const effH = (p.item.type === 'saturnApollo' || p.item.type === 'apollo11CM' || p.item.type === 'soyuzNose' || p.item.type === 'n1Tower' || p.item.type === 'buranNose' || p.item.type === 'energiaNose' || p.item.type === 'cz5Fairing' || p.item.type === 'ariane5Fairing' || p.item.type === 'slsOrion' || p.item.type === 'atlasVFairing' || p.item.type === 'fhFairing' || p.item.type === 'f9Dragon' || p.item.type === 'shuttleNose' || p.item.type === 'protonFairing' || p.item.type === 'd4hFairing' || p.item.type === 'titan4Fairing' || p.item.type === 'starshipNose') ? 3.6 : p.def.height;
-          posX = Math.cos(pl.angle) * effDist; posY = isUfo ? (p.y + 0.80) : (p.y + effH * 0.42); posZ = Math.sin(pl.angle) * effDist + (pl.offsetZ || 0);
+        } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
+          const gc = getGunPlacementCoords(p.item.type, p.def.height, p.y, a, pl);
+          posX = gc.posX; posY = gc.posY; posZ = gc.posZ;
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {

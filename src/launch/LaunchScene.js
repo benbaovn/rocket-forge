@@ -34,7 +34,7 @@ const AIRPORT_SCATTER_OFFSETS = [
   { dx: -82000,  dz: -18000, planetDz: -1100 },  // Airport #4 (Far Northwest — ~30-45 km from AP3)
   { dx: -115000, dz: 15000,  planetDz: 1100 },   // Airport #5 (Far Southwest — ~33-47 km from AP4)
 ];
-const HARBOR_SCATTER_Z = [0, -18000, -38000, 20000, 42000];
+const HARBOR_SCATTER_Z = [0, -18000, -38000, 20000, 42000, -58000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
 const fmt = (v, d = 0) => v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d });
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -1739,7 +1739,7 @@ export class LaunchScene {
   }
 
   teleportToHarbor(harborIdx = 0) {
-    const idx = Math.max(0, Math.min(4, Number(harborIdx) || 0));
+    const idx = Math.max(0, Math.min(HARBOR_SCATTER_Z.length - 1, Number(harborIdx) || 0));
     this.selectedHarborIdx = idx;
     this.selectedAirportBody = null;
     this.teleportToBody('earth', 'surface', { harborIdx: idx });
@@ -2991,7 +2991,10 @@ export class LaunchScene {
         if (P.isBoat) {
           P.waterSpeed = 0;
           this.leftHarborForVoyage = false;
-          this.lastVisitedHarborId = this.getCurrentHarborId(P) || `earth:${hIdx}`;
+          const curHId = this.getCurrentHarborId(P) || `earth:${hIdx}`;
+          this.lastVisitedHarborId = curHId;
+          if (!this.visitedHarborIds) this.visitedHarborIds = new Set();
+          this.visitedHarborIds.add(curHId);
         }
         if (P.isPlane) {
           P.planeRollSpeed = 0;
@@ -3595,6 +3598,7 @@ export class LaunchScene {
     this.wasAirborneForAirport = false;
     this.lastLandedAirportId = 'earth:0';
     this.harborsVisitedSet = new Set();
+    this.visitedHarborIds = new Set(['earth:0']);
     this.leftHarborForVoyage = false;
     this.lastVisitedHarborId = 'earth:0';
     if (isSpecial) {
@@ -3836,8 +3840,8 @@ export class LaunchScene {
     }
     this.event(
       tr(
-        '🤖 Bật lái tự động (Tỷ lệ thành công 85%) & tự động bắn Alien: ',
-        '🤖 Mission Autopilot (85% Success Rate) & Auto-Turret ON: '
+        '🤖 Bật lái tự động & tự động bắn Alien: ',
+        '🤖 Mission Autopilot & Auto-Turret ON: '
       ) + this.program.label + '.'
     );
     if (this.phase === 'ready') {
@@ -4589,16 +4593,20 @@ export class LaunchScene {
     // Boat harbor-visiting (1..5 harbors) & distance missions (500 km, 1000 km, 2000 km)
     if (v.isBoat) {
       const hId = this.getCurrentHarborId(v);
+      if (!this.visitedHarborIds) this.visitedHarborIds = new Set(['earth:0']);
+      if (!this.harborsVisitedSet) this.harborsVisitedSet = new Set();
       if (!hId) {
         this.leftHarborForVoyage = true;
-      } else if (this.leftHarborForVoyage || (hId !== this.lastVisitedHarborId && (v.boatDistTotal || 0) > 40)) {
+      } else if (
+        hId !== this.lastVisitedHarborId &&
+        !this.visitedHarborIds.has(hId) &&
+        !this.harborsVisitedSet.has(hId) &&
+        (this.leftHarborForVoyage || (v.boatDistTotal || 0) > 40)
+      ) {
         this.leftHarborForVoyage = false;
         this.lastVisitedHarborId = hId;
-        if (!this.harborsVisitedSet) this.harborsVisitedSet = new Set();
-        const keyToAdd = this.harborsVisitedSet.has(hId)
-          ? `${hId}_voyage_${this.harborsVisitedSet.size + 1}`
-          : hId;
-        this.harborsVisitedSet.add(keyToAdd);
+        this.visitedHarborIds.add(hId);
+        this.harborsVisitedSet.add(hId);
         const count = this.harborsVisitedSet.size;
         const targetHb = this.mission?.targetHarbors || 0;
         for (let k = 1; k <= 5; k++) {
@@ -4979,10 +4987,31 @@ export class LaunchScene {
   }
 
   // =================================================================== SIMULATION
+  getAlienFuelDrainInfo(v) {
+    if (!v || v !== this.player || v.clamped || this.docked) {
+      return { count: 0, drainMul: 1.0 };
+    }
+    const list = this.aliens || [];
+    let count = 0;
+    let heavyBonus = 0;
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i];
+      if (!a || a.dead || a.hp <= 0) continue;
+      count++;
+      if (a.isRoyal) heavyBonus += 0.35;
+      else if (a.tier === 'boss') heavyBonus += 0.10;
+      else if (a.tier === 'warrior') heavyBonus += 0.05;
+    }
+    if (count === 0) return { count: 0, drainMul: 1.0 };
+    const drainMul = +(1.0 + count * 0.15 + heavyBonus).toFixed(2);
+    return { count, drainMul };
+  }
+
   get env() {
     return this._env || (this._env = {
       surface: (v) => this.surfaceAt(v),
       resolveBuilding: (v, sx, sz, alt, rPad) => this.resolveBuildingCollision(v, sx, sz, alt, rPad),
+      getAlienFuelDrain: (v) => this.getAlienFuelDrainInfo(v),
     });
   }
 
@@ -7986,9 +8015,9 @@ export class LaunchScene {
         btnAp.style.cursor = 'not-allowed';
       } else {
         btnAp.innerHTML = this.program
-          ? `🤖 ${tr('Đang lái (85%)', 'Active (85%)')} <kbd>G</kbd>`
-          : `🤖 ${tr('Tự lái (85%)', 'Auto (85%)')} <kbd>G</kbd>`;
-        btnAp.title = tr('Bật/tắt tự lái nhiệm vụ — Tỷ lệ thành công 85% (G)', 'Toggle Mission Autopilot — 85% Success Rate (G)');
+          ? `🤖 ${tr('Đang lái', 'Active')} <kbd>G</kbd>`
+          : `🤖 ${tr('Tự lái', 'Auto')} <kbd>G</kbd>`;
+        btnAp.title = tr('Bật/tắt tự lái nhiệm vụ (G)', 'Toggle Mission Autopilot (G)');
         btnAp.style.background = this.program ? 'rgba(74,222,128,0.28)' : 'rgba(74,222,128,0.12)';
         btnAp.style.borderColor = this.program ? 'rgba(74,222,128,0.8)' : 'rgba(74,222,128,0.38)';
         btnAp.style.color = '#86efac';
@@ -8110,10 +8139,14 @@ export class LaunchScene {
       const gunBatBadge = hasGunBat
         ? ` <span style="color:#22d3ee;font-size:10px" title="${tr('Pin Siêu Siêu Nhỏ cấp điện cho Súng', 'Ultra-Tiny Gun Battery powering Weapons')}">🔋🔫</span>`
         : '';
+      const alienDrain = active ? this.getAlienFuelDrainInfo(P) : null;
+      const alienDrainBadge = alienDrain && alienDrain.count > 0 && this.fuelMax[k] > 0
+        ? ` <span style="color:#fb7185;font-size:10px;font-weight:700" title="${tr(`Có ${alienDrain.count} Alien xung quanh làm hao nhiên liệu/pin nhanh gấp ${fmt(alienDrain.drainMul, 2)}×!`, `${alienDrain.count} nearby Aliens accelerating fuel/battery drain by ${fmt(alienDrain.drainMul, 2)}×!`)}">👽⚡-${fmt(alienDrain.drainMul, 1)}×</span>`
+        : '';
       const barStyle = hasSolarBat && chgRate > 0.5 && this.fuel[k] < this.fuelMax[k] - 0.05
         ? `width:${f * 100}%;background:linear-gradient(90deg,#22d3ee,#4ade80);box-shadow:0 0 8px rgba(74,222,128,0.65)`
         : `width:${f * 100}%`;
-      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}${gunBatBadge}</span><span>${this.fuelMax[k] > 0 ? fmt(this.fuel[k], 1) + ' t' : '—'}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
+      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}${gunBatBadge}${alienDrainBadge}</span><span>${this.fuelMax[k] > 0 ? fmt(this.fuel[k], 1) + ' t' : '—'}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
       for (const bb of this.rocket.boosters) if (bb.seg === k) {
         html += `<div class="fr-top" style="margin-top:3px;font-size:10px;opacity:${bb.attached ? 1 : 0.35}"><span>↳ SRB</span><span>${fmt(bb.fuel, 1)} t</span></div><div class="fr-bar boost"><div style="width:${(bb.fuel / bb.fuelMax) * 100}%"></div></div>`;
       }

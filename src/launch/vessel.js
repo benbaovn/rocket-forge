@@ -211,6 +211,13 @@ export class Vessel {
     const gRatio = Math.max(0.005, gLocal / G0);
     const batBoost = 1 + 0.25 * Math.min(3, info.batteryCount || 0);
 
+    // Surrounding Aliens accelerate fuel & battery depletion (more Aliens around -> faster drain!)
+    const alienDrainInfo = (env && env.getAlienFuelDrain) ? env.getAlienFuelDrain(this) : null;
+    const nearbyAliens = alienDrainInfo ? (alienDrainInfo.count || 0) : 0;
+    const alienDrainMul = alienDrainInfo ? (alienDrainInfo.drainMul || 1.0) : 1.0;
+    this.nearbyAliens = nearbyAliens;
+    this.alienDrainMul = alienDrainMul;
+
     // Compute local brightness / darkness for the Laser Engine (brighter -> slower, darker -> faster)
     let laserScale = 1.0;
     let solarChargeFactor = 1.0;
@@ -230,6 +237,9 @@ export class Vessel {
       solarChargeFactor = inShadow
         ? 0.55
         : THREE.MathUtils.clamp(0.75 + Math.min(2.0, solarIrradiance) * (0.55 + 0.45 * Math.max(0, cosZenith)), 0.75, 2.6);
+      if (nearbyAliens > 0) {
+        solarChargeFactor /= (1 + nearbyAliens * 0.22);
+      }
     }
 
     let thrust = 0;
@@ -251,10 +261,21 @@ export class Vessel {
       const sciFiDrainScale = info.solarOnBattery > 0 ? 12.0 : 1.0;
       const curMdot = normMdot + (agMdot * Math.max(0.12, gRatio) + lzMdot * Math.max(0.18, laserScale * 0.75)) * sciFiDrainScale;
       thrust += curThrust * thr * engFrac;
-      const planeFuelFloor = this.isPlane ? (fuelMax[k] || 0) * 0.25 : 0;
+      const planeFuelFloor = (this.isPlane && nearbyAliens === 0) ? (fuelMax[k] || 0) * 0.25 : 0;
       const drainScale = this.isPlane ? 0.005 : 1.0;
-      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * thr * engFrac * h);
+      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * alienDrainMul * thr * engFrac * h);
       if (fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
+        this.events.push(['fuelOut', k]);
+      }
+    }
+
+    // Passive Alien energy/fuel siphon when surrounded by Aliens (more Aliens -> faster continuous drain!)
+    if (nearbyAliens > 0 && !this.clamped && fuel[k] > 0 && (fuelMax[k] || 0) > 0) {
+      const realDt = Math.min(h, h / Math.max(1, this._warp || 1));
+      const passiveRate = (fuelMax[k] * 0.0028 * nearbyAliens) * (info.solarOnBattery > 0 ? 1.8 : 1.0);
+      const prevF = fuel[k];
+      fuel[k] = Math.max(0, fuel[k] - passiveRate * realDt);
+      if (prevF > 0 && fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
         this.events.push(['fuelOut', k]);
       }
     }
@@ -295,7 +316,7 @@ export class Vessel {
       if (b.seg !== k || !this.engineOn || b.fuel <= 0) continue;
       const d = PARTS.booster;
       thrust += (d.thrustVac - (d.thrustVac - d.thrustSL) * pr) * b.count;
-      b.fuel = Math.max(0, b.fuel - b.count * d.thrustVac / (d.ispVac * G0) * h);
+      b.fuel = Math.max(0, b.fuel - b.count * d.thrustVac / (d.ispVac * G0) * alienDrainMul * h);
       this.boosterFiring = true;
       if (b.fuel === 0) this.events.push(['boosterOut', b]);
     }

@@ -386,13 +386,13 @@ export const PART_I18N = {
     vi: { name: 'Tầng 1 Falcon 9 Block 5 (Logo FALCON 9, Chữ Dọc SPACEX & 9 Merlin 1D)', cat: 'Động cơ', desc: 'Tầng 1 Falcon 9 Block 5 màu trắng in logo cánh chim đỏ FALCON 9, Cờ Mỹ, dòng chữ dọc SPACEX xanh đậm, 4 cánh lưới Titanium đen, 4 chân đáp đen tạo khe chữ V trắng và 9 loa phụt Merlin 1D bạc' },
     en: { name: 'Falcon 9 Block 5 First Stage (FALCON 9, Vertical SPACEX & 9× Merlin 1D)', cat: 'Engines', desc: 'White Falcon 9 Block 5 booster with red FALCON 9 swoosh, US Flag, vertical navy SPACEX lettering, 4 black Titanium grid fins, 4 folded black landing legs with white center V-wedge & 9 silver Merlin 1D bells' },
   },
-  shuttleNose: {
-    vi: { name: 'Chóp Mũi Bồn Cam ET & Đai Gân Vàng Intertank (Space Shuttle · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động bồn nhiên liệu ngoài (External Tank) màu cam đất kèm cột thu lôi, đường ống cáp đen dọc mũi, cổ gân vàng nâu Intertank và dù hạ cánh' },
-    en: { name: 'Space Shuttle ET Burnt-Orange Nose Cone & Ribbed Intertank (Stage 3)', cat: 'Command & Nose', desc: 'Burnt-orange External Tank ogive nose cone with lightning rod tip, black vertical cable tray, golden-tan ribbed Intertank collar with access door & parachutes' },
-  },
   shuttleOrbiter: {
-    vi: { name: 'Tàu Con Thoi Discovery (STS) & Thân Giữa Bồn Cam ET (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu vũ trụ con thoi Discovery gắn lưng bồn cam ET với mũi gạch đen RCC, cụm RCS mũi, kính buồng lái 6 ô, chữ United States + Cờ Mỹ + logo NASA + Discovery trên cánh tam giác kép và 3 động cơ chính RS-25 (SSME)' },
-    en: { name: 'Space Shuttle Orbiter Discovery & Middle External Tank (Stage 2)', cat: 'Fuel Tanks', desc: 'Piggyback Space Shuttle Orbiter Discovery on the burnt-orange ET with black RCC nose cap, forward RCS array, 6-pane cockpit windshield, United States + US Flag + NASA Meatball + Discovery wing markings & 3 RS-25 SSME nozzles' },
+    vi: { name: 'Tàu Con Thoi Discovery (STS · Tầng 3 – Cuối)', cat: 'Đầu', desc: 'Tàu vũ trụ con thoi Discovery của NASA (Tầng 3 – Cuối) với mũi & bụng gạch chịu nhiệt đen RCC, cụm RCS mũi, kính buồng lái 6 ô, chữ United States + Cờ Mỹ + logo NASA + Discovery trên cánh tam giác kép, 3 động cơ chính RS-25 (SSME), 2 động cơ OMS và dù hạ cánh' },
+    en: { name: 'Space Shuttle Orbiter Discovery (STS · Stage 3 – Final)', cat: 'Command & Nose', desc: 'NASA Space Shuttle Orbiter Discovery (Final Stage) with black RCC nose cap & thermal tile belly, forward RCS array, 6-pane cockpit windshield, United States + US Flag + NASA Meatball + Discovery wing markings, 3× RS-25 SSME + 2× OMS engines & parachutes' },
+  },
+  shuttleNose: {
+    vi: { name: 'Bồn Nhiên Liệu Ngoài Cam ET & Đai Gân Intertank (Space Shuttle · Tầng 2)', cat: 'Nhiên liệu', desc: 'Thân chính và chóp mũi khí động bồn nhiên liệu ngoài (External Tank – ET) màu cam đất kèm cột thu lôi, đường ống LOX & cáp đen dọc thân, cổ gân vàng nâu Intertank và khung giằng đỡ tàu con thoi' },
+    en: { name: 'Space Shuttle Burnt-Orange External Tank (ET) & Intertank (Stage 2)', cat: 'Fuel Tanks', desc: 'Burnt-orange External Tank (ET) main barrel, golden-tan ribbed Intertank collar, ogive LOX nose cone with lightning rod tip, external LOX feedline & Orbiter attachment struts' },
   },
   shuttleSrb: {
     vi: { name: 'Đáy Bồn Cam ET & 2 Tên Lửa Đẩy Phụ Trắng SRB (Space Shuttle · Tầng 1)', cat: 'Động cơ', desc: 'Phần dưới bồn nhiên liệu ngoài màu cam đáy vòm tròn kèm 2 tên lửa đẩy nhiên liệu rắn SRB màu trắng mũi nhọn có đai đen-cam, 3 vòng gân vàng ở váy đáy và cặp loa phụt khổng lồ' },

@@ -1575,6 +1575,11 @@ export function applyLanguage(lang, app) {
   setAttr('#part-search', 'placeholder', 'Tìm linh kiện, tên lửa…', 'Search parts, rockets…');
   setAttr('#part-search-clear', 'title', 'Xóa tìm kiếm', 'Clear search');
   setTxt('#stats h3', '📊 Thông số', '📊 Specs');
+  setTxt('#rocket-name-label', '🏷️ Tên tên lửa', '🏷️ Rocket Name');
+  setAttr('#rocket-name-input', 'placeholder', 'Đặt tên tên lửa…', 'Enter rocket name…');
+  setAttr('#btn-rocket-rename', 'title', 'Đặt lại tên tên lửa', 'Rename rocket');
+  setAttr('#hud-rocket-name-input', 'placeholder', 'Đặt tên tên lửa…', 'Enter rocket name…');
+  setAttr('#btn-hud-rename', 'title', 'Đặt lại tên tên lửa', 'Rename rocket');
 
   const statLabels = document.querySelectorAll('#stats .stat-grid .stat label');
   if (statLabels.length >= 4) {

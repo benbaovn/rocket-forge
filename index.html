@@ -66,6 +66,13 @@
 
     <aside id="stats" class="glass panel right">
       <h3>📊 Specs</h3>
+      <div class="rocket-name-box" id="rocket-name-box">
+        <label id="rocket-name-label" for="rocket-name-input">🏷️ Rocket Name</label>
+        <div class="rocket-name-row">
+          <input id="rocket-name-input" type="text" maxlength="40" value="Rocket #1" placeholder="Enter rocket name…" autocomplete="off" spellcheck="false" />
+          <button id="btn-rocket-rename" class="rocket-name-edit-btn" type="button" title="Rename rocket">✏️</button>
+        </div>
+      </div>
       <div class="stat-grid">
         <div class="stat"><label>⚖ Mass</label><b id="st-mass">0 t</b></div>
         <div class="stat"><label>📏 Height</label><b id="st-height">0 m</b></div>
@@ -152,6 +159,11 @@
     </div>
 
     <div class="hud hud-right glass">
+      <div class="hud-rocket-box" id="hud-rocket-box">
+        <span id="hud-rocket-ico" class="hud-rocket-ico">🚀</span>
+        <input id="hud-rocket-name-input" class="hud-rocket-name-input" type="text" maxlength="40" value="Rocket #1" placeholder="Rocket name…" autocomplete="off" spellcheck="false" />
+        <button id="btn-hud-rename" class="rocket-name-edit-btn" type="button" title="Rename rocket">✏️</button>
+      </div>
       <h4>⛽ STAGES</h4>
       <div id="h-stages"></div>
 

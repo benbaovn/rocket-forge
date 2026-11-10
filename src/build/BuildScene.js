@@ -434,10 +434,73 @@ export class BuildScene {
     return matchesQuery(hay, q);
   }
 
+  getDefaultRocketName() {
+    const vType = stackVehicleType(this.stack);
+    if (vType === 'boat') return tr('Siêu Du Thuyền #1', 'Superyacht #1');
+    if (vType === 'plane') return tr('Tiêm Kích Phản Lực #1', 'Fighter Jet #1');
+    if (vType === 'rover') return tr('Xe Tự Hành Rover #1', 'Planetary Rover #1');
+    return tr('Tên Lửa #1', 'Rocket #1');
+  }
+
+  getRocketName() {
+    const custom = (this.rocketName || '').trim();
+    return custom || this.getDefaultRocketName();
+  }
+
+  setRocketName(name, isCustom = true) {
+    const clean = (name || '').trim().slice(0, 40);
+    this.rocketName = clean;
+    this.rocketNameCustom = isCustom && !!clean;
+    try {
+      localStorage.setItem('rf-rocket-name', this.rocketName);
+      localStorage.setItem('rf-rocket-name-custom', this.rocketNameCustom ? '1' : '0');
+    } catch { /* ignore */ }
+    this.syncRocketNameUI();
+    if (this.app?.launch?.player) {
+      this.app.launch.player.label = this.getRocketName();
+    }
+  }
+
+  syncRocketNameUI() {
+    const vType = stackVehicleType(this.stack);
+    const ico = vType === 'boat' ? '🛥️' : vType === 'plane' ? '✈️' : vType === 'rover' ? '🚙' : '🚀';
+    const lblText = vType === 'boat'
+      ? `🛥️ ${tr('Tên thuyền', 'Boat Name')}`
+      : vType === 'plane'
+        ? `✈️ ${tr('Tên máy bay', 'Aircraft Name')}`
+        : vType === 'rover'
+          ? `🚙 ${tr('Tên xe Rover', 'Rover Name')}`
+          : `🏷️ ${tr('Tên tên lửa', 'Rocket Name')}`;
+    const placeholderText = vType === 'boat'
+      ? tr('Đặt tên thuyền…', 'Enter boat name…')
+      : vType === 'plane'
+        ? tr('Đặt tên máy bay…', 'Enter aircraft name…')
+        : vType === 'rover'
+          ? tr('Đặt tên xe Rover…', 'Enter rover name…')
+          : tr('Đặt tên tên lửa…', 'Enter rocket name…');
+    const lblEl = $('rocket-name-label');
+    if (lblEl) lblEl.textContent = lblText;
+    const displayVal = this.getRocketName();
+    const inp = $('rocket-name-input');
+    if (inp) {
+      inp.placeholder = placeholderText;
+      if (document.activeElement !== inp) inp.value = displayVal;
+    }
+    const hudIco = $('hud-rocket-ico');
+    if (hudIco) hudIco.textContent = ico;
+    const hudInp = $('hud-rocket-name-input');
+    if (hudInp) {
+      hudInp.placeholder = placeholderText;
+      if (document.activeElement !== hudInp) hudInp.value = displayVal;
+    }
+  }
+
   loadPresetByName(pName) {
     if (!pName || !PRESETS[pName]) return;
     this.pushHistory();
     this.stack = stackFromTypes(PRESETS[pName]);
+    const presetLabel = (PRESET_LABELS[pName]?.[getLang()] || pName).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    this.setRocketName(presetLabel, false);
     this.select(null);
     this.rebuild(true);
     if ($('preset-modal')) $('preset-modal').classList.add('hidden');
@@ -704,11 +767,46 @@ export class BuildScene {
   }
 
   initUI() {
+    this.rocketName = localStorage.getItem('rf-rocket-name') || '';
+    this.rocketNameCustom = localStorage.getItem('rf-rocket-name-custom') === '1';
     this.partSearchQuery = '';
     this.presetSearchQuery = '';
     this.thumbs = this.makeThumbnails();
     this.renderPalette();
     this.renderPresets();
+    this.syncRocketNameUI();
+
+    const bindRenameControls = (inputId, btnId) => {
+      const inp = $(inputId);
+      const btn = $(btnId);
+      if (inp) {
+        inp.addEventListener('input', () => {
+          this.setRocketName(inp.value, true);
+        });
+        inp.addEventListener('change', () => {
+          this.setRocketName(inp.value, true);
+        });
+        inp.addEventListener('blur', () => {
+          this.syncRocketNameUI();
+        });
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === 'Escape') {
+            e.preventDefault();
+            inp.blur();
+          }
+          e.stopPropagation();
+        });
+      }
+      if (btn && inp) {
+        btn.onclick = () => {
+          inp.focus();
+          inp.select();
+          audio.click();
+        };
+      }
+    };
+    bindRenameControls('rocket-name-input', 'btn-rocket-rename');
+    bindRenameControls('hud-rocket-name-input', 'btn-hud-rename');
 
     // Part search box in left palette
     const partSearch = $('part-search');
@@ -1057,6 +1155,10 @@ export class BuildScene {
     if (loadPreset && m.preset && PRESETS[m.preset]) {
       this.pushHistory();
       this.stack = stackFromTypes(PRESETS[m.preset]);
+      if (!this.rocketNameCustom) {
+        const presetLabel = (PRESET_LABELS[m.preset]?.[getLang()] || m.preset).replace(/\s*\([^)]*\)\s*$/, '').trim();
+        this.setRocketName(presetLabel, false);
+      }
       this.select(null);
       this.rebuild(true);
     }
@@ -1612,6 +1714,7 @@ export class BuildScene {
   updateStats() {
     const st = computeStats(this.stack);
     this.updatePaletteCompatibility();
+    this.syncRocketNameUI();
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
     const twr = st.stages[0] ? st.stages[0].twr : 0;

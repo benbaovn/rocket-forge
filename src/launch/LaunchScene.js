@@ -1413,6 +1413,8 @@ export class LaunchScene {
   initUI() {
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;
+      const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea') return;
       const k = e.key.toLowerCase();
       this.keys[k] = true;
       if (e.code === 'Space') {
@@ -3448,6 +3450,8 @@ export class LaunchScene {
 
     this.simT = this.simT || 0;
     this.player = new Vessel(this.ctx, this.segs.map((_, k) => k), this.rocket.root, 'player');
+    this.player.label = this.app?.build?.getRocketName?.() || tr('Tên Lửa #1', 'Rocket #1');
+    if (this.app?.build?.syncRocketNameUI) this.app.build.syncRocketNameUI();
     this.vessels = [this.player];
     this.focus = this.player;
 
@@ -3605,7 +3609,8 @@ export class LaunchScene {
       $('btn-go').classList.add('hidden');
     } else {
       $('btn-go').classList.remove('hidden');
-      this.event(tr('Tên lửa đã lên bệ phóng. Sẵn sàng!', 'Rocket is on the launchpad. Ready for launch!'));
+      const rName = this.player.label || tr('Tên lửa', 'Rocket');
+      this.event(tr(`🚀 ${rName} đã lên bệ phóng. Sẵn sàng!`, `🚀 ${rName} is on the launchpad. Ready for launch!`));
     }
     $('countdown').textContent = '';
     $('mission-panel').classList.toggle('hidden', !this.mission.objectives.length);
@@ -7898,7 +7903,8 @@ export class LaunchScene {
       }
     }
     if (pred && pred.targetCA && pred.targetCA.d < 1e7 && this.mission.id === 'iss') info.push(tr(`Tiếp cận ISS: ${fmt(pred.targetCA.d / 1000, 1)} km (sau ${fmt((pred.targetCA.t - t) / 60, 1)} phút)`, `ISS approach: ${fmt(pred.targetCA.d / 1000, 1)} km (in ${fmt((pred.targetCA.t - t) / 60, 1)} min)`));
-    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped, isPlane: !!P.isPlane }, beta: P.beta, name: tr('Tàu hiện tại', 'Current Craft'), ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
+    const craftName = P.label || this.app?.build?.getRocketName?.() || tr('Tàu hiện tại', 'Current Craft');
+    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped, isPlane: !!P.isPlane }, beta: P.beta, name: craftName, ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
   }
 
   fmtTime(sec) {

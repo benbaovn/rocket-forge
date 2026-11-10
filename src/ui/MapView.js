@@ -2335,7 +2335,7 @@ export class MapView {
         return;
       }
       const refB = BODIES[S.ref] || BODIES.earth;
-      name = '🚀 ' + tr('Tàu hiện tại', 'Current Craft');
+      name = '🚀 ' + (S.name || tr('Tàu hiện tại', 'Current Craft'));
       meta = `${tr('Quanh', 'Orbiting')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((S.vessel.alt || 0) / 1000, 1)} km · ${fmt(S.vessel.speedOrb || 0, 0)} m/s`;
     } else {
       const found = (S.others || []).find((o) => o.id === this.selectedObjectId);
@@ -2430,7 +2430,7 @@ export class MapView {
     }
 
     let focusDisplay = this.focus;
-    if (this.focus === 'vessel') focusDisplay = tr('Tàu vũ trụ', 'Spacecraft');
+    if (this.focus === 'vessel') focusDisplay = S.name || tr('Tàu vũ trụ', 'Spacecraft');
     else if (this.focus === 'iss') focusDisplay = 'ISS';
     else if (this.focus === 'oort') focusDisplay = tr('☄️ Đám mây Oort', '☄️ Oort Cloud');
     else if (BODIES[this.focus]) {

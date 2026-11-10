@@ -3515,7 +3515,7 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng W / Shift / Z / Space để chạy đà trên đường băng, nhấn S để ngóc mũi cất cánh.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with W / Shift / Z / Space to roll down the runway, press S to pitch up for takeoff.'));
+      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z / Space để chạy đà, nhấn W để bay lên, S để bay xuống, A/D để quẹo trái/phải.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with Shift / Z / Space to roll, press W to pitch up, S to pitch down, A/D to turn left/right.'));
     } else {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.clamped = true;

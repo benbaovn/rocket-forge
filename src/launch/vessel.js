@@ -442,10 +442,10 @@ export class Vessel {
       const uLH = -vu / v3D;
       const hDirE = vHoriz > 0.5 ? (ve / vHoriz) : Math.cos(this.heading || 0);
       const hDirZ = vHoriz > 0.5 ? (vz / vHoriz) : -Math.sin(this.heading || 0);
-      fe += liftMag * cosBank * uLH * hDirE;
+      fe += liftMag * cosBank * uLH * hDirE + liftMag * sinBank * Math.sin(this.heading || 0);
       fu += liftMag * cosBank * uLU;
       fz += liftMag * cosBank * uLH * hDirZ;
-      this._lateralLift = -liftMag * sinBank;
+      this._lateralLift = liftMag * sinBank * Math.cos(this.heading || 0);
 
       // Air-breathing jet ram drag + thin-air speed ceiling (thinner air -> slower acceleration AND slower top speed in the air)
       const vMaxAir = Math.max(18, 235 * planeRhoFactor * Math.max(0.35, planeAtmFactor));
@@ -528,15 +528,15 @@ export class Vessel {
     // Airplane flight control authority (elevator pitch & aileron roll & rudder yaw)
     if (this.isPlane) {
       const qNorm = Math.min(2.5, Math.max(0.2, q / 1200));
-      // S = -1 (pitch up -> negative angAcc), W = +1 (pitch down -> positive angAcc)
+      // W = +1 (pitch up -> negative angAcc), S = -1 (pitch down -> positive angAcc)
       const pitchInput = (this.ctl.drive || 0);
-      const rollInput = this.ctl.input || 0; // D = +1 (bank right), A = -1 (bank left)
+      const rollInput = this.ctl.input || 0; // A = -1 (bank/turn left), D = +1 (bank/turn right)
       this.bank = (this.bank || 0) + rollInput * 2.4 * h;
       this.bank *= Math.exp(-1.2 * h); // self-leveling bank damping
       this.bank = THREE.MathUtils.clamp(this.bank, -1.35, 1.35);
 
-      // Pitch angular acceleration
-      angAcc = pitchInput * 1.8 * qNorm;
+      // Pitch angular acceleration (negative angAcc decreases this.ang -> pitches nose UP)
+      angAcc = -pitchInput * 1.8 * qNorm;
       // Pitch rate damping
       angAcc -= this.omega * Math.min(4.0, 1.2 + q / 600);
       // Aerodynamic pitch stability restoring towards flight path
@@ -544,9 +544,9 @@ export class Vessel {
         angAcc += this.alpha * 1.5 * qNorm;
       }
 
-      // Yaw / Heading turning rate (Coordinated turn from bank angle + rudder/roll input)
-      const pullFactor = (pitchInput < 0) ? (1.0 + (-pitchInput) * 1.6) : 1.0;
-      const turnYawRate = (Math.sin(this.bank) * 0.95 * pullFactor + rollInput * 0.5) * Math.min(2.4, Math.max(0.4, v / 30));
+      // Yaw / Heading turning rate (A = -1 -> +turnYawRate = left; D = +1 -> -turnYawRate = right)
+      const pullFactor = (pitchInput > 0) ? (1.0 + pitchInput * 1.6) : 1.0;
+      const turnYawRate = -(Math.sin(this.bank) * 0.95 * pullFactor + rollInput * 0.5) * Math.min(2.4, Math.max(0.4, v / 30));
       this.turnYawRate = turnYawRate;
       this.heading = (this.heading || 0) + turnYawRate * h;
     }
@@ -736,17 +736,17 @@ export class Vessel {
         if (drive === 0) this.planeRollSpeed *= Math.exp(-0.8 * h);
         if (this.planeRollSpeed < 0.05 && drive === 0) this.planeRollSpeed = 0;
 
-        // Ground steering with A / D
-        const steer = this.ctl.input || 0; // A = -1 (left), D = +1 (right)
+        // Ground steering with A / D (A = -1 -> +heading = left; D = +1 -> -heading = right)
+        const steer = this.ctl.input || 0;
         if (steer !== 0 && this.planeRollSpeed > 0.5) {
-          const steerRate = THREE.MathUtils.clamp(steer * 1.2 * Math.min(1.0, 18 / (this.planeRollSpeed + 5)), -0.8, 0.8);
+          const steerRate = THREE.MathUtils.clamp(-steer * 1.2 * Math.min(1.0, 18 / (this.planeRollSpeed + 5)), -0.8, 0.8);
           this.heading = (this.heading || 0) + steerRate * h;
         }
 
-        const pitchControl = this.ctl.drive || 0; // S = -1 (pitch up), W = +1 (pitch down)
+        const pitchControl = this.ctl.drive || 0; // W = +1 (pitch up), S = -1 (pitch down)
         const minRotateSpd = Math.max(10, 25 * rhoF);
         const minLiftoffSpd = Math.max(14, 35 * rhoF);
-        const rotateUp = (this.planeRollSpeed > minRotateSpd && pitchControl < 0) ? (-pitchControl * 0.16) : 0;
+        const rotateUp = (this.planeRollSpeed > minRotateSpd && pitchControl > 0) ? (pitchControl * 0.16) : 0;
         const targetBeta = this.phi + Math.PI / 2 - rotateUp;
 
         const vRollEff = this.planeRollSpeed / Math.max(0.14, rhoF);

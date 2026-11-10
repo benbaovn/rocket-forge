@@ -639,7 +639,7 @@ export class PlaneLoopProgram {
       sc.requestWarp(1);
       const rhoF = v.planeRhoFactor || 1;
       const minRotateSpd = Math.max(10, 25 * rhoF);
-      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? -1 : 0;
+      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? 1 : 0;
       return;
     }
     if (this.phase !== 'cruise') {
@@ -805,7 +805,7 @@ export class PlaneAirportHopProgram {
       v.ctl.input = 0;
       const rhoF = v.planeRhoFactor || 1;
       const minRotateSpd = Math.max(10, 25 * rhoF);
-      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? -1 : 0;
+      v.ctl.drive = (v.planeRollSpeed || 0) >= minRotateSpd * 0.85 ? 1 : 0;
       return;
     }
 

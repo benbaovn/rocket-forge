@@ -895,10 +895,10 @@ function addParachutes(g, attachY) {
     let w, elong, D, tilt;
     if (t < 0.35) { // streaming / reefed
       const k = t / 0.35;
-      w = 0.05 + 0.1 * k; elong = 2.4 - 0.4 * k; D = 16.5 * (0.5 + 0.5 * k); tilt = 0.04 + 0.06 * k;
-    } else {        // disreef & inflate
-      const u = (t - 0.35) / 0.65, e = 1 - Math.pow(1 - u, 3);
-      w = 0.15 + 0.85 * e; elong = 2.0 - 1.0 * e; D = 16.5; tilt = 0.1 + 0.2 * e;
+      w = 0.05 + 0.1 * k; elong = 2.4 - 0.4 * k; D = 16.5 * (0.45 + 0.55 * k); tilt = 0.03 + 0.05 * k;
+    } else {        // disreef & inflate gradually
+      const u = (t - 0.35) / 0.65, e = u * u * (3 - 2 * u);
+      w = 0.15 + 0.85 * e; elong = 2.0 - 1.0 * e; D = 16.5; tilt = 0.08 + 0.22 * e;
     }
     const riserL = Math.min(3.2, D * 0.2);
     for (const it of items) {

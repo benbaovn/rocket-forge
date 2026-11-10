@@ -199,7 +199,8 @@ export class Vessel {
     const dRate = h * 0.6;
     this.legsT += THREE.MathUtils.clamp(this.legsTarget - this.legsT, -dRate, dRate);
     this.finsT += THREE.MathUtils.clamp(this.finsTarget - this.finsT, -h * 1.5, h * 1.5);
-    this.chuteT += THREE.MathUtils.clamp(this.chuteTarget - this.chuteT, -h * 0.25, h * (this.chuteT < 0.35 ? 0.5 : 0.18));
+    const chuteOpenRate = this.chuteT < 0.35 ? 0.20 : this.chuteT < 0.75 ? 0.11 : 0.08;
+    this.chuteT += THREE.MathUtils.clamp(this.chuteTarget - this.chuteT, -h * 0.25, h * chuteOpenRate);
 
     const inAtm = (B.atm || 0) > 0 && this.alt < B.atm;
     const pr = inAtm ? Math.exp(-Math.max(0, this.alt) / (B.atmH || ATM_H)) : 0;
@@ -347,11 +348,21 @@ export class Vessel {
     const hasShield = this.hasHeatShield();
     const isFallingInAtm = inAtm && vu < -8 && v3D > 18 && !this.isPlane && !this.isRover && !this.isBoat;
     const cd0 = tailFirst ? 1.05 : top === 'nose' ? 0.28 : top === 'capsule' ? 0.42 : top === 'dockPort' ? 0.5 : 0.75;
-    let cdA = (cd0 + 1.4 * Math.sin(aoa) ** 2) * area;
-    cdA += this.legsT * 6 + this.finsT * 5.0;
-    if (hasShield && vu < -5) cdA += 9.5;
+    let bodyCdA = (cd0 + 1.4 * Math.sin(aoa) ** 2) * area;
+    bodyCdA += this.legsT * 6 + this.finsT * 5.0;
+    if (hasShield && vu < -5) bodyCdA += 9.5;
     const chute = this.capsule() ? this.chuteT : 0;
-    cdA += chute < 0.35 ? chute * 25 : 9 + (chute - 0.35) / 0.65 * 420;
+    let chuteCdA = 0;
+    if (chute > 0) {
+      if (chute < 0.35) {
+        const u1 = chute / 0.35;
+        chuteCdA = 6.0 * (u1 * u1);
+      } else {
+        const u2 = (chute - 0.35) / 0.65;
+        chuteCdA = 6.0 + 420.0 * (u2 * u2 * (3 - 2 * u2));
+      }
+    }
+    const cdA = bodyCdA + chuteCdA;
     const q = 0.5 * rho * v3D * v3D;
     this.qNow = q;
     const rhoNorm = rho > 0 ? Math.pow(Math.max(1e-5, rho / RHO0), 0.30) : 0;
@@ -374,7 +385,16 @@ export class Vessel {
     let fe = 0, fu = 0, fz = 0;                           // aero force (kN) in local (east, up, z)
     this.atmFrictionNow = 0;
     if (v > 0.5 && q > 0 && !this.isPlane) {
-      const dragF = q * cdA / 1000;
+      const bodyDragF = q * bodyCdA / 1000;
+      let chuteDragF = 0;
+      if (chuteCdA > 0) {
+        const rawChuteAcc = (q * chuteCdA / 1000) / Math.max(0.1, mass);
+        const chuteRamp = chute * chute * (3 - 2 * chute);
+        const maxChuteAcc = (3.5 + 18.5 * chuteRamp) * (1 + Math.min(1.2, v / 180));
+        const chuteAcc = (rawChuteAcc * maxChuteAcc) / Math.hypot(rawChuteAcc, maxChuteAcc);
+        chuteDragF = chuteAcc * mass;
+      }
+      const dragF = bodyDragF + chuteDragF;
       fe -= dragF * ve / v; fu -= dragF * vu / v;
       if (isFallingInAtm) {
         const fallFactor = THREE.MathUtils.clamp((-vu - 8) / 55, 0, 1.8);
@@ -495,7 +515,7 @@ export class Vessel {
     // aerodynamic stability: fins (nose-first stable), grid fins deployed / heatShield / bare stages (tail-first stable)
     let stab = this.hasFins() ? 1.0 : -0.22;
     if (this.finsT > 0.5 || (hasShield && isFallingInAtm)) stab = -1.2;
-    if (chute > 0.05) stab = -3.0 * chute;
+    if (chute > 0.05) stab = -3.0 * (chute * chute);
     const aeroScale = this.ctl.targetBeta !== null && chute <= 0.05 ? 0.55 : 2.5;
     angAcc += -stab * q * Math.sin(aoa) * aeroScale / (mass * 1000) * (this.height / 20);
 
@@ -898,7 +918,7 @@ export class Vessel {
       const sp = Math.hypot(vs.e, vs.u);
       const tilt = Math.abs(this.ang);
       const legsOk = this.hasLegs() && this.legsT > 0.95;
-      const chuteOk = this.capsule() && chute > 0.9;
+      const chuteOk = this.capsule() && chute > 0.65;
       const vLim = chuteOk ? 14 : legsOk ? 8 : 6;
       const details = {
         sp,

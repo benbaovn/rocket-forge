@@ -147,32 +147,32 @@ export const PART_I18N = {
     en: { name: 'Rover Solar Panels ×2', cat: 'Rover', desc: 'Twin solar panels recharging power on the move' },
   },
   cabinBoat: {
-    vi: { name: 'Đài Chỉ Huy & Sky-Lounge Du Thuyền', cat: 'Thuyền', desc: 'Tầng thượng siêu du thuyền tương lai với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
-    en: { name: 'Superyacht Bridge & Sky-Lounge', cat: 'Boat', desc: 'Futuristic cruise superyacht upper deck with panoramic smart-glass bridge, solar canopy and dual radar domes' },
+    vi: { name: 'Đài Chỉ Huy Thuyền To', cat: 'Thuyền', desc: 'Tầng thượng Thuyền to với buồng lái kính vòm panorama, mái năng lượng mặt trời và radar kép' },
+    en: { name: 'Big Boat Bridge & Sky-Lounge', cat: 'Boat', desc: 'Big Boat upper deck with panoramic smart-glass bridge, solar canopy and dual radar domes' },
   },
   hullBoat: {
-    vi: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Thuyền', desc: 'Thân du thuyền đa tầng siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
-    en: { name: 'Futuristic Luxury Superyacht Hull', cat: 'Boat', desc: 'Multi-deck luxury cruise yacht hull with wave-piercing bow, infinity Jacuzzi pool, helipad and neon LED trim' },
+    vi: { name: 'Thân Thuyền To', cat: 'Thuyền', desc: 'Thân Thuyền to đa tầng có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
+    en: { name: 'Big Boat Hull', cat: 'Boat', desc: 'Multi-deck Big Boat hull with wave-piercing bow, infinity Jacuzzi pool, helipad and neon LED trim' },
   },
   motorBoat: {
-    vi: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Thuyền', desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
-    en: { name: 'Twin Azimuth Pod & Plasma Hydro-Jet', cat: 'Boat', desc: 'Hydrodynamic underwater keel with twin azimuth pods and plasma water-jet propulsion' },
+    vi: { name: 'Động Cơ Thuyền To (Hydro-Jet & Chân Vịt Kép)', cat: 'Thuyền', desc: 'Đáy ngầm khí động học của Thuyền to tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
+    en: { name: 'Big Boat Engine (Hydro-Jet & Twin Pods)', cat: 'Boat', desc: 'Hydrodynamic Big Boat keel with twin azimuth pods and plasma water-jet propulsion' },
   },
   floatsBoat: {
-    vi: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
-    en: { name: 'Trimaran Hydrofoil Sponsons ×2', cat: 'Boat', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips' },
+    vi: { name: 'Cánh Ngầm & Phao Thuyền To ×2', cat: 'Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp Thuyền to lướt êm trên sóng' },
+    en: { name: 'Big Boat Hydrofoil Sponsons ×2', cat: 'Boat', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips for the Big Boat' },
   },
   cabinSailBoat: {
-    vi: { name: 'Boong Lái & Cột Trụ Thuyền Buồm (Không Cánh Buồm)', cat: 'Thuyền', desc: 'Khoang kính hiện đại, cặp vô-lăng thuyền buồm carbon và cột trụ khí động đã tháo bỏ cánh buồm, tích hợp radar & cảm biến laser' },
-    en: { name: 'Modern Sailboat Helm & Sail-Free Carbon Mast', cat: 'Boat', desc: 'Panoramic glass coachroof, twin carbon sailboat helm wheels & sleek sail-free carbon wing-mast with radar and laser wind sensors' },
+    vi: { name: 'Boong Lái & Cột Trụ Thuyền Nhỏ', cat: 'Thuyền', desc: 'Khoang kính hiện đại của Thuyền nhỏ, cặp vô-lăng carbon và cột trụ khí động không cánh buồm tích hợp radar & cảm biến laser' },
+    en: { name: 'Small Boat Helm & Carbon Mast', cat: 'Boat', desc: 'Panoramic glass coachroof of the Small Boat, twin carbon helm wheels & sleek sail-free carbon mast with radar and laser wind sensors' },
   },
   hullSailBoat: {
-    vi: { name: 'Thân Thuyền Buồm Hiện Đại Mũi Rẽ Sóng', cat: 'Thuyền', desc: 'Thân thuyền buồm thể thao hiện đại mũi rẽ sóng sắc gọn, sàn gỗ Teak & Carbon, buồng lái mở và dải đèn LED' },
-    en: { name: 'Modern Wave-Piercing Sailboat Hull', cat: 'Boat', desc: 'Sleek modern performance sailboat hull with plumb wave-piercing bow, carbon bowsprit, slatted teak deck & LED trim' },
+    vi: { name: 'Thân Thuyền Nhỏ', cat: 'Thuyền', desc: 'Thân Thuyền nhỏ dáng thon gọn mũi rẽ sóng, sàn gỗ Teak & Carbon, buồng lái mở và dải đèn LED' },
+    en: { name: 'Small Boat Hull', cat: 'Boat', desc: 'Sleek Small Boat hull with plumb wave-piercing bow, carbon bowsprit, slatted teak deck & LED trim' },
   },
   motorSailBoat: {
-    vi: { name: 'Động Cơ Thủy Lực Kép & Sống Đáy Thuyền Buồm', cat: 'Thuyền', desc: 'Cặp động cơ Turbo-Jet hiện đại gắn đuôi thuyền buồm kèm chân vịt kép xoay ngược chiều, bánh lái đôi và sống đáy cân bằng' },
-    en: { name: 'Modern Twin Turbo Marine Engine & Sailboat Keel', cat: 'Boat', desc: 'Twin modern stern-mounted turbo-jet marine engines with counter-rotating propellers, twin rudders & hydrodynamic bulb keel' },
+    vi: { name: 'Động Cơ Thuyền Nhỏ (Turbo Kép & Chân Vịt)', cat: 'Thuyền', desc: 'Cặp động cơ Turbo-Jet hiện đại gắn đuôi Thuyền nhỏ kèm chân vịt kép xoay ngược chiều, bánh lái đôi và sống đáy cân bằng' },
+    en: { name: 'Small Boat Twin Turbo Engine', cat: 'Boat', desc: 'Twin modern stern-mounted turbo-jet marine engines for the Small Boat with counter-rotating propellers, twin rudders & bulb keel' },
   },
   cockpitPlane: {
     vi: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
@@ -498,7 +498,7 @@ export const PRESET_ICONS = {
   'Apollo (Mặt Trăng)': '🌖',
   'Xe địa hình Rover 4x4': '🛞',
   'Canô lướt sóng siêu tốc': '🛥️',
-  'Thuyền buồm hiện đại (Gắn động cơ)': '⛵',
+  'Thuyền nhỏ': '⛵',
   'Tiêm kích phản lực F-22': '✈️',
   'Tàu Phản Trọng Lực Lượng Tử': '⚛️',
   'Tàu Chiến Lazer Liên Hành Tinh': '🔫',
@@ -531,8 +531,8 @@ export const PRESET_LABELS = {
   'Tàu chở khách (ISS)': { vi: 'Tàu chở khách (ISS)', en: 'Crew Dragon (ISS)' },
   'Apollo (Mặt Trăng)': { vi: 'Apollo (Mặt Trăng)', en: 'Apollo (Moon & Planets)' },
   'Xe địa hình Rover 4x4': { vi: 'Xe địa hình Rover 4x4', en: '4x4 Planetary Rover' },
-  'Canô lướt sóng siêu tốc': { vi: 'Siêu Du Thuyền Du Lịch Tương Lai', en: 'Futuristic Luxury Cruise Superyacht' },
-  'Thuyền buồm hiện đại (Gắn động cơ)': { vi: 'Thuyền Buồm Hiện Đại (Không Buồm · Gắn Động Cơ)', en: 'Modern Motorized Sailboat (Sail-Free)' },
+  'Canô lướt sóng siêu tốc': { vi: 'Thuyền to', en: 'Big Boat' },
+  'Thuyền nhỏ': { vi: 'Thuyền nhỏ', en: 'Small Boat' },
   'Tiêm kích phản lực F-22': { vi: 'Tiêm kích phản lực F-22', en: 'F-22 Raptor Fighter Jet' },
   'Tàu Phản Trọng Lực Lượng Tử': { vi: 'Tàu Phản Trọng Lực Lượng Tử', en: 'Quantum Anti-Gravity Ship' },
   'Tàu Chiến Lazer Liên Hành Tinh': { vi: 'Tàu Chiến Lazer Liên Hành Tinh', en: 'Interplanetary Laser Cruiser' },
@@ -1168,7 +1168,7 @@ const MISSION_I18N = {
   boat_500km: {
     vi: {
       name: 'Đi 500 km trên biển',
-      desc: 'Lái Canô lướt sóng siêu tốc rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
+      desc: 'Lái Thuyền to hoặc Thuyền nhỏ rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
       objs: {
         boatDist100: 'Đi đạt 100 km trên mặt biển',
         boatDist250: 'Đi đạt 250 km trên mặt biển',
@@ -1177,7 +1177,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Sail 500 km at Sea',
-      desc: 'Pilot the SuperSpeed Yacht out of the harbor and across the open ocean for a total distance of 500 km.',
+      desc: 'Pilot the Big Boat or Small Boat out of the harbor and across the open ocean for a total distance of 500 km.',
       objs: {
         boatDist100: 'Sail 100 km across the ocean',
         boatDist250: 'Sail 250 km across the ocean',
@@ -1188,7 +1188,7 @@ const MISSION_I18N = {
   boat_1000km: {
     vi: {
       name: 'Đi 1000 km trên biển',
-      desc: 'Hải trình viễn dương: Điều khiển Canô lướt sóng siêu tốc vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
+      desc: 'Hải trình viễn dương: Điều khiển Thuyền to hoặc Thuyền nhỏ vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
       objs: {
         boatDist250: 'Đi đạt 250 km trên mặt biển',
         boatDist500: 'Đi đạt 500 km trên mặt biển',
@@ -1197,7 +1197,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Sail 1000 km at Sea',
-      desc: 'Transoceanic voyage: Pilot the SuperSpeed Yacht across the open ocean for a total distance of 1000 km.',
+      desc: 'Transoceanic voyage: Pilot the Big Boat or Small Boat across the open ocean for a total distance of 1000 km.',
       objs: {
         boatDist250: 'Sail 250 km across the ocean',
         boatDist500: 'Sail 500 km across the ocean',
@@ -1208,7 +1208,7 @@ const MISSION_I18N = {
   boat_2000km: {
     vi: {
       name: 'Đi 2000 km trên biển',
-      desc: 'Thử thách chinh phục đại dương: Lái Canô lướt sóng siêu tốc vượt qua tổng hải trình 2000 km trên biển khơi.',
+      desc: 'Thử thách chinh phục đại dương: Lái Thuyền to hoặc Thuyền nhỏ vượt qua tổng hải trình 2000 km trên biển khơi.',
       objs: {
         boatDist500: 'Đi đạt 500 km trên mặt biển',
         boatDist1000: 'Đi đạt 1000 km trên mặt biển',
@@ -1217,7 +1217,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Sail 2000 km at Sea',
-      desc: 'Ocean endurance challenge: Pilot the SuperSpeed Yacht across 2000 km of open ocean.',
+      desc: 'Ocean endurance challenge: Pilot the Big Boat or Small Boat across 2000 km of open ocean.',
       objs: {
         boatDist500: 'Sail 500 km across the ocean',
         boatDist1000: 'Sail 1000 km across the ocean',
@@ -1228,14 +1228,14 @@ const MISSION_I18N = {
   boat_harbor_1: {
     vi: {
       name: 'Tới 1 cảng',
-      desc: 'Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
+      desc: 'Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
       objs: {
         boatHarbor1: 'Di chuyển và cập bến an toàn tại 1 cảng biển',
       },
     },
     en: {
       name: 'Reach 1 Harbor',
-      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) to depart and arrive safely at 1 harbor.',
+      desc: 'Pilot the Big Boat or Small Boat (or enable Autopilot G) to depart and arrive safely at 1 harbor.',
       objs: {
         boatHarbor1: 'Sail and arrive safely at 1 harbor',
       },
@@ -1244,7 +1244,7 @@ const MISSION_I18N = {
   boat_harbor_2: {
     vi: {
       name: 'Tới 2 cảng',
-      desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
+      desc: 'Điều khiển Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
       objs: {
         boatHarbor1: 'Tới cảng biển thứ 1',
         boatHarbor2: 'Tới hoàn thành đủ 2 cảng biển',
@@ -1252,7 +1252,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Reach 2 Harbors',
-      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) to sail and arrive at 2 harbors.',
+      desc: 'Pilot the Big Boat or Small Boat (or enable Autopilot G) to sail and arrive at 2 harbors.',
       objs: {
         boatHarbor1: 'Reach the 1st harbor',
         boatHarbor2: 'Complete arrival at 2 harbors',
@@ -1262,7 +1262,7 @@ const MISSION_I18N = {
   boat_harbor_3: {
     vi: {
       name: 'Tới 3 cảng',
-      desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
+      desc: 'Điều khiển Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
       objs: {
         boatHarbor1: 'Tới cảng biển thứ 1',
         boatHarbor2: 'Tới cảng biển thứ 2',
@@ -1271,7 +1271,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Reach 3 Harbors',
-      desc: 'Pilot the SuperSpeed Yacht (or enable Autopilot G) across the coast to reach 3 harbors.',
+      desc: 'Pilot the Big Boat or Small Boat (or enable Autopilot G) across the coast to reach 3 harbors.',
       objs: {
         boatHarbor1: 'Reach the 1st harbor',
         boatHarbor2: 'Reach the 2nd harbor',
@@ -1282,7 +1282,7 @@ const MISSION_I18N = {
   boat_harbor_4: {
     vi: {
       name: 'Tới 4 cảng',
-      desc: 'Hải trình liên cảng: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
+      desc: 'Hải trình liên cảng: Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
       objs: {
         boatHarbor1: 'Tới cảng biển thứ 1',
         boatHarbor2: 'Tới cảng biển thứ 2',
@@ -1292,7 +1292,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Reach 4 Harbors',
-      desc: 'Coastal harbor tour: Pilot the SuperSpeed Yacht (or enable Autopilot G) to reach 4 harbors.',
+      desc: 'Coastal harbor tour: Pilot the Big Boat or Small Boat (or enable Autopilot G) to reach 4 harbors.',
       objs: {
         boatHarbor1: 'Reach the 1st harbor',
         boatHarbor2: 'Reach the 2nd harbor',
@@ -1304,7 +1304,7 @@ const MISSION_I18N = {
   boat_harbor_5: {
     vi: {
       name: 'Tới 5 cảng',
-      desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
+      desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
       objs: {
         boatHarbor1: 'Tới cảng biển thứ 1',
         boatHarbor2: 'Tới cảng biển thứ 2',
@@ -1315,7 +1315,7 @@ const MISSION_I18N = {
     },
     en: {
       name: 'Reach 5 Harbors',
-      desc: 'Conquer all 5 harbors: Pilot the SuperSpeed Yacht (or enable Autopilot G) to reach all 5 harbors!',
+      desc: 'Conquer all 5 harbors: Pilot the Big Boat or Small Boat (or enable Autopilot G) to reach all 5 harbors!',
       objs: {
         boatHarbor1: 'Reach the 1st harbor',
         boatHarbor2: 'Reach the 2nd harbor',

@@ -390,7 +390,7 @@ export const MISSIONS = [
   {
     id: 'boat_500km', icon: '🛥️', name: 'Đi 500 km trên biển', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetDistKm: 500,
-    desc: 'Lái Canô lướt sóng siêu tốc rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
+    desc: 'Lái Thuyền to hoặc Thuyền nhỏ rời cảng ra khơi đạt tổng hải trình 500 km trên mặt biển.',
     objectives: [
       { id: 'boatDist100', text: 'Đi đạt 100 km trên mặt biển', targetKm: 100 },
       { id: 'boatDist250', text: 'Đi đạt 250 km trên mặt biển', targetKm: 250 },
@@ -400,7 +400,7 @@ export const MISSIONS = [
   {
     id: 'boat_1000km', icon: '🛥️', name: 'Đi 1000 km trên biển', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetDistKm: 1000,
-    desc: 'Hải trình viễn dương: Điều khiển Canô lướt sóng siêu tốc vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
+    desc: 'Hải trình viễn dương: Điều khiển Thuyền to hoặc Thuyền nhỏ vượt sóng đạt tổng quãng đường 1000 km trên đại dương.',
     objectives: [
       { id: 'boatDist250', text: 'Đi đạt 250 km trên mặt biển', targetKm: 250 },
       { id: 'boatDist500', text: 'Đi đạt 500 km trên mặt biển', targetKm: 500 },
@@ -410,7 +410,7 @@ export const MISSIONS = [
   {
     id: 'boat_2000km', icon: '🛥️', name: 'Đi 2000 km trên biển', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetDistKm: 2000,
-    desc: 'Thử thách chinh phục đại dương: Lái Canô lướt sóng siêu tốc vượt qua tổng hải trình 2000 km trên biển khơi.',
+    desc: 'Thử thách chinh phục đại dương: Lái Thuyền to hoặc Thuyền nhỏ vượt qua tổng hải trình 2000 km trên biển khơi.',
     objectives: [
       { id: 'boatDist500', text: 'Đi đạt 500 km trên mặt biển', targetKm: 500 },
       { id: 'boatDist1000', text: 'Đi đạt 1000 km trên mặt biển', targetKm: 1000 },
@@ -421,7 +421,7 @@ export const MISSIONS = [
   {
     id: 'boat_harbor_1', icon: '⚓', name: 'Tới 1 cảng', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetHarbors: 1,
-    desc: 'Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
+    desc: 'Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) rời bến và di chuyển cập vào 1 cảng biển.',
     objectives: [
       { id: 'boatHarbor1', text: 'Di chuyển và cập bến an toàn tại 1 cảng biển', targetHarbors: 1 },
     ],
@@ -429,7 +429,7 @@ export const MISSIONS = [
   {
     id: 'boat_harbor_2', icon: '⚓', name: 'Tới 2 cảng', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetHarbors: 2,
-    desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
+    desc: 'Điều khiển Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) lần lượt di chuyển tới đủ 2 cảng biển.',
     objectives: [
       { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
       { id: 'boatHarbor2', text: 'Tới hoàn thành đủ 2 cảng biển', targetHarbors: 2 },
@@ -438,7 +438,7 @@ export const MISSIONS = [
   {
     id: 'boat_harbor_3', icon: '⚓', name: 'Tới 3 cảng', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetHarbors: 3,
-    desc: 'Điều khiển Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
+    desc: 'Điều khiển Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) vượt sóng cập bến đủ 3 cảng biển.',
     objectives: [
       { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
       { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },
@@ -448,7 +448,7 @@ export const MISSIONS = [
   {
     id: 'boat_harbor_4', icon: '⚓', name: 'Tới 4 cảng', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetHarbors: 4,
-    desc: 'Hải trình liên cảng: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
+    desc: 'Hải trình liên cảng: Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) di chuyển tới đủ 4 cảng biển.',
     objectives: [
       { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
       { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },
@@ -459,7 +459,7 @@ export const MISSIONS = [
   {
     id: 'boat_harbor_5', icon: '⚓', name: 'Tới 5 cảng', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetHarbors: 5,
-    desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Canô lướt sóng siêu tốc (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
+    desc: 'Chinh phục toàn bộ 5 cảng biển: Lái Thuyền to hoặc Thuyền nhỏ (hoặc bật Lái tự động G) cập bến cả 5 cảng biển!',
     objectives: [
       { id: 'boatHarbor1', text: 'Tới cảng biển thứ 1', targetHarbors: 1 },
       { id: 'boatHarbor2', text: 'Tới cảng biển thứ 2', targetHarbors: 2 },

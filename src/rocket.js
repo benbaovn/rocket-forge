@@ -230,7 +230,7 @@ export const PRESETS = {
   'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon+batteryGun', 'apollo11SM+gunLaser+waterCannon+batteryGun', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
   'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel', 'motorBoat'],
-  'Thuyền buồm hiện đại (Gắn động cơ)': ['cabinSailBoat', 'hullSailBoat+solarPanel', 'motorSailBoat'],
+  'Thuyền nhỏ': ['cabinSailBoat', 'hullSailBoat+solarPanel', 'motorSailBoat'],
   'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon+batteryGun', 'tailPlane', 'engJet'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
@@ -506,7 +506,7 @@ export function computeStats(stack) {
     if (!stack.some((it) => it.attach.includes('wheelsRover'))) warnings.push(tr('Xe Rover cần gắn Bánh xe địa hình ×4 để di chuyển.', 'Rover needs Off-Road Wheels ×4 to drive.'));
   } else if (isBoat) {
     if (!stack.some((it) => isBoatCabinPart(it.type))) warnings.push(tr('Thuyền nên có Đài Chỉ Huy / Boong Lái để điều khiển.', 'Boat should have a Bridge or Helm Deck to steer.'));
-    if (!stack.some((it) => isBoatHullPart(it.type))) warnings.push(tr('Thuyền cần có Thân Thuyền / Du Thuyền để nổi và lướt sóng.', 'Boat needs a Boat / Yacht Hull to float on water.'));
+    if (!stack.some((it) => isBoatHullPart(it.type))) warnings.push(tr('Thuyền cần có Thân Thuyền (Thuyền to / Thuyền nhỏ) để nổi và lướt sóng.', 'Boat needs a Hull (Big Boat / Small Boat) to float on water.'));
     if (!stack.some((it) => isBoatMotorPart(it.type) || it.attach.some(isBoatMotorPart))) {
       warnings.push(tr('Thuyền chưa có Động Cơ Thủy Lực & Chân Vịt!', 'Boat has no Marine Hydro-Jet / Propeller Engine!'));
     }

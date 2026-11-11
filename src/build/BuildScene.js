@@ -438,7 +438,7 @@ export class BuildScene {
     const vType = stackVehicleType(this.stack);
     if (vType === 'boat') {
       const isSailBoat = this.stack.some((it) => it.type.includes('SailBoat') || it.attach?.some((a) => a.includes('SailBoat')));
-      return isSailBoat ? tr('Thuyền Buồm Động Cơ #1', 'Motor Sailboat #1') : tr('Siêu Du Thuyền #1', 'Superyacht #1');
+      return isSailBoat ? tr('Thuyền nhỏ #1', 'Small Boat #1') : tr('Thuyền to #1', 'Big Boat #1');
     }
     if (vType === 'plane') return tr('Tiêm Kích Phản Lực #1', 'Fighter Jet #1');
     if (vType === 'rover') return tr('Xe Tự Hành Rover #1', 'Planetary Rover #1');

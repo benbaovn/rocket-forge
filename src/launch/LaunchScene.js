@@ -3543,8 +3543,8 @@ export class LaunchScene {
       this.met = 0;
       const isSailBoatStack = stack.some((it) => it.type.includes('SailBoat') || it.attach.some((a) => a.includes('SailBoat')));
       this.event(isSailBoatStack
-        ? tr('⛵⚡ Thuyền buồm hiện đại gắn động cơ đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để lướt sóng ra khơi, A/D bẻ lái.', '⛵⚡ Modern motorized sailboat moored at the Harbor ready to depart! Press W/S or throttle up to cruise out to sea, A/D to steer.')
-        : tr('🛥️⚓ Du thuyền đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Superyacht moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
+        ? tr('⛵⚡ Thuyền nhỏ đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để lướt sóng ra khơi, A/D bẻ lái.', '⛵⚡ Small Boat moored at the Harbor ready to depart! Press W/S or throttle up to cruise out to sea, A/D to steer.')
+        : tr('🛥️⚓ Thuyền to đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Big Boat moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
     } else if (this.player.isRover) {
       const roverX = 0;
       const surfH = this.earthGroundWave(roverX, 0, 0.0, 0.0) + this.player.bottomOffset();

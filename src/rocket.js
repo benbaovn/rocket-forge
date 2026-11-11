@@ -856,6 +856,9 @@ export function centerOfMass(stack, segIdxList, fuelFrac = null, boosterState = 
       const pm = d.dry + (d.fuel || 0) * f;
       m += pm; my += pm * (p.y + d.height / 2);
       minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + d.height);
+      if (p.item.attach && p.item.attach.includes('wheelsRover')) {
+        minY = Math.min(minY, p.y - 0.365);
+      }
       for (const a of p.item.attach) {
         const ad = PARTS[a];
         if (!ad) continue;

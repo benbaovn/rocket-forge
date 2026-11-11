@@ -282,14 +282,44 @@ export class LaunchScene {
     return best;
   }
 
+  trigFbmJS(px, py, seed, oct = 3) {
+    const fract = (v) => v - Math.floor(v);
+    const TAU = 6.283185307179586;
+    let x = px, y = py, s = 0, a = 0.5, norm = 0;
+    let ph = seed * 0.173;
+    for (let i = 0; i < oct; i++) {
+      const u1 = fract(x * 0.15915494 + y * 0.09188815 + ph);
+      const u2 = fract(x * -0.11253954 + y * 0.13783222 + ph * 1.618 + 0.37);
+      const u3 = fract((x + y) * 0.1031 + ph * 0.73 + 0.61);
+      const n = (Math.sin(TAU * u1) + Math.cos(TAU * u2) + 0.6 * Math.sin(TAU * u3)) * (1.0 / 2.6);
+      s += a * (n * 0.5 + 0.5);
+      norm += a;
+      const nx = x * 1.62 - y * 1.18 + 0.71;
+      const ny = x * 1.18 + y * 1.62 + 1.39;
+      x = nx; y = ny;
+      ph = ph * 1.37 + 0.29;
+      a *= 0.52;
+    }
+    return s / norm;
+  }
+
+  lagoonNoiseJS(sx, sz) {
+    return this.trigFbmJS(sx * 0.0022, -sz * 0.0022, 11.0, 4);
+  }
+
   isLagoonWater(sx, sz) {
     if (sx > COAST_X - 300) return false;
     if (this.earthAirportBoxDist(sx, sz) < 80.0) return false;
-    return this.fbm3JS(sx * 0.0007, -sz * 0.0007, 11.0, 5) >= 0.655;
+    return this.lagoonNoiseJS(sx, sz) >= 0.685;
   }
 
   earthGroundWave(sx, sz, showPad = 1.0, showAirport = 0.0) {
     if (showAirport > 0.5) return 0.0;
+    const fract = (v) => v - Math.floor(v);
+    const TAU = 6.283185307179586;
+    const INV_TAU = 0.15915494309189535;
+    const sinT = (rad) => Math.sin(TAU * fract(rad * INV_TAU));
+    const cosT = (rad) => Math.cos(TAU * fract(rad * INV_TAU));
     const smooth = (e0, e1, x) => {
       const t = THREE.MathUtils.clamp((x - e0) / (e1 - e0), 0, 1);
       return t * t * (3 - 2 * t);
@@ -300,23 +330,23 @@ export class LaunchScene {
     const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
     const boxDist = this.earthAirportBoxDist(sx, sz);
     const rwyFlat = smooth(0.0, 70.0, boxDist);
-    const lagoonFlat = sx <= 2300.0 ? (1.0 - smooth(0.64, 0.67, this.fbm3JS(sx * 0.0007, -sz * 0.0007, 11.0, 5))) : 1.0;
-    const nAmp1 = this.fbm3JS(sx * 0.0085, sz * 0.0085, seed + 3.7, 3);
-    const nAmp2 = this.fbm3JS(sx * 0.021, sz * 0.021, seed + 17.3, 2);
-    const nHill = this.fbm3JS(sx * 0.013, sz * 0.013, seed + 31.9, 3);
-    const warp = (this.fbm3JS(sx * 0.006, sz * 0.006, seed + 47.1, 2) - 0.5) * 4.2;
+    const lagoonFlat = sx <= 2300.0 ? (1.0 - smooth(0.66, 0.70, this.lagoonNoiseJS(sx, sz))) : 1.0;
+    const nAmp1 = this.trigFbmJS(sx * 0.014, sz * 0.014, seed + 3.7, 3);
+    const nAmp2 = this.trigFbmJS(sx * 0.032, sz * 0.032, seed + 17.3, 2);
+    const nHill = this.trigFbmJS(sx * 0.020, sz * 0.020, seed + 31.9, 3);
+    const warp = (this.trigFbmJS(sx * 0.009, sz * 0.009, seed + 47.1, 2) - 0.5) * 4.2;
     const amp1 = 0.12 + 3.4 * Math.pow(Math.max(nAmp1, 0), 1.7);
     const amp2 = 0.08 + 2.8 * Math.pow(Math.max(nAmp2, 0), 1.6);
     const hillAmp = 0.15 + 4.2 * Math.pow(Math.max(nAmp1, 0), 1.5);
-    const w = Math.sin(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
-      + Math.cos(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
-      + Math.sin(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
-      + (nHill - 0.48) * hillAmp;
+    const w = sinT(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
+      + cosT(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
+      + sinT(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
+      + (nHill - 0.5) * hillAmp;
     return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
   }
 
   initGround() {
-    this.groundWaveSeed = Math.random() * 500;
+    this.groundWaveSeed = Math.random() * 6.283185;
     this.groundUniforms = {
       uTime: { value: 0 },
       uOff: { value: new THREE.Vector2() },
@@ -326,6 +356,34 @@ export class LaunchScene {
       uWaveSeed: { value: this.groundWaveSeed },
     };
     const waveGLSL = /* glsl */`
+      float sinTau(float rad) {
+        return sin(6.2831853 * fract(rad * 0.15915494));
+      }
+      float cosTau(float rad) {
+        return cos(6.2831853 * fract(rad * 0.15915494));
+      }
+      float trigFbm(float px, float py, float seed, int oct) {
+        float x = px, y = py, s = 0.0, a = 0.5, norm = 0.0;
+        float ph = seed * 0.173;
+        for (int i = 0; i < 6; i++) {
+          if (i >= oct) break;
+          float u1 = fract(x * 0.15915494 + y * 0.09188815 + ph);
+          float u2 = fract(x * -0.11253954 + y * 0.13783222 + ph * 1.618 + 0.37);
+          float u3 = fract((x + y) * 0.1031 + ph * 0.73 + 0.61);
+          float n = (sin(6.2831853 * u1) + cos(6.2831853 * u2) + 0.6 * sin(6.2831853 * u3)) * 0.38461538;
+          s += a * (n * 0.5 + 0.5);
+          norm += a;
+          float nx = x * 1.62 - y * 1.18 + 0.71;
+          float ny = x * 1.18 + y * 1.62 + 1.39;
+          x = nx; y = ny;
+          ph = ph * 1.37 + 0.29;
+          a *= 0.52;
+        }
+        return s / norm;
+      }
+      float lagoonNoiseGLSL(float sx, float sz) {
+        return trigFbm(sx * 0.0022, -sz * 0.0022, 11.0, 4);
+      }
       float airportBoxDistGLSL(float sx, float sz) {
         float d0 = max(max(-260.0 - sx, sx - 2460.0), max(-190.0 - sz, sz - 130.0));
         float d1 = max(max(-260.0 - (sx + 25000.0), (sx + 25000.0) - 2460.0), max(-190.0 - (sz + 14000.0), (sz + 14000.0) - 130.0));
@@ -343,18 +401,18 @@ export class LaunchScene {
         float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
         float boxDist = airportBoxDistGLSL(sx, sz);
         float rwyFlat = smoothstep(0.0, 70.0, boxDist);
-        float lagoonFlat = 1.0 - smoothstep(0.64, 0.67, fbm3(vec3(p * 0.0007, 11.0), 5)) * step(p.x, 2300.0);
-        float nAmp1 = fbm3(vec3(sx * 0.0085, sz * 0.0085, uWaveSeed + 3.7), 3);
-        float nAmp2 = fbm3(vec3(sx * 0.021, sz * 0.021, uWaveSeed + 17.3), 2);
-        float nHill = fbm3(vec3(sx * 0.013, sz * 0.013, uWaveSeed + 31.9), 3);
-        float warp = (fbm3(vec3(sx * 0.006, sz * 0.006, uWaveSeed + 47.1), 2) - 0.5) * 4.2;
+        float lagoonFlat = 1.0 - smoothstep(0.66, 0.70, lagoonNoiseGLSL(sx, sz)) * step(p.x, 2300.0);
+        float nAmp1 = trigFbm(sx * 0.014, sz * 0.014, uWaveSeed + 3.7, 3);
+        float nAmp2 = trigFbm(sx * 0.032, sz * 0.032, uWaveSeed + 17.3, 2);
+        float nHill = trigFbm(sx * 0.020, sz * 0.020, uWaveSeed + 31.9, 3);
+        float warp = (trigFbm(sx * 0.009, sz * 0.009, uWaveSeed + 47.1, 2) - 0.5) * 4.2;
         float amp1 = 0.12 + 3.4 * pow(max(nAmp1, 0.0), 1.7);
         float amp2 = 0.08 + 2.8 * pow(max(nAmp2, 0.0), 1.6);
         float hillAmp = 0.15 + 4.2 * pow(max(nAmp1, 0.0), 1.5);
-        float w = sin(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
-                + cos(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
-                + sin(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
-                + (nHill - 0.48) * hillAmp;
+        float w = sinTau(sx * 0.028 + sz * 0.022 + warp) * 0.65 * amp1
+                + cosTau(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
+                + sinTau(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
+                + (nHill - 0.5) * hillAmp;
         return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
       }
     `;
@@ -406,7 +464,7 @@ export class LaunchScene {
           float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 24000.0);
           float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 32000.0);
           float lagoon = max(
-            smoothstep(0.66, 0.68, fbm3(vec3(p * 0.0007, 11.0), 5)) * step(p.x, coast - 300.0),
+            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, coast - 300.0),
             max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
           ) * apDry;
           landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
@@ -513,7 +571,7 @@ export class LaunchScene {
     // cloud layer
     this.cloudMat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, side: THREE.DoubleSide,
-      uniforms: { uOff: { value: this.groundUniforms.uOff.value }, uBend: { value: BEND }, uTime: { value: 0 }, uSunCol: { value: new THREE.Color(1, 0.9, 0.8) }, uFogColor: { value: new THREE.Color() }, uSun: { value: this.sunDir } },
+      uniforms: { uOff: { value: new THREE.Vector2() }, uBend: { value: BEND }, uTime: { value: 0 }, uSunCol: { value: new THREE.Color(1, 0.9, 0.8) }, uFogColor: { value: new THREE.Color() }, uSun: { value: this.sunDir } },
       vertexShader: /* glsl */`
         varying vec2 vP; varying vec3 vW;
         uniform vec2 uOff; uniform float uBend; varying vec2 vL;
@@ -678,7 +736,7 @@ export class LaunchScene {
   }
 
   randomizeGroundWaves() {
-    this.groundWaveSeed = Math.random() * 500;
+    this.groundWaveSeed = Math.random() * 6.283185;
     if (this.groundUniforms && this.groundUniforms.uWaveSeed) {
       this.groundUniforms.uWaveSeed.value = this.groundWaveSeed;
     }
@@ -6804,7 +6862,7 @@ export class LaunchScene {
       } else if (v.isRover || v.isBoat) {
         const pitch = v.beta - phi;
         const yaw = Math.PI / 2 + (v.heading || 0);
-        const roll = (v.ctl?.input || 0) * 0.06;
+        const roll = (v.isRover ? (v.terrainRoll || 0) : 0) + (v.ctl?.input || 0) * (v.isRover ? 0.04 : 0.06);
         v.root.rotation.set(-pitch, yaw, roll, 'YXZ');
       } else {
         if (v.dir3D) {
@@ -7259,11 +7317,15 @@ export class LaunchScene {
     this.ship.visible = near && this.shipX !== null;
     this.trees.visible = near && F.alt < 20000;
     this.clouds.visible = near;
-    const gx = Math.round(F.sx / 200) * 200;
-    const gz = Math.round((S.z || 0) / 200) * 200;
+    const gSnap = F.alt < 250 ? 4 : 200;
+    const gx = Math.round(F.sx / gSnap) * gSnap;
+    const gz = Math.round((S.z || 0) / gSnap) * gSnap;
+    const cx = Math.round(F.sx / 200) * 200;
+    const cz = Math.round((S.z || 0) / 200) * 200;
     this.ground.position.set(gx, 0, gz);
-    this.clouds.position.set(gx, 2800, gz);
     this.groundUniforms.uOff.value.set(gx, -gz);
+    this.clouds.position.set(cx, 2800, cz);
+    this.cloudMat.uniforms.uOff.value.set(cx, -cz);
     // sun light follows the focus
     this.sun.position.copy(this.sunDir).multiplyScalar(400);
     this.sun.target.position.set(0, 0, 0);

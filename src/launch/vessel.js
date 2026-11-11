@@ -92,7 +92,7 @@ export class Vessel {
         m += pm; my += pm * (p.y + p.def.height / 2);
         minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.def.height);
         if (p.item.attach && p.item.attach.includes('wheelsRover')) {
-          minY = Math.min(minY, p.y - 0.32);
+          minY = Math.min(minY, p.y - 0.365);
         }
         for (const a of p.item.attach) {
           if (a === 'booster') continue;
@@ -630,10 +630,19 @@ export class Vessel {
           if (!this.roverDistByBody) this.roverDistByBody = {};
           this.roverDistByBody[this.ref] = (this.roverDistByBody[this.ref] || 0) + stepDist;
         }
-        const surfAhead = env.surface({ ...this, sx: newSx + 2.5 * cosH, s: { ...this.s, z: newZ - 2.5 * sinH } });
-        const slopePitch = Math.atan2(surfAhead.h - surf.h, 2.5);
-        const targetH = surf.h + this.bottomOffset();
+        const wheelLz = 0.95;
+        const wheelLx = 1.35;
+        const hF = env.surface({ ...this, sx: newSx + wheelLz * cosH, s: { ...this.s, z: newZ - wheelLz * sinH } }).h;
+        const hB = env.surface({ ...this, sx: newSx - wheelLz * cosH, s: { ...this.s, z: newZ + wheelLz * sinH } }).h;
+        const hL = env.surface({ ...this, sx: newSx - wheelLx * sinH, s: { ...this.s, z: newZ - wheelLx * cosH } }).h;
+        const hR = env.surface({ ...this, sx: newSx + wheelLx * sinH, s: { ...this.s, z: newZ + wheelLx * cosH } }).h;
+        const slopePitch = Math.atan2(hF - hB, 2 * wheelLz);
+        const slopeRoll = THREE.MathUtils.clamp(Math.atan2(hL - hR, 2 * wheelLx), -0.55, 0.55);
+        this.terrainRoll = slopeRoll;
         const pitchUp = THREE.MathUtils.clamp(slopePitch + drive * 0.025, -0.65, 0.65);
+        const wheelPlaneH = (hF + hB + hL + hR) * 0.25;
+        const baseSurfH = Math.max(surf.h, wheelPlaneH);
+        const targetH = baseSurfH + this.bottomOffset() * Math.cos(pitchUp) * Math.cos(slopeRoll);
         const targetBeta = this.phi + pitchUp;
         this.beta = targetBeta;
         this.omega = 0;

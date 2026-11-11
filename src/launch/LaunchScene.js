@@ -6788,7 +6788,8 @@ export class LaunchScene {
         if (wg) {
           wg.rotation.order = 'YXZ';
           const sideSign = wo.userData.sideSign || 1;
-          wg.rotation.x += spd * 0.05 * sideSign;
+          const spinScale = v && v.isRover ? 0.10 : 0.05;
+          wg.rotation.x += spd * spinScale * sideSign;
           const targetSteer = wo.userData.isFront ? (-steer * 0.42) : 0;
           wg.rotation.y += (targetSteer - wg.rotation.y) * 0.25;
         }

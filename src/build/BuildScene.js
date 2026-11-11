@@ -1217,7 +1217,8 @@ export class BuildScene {
   }
 
   screenOf(y) {
-    const v = new THREE.Vector3(0, y, 0).project(this.camera);
+    const baseY = this.rocket?.root?.position?.y || 0;
+    const v = new THREE.Vector3(0, y + baseY, 0).project(this.camera);
     return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight];
   }
 
@@ -1677,6 +1678,8 @@ export class BuildScene {
       this.rocket.root.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
     }
     this.rocket = buildRocket(stack);
+    const hasBottomRoverWheels = !!(stack.length && stack[stack.length - 1]?.attach?.includes('wheelsRover'));
+    this.rocket.root.position.y = hasBottomRoverWheels ? 0.225 : 0;
     this.rocketHolder.add(this.rocket.root);
     if (highlight) {
       this.rocket.root.traverse((o) => {

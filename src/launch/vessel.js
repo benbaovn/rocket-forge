@@ -92,7 +92,7 @@ export class Vessel {
         m += pm; my += pm * (p.y + p.def.height / 2);
         minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.def.height);
         if (p.item.attach && p.item.attach.includes('wheelsRover')) {
-          minY = Math.min(minY, p.y - 0.365);
+          minY = Math.min(minY, p.y - 0.205);
         }
         for (const a of p.item.attach) {
           if (a === 'booster') continue;
@@ -630,8 +630,8 @@ export class Vessel {
           if (!this.roverDistByBody) this.roverDistByBody = {};
           this.roverDistByBody[this.ref] = (this.roverDistByBody[this.ref] || 0) + stepDist;
         }
-        const wheelLz = 0.95;
-        const wheelLx = 1.35;
+        const wheelLz = 0.72;
+        const wheelLx = 1.50;
         const hF = env.surface({ ...this, sx: newSx + wheelLz * cosH, s: { ...this.s, z: newZ - wheelLz * sinH } }).h;
         const hB = env.surface({ ...this, sx: newSx - wheelLz * cosH, s: { ...this.s, z: newZ + wheelLz * sinH } }).h;
         const hL = env.surface({ ...this, sx: newSx - wheelLx * sinH, s: { ...this.s, z: newZ - wheelLx * cosH } }).h;

@@ -1294,45 +1294,50 @@ function buildChassisRover() {
 
 function buildWheelsRover() {
   const g = new THREE.Group();
-  // Suspension arm extending from chassis outwards
-  const armGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.52, 12).rotateZ(Math.PI / 2);
-  g.add(mesh(armGeo, MAT.darkMetal, 0.24, 0, 0));
+  // Angled suspension wishbone arm extending from chassis (0, 0, 0) down to hub (0.32, -0.14, 0)
+  const arm = mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.36, 12).rotateZ(Math.PI / 2), MAT.darkMetal, 0.16, -0.07, 0);
+  arm.rotation.z = -0.41;
+  g.add(arm);
 
-  // Shock absorber / spring
-  const springGeo = new THREE.TorusGeometry(0.075, 0.022, 8, 24).rotateX(Math.PI / 2);
-  for (let y = -0.14; y <= 0.14; y += 0.07) g.add(mesh(springGeo, MAT.orange, 0.22, y, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.48, 12), MAT.silver, 0.22, 0, 0));
+  // Compact coilover shock absorber / spring (2x smaller scale)
+  const strutGrp = new THREE.Group();
+  strutGrp.position.set(0.18, -0.02, 0);
+  strutGrp.rotation.z = 0.28;
+  const springGeo = new THREE.TorusGeometry(0.038, 0.011, 8, 20).rotateX(Math.PI / 2);
+  for (let y = -0.07; y <= 0.07; y += 0.035) strutGrp.add(mesh(springGeo, MAT.orange, 0, y, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.24, 12), MAT.silver, 0, 0, 0));
+  g.add(strutGrp);
 
-  // Wheel hub & rotating wheel group
+  // Wheel hub & rotating wheel group (2x smaller wheel radius & width)
   const wheelGroup = new THREE.Group();
-  wheelGroup.position.set(0.5, 0, 0);
+  wheelGroup.position.set(0.32, -0.14, 0);
   g.add(wheelGroup);
   g.userData.wheelGroup = wheelGroup;
 
-  // Off-road tire
-  const tireRadius = 0.54, tireWidth = 0.36;
+  // Off-road tire (half size: radius 0.27, width 0.18)
+  const tireRadius = 0.27, tireWidth = 0.18;
   const tireGeo = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, 32, 1, false).rotateZ(Math.PI / 2);
   wheelGroup.add(mesh(tireGeo, MAT.rubber, 0, 0, 0));
 
-  // Deep tire treads
-  const treadGeo = new THREE.BoxGeometry(tireWidth * 0.9, 0.038, 0.08);
+  // Deep tire treads (half size)
+  const treadGeo = new THREE.BoxGeometry(tireWidth * 0.9, 0.019, 0.04);
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2;
-    const tr = mesh(treadGeo, MAT.darkMetal, 0, Math.sin(a) * (tireRadius + 0.012), Math.cos(a) * (tireRadius + 0.012));
+    const tr = mesh(treadGeo, MAT.darkMetal, 0, Math.sin(a) * (tireRadius + 0.006), Math.cos(a) * (tireRadius + 0.006));
     tr.rotation.x = -a;
     wheelGroup.add(tr);
   }
 
-  // Alloy rim & spokes
-  const rimGeo = new THREE.CylinderGeometry(0.34, 0.34, tireWidth + 0.01, 24).rotateZ(Math.PI / 2);
+  // Alloy rim & spokes (half size)
+  const rimGeo = new THREE.CylinderGeometry(0.17, 0.17, tireWidth + 0.005, 24).rotateZ(Math.PI / 2);
   wheelGroup.add(mesh(rimGeo, MAT.metal, 0, 0, 0));
 
-  // Hub cap & lug nuts
-  const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, tireWidth + 0.03, 16).rotateZ(Math.PI / 2);
+  // Hub cap & lug nuts (half size)
+  const hubGeo = new THREE.CylinderGeometry(0.065, 0.065, tireWidth + 0.015, 16).rotateZ(Math.PI / 2);
   wheelGroup.add(mesh(hubGeo, MAT.titanium, 0, 0, 0));
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2;
-    const nut = mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 6).rotateZ(Math.PI / 2), MAT.silver, tireWidth / 2 + 0.02, Math.sin(a) * 0.085, Math.cos(a) * 0.085);
+    const nut = mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.015, 6).rotateZ(Math.PI / 2), MAT.silver, tireWidth / 2 + 0.01, Math.sin(a) * 0.0425, Math.cos(a) * 0.0425);
     wheelGroup.add(nut);
   }
 

@@ -425,16 +425,26 @@
       <button class="btn wide" data-act="build">🛠️ Back to VAB</button>
       <button class="btn wide" data-act="settings">📊 GPU &amp; Settings</button>
       <div class="setting">
+        <div class="setting-hdr">
+          <label id="lbl-volume-1" for="vol-slider-1">🔊 Volume</label>
+          <span class="vol-pct" id="vol-val-1">100%</span>
+        </div>
+        <div class="vol-row">
+          <button type="button" class="vol-mute-btn" id="btn-mute-1" data-vol-mute title="Mute / Unmute">🔊</button>
+          <input type="range" class="vol-slider" id="vol-slider-1" data-vol-slider min="0" max="100" step="1" value="100">
+        </div>
+      </div>
+      <div class="setting">
         <label id="lbl-quality-1">Graphics Quality</label>
         <div class="seg" id="quality-seg">
           <button data-q="rtx" class="rtx-btn">⚡ RTX 4070 Ti</button><button data-q="ultra">Ultra</button><button data-q="high">High</button><button data-q="medium">Medium</button>
         </div>
       </div>
       <div class="setting">
-        <label id="lbl-lang-1">Language / Ngôn ngữ</label>
+        <label id="lbl-lang-1">Language</label>
         <div class="seg" id="lang-seg">
           <button type="button" id="btn-menu-lang-en" data-lang="en" class="on">🇬🇧 English</button>
-          <button type="button" id="btn-menu-lang-vi" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button type="button" id="btn-menu-lang-vi" data-lang="vi">🇻🇳 Vietnamese</button>
         </div>
       </div>
     </div>
@@ -454,16 +464,26 @@
         <div class="gpu-card-row"><span id="lbl-gpu-perf">Live Performance</span><b id="gpu-perf">— FPS · — Draw Calls</b></div>
       </div>
       <div class="setting">
+        <div class="setting-hdr">
+          <label id="lbl-volume-2" for="vol-slider-2">🔊 Volume</label>
+          <span class="vol-pct" id="vol-val-2">100%</span>
+        </div>
+        <div class="vol-row">
+          <button type="button" class="vol-mute-btn" id="btn-mute-2" data-vol-mute title="Mute / Unmute">🔊</button>
+          <input type="range" class="vol-slider" id="vol-slider-2" data-vol-slider min="0" max="100" step="1" value="100">
+        </div>
+      </div>
+      <div class="setting">
         <label id="lbl-quality-2">Graphics Quality</label>
         <div class="seg" id="quality-seg2">
           <button data-q="rtx" class="rtx-btn">⚡ RTX 4070 Ti</button><button data-q="ultra">Ultra</button><button data-q="high">High</button><button data-q="medium">Medium</button>
         </div>
       </div>
       <div class="setting">
-        <label id="lbl-lang-2">Language / Ngôn ngữ</label>
+        <label id="lbl-lang-2">Language</label>
         <div class="seg" id="lang-seg2">
           <button type="button" id="btn-lang-en" data-lang="en" class="on">🇬🇧 English</button>
-          <button type="button" id="btn-lang-vi" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button type="button" id="btn-lang-vi" data-lang="vi">🇻🇳 Vietnamese</button>
         </div>
       </div>
       <button class="btn wide" id="btn-settings-close">Close</button>

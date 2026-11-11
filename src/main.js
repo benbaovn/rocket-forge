@@ -377,6 +377,21 @@ class App {
     audio.click();
   }
 
+  syncVolumeUI() {
+    const pct = audio.getVolumePercent();
+    const icon = pct === 0 ? '🔇' : pct < 35 ? '🔈' : pct < 70 ? '🔉' : '🔊';
+    document.querySelectorAll('[data-vol-slider]').forEach((el) => {
+      el.value = String(pct);
+      el.style.setProperty('--vol-pct', `${pct}%`);
+    });
+    document.querySelectorAll('[data-vol-mute]').forEach((btn) => {
+      btn.textContent = icon;
+      btn.classList.toggle('muted', pct === 0);
+    });
+    if ($('vol-val-1')) $('vol-val-1').textContent = `${pct}%`;
+    if ($('vol-val-2')) $('vol-val-2').textContent = `${pct}%`;
+  }
+
   initMenus() {
     const act = (a) => {
       $('menu').classList.add('hidden');
@@ -392,6 +407,25 @@ class App {
       this.applyLanguage(b.dataset.lang);
       audio.click();
     }));
+    document.querySelectorAll('[data-vol-slider]').forEach((el) => {
+      el.addEventListener('input', () => {
+        audio.init();
+        audio.setVolume(Number(el.value) / 100);
+        this.syncVolumeUI();
+      });
+      el.addEventListener('change', () => {
+        if (audio.getVolumePercent() > 0) audio.click();
+      });
+    });
+    document.querySelectorAll('[data-vol-mute]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.init();
+        audio.toggleMute();
+        this.syncVolumeUI();
+        if (audio.getVolumePercent() > 0) audio.click();
+      });
+    });
+    this.syncVolumeUI();
     if ($('btn-menu-x')) $('btn-menu-x').onclick = () => { audio.click(); this.toggleMenu(false); };
     if ($('menu')) {
       $('menu').addEventListener('click', (e) => {

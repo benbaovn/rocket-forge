@@ -1,6 +1,53 @@
 // Synthesized audio (Web Audio API) – no audio files required
 class AudioEngine {
-  constructor() { this.ctx = null; this.enabled = true; }
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+    let savedVol = 1;
+    let savedMuted = false;
+    try {
+      const sv = localStorage.getItem('rf_volume');
+      if (sv !== null && !Number.isNaN(Number(sv))) {
+        savedVol = Math.max(0, Math.min(1, Number(sv)));
+      }
+      savedMuted = localStorage.getItem('rf_muted') === '1';
+    } catch (_) {}
+    this.volume = savedVol;
+    this.prevVolume = savedVol > 0.02 ? savedVol : 1;
+    this.muted = savedMuted;
+  }
+
+  getVolumePercent() {
+    return this.muted ? 0 : Math.round(this.volume * 100);
+  }
+
+  setVolume(vol) {
+    const v = Math.max(0, Math.min(1, Number(vol) || 0));
+    this.volume = v;
+    if (v > 0.001) {
+      this.muted = false;
+      this.prevVolume = v;
+    } else {
+      this.muted = true;
+    }
+    try {
+      localStorage.setItem('rf_volume', String(v));
+      localStorage.setItem('rf_muted', this.muted ? '1' : '0');
+    } catch (_) {}
+    if (this.ctx && this.master) {
+      const targetGain = (this.muted ? 0 : this.volume) * 0.8;
+      this.master.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.02);
+    }
+  }
+
+  toggleMute() {
+    if (this.muted || this.volume <= 0.001) {
+      this.setVolume(this.prevVolume > 0.02 ? this.prevVolume : 1);
+    } else {
+      this.prevVolume = this.volume;
+      this.setVolume(0);
+    }
+  }
 
   init() {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -8,7 +55,7 @@ class AudioEngine {
     if (!AC) return;
     const ctx = this.ctx = new AC();
     this.master = ctx.createGain();
-    this.master.gain.value = 0.8;
+    this.master.gain.value = (this.muted ? 0 : this.volume) * 0.8;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp).connect(ctx.destination);
@@ -198,7 +245,7 @@ class AudioEngine {
     const t = this.ctx.currentTime;
     // 1,000,000 WATT high-voltage Tesla arc crackle + FM buzz
     const s = this.ctx.createBufferSource();
-    s.buffer = this.pink;
+    s.buffer = this.white;
     const f = this.ctx.createBiquadFilter();
     f.type = 'highpass';
     f.frequency.setValueAtTime(2200, t);

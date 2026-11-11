@@ -1823,12 +1823,16 @@ export function applyLanguage(lang, app) {
   setTxt('#menu [data-act="restart"]', '🔁 Phóng lại', '🔁 Relaunch');
   setTxt('#menu [data-act="build"]', '🛠️ Về VAB', '🛠️ Back to VAB');
   setTxt('#menu [data-act="settings"]', '📊 Thông tin GPU & Cài đặt', '📊 GPU & Settings');
+  setTxt('#lbl-volume-1', '🔊 Âm lượng', '🔊 Volume');
+  setAttr('#btn-mute-1', 'title', 'Tắt / Bật âm thanh', 'Mute / Unmute');
   setTxt('#lbl-quality-1', 'Đồ họa', 'Graphics Quality');
-  setTxt('#lbl-lang-1', 'Ngôn ngữ / Language', 'Language / Ngôn ngữ');
+  setTxt('#lbl-lang-1', 'Ngôn ngữ', 'Language');
 
   setTxt('#settings h2', '⚙ Cài đặt', '⚙ Settings');
+  setTxt('#lbl-volume-2', '🔊 Âm lượng', '🔊 Volume');
+  setAttr('#btn-mute-2', 'title', 'Tắt / Bật âm thanh', 'Mute / Unmute');
   setTxt('#lbl-quality-2', 'Đồ họa', 'Graphics Quality');
-  setTxt('#lbl-lang-2', 'Ngôn ngữ / Language', 'Language / Ngôn ngữ');
+  setTxt('#lbl-lang-2', 'Ngôn ngữ', 'Language');
   setTxt('#lbl-gpu-api', 'Phần cứng', 'API & Hardware');
   setTxt('#lbl-gpu-pipe', 'Pipeline', 'Render Pipeline');
   setTxt('#lbl-gpu-perf', 'Hiệu năng', 'Live Performance');
@@ -1836,10 +1840,10 @@ export function applyLanguage(lang, app) {
   setAttr('#gpu-launch-badge', 'title', 'GPU & FPS (O)', 'GPU & FPS (O)');
   setTxt('#btn-settings-close', 'Đóng', 'Close');
 
-  setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt');
-  setTxt('#btn-lang-en', '🇬🇧 English', '🇬🇧 English');
-  setTxt('#btn-menu-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Tiếng Việt');
-  setTxt('#btn-menu-lang-en', '🇬🇧 English', '🇬🇧 English');
+  setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Vietnamese');
+  setTxt('#btn-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English');
+  setTxt('#btn-menu-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Vietnamese');
+  setTxt('#btn-menu-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English');
 
   const resLabels = document.querySelectorAll('#result .stat-grid .stat label');
   if (resLabels.length >= 4) {

@@ -2117,7 +2117,7 @@ export class LaunchScene {
       rightArm.rotation.z = -2.35;
       g.add(leftArm, rightArm);
 
-      g.scale.setScalar(1.15);
+      g.scale.setScalar(1.15 / 3);
       g.userData = { leftLeg, rightLeg, leftArm, rightArm, phaseOffset: index * 1.17, role: resolvedRole };
       return g;
     }
@@ -2197,7 +2197,7 @@ export class LaunchScene {
     rightArm.rotation.z = -2.35;
     g.add(leftArm, rightArm);
 
-    g.scale.setScalar(1.15);
+    g.scale.setScalar(1.15 / 3);
     g.userData = { leftLeg, rightLeg, leftArm, rightArm, phaseOffset: index * 1.17, role: resolvedRole };
     return g;
   }
@@ -2433,7 +2433,7 @@ export class LaunchScene {
       m.userData.baseZ = baseZ;
       m.position.set(baseX + startX, baseY, baseZ + startZ);
       m.rotation.set(0, Math.atan2(-startX, (hatchZ + 2.35) - startZ), 0);
-      m.scale.setScalar(1.15);
+      m.scale.setScalar(1.15 / 3);
     }
     this.hatchCloseStartT = this.time + firstWalkDelay + (added - 1) * stagger + boardDur + 0.12;
     audio.thunk(0.55);
@@ -2537,15 +2537,16 @@ export class LaunchScene {
       this.scene.add(mesh);
       const side = idx % 2 === 0 ? 1 : -1;
       const rank = Math.floor(idx / 2);
-      const offsetX = side * (5.5 + rank * 3.2);
-      const offsetZ = hatchZ + 3.2 + (idx % 3) * 1.8;
+      const offsetX = side * (3.6 + rank * 1.6);
+      const offsetZ = hatchZ + 2.8 + (idx % 3) * 1.0;
       const exitStartT = this.time + firstExitDelay + i * stagger;
 
       if (P.ref === 'earth') {
-        const surf = this.surfaceAt(P);
+        const surf = this.surfaceAt({ ...P, sx: P.sx + offsetX, s: { ...P.s, z: (P.s.z || 0) + offsetZ } });
         this.deployedAstronauts.push({
           idx,
           body: 'earth',
+          site: surf.site,
           mode: isSurface ? 'surface' : 'eva',
           sx: P.sx + offsetX,
           z: (P.s.z || 0) + offsetZ,
@@ -7123,11 +7124,11 @@ export class LaunchScene {
           curY = baseY + 0.62 * t2;
           rotY = Math.PI;
         }
-        const hop = Math.abs(Math.sin(elapsed * 16)) * 0.18 * (1 - p * 0.4);
+        const hop = Math.abs(Math.sin(elapsed * 16)) * 0.06 * (1 - p * 0.4);
         m.position.set(baseX + curX, curY + hop, baseZ + curZ);
         m.rotation.set(0, rotY, 0);
         const shrink = p > 0.78 ? Math.max(0.05, 1 - (p - 0.78) / 0.22) : 1;
-        m.scale.setScalar(1.15 * shrink);
+        m.scale.setScalar((1.15 / 3) * shrink);
         m.visible = true;
 
         const stride = elapsed * 16;
@@ -7211,9 +7212,9 @@ export class LaunchScene {
             rotY = walkDirY * (1 - t2 * 0.72);
           }
 
-          const hop = Math.abs(Math.sin(exitElapsed * 16)) * 0.20;
+          const hop = Math.abs(Math.sin(exitElapsed * 16)) * 0.067;
           const emerge = p < 0.22 ? (0.18 + 0.82 * (p / 0.22)) : 1.0;
-          m.scale.setScalar(1.35 * emerge);
+          m.scale.setScalar((1.35 / 3) * emerge);
           m.position.set(curX, curY + hop, curZ);
           m.rotation.set(0, rotY, surfTiltZ);
           m.visible = true;
@@ -7232,13 +7233,13 @@ export class LaunchScene {
           continue;
         }
 
-        m.scale.setScalar(1.35);
+        m.scale.setScalar(1.35 / 3);
         if (a.dropH > 0) {
           a.dropH = Math.max(0, a.dropH - placeDt * 16);
         }
         const ph = this.time * 4.8 + (m.userData?.phaseOffset || 0);
-        const hopY = a.mode === 'surface' && a.dropH <= 0 ? Math.max(0, Math.sin(ph * 0.85)) * 0.45 : 0;
-        const walkX = a.mode === 'surface' && a.dropH <= 0 ? Math.sin(ph * 0.35) * 1.4 : 0;
+        const hopY = a.mode === 'surface' && a.dropH <= 0 ? Math.max(0, Math.sin(ph * 0.85)) * 0.15 : 0;
+        const walkX = a.mode === 'surface' && a.dropH <= 0 ? Math.sin(ph * 0.35) * 0.6 : 0;
 
         if (m.userData) {
           if (m.userData.rightArm) m.userData.rightArm.rotation.z = -2.35 + Math.sin(ph * 1.2) * 0.42;
@@ -7249,14 +7250,17 @@ export class LaunchScene {
 
         if (a.mode === 'eva') {
           m.visible = true;
-          const bobY = Math.sin(ph * 0.6) * 0.8;
+          const bobY = Math.sin(ph * 0.6) * 0.3;
           m.position.set(a.relX + walkX * 0.4, a.relY + bobY, a.relZ);
           m.rotation.set(Math.sin(ph * 0.3) * 0.15, Math.sin(ph * 0.25) * 0.4, 0);
         } else if (a.body === 'earth') {
           const ok = Math.abs(a.sx - F.sx) < 50000 && F.alt < 50000;
           m.visible = ok;
           if (ok) {
-            m.position.set((a.sx + walkX) - F.sx, (a.h + a.dropH + hopY) - F.alt, a.z - S.z);
+            const liveH = a.site === 'land'
+              ? this.earthGroundWave(a.sx + walkX, a.z, (this.player?.isPlane || this.player?.isRover) ? 0.0 : 1.0, this.player?.isPlane ? 1.0 : 0.0)
+              : a.h;
+            m.position.set((a.sx + walkX) - F.sx, (liveH + a.dropH + hopY) - F.alt, a.z - S.z);
             m.rotation.set(0, Math.sin(ph * 0.3) * 0.35, 0);
           }
         } else {

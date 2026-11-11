@@ -436,7 +436,10 @@ export class BuildScene {
 
   getDefaultRocketName() {
     const vType = stackVehicleType(this.stack);
-    if (vType === 'boat') return tr('Siêu Du Thuyền #1', 'Superyacht #1');
+    if (vType === 'boat') {
+      const isSailBoat = this.stack.some((it) => it.type.includes('SailBoat') || it.attach?.some((a) => a.includes('SailBoat')));
+      return isSailBoat ? tr('Thuyền Buồm Động Cơ #1', 'Motor Sailboat #1') : tr('Siêu Du Thuyền #1', 'Superyacht #1');
+    }
     if (vType === 'plane') return tr('Tiêm Kích Phản Lực #1', 'Fighter Jet #1');
     if (vType === 'rover') return tr('Xe Tự Hành Rover #1', 'Planetary Rover #1');
     return tr('Tên Lửa #1', 'Rocket #1');
@@ -1106,9 +1109,16 @@ export class BuildScene {
       sc.add(obj);
       const box = new THREE.Box3().setFromObject(obj);
       const size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
-      const maxDim = Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
+      const isBoatStackPart = type.endsWith('Boat') && type !== 'floatsBoat';
+      const maxDim = isBoatStackPart
+        ? Math.max(size.x * 1.08, size.y * 0.96, size.z * 0.88)
+        : Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
       const d = maxDim / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * 0.96;
-      cam.position.set(ctr.x + d * 0.24, ctr.y + d * 0.14, ctr.z + d * 0.92);
+      if (isBoatStackPart) {
+        cam.position.set(ctr.x + d * 0.78, ctr.y + d * 0.24, ctr.z + d * 0.56);
+      } else {
+        cam.position.set(ctr.x + d * 0.24, ctr.y + d * 0.14, ctr.z + d * 0.92);
+      }
       cam.lookAt(ctr);
       try {
         r.setRenderTarget(rt);

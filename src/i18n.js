@@ -162,6 +162,18 @@ export const PART_I18N = {
     vi: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Thuyền', desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
     en: { name: 'Trimaran Hydrofoil Sponsons ×2', cat: 'Boat', desc: 'Sleek trimaran sponsons with submerged carbon hydrofoil wings and neon LED strips' },
   },
+  cabinSailBoat: {
+    vi: { name: 'Boong Lái & Cột Trụ Thuyền Buồm (Không Cánh Buồm)', cat: 'Thuyền', desc: 'Khoang kính hiện đại, cặp vô-lăng thuyền buồm carbon và cột trụ khí động đã tháo bỏ cánh buồm, tích hợp radar & cảm biến laser' },
+    en: { name: 'Modern Sailboat Helm & Sail-Free Carbon Mast', cat: 'Boat', desc: 'Panoramic glass coachroof, twin carbon sailboat helm wheels & sleek sail-free carbon wing-mast with radar and laser wind sensors' },
+  },
+  hullSailBoat: {
+    vi: { name: 'Thân Thuyền Buồm Hiện Đại Mũi Rẽ Sóng', cat: 'Thuyền', desc: 'Thân thuyền buồm thể thao hiện đại mũi rẽ sóng sắc gọn, sàn gỗ Teak & Carbon, buồng lái mở và dải đèn LED' },
+    en: { name: 'Modern Wave-Piercing Sailboat Hull', cat: 'Boat', desc: 'Sleek modern performance sailboat hull with plumb wave-piercing bow, carbon bowsprit, slatted teak deck & LED trim' },
+  },
+  motorSailBoat: {
+    vi: { name: 'Động Cơ Thủy Lực Kép & Sống Đáy Thuyền Buồm', cat: 'Thuyền', desc: 'Cặp động cơ Turbo-Jet hiện đại gắn đuôi thuyền buồm kèm chân vịt kép xoay ngược chiều, bánh lái đôi và sống đáy cân bằng' },
+    en: { name: 'Modern Twin Turbo Marine Engine & Sailboat Keel', cat: 'Boat', desc: 'Twin modern stern-mounted turbo-jet marine engines with counter-rotating propellers, twin rudders & hydrodynamic bulb keel' },
+  },
   cockpitPlane: {
     vi: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
     en: { name: 'Fighter Jet Cockpit', cat: 'Aircraft', desc: 'Stealth fighter canopy cockpit with HUD and nose pitot' },
@@ -486,6 +498,7 @@ export const PRESET_ICONS = {
   'Apollo (Mặt Trăng)': '🌖',
   'Xe địa hình Rover 4x4': '🛞',
   'Canô lướt sóng siêu tốc': '🛥️',
+  'Thuyền buồm hiện đại (Gắn động cơ)': '⛵',
   'Tiêm kích phản lực F-22': '✈️',
   'Tàu Phản Trọng Lực Lượng Tử': '⚛️',
   'Tàu Chiến Lazer Liên Hành Tinh': '🔫',
@@ -519,6 +532,7 @@ export const PRESET_LABELS = {
   'Apollo (Mặt Trăng)': { vi: 'Apollo (Mặt Trăng)', en: 'Apollo (Moon & Planets)' },
   'Xe địa hình Rover 4x4': { vi: 'Xe địa hình Rover 4x4', en: '4x4 Planetary Rover' },
   'Canô lướt sóng siêu tốc': { vi: 'Siêu Du Thuyền Du Lịch Tương Lai', en: 'Futuristic Luxury Cruise Superyacht' },
+  'Thuyền buồm hiện đại (Gắn động cơ)': { vi: 'Thuyền Buồm Hiện Đại (Không Buồm · Gắn Động Cơ)', en: 'Modern Motorized Sailboat (Sail-Free)' },
   'Tiêm kích phản lực F-22': { vi: 'Tiêm kích phản lực F-22', en: 'F-22 Raptor Fighter Jet' },
   'Tàu Phản Trọng Lực Lượng Tử': { vi: 'Tàu Phản Trọng Lực Lượng Tử', en: 'Quantum Anti-Gravity Ship' },
   'Tàu Chiến Lazer Liên Hành Tinh': { vi: 'Tàu Chiến Lazer Liên Hành Tinh', en: 'Interplanetary Laser Cruiser' },

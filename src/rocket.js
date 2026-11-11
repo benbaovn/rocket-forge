@@ -64,6 +64,18 @@ export function isWeaponPart(type) {
   return type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric';
 }
 
+export function isBoatCabinPart(type) {
+  return type === 'cabinBoat' || type === 'cabinSailBoat';
+}
+
+export function isBoatHullPart(type) {
+  return type === 'hullBoat' || type === 'hullSailBoat';
+}
+
+export function isBoatMotorPart(type) {
+  return type === 'motorBoat' || type === 'motorSailBoat';
+}
+
 export function isBigBatteryPart(type) {
   if (!type || !PARTS[type]) return false;
   return type === 'batteryPack' || type === 'batteryPackL' || type === 'ufoSaucer' || type === 'chassisRover' || !!PARTS[type].isBattery;
@@ -218,6 +230,7 @@ export const PRESETS = {
   'Apollo (Mặt Trăng)': ['apollo11CM+gunLaser+waterCannon+batteryGun', 'apollo11SM+gunLaser+waterCannon+batteryGun', 'apollo11SLA', 'apollo11S4B', 'apollo11S4BInter', 'apollo11S2', 'apollo11S2Inter', 'apollo11S1'],
   'Xe địa hình Rover 4x4': ['cockpitRover', 'chassisRover+wheelsRover+solarRover+gunLaser+waterCannon'],
   'Canô lướt sóng siêu tốc': ['cabinBoat', 'hullBoat+floatsBoat+solarPanel', 'motorBoat'],
+  'Thuyền buồm hiện đại (Gắn động cơ)': ['cabinSailBoat', 'hullSailBoat+solarPanel', 'motorSailBoat'],
   'Tiêm kích phản lực F-22': ['cockpitPlane', 'fuselagePlane+wingsPlane+gearPlane+gunLaser+waterCannon+batteryGun', 'tailPlane', 'engJet'],
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
@@ -229,7 +242,7 @@ export function ensureStackHasWeapons(stack) {
   if (!Array.isArray(stack) || !stack.length) return stack;
   const isBoatStack = stack.some((it) => it.type.includes('Boat') || (it.attach && it.attach.some((a) => a.includes('Boat'))));
   if (isBoatStack) {
-    const boatHull = stack.find((it) => it.type === 'hullBoat');
+    const boatHull = stack.find((it) => isBoatHullPart(it.type));
     if (boatHull && !stack.some((it) => it.attach && (it.attach.includes('solarPanel') || it.attach.includes('solarRover')))) {
       boatHull.attach.push('solarPanel');
     }
@@ -350,7 +363,7 @@ export function segmentInfo(stack, idx) {
       s.engCount += d.engines || 1;
       if (d.restart) s.restart = true;
     }
-    const isBatPart = it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery || it.type === 'chassisRover' || it.type === 'hullBoat';
+    const isBatPart = it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery || it.type === 'chassisRover' || isBoatHullPart(it.type);
     const hasRadialBat = it.attach.some((a) => a === 'batteryPack' || a === 'batteryPackL' || PARTS[a]?.isBattery);
     for (const a of it.attach) {
       const ad = PARTS[a];
@@ -367,7 +380,7 @@ export function segmentInfo(stack, idx) {
         s.hasSolar = true;
         if (isBatPart || hasRadialBat || it.attach.includes('batteryGun')) {
           s.solarOnBattery += 1;
-          if (it.type === 'hullBoat' && s.batteryCount === 0) s.batteryCount += 1;
+          if (isBoatHullPart(it.type) && s.batteryCount === 0) s.batteryCount += 1;
         }
       }
       if (a === 'booster') {
@@ -407,7 +420,7 @@ export function segmentInfo(stack, idx) {
       }
     }
   }
-  const hasMotorBoat = idx.some((i) => stack[i]?.type === 'motorBoat' || stack[i]?.attach?.includes('motorBoat'));
+  const hasMotorBoat = idx.some((i) => isBoatMotorPart(stack[i]?.type) || stack[i]?.attach?.some(isBoatMotorPart));
   if (hasMotorBoat && s.chemFuel <= 0) {
     s.chemFuel = 4.5;
   }
@@ -492,10 +505,10 @@ export function computeStats(stack) {
     if (!stack.some((it) => it.type === 'cockpitRover')) warnings.push(tr('Xe Rover nên có Cabin xe để điều khiển.', 'Rover should have a Rover Cockpit to steer.'));
     if (!stack.some((it) => it.attach.includes('wheelsRover'))) warnings.push(tr('Xe Rover cần gắn Bánh xe địa hình ×4 để di chuyển.', 'Rover needs Off-Road Wheels ×4 to drive.'));
   } else if (isBoat) {
-    if (!stack.some((it) => it.type === 'cabinBoat')) warnings.push(tr('Thuyền nên có Đài Chỉ Huy & Sky-Lounge để lái.', 'Boat should have a Superyacht Bridge & Sky-Lounge to steer.'));
-    if (!stack.some((it) => it.type === 'hullBoat')) warnings.push(tr('Thuyền cần có Thân Siêu Du Thuyền để nổi và lướt sóng.', 'Boat needs a Superyacht Hull to float on water.'));
-    if (!stack.some((it) => it.type === 'motorBoat' || it.attach.includes('motorBoat'))) {
-      warnings.push(tr('Thuyền chưa có Động Cơ Hydro-Jet & Chân Vịt Kép!', 'Boat has no Twin Azimuth Pod & Plasma Hydro-Jet Engine!'));
+    if (!stack.some((it) => isBoatCabinPart(it.type))) warnings.push(tr('Thuyền nên có Đài Chỉ Huy / Boong Lái để điều khiển.', 'Boat should have a Bridge or Helm Deck to steer.'));
+    if (!stack.some((it) => isBoatHullPart(it.type))) warnings.push(tr('Thuyền cần có Thân Thuyền / Du Thuyền để nổi và lướt sóng.', 'Boat needs a Boat / Yacht Hull to float on water.'));
+    if (!stack.some((it) => isBoatMotorPart(it.type) || it.attach.some(isBoatMotorPart))) {
+      warnings.push(tr('Thuyền chưa có Động Cơ Thủy Lực & Chân Vịt!', 'Boat has no Marine Hydro-Jet / Propeller Engine!'));
     }
   } else if (isPlane) {
     if (!stack.some((it) => it.type === 'cockpitPlane')) warnings.push(tr('Máy bay nên có Buồng lái tiêm kích để quan sát và điều khiển.', 'Aircraft should have a Fighter Jet Cockpit.'));
@@ -549,7 +562,7 @@ export function computeStats(stack) {
     (st1Info.bTSL > 0 && st1Info.bFuel > 0) ||
     st1HasRoverDrive
   );
-  const hasMotorBoat = stack.some((it) => it.type === 'motorBoat' || it.attach.includes('motorBoat'));
+  const hasMotorBoat = stack.some((it) => isBoatMotorPart(it.type) || it.attach.some(isBoatMotorPart));
   const canLaunch = stack.length > 0 && (isBoat ? hasMotorBoat : st1HasEngineAndFuel);
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
 }
@@ -720,8 +733,9 @@ export function buildRocket(stack) {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.65; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'solarPanel') {
           const isBoatHull = p.item.type === 'hullBoat';
-          posX = Math.cos(pl.angle) * (isBoatHull ? 1.12 : pl.dist);
-          posY = p.y + p.def.height * (isBoatHull ? 0.96 : 0.55);
+          const isSailHull = p.item.type === 'hullSailBoat';
+          posX = Math.cos(pl.angle) * (isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist);
+          posY = p.y + p.def.height * ((isBoatHull || isSailHull) ? 0.96 : 0.55);
           posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
           const gc = getGunPlacementCoords(p.item.type, p.def.height, p.y, a, pl);

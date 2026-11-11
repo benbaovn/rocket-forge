@@ -42,6 +42,9 @@ export const PARTS = {
   hullBoat: { name: 'Thân Siêu Du Thuyền Du Lịch', cat: 'Thuyền', kind: 'stack', height: 1.6, dry: 1.3, fuel: 4.5, desc: 'Thân du thuyền siêu hiện đại có mũi rẽ sóng, hồ bơi vô cực Jacuzzi, bãi đáp trực thăng và dải đèn LED' },
   motorBoat: { name: 'Động Cơ Hydro-Jet & Chân Vịt Kép', cat: 'Thuyền', kind: 'stack', height: 1.4, dry: 0.4, thrustSL: 320, thrustVac: 320, ispSL: 800, ispVac: 400, engines: 1, desc: 'Đáy ngầm khí động học tích hợp cặp chân vịt Azimuth Pod và họng đẩy phản lực nước Plasma' },
   floatsBoat: { name: 'Cánh Ngầm Hydrofoil & Phao Trimaran ×2', cat: 'Thuyền', kind: 'radial', count: 2, dry: 0.18, desc: 'Cặp phao khí động Trimaran kết hợp cánh ngầm Hydrofoil phát sáng giúp siêu du thuyền lướt êm trên sóng' },
+  cabinSailBoat: { name: 'Boong Lái & Cột Trụ Thuyền Buồm (Không Cánh Buồm)', cat: 'Thuyền', kind: 'stack', height: 2.6, dry: 0.75, desc: 'Khoang kính hiện đại, cặp vô-lăng thuyền buồm carbon và cột trụ khí động đã tháo bỏ cánh buồm, tích hợp radar & cảm biến laser' },
+  hullSailBoat: { name: 'Thân Thuyền Buồm Hiện Đại Mũi Rẽ Sóng', cat: 'Thuyền', kind: 'stack', height: 1.35, dry: 1.15, fuel: 5.0, desc: 'Thân thuyền buồm thể thao hiện đại mũi rẽ sóng sắc gọn, sàn gỗ Teak & Carbon, buồng lái mở và dải đèn LED' },
+  motorSailBoat: { name: 'Động Cơ Thủy Lực Kép & Sống Đáy Thuyền Buồm', cat: 'Thuyền', kind: 'stack', height: 1.15, dry: 0.42, thrustSL: 380, thrustVac: 380, ispSL: 900, ispVac: 450, engines: 2, desc: 'Cặp động cơ Turbo-Jet hiện đại gắn đuôi thuyền buồm kèm chân vịt kép xoay ngược chiều, bánh lái đôi và sống đáy cân bằng' },
   cockpitPlane: { name: 'Cabin tiêm kích Jet', cat: 'Máy bay', kind: 'stack', height: 2.8, dry: 0.85, desc: 'Buồng lái tiêm kích tàng hình với kính vòm chống chói, HUD và mũi kim khí động' },
   fuselagePlane: { name: 'Thân máy bay Jet', cat: 'Máy bay', kind: 'stack', height: 3.8, dry: 1.1, fuel: 5.5, desc: 'Thân máy bay khí động học chứa thùng nhiên liệu JP-8 và cửa hút khí' },
   wingsPlane: { name: 'Cánh nâng phản lực ×2', cat: 'Máy bay', kind: 'radial', count: 2, dry: 0.45, desc: 'Cặp cánh swept-wing tạo lực nâng khí động học cất cánh và lượn trên trời' },
@@ -691,6 +694,9 @@ const builders = {
   hullBoat() { return buildHullBoat(); },
   motorBoat() { return buildMotorBoat(); },
   floatsBoat() { return buildFloatsBoat(); },
+  cabinSailBoat() { return buildCabinSailBoat(); },
+  hullSailBoat() { return buildHullSailBoat(); },
+  motorSailBoat() { return buildMotorSailBoat(); },
   cockpitPlane() { return buildCockpitPlane(); },
   fuselagePlane() { return buildFuselagePlane(); },
   wingsPlane() { return buildWingsPlane(); },
@@ -2225,6 +2231,356 @@ function buildFloatsBoat() {
   const foilBlade = mesh(new THREE.BoxGeometry(0.62, 0.03, 0.28), ym.obsidianCarbon, 0, -0.34, 0.15);
   const foilStrut = mesh(new THREE.BoxGeometry(0.04, 0.32, 0.22), ym.platinum, 0, -0.18, 0.15);
   pontoonGroup.add(foilStrut, foilBlade);
+
+  return g;
+}
+
+// ---------------------------------------------------------------- modern motorized sail-free sailboat builders
+function buildCabinSailBoat() {
+  const g = new THREE.Group();
+  const ym = getYachtMaterials();
+  const redNavMat = new THREE.MeshStandardMaterial({ color: 0xff1111, emissive: 0xff0000, emissiveIntensity: 3.5, roughness: 0.15 });
+  const grnNavMat = new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3.5, roughness: 0.15 });
+
+  // 1. Sleek Wally-Style Low-Profile Flush Coachroof & Panoramic Glass Salon (y = 0.0 .. 0.56, z = -0.55 .. +1.58)
+  const coachBase = mesh(new THREE.CylinderGeometry(0.76, 0.84, 0.10, 40), ym.pearlWhite, 0, 0.05, 0.35);
+  coachBase.scale.set(0.92, 1, 1.55);
+  g.add(coachBase);
+
+  const coachLed = mesh(new THREE.CylinderGeometry(0.80, 0.80, 0.024, 40), ym.neonCyan, 0, 0.09, 0.35);
+  coachLed.scale.set(0.93, 1, 1.56);
+  g.add(coachLed);
+
+  // Faceted Wrap-Around Tinted Smart-Glass Salon Canopy
+  const glassSalon = mesh(new THREE.CylinderGeometry(0.58, 0.75, 0.38, 36), ym.panoGlass, 0, 0.28, 0.32);
+  glassSalon.scale.set(0.90, 1, 1.48);
+  g.add(glassSalon);
+
+  // Subtle warm interior lounge illumination visible inside the glass coachroof
+  const salonGlow = mesh(new THREE.CylinderGeometry(0.42, 0.52, 0.22, 24), ym.vipWindowGold, 0, 0.25, 0.30);
+  salonGlow.scale.set(0.82, 1, 1.25);
+  g.add(salonGlow);
+
+  // Sculpted Aerodynamic Coachroof Cap & Integrated Solar-Glass Skylight Roof
+  const roofCap = mesh(new THREE.CylinderGeometry(0.54, 0.62, 0.08, 36), ym.pearlWhite, 0, 0.49, 0.28);
+  roofCap.scale.set(0.88, 1, 1.42);
+  g.add(roofCap);
+
+  const roofSolar = mesh(new THREE.CylinderGeometry(0.46, 0.48, 0.03, 32), ym.solarRoof, 0, 0.535, 0.26);
+  roofSolar.scale.set(0.84, 1, 1.32);
+  g.add(roofSolar);
+
+  // Swept Metallic Brow & Side Carbon Mullions
+  for (const sgn of [-1, 1]) {
+    const mullion = mesh(new THREE.BoxGeometry(0.055, 0.40, 0.18), ym.obsidianCarbon, sgn * 0.61, 0.29, 0.12);
+    mullion.rotation.z = -sgn * 0.32;
+    mullion.rotation.x = 0.28;
+    g.add(mullion);
+
+    // Port (Red) & Starboard (Green) Flush Marine Navigation Lights
+    g.add(mesh(new THREE.BoxGeometry(0.05, 0.045, 0.24), sgn < 0 ? redNavMat : grnNavMat, sgn * 0.68, 0.24, 0.68));
+  }
+
+  // Aft Carbon Targa Bimini Arch over the Companionway Entrance (z = -0.42)
+  for (const sgn of [-1, 1]) {
+    const leg = mesh(new THREE.BoxGeometry(0.065, 0.66, 0.16), ym.obsidianCarbon, sgn * 0.64, 0.34, -0.44);
+    leg.rotation.z = sgn * 0.22;
+    leg.rotation.x = -0.18;
+    g.add(leg);
+  }
+  const archTop = mesh(new THREE.BoxGeometry(1.06, 0.055, 0.22), ym.platinum, 0, 0.66, -0.50);
+  g.add(archTop);
+  g.add(mesh(new THREE.BoxGeometry(0.98, 0.022, 0.23), ym.neonCyan, 0, 0.64, -0.50));
+
+  // 2. Signature Twin Spoked Carbon Sailboat Helm Wheels & Digital Engine Throttle Pedestals (z = -1.12)
+  for (const sgn of [-1, 1]) {
+    const hx = sgn * 0.46;
+    const hz = -1.10;
+    // Raked Carbon-Titanium Helm Pedestal
+    const ped = mesh(new THREE.CylinderGeometry(0.065, 0.095, 0.56, 18), ym.obsidianCarbon, hx, 0.28, hz);
+    ped.rotation.x = 0.22;
+    g.add(ped);
+
+    // Binnacle Touchscreen Chartplotter & Engine Telemetry Pod
+    const binnacle = mesh(new THREE.BoxGeometry(0.22, 0.13, 0.12), ym.platinum, hx, 0.56, hz + 0.07);
+    binnacle.rotation.x = -0.45;
+    g.add(binnacle);
+    const hudScreen = mesh(new THREE.BoxGeometry(0.18, 0.09, 0.02), ym.neonCyan, hx, 0.575, hz + 0.02);
+    hudScreen.rotation.x = -0.45;
+    g.add(hudScreen);
+
+    // Twin Electronic Marine Engine Throttle Levers on side of pedestal
+    g.add(mesh(new THREE.BoxGeometry(0.05, 0.06, 0.09), ym.platinum, hx - sgn * 0.09, 0.44, hz + 0.03));
+    for (const dz of [-0.018, 0.018]) {
+      const lever = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.11, 8), ym.platinum, hx - sgn * 0.11, 0.50, hz + 0.03 + dz);
+      lever.rotation.x = 0.35;
+      g.add(lever);
+      g.add(mesh(new THREE.SphereGeometry(0.016, 8, 8), ym.neonCyan, hx - sgn * 0.11, 0.55, hz + 0.05 + dz));
+    }
+
+    // 6-Spoke Carbon-Fiber Sailboat Steering Wheel
+    const wheelGroup = new THREE.Group();
+    wheelGroup.position.set(hx, 0.47, hz - 0.08);
+    wheelGroup.rotation.x = 0.12;
+    wheelGroup.add(mesh(new THREE.TorusGeometry(0.26, 0.020, 10, 28), ym.obsidianCarbon, 0, 0, 0));
+    wheelGroup.add(mesh(new THREE.TorusGeometry(0.26, 0.007, 8, 28), ym.neonCyan, 0, 0, -0.014));
+    wheelGroup.add(mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.05, 16).rotateX(Math.PI / 2), ym.platinum, 0, 0, 0));
+    for (let sp = 0; sp < 6; sp++) {
+      const a = (sp / 6) * Math.PI * 2;
+      const spoke = mesh(new THREE.CylinderGeometry(0.009, 0.011, 0.25, 8), ym.platinum, Math.cos(a) * 0.125, Math.sin(a) * 0.125, 0);
+      spoke.rotation.z = a - Math.PI / 2;
+      wheelGroup.add(spoke);
+    }
+    g.add(wheelGroup);
+  }
+
+  // 3. Tall Raked Aerodynamic Sail-Free Carbon Wing-Mast (NO SAILS! Sails removed, modern sensor/radar rig)
+  const mastGroup = new THREE.Group();
+  mastGroup.position.set(0, 0.52, 0.68);
+  mastGroup.rotation.x = -0.09; // Classic modern sailboat aft mast rake
+  g.add(mastGroup);
+
+  // Titanium Mast Step Collar Ring
+  mastGroup.add(mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.08, 24), ym.platinum, 0, 0.04, 0));
+  mastGroup.add(mesh(new THREE.TorusGeometry(0.145, 0.014, 8, 24).rotateX(Math.PI / 2), ym.neonCyan, 0, 0.05, 0));
+
+  // Teardrop Carbon-Fiber Wing-Mast Spar (y_mast = 0.05 .. 2.02, completely free of cloth sails!)
+  const mastH = 1.98;
+  const mastSpar = mesh(new THREE.CylinderGeometry(0.048, 0.088, mastH, 24), ym.obsidianCarbon, 0, mastH * 0.5 + 0.04, 0);
+  mastSpar.scale.set(0.62, 1, 1.68);
+  mastGroup.add(mastSpar);
+
+  // Brushed Platinum Leading Edge + Glowing Neon-Cyan Sail-Track Strip (where the removed mainsail luff used to be!)
+  mastGroup.add(mesh(new THREE.BoxGeometry(0.022, mastH - 0.08, 0.035), ym.platinum, 0, mastH * 0.5 + 0.04, 0.11));
+  mastGroup.add(mesh(new THREE.BoxGeometry(0.018, mastH - 0.10, 0.028), ym.neonCyan, 0, mastH * 0.5 + 0.04, -0.11));
+
+  // Two Tiers of Clean Swept Carbon Aerodynamic Spreaders (zero cloth sails, futuristic LED wingtips)
+  for (const [sy, span] of [[0.78, 1.12], [1.42, 0.74]]) {
+    for (const sgn of [-1, 1]) {
+      const spr = mesh(new THREE.BoxGeometry(span * 0.5, 0.024, 0.085), ym.obsidianCarbon, sgn * span * 0.25, sy, -0.02);
+      spr.rotation.y = -sgn * 0.18;
+      spr.rotation.z = sgn * 0.07;
+      mastGroup.add(spr);
+      mastGroup.add(mesh(new THREE.SphereGeometry(0.022, 10, 8), ym.neonCyan, sgn * span * 0.50, sy + 0.018, -0.06));
+    }
+  }
+
+  // Forward Solid-State Marine Broadband Radar Scanner mounted cleanly on the mast
+  mastGroup.add(mesh(new THREE.BoxGeometry(0.07, 0.08, 0.16), ym.platinum, 0, 1.08, 0.16));
+  mastGroup.add(mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.075, 24), ym.pearlWhite, 0, 1.10, 0.24));
+  mastGroup.add(mesh(new THREE.TorusGeometry(0.23, 0.012, 8, 24).rotateX(Math.PI / 2), ym.neonCyan, 0, 1.10, 0.24));
+
+  // Masthead Ultrasonic Wind/Weather Wand & All-Round LED Anchor/Nav Beacon (y_mast = 2.04)
+  mastGroup.add(mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.06, 16), ym.platinum, 0, mastH + 0.05, 0));
+  mastGroup.add(mesh(new THREE.SphereGeometry(0.042, 14, 12), ym.neonCyan, 0, mastH + 0.10, 0));
+  mastGroup.add(mesh(new THREE.CylinderGeometry(0.008, 0.010, 0.26, 8).rotateX(Math.PI / 2), ym.platinum, 0, mastH + 0.06, 0.14));
+  mastGroup.add(mesh(new THREE.SphereGeometry(0.018, 8, 8), ym.vipWindowGold, 0, mastH + 0.06, 0.27));
+
+  return g;
+}
+
+function buildHullSailBoat() {
+  const g = new THREE.Group();
+  const H = PARTS.hullSailBoat.height; // 1.35
+  const ym = getYachtMaterials();
+
+  // 1. Razor-Sharp Modern Performance Sailboat Hull (y = 0 .. 1.28, sleek narrow-beam wave-piercing lines)
+  const hullBody = mesh(new THREE.CylinderGeometry(0.96, 0.78, 1.26, 48), ym.pearlWhite, 0, 0.63, 0.16);
+  hullBody.scale.set(0.95, 1, 2.76);
+  g.add(hullBody);
+
+  // Plumb / Wave-Piercing Modern Racing Sailboat Bow (+Z forward to z = +3.62)
+  const bowWedge = mesh(new THREE.ConeGeometry(0.78, 1.72, 36).rotateX(Math.PI / 2), ym.pearlWhite, 0, 0.68, 2.72);
+  bowWedge.scale.set(0.64, 0.78, 1.16);
+  g.add(bowWedge);
+
+  // Brushed-Titanium Plumb Stem Cutwater
+  const stemBar = mesh(new THREE.BoxGeometry(0.055, 1.22, 0.46), ym.platinum, 0, 0.66, 3.24);
+  stemBar.rotation.x = 0.14; // Sleek reverse/plumb wave-piercing sailboat bow angle!
+  g.add(stemBar);
+
+  // Modern Carbon-Fiber Sailboat Bowsprit Prodder & Anchor Roller (NO jib sail — pure modern hardware!)
+  const bowsprit = mesh(new THREE.CylinderGeometry(0.036, 0.062, 0.92, 16).rotateX(Math.PI / 2), ym.obsidianCarbon, 0, 1.24, 3.68);
+  g.add(bowsprit);
+  g.add(mesh(new THREE.TorusGeometry(0.044, 0.010, 8, 16), ym.neonCyan, 0, 1.24, 4.12));
+  g.add(mesh(new THREE.BoxGeometry(0.11, 0.04, 0.26), ym.platinum, 0, 1.28, 3.42));
+
+  // Chamfered Sheer & Chine Neon-Cyan Architectural LED Lines
+  for (const [ly, rRing, scZ] of [[0.12, 0.80, 2.58], [1.22, 0.96, 2.78]]) {
+    const led = mesh(new THREE.CylinderGeometry(rRing, rRing, 0.026, 48), ym.neonCyan, 0, ly, 0.16);
+    led.scale.set(0.96, 1, scZ);
+    g.add(led);
+  }
+
+  // Recessed Matte-Carbon Hull Window Cove & Elongated Tinted Yacht Portlights
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.045, 0.19, 3.15), ym.obsidianCarbon, sgn * 0.88, 0.82, 0.22));
+    for (let wz = -1.05; wz <= 1.45; wz += 0.62) {
+      g.add(mesh(new THREE.BoxGeometry(0.055, 0.11, 0.42), ym.vipWindowCyan, sgn * 0.89, 0.82, wz));
+    }
+  }
+
+  // 2. Flush Slatted Teak & Carbon Modern Sailboat Main Deck (y = 1.26 .. 1.34)
+  const teakMain = mesh(new THREE.CylinderGeometry(0.93, 0.93, 0.07, 48), ym.teakDeck, 0, 1.29, 0.16);
+  teakMain.scale.set(0.94, 1, 2.72);
+  g.add(teakMain);
+
+  // Dark Carbon Teak-Plank Caulking Seams running fore-and-aft along the deck
+  for (const sx of [-0.58, -0.36, -0.16, 0.16, 0.36, 0.58]) {
+    const zLen = Math.max(1.6, 4.4 - Math.abs(sx) * 2.8);
+    g.add(mesh(new THREE.BoxGeometry(0.014, 0.015, zLen), ym.obsidianCarbon, sx, 1.33, 0.25));
+  }
+
+  // Flush Smoked-Glass Foredeck Skylight Hatches (+Z foredeck)
+  for (const hz of [1.82, 2.45]) {
+    const w = hz > 2.1 ? 0.34 : 0.46;
+    g.add(mesh(new THREE.BoxGeometry(w + 0.06, 0.025, 0.36), ym.platinum, 0, 1.335, hz));
+    g.add(mesh(new THREE.BoxGeometry(w, 0.032, 0.30), ym.panoGlass, 0, 1.34, hz));
+  }
+
+  // Stainless-Titanium Bow Pulpit & Modern Low-Profile Foredeck Guardrails
+  for (const sgn of [-1, 1]) {
+    const rail = mesh(new THREE.CylinderGeometry(0.012, 0.012, 2.05, 8).rotateX(Math.PI / 2), ym.platinum, sgn * 0.72, 1.46, 1.95);
+    rail.rotation.y = -sgn * 0.16;
+    g.add(rail);
+    for (const sz of [1.05, 1.95, 2.82]) {
+      const rx = sgn * (0.72 - (sz - 1.95) * 0.16);
+      g.add(mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.15, 8), ym.platinum, rx, 1.39, sz));
+    }
+  }
+
+  // 3. Open Mediterranean Sailboat Aft Cockpit Lounge, Folding Teak Table & Transom Swim Step (z = -0.75 .. -2.52)
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.24, 0.11, 0.88), ym.loungeCushion, sgn * 0.54, 1.36, -1.22));
+    // Coaming backrest bolster
+    g.add(mesh(new THREE.BoxGeometry(0.08, 0.18, 0.92), ym.pearlWhite, sgn * 0.70, 1.42, -1.22));
+  }
+  // Central Teak & Titanium Cockpit Table with ambient cyan LED base
+  g.add(mesh(new THREE.BoxGeometry(0.36, 0.035, 0.62), ym.teakDeck, 0, 1.44, -1.18));
+  g.add(mesh(new THREE.BoxGeometry(0.06, 0.12, 0.34), ym.platinum, 0, 1.37, -1.18));
+  g.add(mesh(new THREE.BoxGeometry(0.32, 0.018, 0.56), ym.neonCyan, 0, 1.42, -1.18));
+
+  // Open-Transom Aft Swim Terrace & Twin Engine Transom Mount Bar (z = -2.28 .. -2.56)
+  g.add(mesh(new THREE.BoxGeometry(1.32, 0.10, 0.52), ym.teakDeck, 0, 0.24, -2.36));
+  g.add(mesh(new THREE.BoxGeometry(1.36, 0.028, 0.55), ym.neonCyan, 0, 0.19, -2.36));
+  // Port & Starboard Teak Cockpit-to-Water Steps
+  for (const sgn of [-1, 1]) {
+    for (let st = 0; st < 4; st++) {
+      g.add(mesh(new THREE.BoxGeometry(0.24, 0.07, 0.14), ym.teakDeck, sgn * 0.52, 0.38 + st * 0.22, -2.28 + st * 0.11));
+    }
+  }
+
+  // Smooth Top Coaming Rim at y = H (1.35) mating cleanly with CabinSailBoat
+  const topRim = mesh(new THREE.CylinderGeometry(0.84, 0.84, 0.04, 40), ym.pearlWhite, 0, H - 0.02, 0.35);
+  topRim.scale.set(0.92, 1, 1.55);
+  g.add(topRim);
+
+  return g;
+}
+
+function buildMotorSailBoat() {
+  const g = new THREE.Group();
+  const H = PARTS.motorSailBoat.height; // 1.15
+  const ym = getYachtMaterials();
+
+  // 1. Sleek Hydrodynamic Sailboat Canoe Underbody (y = 0.36 .. H)
+  const canoeUnderbody = mesh(new THREE.CylinderGeometry(0.78, 0.46, H - 0.36, 44), ym.obsidianCarbon, 0, 0.36 + (H - 0.36) * 0.5, 0.14);
+  canoeUnderbody.scale.set(0.94, 1, 2.62);
+  g.add(canoeUnderbody);
+
+  // Sharp Underwater Wave-Piercing Bow Forefoot (+Z)
+  const forefoot = mesh(new THREE.ConeGeometry(0.46, 1.25, 28).rotateX(Math.PI / 2), ym.obsidianCarbon, 0, 0.72, 2.22);
+  forefoot.scale.set(0.62, 0.88, 1.15);
+  g.add(forefoot);
+
+  // Underwater Bioluminescent Cyan LED Hull Floodlight Strips
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.045, 0.045, 2.95), ym.neonCyan, sgn * 0.62, 0.62, 0.14));
+  }
+
+  // 2. Iconic Modern Racing Sailboat Deep Fin Keel & Hydrodynamic Torpedo Bulb (y = 0.04 .. 0.44, z = +0.18)
+  const keelFin = mesh(new THREE.BoxGeometry(0.065, 0.38, 0.64), ym.platinum, 0, 0.26, 0.18);
+  g.add(keelFin);
+  const keelBulb = mesh(new THREE.SphereGeometry(0.15, 22, 16), ym.obsidianCarbon, 0, 0.11, 0.20);
+  keelBulb.scale.set(0.84, 0.72, 3.35);
+  g.add(keelBulb);
+  g.add(mesh(new THREE.TorusGeometry(0.11, 0.016, 8, 20), ym.neonCyan, 0, 0.11, 0.52));
+
+  // 3. Twin Canted Modern Sailboat Rudder Blades (z = -1.42)
+  for (const sgn of [-1, 1]) {
+    const rudder = mesh(new THREE.BoxGeometry(0.035, 0.36, 0.28), ym.platinum, sgn * 0.44, 0.24, -1.42);
+    rudder.rotation.z = sgn * 0.20;
+    g.add(rudder);
+  }
+
+  // 4. Central Flush Plasma Hydro-Jet Booster Tunnel at Underwater Stern
+  g.add(mesh(new THREE.CylinderGeometry(0.17, 0.20, 0.68, 20).rotateX(Math.PI / 2), ym.platinum, 0, 0.34, -1.85));
+  g.add(mesh(new THREE.TorusGeometry(0.18, 0.022, 10, 24), ym.neonCyan, 0, 0.34, -2.19));
+
+  // 5. Prominent Attached Twin Modern Turbo-Outboard / Hybrid Stern Marine Engines (x = ±0.44, z = -2.72)
+  // Mounted visibly on the stern transom with sculpted silver/carbon cowlings rising above the waterline
+  // and twin counter-rotating 5-blade propellers spinning underwater!
+  const propGroups = [];
+  const bladeShape = new THREE.Shape();
+  bladeShape.moveTo(0, 0);
+  bladeShape.quadraticCurveTo(0.11, 0.13, 0.05, 0.28);
+  bladeShape.quadraticCurveTo(-0.07, 0.20, 0, 0);
+  const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, { depth: 0.012 });
+
+  for (const sgn of [-1, 1]) {
+    const ex = sgn * 0.44;
+    const ez = -2.70;
+
+    // Heavy-Duty Titanium Transom Mounting Bracket clamping onto the stern swim platform
+    g.add(mesh(new THREE.BoxGeometry(0.18, 0.28, 0.36), ym.platinum, ex, 1.24, ez + 0.18));
+
+    // Vertical Streamlined Outboard Drive Leg / Midsection Strut (y = 0.30 .. 1.22)
+    const driveLeg = mesh(new THREE.BoxGeometry(0.11, 0.94, 0.28), ym.obsidianCarbon, ex, 0.76, ez);
+    driveLeg.rotation.x = -0.08;
+    g.add(driveLeg);
+    // Anti-ventilation cavitation plate above propeller
+    g.add(mesh(new THREE.BoxGeometry(0.26, 0.025, 0.38), ym.platinum, ex, 0.46, ez - 0.04));
+
+    // Sculpted Futuristic Upper Marine Engine Cowling (y = 1.18 .. 1.78 — clearly visible above water at the stern!)
+    const cowlCore = mesh(new THREE.BoxGeometry(0.30, 0.56, 0.46), ym.platinum, ex, 1.46, ez - 0.02);
+    cowlCore.rotation.x = -0.10;
+    g.add(cowlCore);
+
+    const cowlHood = mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.46, 20).rotateX(Math.PI / 2), ym.obsidianCarbon, ex, 1.72, ez - 0.04);
+    cowlHood.scale.set(0.98, 0.55, 1.0);
+    cowlHood.rotation.x = -0.10;
+    g.add(cowlHood);
+
+    // Side Carbon Air-Intake Louvers & Glowing Neon-Cyan Turbo Power Bars on Engine Cowling
+    for (const side of [-1, 1]) {
+      g.add(mesh(new THREE.BoxGeometry(0.02, 0.34, 0.24), ym.obsidianCarbon, ex + side * 0.155, 1.48, ez - 0.03));
+      g.add(mesh(new THREE.BoxGeometry(0.024, 0.38, 0.035), ym.neonCyan, ex + side * 0.158, 1.48, ez + 0.11));
+    }
+    // Rear glowing cyan power badge on back of engine cowling
+    g.add(mesh(new THREE.BoxGeometry(0.22, 0.04, 0.025), ym.neonCyan, ex, 1.56, ez - 0.26));
+
+    // Underwater Torpedo Gearcase & Glowing Shroud Ring (y = 0.28)
+    g.add(mesh(new THREE.CylinderGeometry(0.10, 0.12, 0.54, 20).rotateX(Math.PI / 2), ym.obsidianCarbon, ex, 0.28, ez));
+    g.add(mesh(new THREE.ConeGeometry(0.10, 0.22, 20).rotateX(Math.PI / 2), ym.platinum, ex, 0.28, ez + 0.36));
+    g.add(mesh(new THREE.TorusGeometry(0.135, 0.016, 8, 22), ym.neonCyan, ex, 0.28, ez - 0.26));
+
+    // Spinning 5-Blade Copper-Titanium Propeller Group
+    const pg = new THREE.Group();
+    pg.position.set(ex, 0.28, ez - 0.30);
+    pg.userData.spinSign = sgn; // Counter-rotating twin props!
+    pg.add(mesh(new THREE.ConeGeometry(0.075, 0.20, 16).rotateX(-Math.PI / 2), ym.platinum, 0, 0, 0));
+    for (let i = 0; i < 5; i++) {
+      const b = mesh(bladeGeo, MAT.copper, 0, 0, 0);
+      b.rotation.z = (i / 5) * Math.PI * 2;
+      b.rotation.y = sgn * 0.38;
+      pg.add(b);
+    }
+    g.add(pg);
+    propGroups.push(pg);
+  }
+
+  g.userData.propGroup = propGroups[0];
+  g.userData.propGroups = propGroups;
 
   return g;
 }
@@ -13717,6 +14073,15 @@ export function buildPart(type) {
     if (g.userData.fairingDoor) {
       mergeGroupMeshesByMaterial(g.userData.fairingDoor);
       exclude.add(g.userData.fairingDoor);
+    }
+    if (g.userData.propGroups && Array.isArray(g.userData.propGroups)) {
+      for (const pg of g.userData.propGroups) {
+        mergeGroupMeshesByMaterial(pg);
+        exclude.add(pg);
+      }
+    } else if (g.userData.propGroup) {
+      mergeGroupMeshesByMaterial(g.userData.propGroup);
+      exclude.add(g.userData.propGroup);
     }
     if (g.userData.chute) exclude.add(g.userData.chute);
     if (g.userData.chutes) exclude.add(g.userData.chutes);

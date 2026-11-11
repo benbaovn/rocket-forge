@@ -3486,7 +3486,9 @@ export class LaunchScene {
         }
       }
       if (!stack.some((it) => it.attach.includes('solarPanel') || it.attach.includes('solarRover'))) {
-        const target = stack.find((it) => it.type === 'hullBoat') || stack.find((it) => it.type === 'cabinBoat') || stack[0];
+        const target = stack.find((it) => it.type === 'hullBoat' || it.type === 'hullSailBoat')
+          || stack.find((it) => it.type === 'cabinBoat' || it.type === 'cabinSailBoat')
+          || stack[0];
         if (target) target.attach.push('solarPanel');
       }
     }
@@ -3539,7 +3541,10 @@ export class LaunchScene {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('🛥️⚓ Du thuyền đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Superyacht moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
+      const isSailBoatStack = stack.some((it) => it.type.includes('SailBoat') || it.attach.some((a) => a.includes('SailBoat')));
+      this.event(isSailBoatStack
+        ? tr('⛵⚡ Thuyền buồm hiện đại gắn động cơ đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để lướt sóng ra khơi, A/D bẻ lái.', '⛵⚡ Modern motorized sailboat moored at the Harbor ready to depart! Press W/S or throttle up to cruise out to sea, A/D to steer.')
+        : tr('🛥️⚓ Du thuyền đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Superyacht moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
     } else if (this.player.isRover) {
       const roverX = 0;
       const surfH = this.earthGroundWave(roverX, 0, 0.0, 0.0) + this.player.bottomOffset();
@@ -6836,8 +6841,15 @@ export class LaunchScene {
       const spd = v ? (v.waterSpeed || 0) : 0;
       const running = v && (v.engineOn || Math.abs(spd) > 0.05);
       if (running) {
+        const spinStep = (Math.abs(spd) * 0.4 + 12) * 0.08;
         for (const po of this.rocket.partObjs) {
-          if (po.obj.userData.propGroup) po.obj.userData.propGroup.rotation.z += (Math.abs(spd) * 0.4 + 12) * 0.08;
+          if (po.obj.userData.propGroups && Array.isArray(po.obj.userData.propGroups)) {
+            for (const pg of po.obj.userData.propGroups) {
+              pg.rotation.z += spinStep * (pg.userData?.spinSign || 1);
+            }
+          } else if (po.obj.userData.propGroup) {
+            po.obj.userData.propGroup.rotation.z += spinStep;
+          }
         }
       }
     }

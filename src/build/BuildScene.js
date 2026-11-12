@@ -552,14 +552,15 @@ export class BuildScene {
   createPartCardEl(type, thumbs, onClickOverride = null) {
     const def = PARTS[type];
     const card = document.createElement('div');
-    card.className = isUfoPart(type) ? 'part-card part-card-wide' : 'part-card';
+    card.className = 'part-card';
     if (this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) {
       card.classList.add('part-incompatible');
     }
     card.dataset.part = type;
     const fmtCompact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 10000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${n}`;
+    const fmtCompactK = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${n}`;
     const badgeTxt = isUfoPart(type)
-      ? `⚡${fmtCompact(def.thrustVac)}·🔋${Math.round(def.fuel)}t`
+      ? `⚡${fmtCompactK(def.thrustVac)}·🔋${fmtCompactK(Math.round(def.fuel))}t`
       : def.thrustVac
         ? `🔥${fmtCompact(def.thrustVac)}`
         : def.isGunBattery

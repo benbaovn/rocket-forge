@@ -118,11 +118,11 @@ export const PARTS = {
   starshipNose: { name: 'Mũi Tàu Starship Đen Gạch Chịu Nhiệt & 2 Cánh Vây Trước (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 7.2, dry: 1.4, fuel: 10.0, thrustSL: 240, thrustVac: 420, ispSL: 280, ispVac: 380, engines: 1, hasFins: true, desc: 'Chóp mũi ogive của tàu Starship phủ gạch chịu nhiệt đen than chì kết hợp ánh thép không gỉ, 2 cánh vây khí động phía trước (Forward Flaps) và dù hạ cánh' },
   starshipShip: { name: 'Thân Tàu Starship (Đai Băng Trắng, 2 Cánh Vây Sau, Đai Hot-Stage & 6 Raptor · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 10.4, dry: 2.8, fuel: 32.0, thrustSL: 1350, thrustVac: 1950, ispSL: 300, ispVac: 380, engines: 6, autoStage: true, hasFins: true, desc: 'Thân tàu Starship chia 2 nửa trắng phủ băng lạnh & đen gạch chịu nhiệt, váy đáy xám đen kèm 2 cánh vây lớn phía sau (Aft Flaps), vành tách tầng nóng (Hot-Staging Ring) và 6 động cơ Raptor' },
   starshipBooster: { name: 'Tầng Đẩy Super Heavy (Thép Không Gỉ, 4 Cánh Lưới, 4 Sống Khí Động & 33 Động Cơ Raptor)', cat: 'Động cơ', kind: 'stack', height: 20.6, dry: 6.8, fuel: 82.0, thrustSL: 6200, thrustVac: 7100, ispSL: 310, ispVac: 350, engines: 33, autoStage: true, hasFins: true, desc: 'Siêu tầng đẩy Super Heavy bằng thép không gỉ với 4 cánh lưới xòe ngang ở đỉnh, vệt băng trắng dọc sống lưng, 4 gờ khí động (chines) nổi dọc thân dưới và cụm 33 động cơ Raptor phát sáng rực rỡ ở đáy' },
-  ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 60.0, isBattery: true, ufoTier: 1, ufoRadius: 4.2, thrustSL: 3600, thrustVac: 4000, ispSL: 7000, ispVac: 8500, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1 · Pin 60 tấn / 2 lõi) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, dù hạ cánh và lõi phản trọng lực' },
-  ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', kind: 'stack', height: 3.75, dry: 1.3, fuel: 150.0, isBattery: true, ufoTier: 2, ufoRadius: 4.45, thrustSL: 18500, thrustVac: 20800, ispSL: 26000, ispVac: 32000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Pin 150 tấn / 4 tế bào năng lượng) bọc giáp đen-tím, 8 lưỡi kiếm khí động và phi công Chiến Binh giáp kính' },
-  ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', kind: 'stack', height: 4.05, dry: 1.5, fuel: 350.0, isBattery: true, ufoTier: 3, ufoRadius: 4.85, thrustSL: 72000, thrustVac: 81000, ispSL: 80000, ispVac: 98000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Pin khủng 350 tấn / 6 tế bào năng lượng) hai tầng giáp đỏ-vàng, vòng hào quang khiên xoay và chỉ huy Tàu Mẹ' },
-  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', kind: 'stack', height: 4.45, dry: 1.7, fuel: 800.0, isBattery: true, ufoTier: 4, ufoRadius: 5.2, thrustSL: 245000, thrustVac: 278000, ispSL: 230000, ispVac: 285000, engines: 1, restart: true, hasFins: true, desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Siêu Pin 800 tấn / 8 tế bào năng lượng) vỏ hồng kim cương, 3 vòng hào quang hoàng gia và vương miện pha lê 8 đỉnh lơ lửng' },
-  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', kind: 'stack', height: 4.7, dry: 1.9, fuel: 1800.0, isBattery: true, ufoTier: 5, ufoRadius: 5.5, thrustSL: 790000, thrustVac: 895000, ispSL: 620000, ispVac: 760000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn / 12 tế bào năng lượng) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc và đại vương miện vàng lơ lửng' },
+  ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 60.0, isBattery: true, ufoTier: 1, ufoScale: 1.0, ufoRadius: 4.2, thrustSL: 3600, thrustVac: 4000, ispSL: 7000, ispVac: 8500, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1 · Pin 60 tấn / 2 lõi) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, dù hạ cánh và lõi phản trọng lực' },
+  ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', kind: 'stack', height: 5.0, dry: 1.3, fuel: 150.0, isBattery: true, ufoTier: 2, ufoScale: 1.38, ufoRadius: 5.86, thrustSL: 18500, thrustVac: 20800, ispSL: 26000, ispVac: 32000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh cỡ lớn (Tốc độ Cấp 2 · Pin 150 tấn / 4 tế bào năng lượng) bọc giáp đen-tím, 8 lưỡi kiếm khí động và phi công Chiến Binh giáp kính' },
+  ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', kind: 'stack', height: 7.4, dry: 1.5, fuel: 350.0, isBattery: true, ufoTier: 3, ufoScale: 1.95, ufoRadius: 8.48, thrustSL: 72000, thrustVac: 81000, ispSL: 80000, ispVac: 98000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ cỡ đại rộng 19m (Tốc độ Cấp 3 · Pin khủng 350 tấn / 6 tế bào năng lượng) hai tầng giáp đỏ-vàng, vòng hào quang khiên xoay và chỉ huy Tàu Mẹ' },
+  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', kind: 'stack', height: 16.5, dry: 1.7, fuel: 800.0, isBattery: true, ufoTier: 4, ufoScale: 3.65, ufoRadius: 15.88, thrustSL: 245000, thrustVac: 278000, ispSL: 230000, ispVac: 285000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa Bay UFO Hoàng Hậu KHỔNG LỒ rộng ~39m (Tốc độ Cấp 4 · Siêu Pin 800 tấn / 8 tế bào năng lượng) vỏ hồng kim cương, phi công Hoàng Hậu khổng lồ, 3 vòng hào quang hoàng gia và đại vương miện pha lê lơ lửng' },
+  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', kind: 'stack', height: 19.3, dry: 1.9, fuel: 1800.0, isBattery: true, ufoTier: 5, ufoScale: 4.25, ufoRadius: 18.70, thrustSL: 790000, thrustVac: 895000, ispSL: 620000, ispVac: 760000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua SIÊU KHỔNG LỒ rộng ~46m (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn / 12 tế bào năng lượng) vỏ vàng ròng hoàng đế, phi công Vua Alien khổng lồ, 3 vòng hào quang hồng ngọc và đại vương miện vàng lơ lửng' },
 };
 
 export function isUfoPart(type) {
@@ -13913,8 +13913,13 @@ function buildUfoSaucerVariant(variant = 'scout') {
   const isBoss = isMother || isRoyal;
 
   const partKey = isKing ? 'ufoKing' : isQueen ? 'ufoQueen' : isMother ? 'ufoMother' : isWarrior ? 'ufoWarrior' : 'ufoSaucer';
-  const discR = PARTS[partKey].ufoRadius || 4.2;
+  const S = PARTS[partKey].ufoScale || 1.0;
+  const discR = (PARTS[partKey].ufoRadius || 4.2) / S;
   const H = PARTS[partKey].height || 3.6;
+  const localH = H / S;
+  const hull = new THREE.Group();
+  hull.scale.setScalar(S);
+  g.add(hull);
 
   const makeGlow = (col, emi, intensity = 2.3) => new THREE.MeshStandardMaterial({
     color: col,
@@ -13960,14 +13965,14 @@ function buildUfoSaucerVariant(variant = 'scout') {
     metalness: isRoyal ? 0.35 : 0.12,
   });
 
-  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95, base collar R = 1.25 for seamless stack mating)
-  g.add(mesh(new THREE.CylinderGeometry(1.55, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
-  g.add(mesh(new THREE.TorusGeometry(1.24, 0.08, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 0.18, 0));
-  g.add(mesh(new THREE.CylinderGeometry(discR - 0.10, 1.55, 0.65, 64), lowerHullMat, 0, 0.66, 0));
+  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95, base collar R * S for seamless stack mating)
+  hull.add(mesh(new THREE.CylinderGeometry(1.55, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
+  hull.add(mesh(new THREE.TorusGeometry(1.24, 0.08, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 0.18, 0));
+  hull.add(mesh(new THREE.CylinderGeometry(discR - 0.10, 1.55, 0.65, 64), lowerHullMat, 0, 0.66, 0));
 
   // Underbelly glowing anti-gravity concentric rings (pulsed when thrusting)
-  g.add(mesh(new THREE.TorusGeometry(discR * 0.56, 0.075, 12, 56).rotateX(Math.PI / 2), underRing1, 0, 0.45, 0));
-  g.add(mesh(new THREE.TorusGeometry(discR * 0.78, 0.065, 12, 64).rotateX(Math.PI / 2), underRing2, 0, 0.68, 0));
+  hull.add(mesh(new THREE.TorusGeometry(discR * 0.56, 0.075, 12, 56).rotateX(Math.PI / 2), underRing1, 0, 0.45, 0));
+  hull.add(mesh(new THREE.TorusGeometry(discR * 0.78, 0.065, 12, 64).rotateX(Math.PI / 2), underRing2, 0, 0.68, 0));
 
   // Escalating Quantum Battery Cells mounted around the lower saucer core (2 -> 4 -> 6 -> 8 -> 12 cells)
   const batCellCount = isKing ? 12 : isQueen ? 8 : isMother ? 6 : isWarrior ? 4 : 2;
@@ -13977,8 +13982,8 @@ function buildUfoSaucerVariant(variant = 'scout') {
     const bx = Math.cos(a) * batCellRad;
     const bz = Math.sin(a) * batCellRad;
     const cellCap = mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.34, 14), MAT.darkMetal, bx, 0.44, bz);
-    g.add(cellCap);
-    g.add(mesh(new THREE.CylinderGeometry(0.195, 0.195, 0.16, 14), secondaryNeon, bx, 0.44, bz));
+    hull.add(cellCap);
+    hull.add(mesh(new THREE.CylinderGeometry(0.195, 0.195, 0.16, 14), secondaryNeon, bx, 0.44, bz));
   }
 
   // Underbelly Bio-Mechanical Energy Pylons / Talons for Mother (6) & Royal Queen/King (8)
@@ -13992,21 +13997,21 @@ function buildUfoSaucerVariant(variant = 'scout') {
       const p1 = mesh(new THREE.CylinderGeometry(0.11, 0.06, 0.46, 10), upperHullMat, px, 0.42, pz);
       p1.rotation.z = Math.cos(a) * 0.35;
       p1.rotation.x = -Math.sin(a) * 0.35;
-      g.add(p1);
-      g.add(mesh(new THREE.SphereGeometry(0.10, 10, 8), primaryNeon, px * 1.05, 0.20, pz * 1.05));
+      hull.add(p1);
+      hull.add(mesh(new THREE.SphereGeometry(0.10, 10, 8), primaryNeon, px * 1.05, 0.20, pz * 1.05));
     }
   }
 
   // 2. Main Wide Flying Saucer Disc & Glowing Plasma Rim (y = 0.95 -> 1.92)
-  g.add(mesh(new THREE.CylinderGeometry(discR, discR - 0.10, 0.25, 64), MAT.darkMetal, 0, 1.10, 0));
-  g.add(mesh(new THREE.TorusGeometry(discR + 0.02, isRoyal ? 0.20 : 0.16, 16, 64).rotateX(Math.PI / 2), primaryNeon, 0, 1.10, 0));
-  g.add(mesh(new THREE.CylinderGeometry(1.92, discR, 0.68, 64), upperHullMat, 0, 1.56, 0));
-  g.add(mesh(new THREE.TorusGeometry(1.94, 0.075, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 1.90, 0));
+  hull.add(mesh(new THREE.CylinderGeometry(discR, discR - 0.10, 0.25, 64), MAT.darkMetal, 0, 1.10, 0));
+  hull.add(mesh(new THREE.TorusGeometry(discR + 0.02, isRoyal ? 0.20 : 0.16, 16, 64).rotateX(Math.PI / 2), primaryNeon, 0, 1.10, 0));
+  hull.add(mesh(new THREE.CylinderGeometry(1.92, discR, 0.68, 64), upperHullMat, 0, 1.56, 0));
+  hull.add(mesh(new THREE.TorusGeometry(1.94, 0.075, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 1.90, 0));
 
   // Extra Elevated Command Deck Step for Mothership & Royal UFOs
   if (isBoss) {
-    g.add(mesh(new THREE.CylinderGeometry(2.55, 3.35, 0.24, 56), upperHullMat, 0, 1.78, 0));
-    g.add(mesh(new THREE.TorusGeometry(2.95, 0.065, 12, 56).rotateX(Math.PI / 2), secondaryNeon, 0, 1.76, 0));
+    hull.add(mesh(new THREE.CylinderGeometry(2.35, 3.05, 0.24, 56), upperHullMat, 0, 1.78, 0));
+    hull.add(mesh(new THREE.TorusGeometry(2.70, 0.065, 12, 56).rotateX(Math.PI / 2), secondaryNeon, 0, 1.76, 0));
   }
 
   // Warrior Swept Combat Blades around the Saucer Rim
@@ -14015,10 +14020,10 @@ function buildUfoSaucerVariant(variant = 'scout') {
       const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
       const blade = mesh(new THREE.BoxGeometry(0.75, 0.06, 0.28), MAT.darkMetal, Math.cos(a) * (discR + 0.24), 1.12, Math.sin(a) * (discR + 0.24));
       blade.rotation.y = -a + 0.38;
-      g.add(blade);
+      hull.add(blade);
       const bladeEdge = mesh(new THREE.BoxGeometry(0.78, 0.03, 0.06), neonPurple, Math.cos(a) * (discR + 0.26), 1.12, Math.sin(a) * (discR + 0.26));
       bladeEdge.rotation.y = -a + 0.38;
-      g.add(bladeEdge);
+      hull.add(bladeEdge);
     }
   }
 
@@ -14030,13 +14035,13 @@ function buildUfoSaucerVariant(variant = 'scout') {
     const mat = variant === 'scout'
       ? (i % 3 === 0 ? neonCyan : (i % 2 === 0 ? neonGreen : neonPurple))
       : (i % 2 === 0 ? primaryNeon : secondaryNeon);
-    g.add(mesh(orbGeo, mat, Math.cos(a) * discR, 1.12, Math.sin(a) * discR));
+    hull.add(mesh(orbGeo, mat, Math.cos(a) * discR, 1.12, Math.sin(a) * discR));
     const ribLen = (discR - 1.95) * 0.90;
     const ribMid = 1.95 + (discR - 1.95) * 0.48;
     const rib = mesh(new THREE.BoxGeometry(0.15, 0.12, ribLen), isRoyal ? primaryNeon : MAT.darkMetal, Math.cos(a) * ribMid, 1.58, Math.sin(a) * ribMid);
     rib.rotation.y = -a + Math.PI / 2;
     rib.rotation.x = Math.atan2(0.68, discR - 1.92);
-    g.add(rib);
+    hull.add(rib);
   }
 
   // Dynamic Orbiting Halo Rings & Floating Overhead Royal Crown (for Mother, Queen, and King!)
@@ -14060,6 +14065,7 @@ function buildUfoSaucerVariant(variant = 'scout') {
 
   if (isBoss) {
     const spinGroup = new THREE.Group();
+    spinGroup.scale.setScalar(S);
     g.add(spinGroup);
     g.userData.ufoSpinGroup = spinGroup;
 
@@ -14070,21 +14076,21 @@ function buildUfoSaucerVariant(variant = 'scout') {
     if (isRoyal) {
       spinGroup.add(mesh(new THREE.TorusGeometry(discR * 1.22, 0.13, 14, 72).rotateX(Math.PI / 2), primaryNeon, 0, 1.48, 0));
       spinGroup.add(mesh(new THREE.TorusGeometry(discR * 1.09, 0.09, 12, 64).rotateX(Math.PI / 2), secondaryNeon, 0, 0.72, 0));
-      spinGroup.add(buildRoyalCrown(isKing ? 1.55 : 1.42, H - 0.52));
+      spinGroup.add(buildRoyalCrown(isKing ? 1.55 : 1.42, localH - 0.52));
     }
   }
 
   // 3. Pilot & Holographic Console inside the UFO Cockpit (y = 1.85 -> 3.45)
-  g.add(mesh(new THREE.CylinderGeometry(1.72, 1.82, 0.18, 36), MAT.darkMetal, 0, 1.94, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.78, 0.35, 0.36), lowerHullMat, 0, 2.15, 0.58));
-  g.add(mesh(new THREE.BoxGeometry(0.64, 0.22, 0.04), primaryNeon, 0, 2.38, 0.55));
+  hull.add(mesh(new THREE.CylinderGeometry(1.72, 1.82, 0.18, 36), MAT.darkMetal, 0, 1.94, 0));
+  hull.add(mesh(new THREE.BoxGeometry(0.78, 0.35, 0.36), lowerHullMat, 0, 2.15, 0.58));
+  hull.add(mesh(new THREE.BoxGeometry(0.64, 0.22, 0.04), primaryNeon, 0, 2.38, 0.55));
 
   // Alien Commander Pilot inside the dome
   const pScale = isKing ? 1.12 : isQueen ? 1.08 : isMother ? 1.05 : 1.0;
   const pilotGroup = new THREE.Group();
   pilotGroup.position.set(0, 1.94, -0.05);
   pilotGroup.scale.setScalar(pScale);
-  g.add(pilotGroup);
+  hull.add(pilotGroup);
 
   pilotGroup.add(mesh(new THREE.CylinderGeometry(0.32, 0.45, 0.65, 18), alienPilotSkin, 0, 0.32, 0));
   const head = mesh(new THREE.SphereGeometry(0.58, 22, 16), alienPilotSkin, 0, 0.92, 0.03);
@@ -14129,20 +14135,21 @@ function buildUfoSaucerVariant(variant = 'scout') {
     clearcoat: 1.0,
   });
   const domeR = isRoyal ? 1.92 : isMother ? 1.85 : 1.78;
-  g.add(mesh(new THREE.SphereGeometry(domeR, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
+  hull.add(mesh(new THREE.SphereGeometry(domeR, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
 
   // Built-in Parachutes & Anti-Gravity Propulsion Nozzle
-  addParachutes(g, H - 0.2);
+  addParachutes(g, H - 0.2 * S);
   if (g.userData.chutePack) g.remove(g.userData.chutePack);
+  if (g.userData.chutes && S > 1) g.userData.chutes.scale.setScalar(1 + (S - 1) * 0.45);
   const bellM = bellMaterial(true);
   const lightHex = isKing ? 0xfacc15 : isQueen ? 0xf472b6 : isMother ? 0xf43f5e : isWarrior ? 0xa855f7 : 0x22c55e;
-  const ufoAgLight = new THREE.PointLight(lightHex, 0, 68, 2.0);
-  ufoAgLight.position.set(0, 0.45, 0);
+  const ufoAgLight = new THREE.PointLight(lightHex, 0, 68 * S, 2.0);
+  ufoAgLight.position.set(0, 0.45 * S, 0);
   g.add(ufoAgLight);
   g.userData.agLight = ufoAgLight;
   g.userData.cyanGlow = underRing1;
   g.userData.violetGlow = underRing2;
-  addNozzle(g, 0, 0, 0.95, [bellM, underRing1, underRing2], 'antigrav');
+  addNozzle(g, 0, 0, 0.95 * Math.min(2.8, 1 + (S - 1) * 0.55), [bellM, underRing1, underRing2], 'antigrav');
 
   return g;
 }

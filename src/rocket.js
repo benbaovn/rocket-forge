@@ -600,15 +600,16 @@ function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
     };
   }
   const isUfo = isUfoPart(itemType);
-  const ufoScale = isUfo ? ((PARTS[itemType]?.ufoRadius || 4.2) / 4.2) : 1;
+  const ufoRadRatio = isUfo ? ((PARTS[itemType]?.ufoRadius || 4.2) / 4.2) : 1;
+  const ufoHScale = isUfo ? (PARTS[itemType]?.ufoScale || 1) : 1;
   const isBuran = itemType.startsWith('buran') || itemType.startsWith('energia') || itemType.startsWith('shuttle');
   const isCz5 = itemType.startsWith('cz5') || itemType.startsWith('ariane5') || itemType === 'slsStage2' || itemType === 'slsStage1' || itemType === 'fhFairing' || itemType.startsWith('starship');
   const isSlsOrion = itemType === 'slsOrion' || itemType.startsWith('atlasV') || itemType.startsWith('f9') || itemType === 'fhStage2' || itemType.startsWith('proton') || itemType.startsWith('d4h') || itemType.startsWith('titan4');
   const effH = (itemType === 'saturnApollo' || itemType === 'apollo11CM' || itemType === 'soyuzNose' || itemType === 'n1Tower' || itemType === 'buranNose' || itemType === 'energiaNose' || itemType === 'cz5Fairing' || itemType === 'ariane5Fairing' || itemType === 'slsOrion' || itemType === 'atlasVFairing' || itemType === 'fhFairing' || itemType === 'f9Dragon' || itemType === 'shuttleNose' || itemType === 'protonFairing' || itemType === 'd4hFairing' || itemType === 'titan4Fairing' || itemType === 'starshipNose') ? 3.6 : defHeight;
-  const effDist = isUfo ? (ufoDist * ufoScale) : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
+  const effDist = isUfo ? (ufoDist * ufoRadRatio) : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
   return {
     posX: Math.cos(pl.angle) * effDist,
-    posY: isUfo ? (pY + ufoY) : (pY + effH * hFrac),
+    posY: isUfo ? (pY + ufoY * ufoHScale) : (pY + effH * hFrac),
     posZ: Math.sin(pl.angle) * effDist + (pl.offsetZ || 0),
   };
 }
@@ -631,6 +632,10 @@ export function buildRocket(stack) {
   for (const p of lay.parts) {
     const k = segOf.get(p.index);
     const obj = buildPart(p.item.type);
+    if ((p.item.type === 'engAntiGrav' || p.item.type === 'engLaser') && p.index > 0 && isUfoPart(stack[p.index - 1]?.type)) {
+      const aboveUfoS = PARTS[stack[p.index - 1].type]?.ufoScale || 1;
+      if (aboveUfoS > 1) obj.scale.set(aboveUfoS, 1, aboveUfoS);
+    }
     const rot = p.item.rot || [0, 0, 0];
     const halfH = p.def.height / 2;
     const partContainer = new THREE.Group();
@@ -730,7 +735,17 @@ export function buildRocket(stack) {
         if (a === 'fins') {
           posX = 0; posY = p.y + 0.05; posZ = 0;
         } else if (a === 'legs') {
-          posX = 0; posY = p.y; posZ = 0;
+          const ufoS = isUfoPart(p.item.type) ? (p.def.ufoScale || 1) : 1;
+          if (ufoS > 1) {
+            const legVisS = 1 + (ufoS - 1) * 0.45;
+            ao.scale.set(legVisS, 1, legVisS);
+            const radShift = R * (ufoS - legVisS);
+            posX = Math.cos(pl.angle) * radShift;
+            posY = p.y;
+            posZ = Math.sin(pl.angle) * radShift;
+          } else {
+            posX = 0; posY = p.y; posZ = 0;
+          }
         } else if (a === 'gridfins') {
           posX = 0; posY = p.y + p.def.height - 0.5; posZ = 0;
         } else if (a === 'wheelsRover') {
@@ -746,12 +761,17 @@ export function buildRocket(stack) {
           const isBoatHull = p.item.type === 'hullBoat';
           const isSailHull = p.item.type === 'hullSailBoat';
           const isUfo = isUfoPart(p.item.type);
-          posX = Math.cos(pl.angle) * (isUfo ? ((p.def.ufoRadius || 4.2) - 0.12) : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist);
-          posY = isUfo ? (p.y + 1.12) : (p.y + p.def.height * ((isBoatHull || isSailHull) ? 0.96 : 0.55));
+          const ufoS = isUfo ? (p.def.ufoScale || 1) : 1;
+          if (ufoS > 1) ao.scale.setScalar(1 + (ufoS - 1) * 0.5);
+          posX = Math.cos(pl.angle) * (isUfo ? ((p.def.ufoRadius || 4.2) - 0.12 * ufoS) : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist);
+          posY = isUfo ? (p.y + 1.12 * ufoS) : (p.y + p.def.height * ((isBoatHull || isSailHull) ? 0.96 : 0.55));
           posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
           const gc = getGunPlacementCoords(p.item.type, p.def.height, p.y, a, pl);
           posX = gc.posX; posY = gc.posY; posZ = gc.posZ;
+          if (isUfoPart(p.item.type) && (p.def.ufoScale || 1) > 1) {
+            ao.scale.setScalar(1 + ((p.def.ufoScale || 1) - 1) * 0.55);
+          }
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + p.def.height * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'gearPlane') {

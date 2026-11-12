@@ -649,17 +649,20 @@ export class LaunchScene {
     // umbilical tower
     const towerMat = new THREE.MeshStandardMaterial({ color: 0xa63b22, metalness: 0.5, roughness: 0.55 });
     this.towerX = -13;
+    this.towerGroup = new THREE.Group();
+    this.towerGroup.position.x = this.towerX;
+    pad.add(this.towerGroup);
     const tower = latticeTower(80, 6, towerMat, { step: 3.2, t: 0.35, brace: 0.16 });
-    tower.position.set(this.towerX, 6, 0);
-    pad.add(tower);
+    tower.position.set(0, 6, 0);
+    this.towerGroup.add(tower);
     for (let y = 14; y < 86; y += 12) {
       const deckT = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 7), towerMat);
-      deckT.position.set(this.towerX, y, 0); deckT.castShadow = true; pad.add(deckT);
+      deckT.position.set(0, y, 0); deckT.castShadow = true; this.towerGroup.add(deckT);
     }
     const lampMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xff2010, emissiveIntensity: 20 });
     this.beacons = [];
     const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 8), lampMat);
-    beacon.position.set(this.towerX, 87, 0); pad.add(beacon); this.beacons.push(beacon);
+    beacon.position.set(0, 87, 0); this.towerGroup.add(beacon); this.beacons.push(beacon);
     // swing arms (rebuilt per rocket)
     this.arms = [];
     // lightning masts
@@ -1432,7 +1435,12 @@ export class LaunchScene {
     for (const a of this.arms) this.pad.remove(a.pivot);
     this.arms = [];
     const mat = new THREE.MeshStandardMaterial({ color: 0x9c3a22, metalness: 0.5, roughness: 0.55 });
-    const ys = [height * 0.35, height * 0.7, height - 2.5].filter((y) => y > 4 && y < 80);
+    const ufoIt = (this.stack || []).find((s) => isUfoPart(s.type));
+    const maxUfoR = ufoIt ? (PARTS[ufoIt.type]?.ufoRadius || 0) : 0;
+    const maxUfoS = ufoIt ? (PARTS[ufoIt.type]?.ufoScale || 1) : 1;
+    this.towerX = maxUfoR > 4.5 ? -(Math.ceil(maxUfoR * 1.45) + 7) : -13;
+    if (this.towerGroup) this.towerGroup.position.x = this.towerX;
+    const ys = maxUfoR > 0 ? [] : [height * 0.35, height * 0.7, height - 2.5].filter((y) => y > 4 && y < 80);
     const isSaturn = this.stack && this.stack.some((s) => s.type.startsWith('saturn'));
     const isSoyuz = this.stack && this.stack.some((s) => s.type.startsWith('soyuz'));
     const isN1 = this.stack && this.stack.some((s) => s.type.startsWith('n1'));
@@ -1449,7 +1457,7 @@ export class LaunchScene {
       this.pad.add(pivot);
       this.arms.push({ pivot, target: 0 });
     }
-    const clampR = isBuran ? 4.15 : isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
+    const clampR = maxUfoS > 1 ? Math.min(6.4, CORE_R * maxUfoS + 0.85) : isBuran ? 4.15 : isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
     this.clamps.forEach((c, i) => {
       const a = i * Math.PI / 2 + Math.PI / 4;
       c.position.set(Math.cos(a) * clampR, PAD_TOP + 0.6, Math.sin(a) * clampR);
@@ -2247,7 +2255,7 @@ export class LaunchScene {
     if (activeItems.some((s) => s.type.startsWith('saturn'))) return 1.65;
     if (activeItems.some((s) => s.type.startsWith('soyuz')) && (!P || (P.boosters && P.boosters().length > 0))) return 2.30;
     const ufoItem = activeItems.find((s) => isUfoPart(s.type));
-    if (ufoItem) return (PARTS[ufoItem.type]?.ufoRadius || 4.2) * 0.70;
+    if (ufoItem) return Math.max(2.95, CORE_R * (PARTS[ufoItem.type]?.ufoScale || 1) + 0.18);
     return 1.28;
   }
 
@@ -3641,6 +3649,7 @@ export class LaunchScene {
     this.camera.fov = 50; this.camera.updateProjectionMatrix();
     const isSpecial = this.player.isBoat || this.player.isRover || this.player.isPlane;
     const h = this.rocketHeight;
+    const padUfoR = (stack || []).reduce((mx, s) => Math.max(mx, PARTS[s.type]?.ufoRadius || 0), 0);
     if (this.player.isRover) {
       this.camera.position.set(13, 4.5, 0);
       this.controls.minDistance = 2;
@@ -3650,11 +3659,15 @@ export class LaunchScene {
     } else if (this.player.isPlane) {
       this.camera.position.set(-16, 4.5, 16);
       this.controls.minDistance = 2;
+    } else if (padUfoR > 8) {
+      const camSpan = Math.max(h, padUfoR * 1.9);
+      this.camera.position.set(camSpan * 0.65 + 10, h * 0.35 + 4, camSpan * 1.12 + 16);
+      this.controls.minDistance = 10;
     } else {
       this.camera.position.set(h * 0.68 + 12, 1.5, h * 1.18 + 20);
       this.controls.minDistance = 6;
     }
-    this.controls.target.set(0, 1.5, 0);
+    this.controls.target.set(0, padUfoR > 8 ? h * 0.38 : 1.5, 0);
     this.envBand = -1;
     this.flash = 0;
     this.pipKeep = 0;

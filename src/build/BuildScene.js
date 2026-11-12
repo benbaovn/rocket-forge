@@ -147,18 +147,24 @@ export class BuildScene {
     const lampMat = new THREE.MeshStandardMaterial({ emissive: 0xff3322, emissiveIntensity: 8, color: 0 });
     const platGeo = new THREE.BoxGeometry(5, 0.15, 2.6);
     const lampGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    this.vabScaffolds = [];
     for (const x of [-11, 11]) {
+      const sg = new THREE.Group();
+      sg.position.x = x;
+      sg.userData.sign = Math.sign(x);
       const t = latticeTower(64, 2.6, scafMat, { step: 2.6, t: 0.16, brace: 0.07 });
-      t.position.set(x, -0.6, -4);
-      s.add(t);
+      t.position.set(0, -0.6, -4);
+      sg.add(t);
       for (let y = 6; y < 64; y += 8) {
         const plat = new THREE.Mesh(platGeo, platMat);
-        plat.position.set(x - Math.sign(x) * 3.8, y, -4); plat.castShadow = true; plat.receiveShadow = true;
-        s.add(plat);
+        plat.position.set(-Math.sign(x) * 3.8, y, -4); plat.castShadow = true; plat.receiveShadow = true;
+        sg.add(plat);
         const lamp = new THREE.Mesh(lampGeo, lampMat);
-        lamp.position.set(x, y + 0.6, -2.6);
-        s.add(lamp);
+        lamp.position.set(0, y + 0.6, -2.6);
+        sg.add(lamp);
       }
+      s.add(sg);
+      this.vabScaffolds.push(sg);
     }
 
     // lights
@@ -1136,7 +1142,10 @@ export class BuildScene {
         : isUfo
           ? Math.max(size.x * 1.04, size.y * 1.05, size.z * 1.04)
           : Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
-      const d = maxDim / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * 0.96;
+      const ufoThumbZoom = isUfo
+        ? [1.38, 1.22, 1.08, 0.92, 0.85][Math.min(4, (PARTS[type].ufoTier || 1) - 1)]
+        : 0.96;
+      const d = maxDim / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * ufoThumbZoom;
       if (isBoatStackPart) {
         cam.position.set(ctr.x + d * 0.78, ctr.y + d * 0.24, ctr.z + d * 0.56);
       } else if (isUfo) {
@@ -1725,12 +1734,17 @@ export class BuildScene {
       });
     } else this.applyHighlight();
     const h = this.rocket.layout.height;
+    const maxUfoR = stack.reduce((mx, it) => Math.max(mx, PARTS[it.type]?.ufoRadius || 0), 0);
+    if (this.vabScaffolds) {
+      const scafX = maxUfoR > 4.5 ? Math.max(11, maxUfoR * 1.45 + 6) : 11;
+      for (const sg of this.vabScaffolds) sg.position.x = sg.userData.sign * scafX;
+    }
     this.desiredTarget.set(0, Math.max(3, h * 0.45), 0);
     if (commit) {
       this.saveStack();
       this.updateStats();
       this.fitTime = 0.8;
-      this.desiredDist = Math.max(16, h * 1.72 + 8);
+      this.desiredDist = Math.max(16, h * 1.72 + 8, maxUfoR * 2.55);
       if (!this.active) {
         this.controls.target.copy(this.desiredTarget);
         const off = this.camera.position.clone().sub(this.controls.target);

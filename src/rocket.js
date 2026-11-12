@@ -38,6 +38,7 @@ export function partVehicleType(type) {
   if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun' || type === 'solarPanel' || type === 'solarUltra') {
     return 'any';
   }
+  if (type === 'solarUfo') return 'rocket';
   if (type.endsWith('Rover')) return 'rover';
   if (type.endsWith('Boat')) return 'boat';
   if (type.endsWith('Plane') || type === 'engJet') return 'plane';
@@ -235,11 +236,11 @@ export const PRESETS = {
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'heatShield', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
-  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Chiến Binh': ['ufoWarrior+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Mẹ': ['ufoMother+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Hoàng Hậu': ['ufoQueen+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Vua': ['ufoKing+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'UFO Chiến Binh': ['ufoWarrior+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'UFO Mẹ': ['ufoMother+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'UFO Hoàng Hậu': ['ufoQueen+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'UFO Vua': ['ufoKing+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
 };
 
 export function ensureStackHasWeapons(stack) {
@@ -387,6 +388,11 @@ export function segmentInfo(stack, idx) {
         if (it.attach.includes('batteryGun')) {
           s.hasSolar = true;
           s.solarOnBattery += 1;
+        }
+      } else if (a === 'solarUfo') {
+        s.hasSolar = true;
+        if (isBatPart || hasRadialBat || it.attach.includes('batteryGun')) {
+          s.solarOnBattery += 3;
         }
       } else if (a === 'solarPanel' || a === 'solarRover') {
         s.hasSolar = true;
@@ -752,15 +758,25 @@ export function buildRocket(stack) {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.45; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
         } else if (a === 'solarRover') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + partH * 0.65; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+        } else if (a === 'solarUfo') {
+          const isUfo = isUfoPart(p.item.type);
+          const ufoS = isUfo ? (p.def.ufoScale || 1) : 1;
+          const wingScale = isUfo ? (1 + (ufoS - 1) * 0.72) : 1;
+          if (wingScale > 1) ao.scale.setScalar(wingScale);
+          const effRad = isUfo ? ((p.def.ufoRadius || 4.2) - 0.14 * ufoS) : pl.dist;
+          posX = Math.cos(pl.angle) * effRad;
+          posY = isUfo ? (p.y + 1.06 * ufoS) : (p.y + partH * 0.55);
+          posZ = Math.sin(pl.angle) * effRad + (pl.offsetZ || 0);
         } else if (a === 'solarPanel') {
           const isBoatHull = p.item.type === 'hullBoat';
           const isSailHull = p.item.type === 'hullSailBoat';
           const isUfo = isUfoPart(p.item.type);
           const ufoS = isUfo ? (p.def.ufoScale || 1) : 1;
           if (ufoS > 1) ao.scale.setScalar(1 + (ufoS - 1) * 0.5);
-          posX = Math.cos(pl.angle) * (isUfo ? ((p.def.ufoRadius || 4.2) - 0.12 * ufoS) : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist);
+          const effRad = isUfo ? ((p.def.ufoRadius || 4.2) - 0.12 * ufoS) : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist;
+          posX = Math.cos(pl.angle) * effRad;
           posY = isUfo ? (p.y + 1.12 * ufoS) : (p.y + partH * ((isBoatHull || isSailHull) ? 0.96 : 0.55));
-          posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          posZ = Math.sin(pl.angle) * effRad + (pl.offsetZ || 0);
         } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
           const gc = getGunPlacementCoords(p.item.type, partH, p.y, a, pl);
           posX = gc.posX; posY = gc.posY; posZ = gc.posZ;

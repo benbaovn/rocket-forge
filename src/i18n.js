@@ -102,6 +102,10 @@ export const PART_I18N = {
     vi: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
+  solarUfo: {
+    vi: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'Cấu trúc', desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
+    en: { name: 'Radiant Curved UFO Solar Wings ×4', cat: 'Structural', desc: 'Quad gently curved prismatic UFO quantum solar wings glowing with radiant multi-spectrum light · Rapidly regenerates UFO battery energy' },
+  },
   solarUltra: {
     vi: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời vi mô siêu nhỏ (0.004 tấn) · Chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) để tự động sạc hồi năng lượng pin' },
     en: { name: 'Ultra-Tiny Solar Panel ×2', cat: 'Structural', desc: 'Ultra-compact micro photovoltaic wings (0.004t) · Only attaches directly onto Ultra-Tiny Gun Batteries to automatically recharge battery energy' },

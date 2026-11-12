@@ -642,6 +642,9 @@ export class BuildScene {
       if (type === 'batteryGun' && !q.trim() && PARTS.solarUltra && !shownParts.has('solarUltra')) {
         cats[def.cat].push('solarUltra');
       }
+      if (type === 'ufoKing' && !q.trim() && PARTS.solarUfo && !shownParts.has('solarUfo')) {
+        cats[def.cat].push('solarUfo');
+      }
     }
     for (const [cat, types] of Object.entries(cats)) {
       const h = document.createElement('div');
@@ -1103,6 +1106,15 @@ export class BuildScene {
           obj.add(sl);
         }
       }
+      else if (type === 'solarUfo') {
+        obj = new THREE.Group();
+        for (const ang of [0, Math.PI]) {
+          const sl = buildPart('solarUfo');
+          sl.position.set(Math.cos(ang) * 0.36, -0.18, 0);
+          sl.rotation.y = -ang;
+          obj.add(sl);
+        }
+      }
       else if (type === 'solarRover' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
         obj = new THREE.Group();
         for (const pl of radialPlacements(type)) {
@@ -1421,9 +1433,15 @@ export class BuildScene {
       } else if (firstAttachedIdx >= 0) {
         this.select({ index: firstAttachedIdx, attach: 'solarUltra' });
       }
-    } else if (type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
-      // For solarPanel, prefer battery packs first so it recharges battery energy
-      if (type === 'solarPanel') {
+    } else if (type === 'solarUfo' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
+      // For solarUfo, prefer UFO saucers first, then battery packs
+      if (type === 'solarUfo') {
+        for (let i = 0; i < st.length; i++) {
+          if (isUfoPart(st[i].type) && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
+        }
+      }
+      // For solarPanel / solarUfo, prefer battery packs next so it recharges battery energy
+      if (!placed && (type === 'solarPanel' || type === 'solarUfo')) {
         for (let i = 0; i < st.length; i++) {
           const d = PARTS[st[i].type];
           const isBat = st[i].type === 'batteryPack' || st[i].type === 'batteryPackL' || d?.isBattery || st[i].type === 'chassisRover';
@@ -1735,7 +1753,11 @@ export class BuildScene {
       });
     } else this.applyHighlight();
     const h = this.rocket.layout.height;
-    const maxUfoR = stack.reduce((mx, it) => Math.max(mx, PARTS[it.type]?.ufoRadius || 0), 0);
+    const maxUfoR = stack.reduce((mx, it) => {
+      const baseR = PARTS[it.type]?.ufoRadius || 0;
+      const wingExtra = (baseR > 0 && it.attach?.includes('solarUfo')) ? (1.8 * (PARTS[it.type]?.ufoScale || 1)) : 0;
+      return Math.max(mx, baseR + wingExtra);
+    }, 0);
     if (this.vabScaffolds) {
       const scafX = maxUfoR > 4.5 ? Math.max(11, maxUfoR * 1.45 + 6) : 11;
       for (const sg of this.vabScaffolds) sg.position.x = sg.userData.sign * scafX;

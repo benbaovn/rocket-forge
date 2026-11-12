@@ -27,6 +27,7 @@ export const PARTS = {
   legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
+  solarUfo: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.16, isUfoSolar: true, desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
   solarUltra: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.004, isUltraSolar: true, desc: 'Cặp cánh pin mặt trời vi mô siêu siêu nhỏ (0.004 tấn) chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) để tự động sạc điện liên tục' },
   gunLaser: { name: 'Súng Lazer Siêu Hạng ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'laser', desc: 'Cặp pháo Lazer xoay 360° bắn tia plasma tốc độ ánh sáng tiêu diệt Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
   waterCannon: { name: 'Máy Phun Nước 1,000,000 PSI ×2', cat: 'Vũ khí', kind: 'radial', count: 2, dry: 0.05, weapon: 'water', desc: 'Đại bác siêu áp lực 1,000,000 PSI bắn tia nước cắt kim cương nghiền nát Alien · Súng chỉ xài Pin (gắn Pin Siêu Siêu Nhỏ cho tên lửa nhiên liệu thường, hoặc dùng Cục Pin Năng Lượng) (Phím V)' },
@@ -335,6 +336,7 @@ const builders = {
   legs() { return buildLeg(); },
   gridfins() { return buildGridFin(); },
   solarPanel() { return buildSolarPanel(); },
+  solarUfo() { return buildSolarUfo(); },
   solarUltra() { return buildSolarUltra(); },
   gunLaser() { return buildGunLaser(); },
   waterCannon() { return buildWaterCannon(); },
@@ -1469,6 +1471,151 @@ function buildSolarPanel() {
   wing.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, totalLen, 12).rotateZ(Math.PI / 2), MAT.titanium, totalLen / 2, -0.045, 0));
   // End cap bar with gold tip accent
   wing.add(mesh(new THREE.BoxGeometry(0.045, 0.045, segH + 0.04), MAT.gold, totalLen - 0.01, 0, 0));
+
+  return g;
+}
+
+function buildSolarUfo() {
+  const g = new THREE.Group();
+
+  const makeCrystal = (col, emi, intensity = 1.55) => new THREE.MeshStandardMaterial({
+    color: col,
+    emissive: new THREE.Color(emi),
+    emissiveIntensity: intensity,
+    roughness: 0.12,
+    metalness: 0.36,
+  });
+
+  const crystalCyan = makeCrystal(0x22d3ee, 0x00e5ff, 1.60);
+  const crystalAqua = makeCrystal(0x34d399, 0x00ffa3, 1.50);
+  const crystalViolet = makeCrystal(0xe879f9, 0xd946ef, 1.60);
+  const crystalGold = makeCrystal(0xfbbf24, 0xffab00, 1.70);
+  const neonRimGold = makeCrystal(0xffe082, 0xffc400, 2.30);
+  const neonRimCyan = makeCrystal(0x80deea, 0x00f0ff, 2.40);
+  const neonRimPink = makeCrystal(0xff80ab, 0xff1744, 2.25);
+
+  // 1. Alien Anti-Gravity Gimbal Root Socket (embeds cleanly into UFO saucer rim)
+  g.add(mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.38, 24).rotateZ(Math.PI / 2), MAT.darkMetal, 0.02, 0, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.20, 0.038, 12, 32).rotateY(Math.PI / 2), neonRimGold, 0.18, 0, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.145, 18, 14), neonRimCyan, 0.30, 0, 0));
+  for (const sgn of [-1, 1]) {
+    const strut = mesh(new THREE.CylinderGeometry(0.026, 0.032, 0.38, 12), MAT.gold, 0.38, 0.01, sgn * 0.15);
+    strut.rotation.z = Math.PI / 2;
+    strut.rotation.y = sgn * 0.38;
+    g.add(strut);
+  }
+
+  // Tilted wing container so the curved radiant face shines clearly from side, front & top angles
+  const wing = new THREE.Group();
+  wing.rotation.x = 0.20;
+  g.add(wing);
+
+  // Smooth upward crescent curve + organic swept petal width profile
+  const x0 = 0.46;
+  const span = 2.84;
+  const segCount = 8;
+  const curveY = (u) => 0.68 * Math.pow(u, 1.82);
+  const curveZ = (u) => -0.22 * Math.sin(u * Math.PI * 0.92);
+  const widthAt = (u) => 0.72 + 0.72 * Math.sin(Math.pow(u, 0.78) * Math.PI * 0.92);
+  const camberDrop = (w) => Math.sin(0.22) * (w * 0.31);
+
+  const crownMats = [crystalCyan, crystalCyan, crystalAqua, crystalAqua, crystalViolet, crystalViolet, crystalGold, crystalGold];
+  const petalMats = [crystalViolet, crystalAqua, crystalCyan, crystalGold, crystalCyan, crystalPinkOrGold(crystalGold, neonRimPink, 0), crystalViolet, crystalCyan];
+  function crystalPinkOrGold(a, b, idx) { return idx === 0 ? a : b; }
+
+  for (let i = 0; i < segCount; i++) {
+    const u0 = i / segCount;
+    const u1 = (i + 1) / segCount;
+    const um = (u0 + u1) * 0.5;
+    const p0x = x0 + u0 * span, p0y = curveY(u0), p0z = curveZ(u0);
+    const p1x = x0 + u1 * span, p1y = curveY(u1), p1z = curveZ(u1);
+    const pmx = x0 + um * span, pmy = curveY(um), pmz = curveZ(um);
+
+    const dx = p1x - p0x, dy = p1y - p0y, dz = p1z - p0z;
+    const segLen = Math.hypot(dx, dy, dz) * 0.94;
+    const pitchZ = Math.atan2(dy, dx);
+    const yawY = -Math.atan2(dz, dx);
+    const w = widthAt(um);
+
+    const seg = new THREE.Group();
+    seg.position.set(pmx, pmy, pmz);
+    seg.rotation.y = yawY;
+    seg.rotation.z = pitchZ;
+    wing.add(seg);
+
+    const crownW = w * 0.38;
+    const sideW = w * 0.32;
+    const crownMat = crownMats[i];
+    const sideMat = petalMats[i];
+
+    // Center cambered crown crystal wafer (radiant on both top & bottom)
+    seg.add(mesh(new THREE.BoxGeometry(segLen, 0.030, crownW), crownMat, 0, 0.012, 0));
+    seg.add(mesh(new THREE.BoxGeometry(segLen * 0.92, 0.012, 0.045), neonRimGold, 0, 0.026, 0));
+
+    // Gently curved / arched left & right side crystal petals (±12.5° chordwise curvature!)
+    for (const sgn of [-1, 1]) {
+      const zOff = sgn * (crownW * 0.5 + sideW * 0.47);
+      const yOff = -Math.sin(0.22) * (sideW * 0.48);
+      const petal = mesh(new THREE.BoxGeometry(segLen * 0.97, 0.026, sideW), sideMat, 0, yOff, zOff);
+      petal.rotation.x = -sgn * 0.22;
+      seg.add(petal);
+
+      const vein = mesh(new THREE.BoxGeometry(segLen * 0.96, 0.014, 0.024), i % 2 === 0 ? neonRimCyan : neonRimGold, 0, 0.018, sgn * (crownW * 0.49));
+      seg.add(vein);
+    }
+
+    // Glowing transverse golden quantum rib between curved segments
+    const rib = mesh(new THREE.BoxGeometry(0.026, 0.036, crownW + sideW * 1.75), neonRimGold, -segLen * 0.5, -0.008, 0);
+    seg.add(rib);
+  }
+
+  // 2. Smooth Continuous 3D Curved Plasma Edge Rails & Central Spine (CatmullRomCurve3 + TubeGeometry)
+  const leadPts = [];
+  const trailPts = [];
+  const spinePts = [];
+  const samples = 14;
+  for (let k = 0; k <= samples; k++) {
+    const u = k / samples;
+    const px = x0 - 0.04 + u * (span + 0.08);
+    const py = curveY(u);
+    const pz = curveZ(u);
+    const halfW = widthAt(u) * 0.49;
+    const edgeDrop = camberDrop(widthAt(u));
+    leadPts.push(new THREE.Vector3(px, py - edgeDrop, pz + halfW));
+    trailPts.push(new THREE.Vector3(px, py - edgeDrop, pz - halfW));
+    spinePts.push(new THREE.Vector3(px, py - 0.015, pz));
+  }
+
+  const leadCurve = new THREE.CatmullRomCurve3(leadPts);
+  const trailCurve = new THREE.CatmullRomCurve3(trailPts);
+  const spineCurve = new THREE.CatmullRomCurve3(spinePts);
+
+  wing.add(new THREE.Mesh(new THREE.TubeGeometry(leadCurve, 36, 0.034, 10, false), neonRimGold));
+  wing.add(new THREE.Mesh(new THREE.TubeGeometry(trailCurve, 36, 0.034, 10, false), neonRimCyan));
+  wing.add(new THREE.Mesh(new THREE.TubeGeometry(spineCurve, 32, 0.028, 10, false), neonRimPink));
+
+  // Glowing prism pearl nodes along the curved borders
+  const pearlGeo = new THREE.SphereGeometry(0.058, 12, 10);
+  for (const u of [0.22, 0.48, 0.74]) {
+    const lp = leadCurve.getPoint(u);
+    const tp = trailCurve.getPoint(u);
+    wing.add(mesh(pearlGeo, neonRimCyan, lp.x, lp.y, lp.z));
+    wing.add(mesh(pearlGeo, neonRimPink, tp.x, tp.y, tp.z));
+  }
+
+  // 3. Radiant Crescent Wingtip Sunburst Crown
+  const tipX = x0 + span + 0.12;
+  const tipY = curveY(1.0) + 0.05;
+  const tipZ = curveZ(1.0);
+  const tipTangent = Math.atan2(curveY(1.0) - curveY(0.9), 0.1 * span);
+  const tipGrp = new THREE.Group();
+  tipGrp.position.set(tipX, tipY, tipZ);
+  tipGrp.rotation.z = tipTangent;
+  wing.add(tipGrp);
+
+  tipGrp.add(mesh(new THREE.TorusGeometry(0.24, 0.034, 12, 32).rotateX(Math.PI / 2), neonRimGold, 0.04, 0, 0));
+  tipGrp.add(mesh(new THREE.TorusGeometry(0.15, 0.022, 10, 24), neonRimCyan, 0.04, 0, 0));
+  tipGrp.add(mesh(new THREE.OctahedronGeometry(0.11, 0), neonRimPink, 0.04, 0, 0));
 
   return g;
 }
@@ -14286,6 +14433,13 @@ export function radialPlacements(type) {
       { angle: 0, dist: 1.12, offsetZ: 0 },
       { angle: Math.PI, dist: 1.12, offsetZ: 0 },
     ];
+  }
+  if (type === 'solarUfo') {
+    return [0, 1, 2, 3].map((i) => ({
+      angle: Math.PI / 4 + i * (Math.PI / 2),
+      dist: R - 0.05,
+      offsetZ: 0,
+    }));
   }
   if (type === 'solarPanel' || type === 'solarUltra' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun') {
     return [

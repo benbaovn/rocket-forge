@@ -1436,8 +1436,8 @@ export class LaunchScene {
     this.arms = [];
     const mat = new THREE.MeshStandardMaterial({ color: 0x9c3a22, metalness: 0.5, roughness: 0.55 });
     const ufoIt = (this.stack || []).find((s) => isUfoPart(s.type));
-    const maxUfoR = ufoIt ? (PARTS[ufoIt.type]?.ufoRadius || 0) : 0;
     const maxUfoS = ufoIt ? (PARTS[ufoIt.type]?.ufoScale || 1) : 1;
+    const maxUfoR = ufoIt ? ((PARTS[ufoIt.type]?.ufoRadius || 0) + (ufoIt.attach?.includes('solarUfo') ? 1.8 * maxUfoS : 0)) : 0;
     this.towerX = maxUfoR > 4.5 ? -(Math.ceil(maxUfoR * 1.45) + 7) : -13;
     if (this.towerGroup) this.towerGroup.position.x = this.towerX;
     const ys = maxUfoR > 0 ? [] : [height * 0.35, height * 0.7, height - 2.5].filter((y) => y > 4 && y < 80);
@@ -3649,7 +3649,11 @@ export class LaunchScene {
     this.camera.fov = 50; this.camera.updateProjectionMatrix();
     const isSpecial = this.player.isBoat || this.player.isRover || this.player.isPlane;
     const h = this.rocketHeight;
-    const padUfoR = (stack || []).reduce((mx, s) => Math.max(mx, PARTS[s.type]?.ufoRadius || 0), 0);
+    const padUfoR = (stack || []).reduce((mx, s) => {
+      const baseR = PARTS[s.type]?.ufoRadius || 0;
+      const wingExtra = (baseR > 0 && s.attach?.includes('solarUfo')) ? (1.8 * (PARTS[s.type]?.ufoScale || 1)) : 0;
+      return Math.max(mx, baseR + wingExtra);
+    }, 0);
     if (this.player.isRover) {
       this.camera.position.set(13, 4.5, 0);
       this.controls.minDistance = 2;

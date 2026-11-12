@@ -129,6 +129,10 @@ export function isUfoPart(type) {
   return !!(type && PARTS[type] && PARTS[type].ufoTier);
 }
 
+export function ufoEngineScale(ufoScale = 1) {
+  return ufoScale > 1 ? Math.min(2.25, 1 + (ufoScale - 1) * 0.38) : 1;
+}
+
 export const MAT = {};
 
 function physical(o) { return new THREE.MeshPhysicalMaterial(o); }
@@ -13965,10 +13969,13 @@ function buildUfoSaucerVariant(variant = 'scout') {
     metalness: isRoyal ? 0.35 : 0.12,
   });
 
-  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95, base collar R * S for seamless stack mating)
-  hull.add(mesh(new THREE.CylinderGeometry(1.55, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
-  hull.add(mesh(new THREE.TorusGeometry(1.24, 0.08, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 0.18, 0));
-  hull.add(mesh(new THREE.CylinderGeometry(discR - 0.10, 1.55, 0.65, 64), lowerHullMat, 0, 0.66, 0));
+  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95, base collar R * engK for seamless uniform engine mating)
+  const engK = ufoEngineScale(S);
+  const collarR = (R * engK) / S;
+  const collarTopR = S > 1 ? Math.max(collarR * 1.35, 1.15) : 1.55;
+  hull.add(mesh(new THREE.CylinderGeometry(collarTopR, collarR, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
+  hull.add(mesh(new THREE.TorusGeometry(collarR, 0.08 / Math.sqrt(S), 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 0.18, 0));
+  hull.add(mesh(new THREE.CylinderGeometry(discR - 0.10, collarTopR, 0.65, 64), lowerHullMat, 0, 0.66, 0));
 
   // Underbelly glowing anti-gravity concentric rings (pulsed when thrusting)
   hull.add(mesh(new THREE.TorusGeometry(discR * 0.56, 0.075, 12, 56).rotateX(Math.PI / 2), underRing1, 0, 0.45, 0));

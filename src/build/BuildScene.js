@@ -1276,7 +1276,7 @@ export class BuildScene {
       lay.parts.forEach((p) => {
         if (p.item.attach.includes(type)) return;
         if (!canPartAttachToStack(type, this.stack, p.index)) return;
-        const [sx, sy] = this.screenOf(p.y + p.def.height / 2);
+        const [sx, sy] = this.screenOf(p.y + (p.height ?? p.def.height) / 2);
         const d = Math.hypot(sx - mx, sy - my);
         if (d < bd) { bd = d; best = { attach: p.index }; }
       });
@@ -1289,7 +1289,7 @@ export class BuildScene {
       lay.parts.forEach((p) => {
         if (p.item.attach.includes(type)) return;
         if (!canPartAttachToStack(type, this.stack, p.index)) return;
-        const [sx, sy] = this.screenOf(p.y + p.def.height / 2);
+        const [sx, sy] = this.screenOf(p.y + (p.height ?? p.def.height) / 2);
         const dx = Math.abs(mx - sx);
         const dy = Math.abs(my - sy);
         if (dx >= 24 && dx < 280 && dy < 105) {
@@ -1304,7 +1304,7 @@ export class BuildScene {
     const n = this.stack.length;
     let best = null, bd = 1e9;
     for (let k = 0; k <= n; k++) {
-      const y = k === n ? 0 : lay.parts[k].y + lay.parts[k].def.height;
+      const y = k === n ? 0 : lay.parts[k].y + (lay.parts[k].height ?? lay.parts[k].def.height);
       const [sx, sy] = this.screenOf(y);
       const d = Math.hypot((sx - mx) * 0.35, sy - my);
       if (d < bd) { bd = d; best = { insert: k, y }; }
@@ -1322,7 +1322,8 @@ export class BuildScene {
     const lay = layout(st);
     const p = lay.parts[hiIndex];
     this.indicator.visible = true;
-    this.indicator.position.y = cand.attach !== undefined ? p.y + p.def.height / 2 : p.y + p.def.height / 2;
+    const pH = p.height ?? p.def.height;
+    this.indicator.position.y = cand.attach !== undefined ? p.y + pH / 2 : p.y + pH / 2;
     this.indicator.scale.setScalar(cand.attach !== undefined ? 1.6 : 1);
   }
 
@@ -1512,7 +1513,7 @@ export class BuildScene {
     if (this.rocket?.partObjs) {
       const pObj = this.rocket.partObjs.find((p) => p.index === sel.index);
       if (pObj) {
-        this.desiredTarget.set(0, pObj.y + pObj.def.height * 0.5, 0);
+        this.desiredTarget.set(0, pObj.y + (pObj.height ?? pObj.def.height) * 0.5, 0);
       }
     }
     const def = PARTS[sel.attach || it.type];

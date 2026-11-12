@@ -86,11 +86,12 @@ export class Vessel {
       const stInfo = segInfo?.[k];
       for (const i of segs[k]) {
         const p = lay.parts[i];
+        const pH = p.height ?? p.def.height;
         const isBat = p.item.type === 'batteryPack' || p.def.isBattery;
         const canBurn = stInfo ? (isBat ? stInfo.useBatteryFuel : stInfo.useChemFuel) : true;
         const pm = p.def.dry + (p.def.fuel || 0) * (canBurn ? frac : 1);
-        m += pm; my += pm * (p.y + p.def.height / 2);
-        minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.def.height);
+        m += pm; my += pm * (p.y + pH / 2);
+        minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + pH);
         if (p.item.attach && p.item.attach.includes('wheelsRover')) {
           minY = Math.min(minY, p.y - 0.205);
         }
@@ -102,7 +103,7 @@ export class Vessel {
           const aBat = a === 'batteryPack' || ad.isBattery;
           const aCanBurn = stInfo ? (aBat ? stInfo.useBatteryFuel : stInfo.useChemFuel) : true;
           const am = (ad.dry + (ad.fuel || 0) * (aCanBurn ? frac : 1)) * cnt;
-          const y = a === 'gridfins' ? p.y + p.def.height - 0.5 : a === 'legs' ? p.y + 1.0 : p.y + p.def.height * 0.5;
+          const y = a === 'gridfins' ? p.y + pH - 0.5 : a === 'legs' ? p.y + 1.0 : p.y + pH * 0.5;
           m += am; my += am * y;
         }
       }
@@ -117,7 +118,7 @@ export class Vessel {
     this.legBottom = Infinity;
     for (const d of this.deployables('legs')) {
       const p = lay.parts[d.partIndex];
-      const foot = d.objs[0]?.userData.footY ?? -3.8;
+      const foot = (d.objs[0]?.userData.footY ?? -3.8) * (d.objs[0]?.scale?.y || 1);
       this.legBottom = Math.min(this.legBottom, p.y + foot);
     }
     const prevY = this.com ? this.com.y : null;

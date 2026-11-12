@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { PARTS, G0, R as CORE_R, isUfoPart } from '../parts.js';
+import { PARTS, G0, R as CORE_R, isUfoPart, ufoEngineScale } from '../parts.js';
 import { buildRocket, segments, segmentInfo, layout } from '../rocket.js';
 import { createSkyMaterial, atmosphereJS, sunTransmittance, PLANET_R } from '../fx/atmosphere.js';
 import { createEarth, createStars, NOISE_GLSL } from '../fx/earth.js';
@@ -1457,7 +1457,7 @@ export class LaunchScene {
       this.pad.add(pivot);
       this.arms.push({ pivot, target: 0 });
     }
-    const clampR = maxUfoS > 1 ? Math.min(6.4, CORE_R * maxUfoS + 0.85) : isBuran ? 4.15 : isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
+    const clampR = maxUfoS > 1 ? (CORE_R * ufoEngineScale(maxUfoS) + 0.85) : isBuran ? 4.15 : isN1 ? 4.65 : isSoyuz ? 3.65 : isSaturn ? 2.95 : 2.2;
     this.clamps.forEach((c, i) => {
       const a = i * Math.PI / 2 + Math.PI / 4;
       c.position.set(Math.cos(a) * clampR, PAD_TOP + 0.6, Math.sin(a) * clampR);
@@ -2255,7 +2255,7 @@ export class LaunchScene {
     if (activeItems.some((s) => s.type.startsWith('saturn'))) return 1.65;
     if (activeItems.some((s) => s.type.startsWith('soyuz')) && (!P || (P.boosters && P.boosters().length > 0))) return 2.30;
     const ufoItem = activeItems.find((s) => isUfoPart(s.type));
-    if (ufoItem) return Math.max(2.95, CORE_R * (PARTS[ufoItem.type]?.ufoScale || 1) + 0.18);
+    if (ufoItem) return Math.max(2.95, CORE_R * ufoEngineScale(PARTS[ufoItem.type]?.ufoScale || 1) + 0.18);
     return 1.28;
   }
 

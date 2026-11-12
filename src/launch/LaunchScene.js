@@ -8291,7 +8291,11 @@ export class LaunchScene {
       const barStyle = hasSolarBat && chgRate > 0.5 && this.fuel[k] < this.fuelMax[k] - 0.05
         ? `width:${f * 100}%;background:linear-gradient(90deg,#22d3ee,#4ade80);box-shadow:0 0 8px rgba(74,222,128,0.65)`
         : `width:${f * 100}%`;
-      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}${gunBatBadge}${alienDrainBadge}</span><span>${this.fuelMax[k] > 0 ? fmt(this.fuel[k], 1) + ' t' : '—'}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
+      const isBatStage = !!(sInf && sInf.useBatteryFuel);
+      const fuelValTxt = this.fuelMax[k] > 0
+        ? `${isBatStage ? '🔋 ' : ''}${fmt(this.fuel[k], 1)} t`
+        : '—';
+      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}${gunBatBadge}${alienDrainBadge}</span><span>${fuelValTxt}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
       for (const bb of this.rocket.boosters) if (bb.seg === k) {
         html += `<div class="fr-top" style="margin-top:3px;font-size:10px;opacity:${bb.attached ? 1 : 0.35}"><span>↳ SRB</span><span>${fmt(bb.fuel, 1)} t</span></div><div class="fr-bar boost"><div style="width:${(bb.fuel / bb.fuelMax) * 100}%"></div></div>`;
       }

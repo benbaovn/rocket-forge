@@ -250,7 +250,11 @@ export class BuildScene {
     const pills = [
       `<span class="pt-pill">⚖️ <b>${totalMass} t</b>${def.kind === 'radial' ? tr(' / chiếc', ' / ea') : ''}</span>`,
     ];
-    if (def.fuel) pills.push(`<span class="pt-pill">⛽ <b>${def.fuel.toFixed(1)} t</b></span>`);
+    if (def.fuel) {
+      pills.push(def.isBattery
+        ? `<span class="pt-pill">🔋 <b>${def.fuel.toFixed(1)} t ${tr('Pin', 'Battery')}</b></span>`
+        : `<span class="pt-pill">⛽ <b>${def.fuel.toFixed(1)} t</b></span>`);
+    }
     if (def.thrustVac) {
       pills.push(`<span class="pt-pill">🔥 <b>${def.thrustSL}–${def.thrustVac} kN</b></span>`);
       pills.push(`<span class="pt-pill">⚡ Isp <b>${def.ispVac}s</b></span>`);
@@ -523,15 +527,20 @@ export class BuildScene {
       card.classList.add('part-incompatible');
     }
     card.dataset.part = type;
-    const badgeTxt = def.thrustVac
-      ? `🔥${def.thrustVac}`
-      : def.isGunBattery
-        ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-        : def.isUltraSolar
-          ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-          : def.isHeatShield
-            ? `🛡️${(def.dry + (def.fuel || 0)).toFixed(2)}t`
-            : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+    const fmtCompact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 10000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${n}`;
+    const badgeTxt = isUfoPart(type)
+      ? `⚡${fmtCompact(def.thrustVac)}·🔋${Math.round(def.fuel)}t`
+      : def.thrustVac
+        ? `🔥${fmtCompact(def.thrustVac)}`
+        : def.isGunBattery
+          ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+          : def.isUltraSolar
+            ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+            : def.isHeatShield
+              ? `🛡️${(def.dry + (def.fuel || 0)).toFixed(2)}t`
+              : def.isBattery
+                ? `🔋${(def.fuel || 0).toFixed(0)}t`
+                : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
     const shortName = this.getPartCardLabel(type, def);
     card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
     card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
@@ -681,11 +690,16 @@ export class BuildScene {
         const ico = PRESET_ICONS[name] || '🚀';
         const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
         const partCount = PRESETS[name].length;
+        const topBase = (PRESETS[name][0] || '').split('+')[0];
+        const ufoDef = isUfoPart(topBase) ? PARTS[topBase] : null;
+        const metaTxt = ufoDef
+          ? `${partCount} ${tr('tầng/khối', 'modules')} · 🔋 ${tr('Pin', 'Battery')} ${Math.round(ufoDef.fuel)}t · ⚡ ${tr('Cấp', 'Tier')} ${ufoDef.ufoTier}`
+          : `${partCount} ${tr('tầng/khối', 'modules')}`;
         return `<div class="preset-card" data-preset="${name}">
           <div class="prc-ico">${ico}</div>
           <div>
             <div class="prc-name">${cleanLabel}</div>
-            <div class="prc-meta">${partCount} ${tr('tầng/khối', 'modules')}</div>
+            <div class="prc-meta">${metaTxt}</div>
           </div>
         </div>`;
       }).join('');
@@ -1745,12 +1759,15 @@ export class BuildScene {
     const twrEl = $('st-twr');
     twrEl.textContent = st.stages.length ? twr.toFixed(2) : '–';
     twrEl.style.color = twr >= 1.2 ? 'var(--ok)' : twr >= 1 ? '#ffd23d' : 'var(--danger)';
-    $('st-dv').textContent = Math.round(st.totalDv) + ' m/s';
+    const fmtDv = (dv) => dv >= 1e6 ? `${(dv / 1000).toFixed(0)} km/s` : `${Math.round(dv)} m/s`;
+    const fmtStageDv = (dv) => dv >= 1e6 ? `${(dv / 1e6).toFixed(1)}M` : dv >= 100000 ? `${Math.round(dv / 1000)}k` : `${Math.round(dv)}`;
+    $('st-dv').textContent = fmtDv(st.totalDv);
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
-    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.solarOnBattery ? ' ☀️⚡' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>Δv ${Math.round(s.dv)}</span><span>TWR ${s.twr.toFixed(2)}</span></div>`).join('');
+    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋${Math.round(s.batteryFuel)}t · ` : ''}Δv ${fmtStageDv(s.dv)}</span><span>TWR ${s.twr.toFixed(1)}</span></div>`).join('');
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
     const hasGunBat = st.stages.some((s) => s.hasGunBattery);
+    const totalBatFuel = st.stages.reduce((sum, s) => sum + (s.batteryFuel || 0), 0);
     const vType = stackVehicleType(this.stack);
     const readyLabel = vType === 'boat'
       ? tr('Sẵn sàng ra cảng!', 'Ready for the harbor!')
@@ -1763,7 +1780,7 @@ export class BuildScene {
     if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
     w.innerHTML = allWarnings.length
       ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
-      : `<div class="ok">✔ ${readyLabel}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
+      : `<div class="ok">✔ ${readyLabel}${totalBatFuel > 0 ? ` · 🔋 ${tr('Pin', 'Battery')}: ${Math.round(totalBatFuel)}t` : ''}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
     const btnLaunch = $('btn-launchpad');
     if (btnLaunch) {
       btnLaunch.disabled = !st.canLaunch;

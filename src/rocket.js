@@ -341,7 +341,7 @@ export function segmentInfo(stack, idx) {
     const d = PARTS[it.type];
     s.dry += d.dry;
     if (it.type === 'batteryPack' || it.type === 'batteryPackL' || d.isBattery) {
-      s.batteryCount += isUfoPart(it.type) ? (d.ufoTier >= 3 ? 3 : 2) : (it.type === 'batteryPackL' ? 2 : 1);
+      s.batteryCount += isUfoPart(it.type) ? ((d.ufoTier || 1) + 1) : (it.type === 'batteryPackL' ? 2 : 1);
       s.batteryFuel += d.fuel || 0;
     } else {
       s.chemFuel += d.fuel || 0;
@@ -397,7 +397,7 @@ export function segmentInfo(stack, idx) {
       } else {
         s.dry += ad.dry * cnt;
         if (a === 'batteryPack' || a === 'batteryPackL' || ad.isBattery) {
-          s.batteryCount += cnt * (isUfoPart(a) ? (ad.ufoTier >= 3 ? 3 : 2) : (a === 'batteryPackL' ? 2 : 1));
+          s.batteryCount += cnt * (isUfoPart(a) ? ((ad.ufoTier || 1) + 1) : (a === 'batteryPackL' ? 2 : 1));
           s.batteryFuel += (ad.fuel || 0) * cnt;
         } else {
           s.chemFuel += (ad.fuel || 0) * cnt;
@@ -501,7 +501,7 @@ export function computeStats(stack) {
       t += fuelLeft / s.mdot;
     }
     const thrust = first ? s.tSL + s.bTSL : s.tVac + s.bTVac;
-    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery });
+    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery, batteryFuel: s.useBatteryFuel ? s.batteryFuel : 0, batteryCount: s.batteryCount || 0 });
     totalDv += dv;
     remainingAbove -= s.mass;
   }

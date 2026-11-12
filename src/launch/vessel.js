@@ -210,7 +210,9 @@ export class Vessel {
     const info = segInfo[k];
     const gLocal = (B.g || G0) * (B.R / (B.R + Math.max(0, this.alt))) ** 2;
     const gRatio = Math.max(0.005, gLocal / G0);
-    const batBoost = 1 + 0.25 * Math.min(3, info.batteryCount || 0);
+    const maxBatBoostCount = info.ufoTier ? 6 : 3;
+    const batBoost = 1 + 0.25 * Math.min(maxBatBoostCount, info.batteryCount || 0);
+    const ufoBatShield = info.ufoTier ? [1, 1.0, 0.55, 0.30, 0.16, 0.08][Math.min(5, info.ufoTier)] : 1.0;
 
     // Surrounding Aliens accelerate fuel & battery depletion (more Aliens around -> faster drain!)
     const alienDrainInfo = (env && env.getAlienFuelDrain) ? env.getAlienFuelDrain(this) : null;
@@ -259,7 +261,7 @@ export class Vessel {
       // Anti-gravity thrust scales directly with local gravity (stronger gravity -> faster, weaker gravity -> slower)
       // Higher-tier UFOs maintain a quantum-warp anti-gravity floor so higher-tier UFOs fly dramatically faster even in deep space
       // Laser thrust scales inversely with local brightness (brighter -> slower, darker -> faster)
-      const ufoWarpFloor = info.ufoTier ? [0, 0.04, 0.08, 0.13, 0.19, 0.28][Math.min(5, info.ufoTier)] : 0;
+      const ufoWarpFloor = info.ufoTier ? [0, 0.045, 0.08, 0.13, 0.19, 0.27][Math.min(5, info.ufoTier)] : 0;
       const agGRatio = Math.max(gRatio, ufoWarpFloor);
       const curThrust = (normVac - (normVac - normSL) * pr) + (agVac * agGRatio + lzVac * laserScale) * batBoost;
       const sciFiDrainScale = info.solarOnBattery > 0 ? 12.0 : 1.0;
@@ -267,7 +269,8 @@ export class Vessel {
       thrust += curThrust * thr * engFrac;
       const planeFuelFloor = (this.isPlane && nearbyAliens === 0) ? (fuelMax[k] || 0) * 0.25 : 0;
       const drainScale = this.isPlane ? 0.005 : 1.0;
-      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * alienDrainMul * thr * engFrac * h);
+      const effAlienDrainMul = 1 + (alienDrainMul - 1) * ufoBatShield;
+      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * effAlienDrainMul * thr * engFrac * h);
       if (fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
         this.events.push(['fuelOut', k]);
       }
@@ -276,7 +279,7 @@ export class Vessel {
     // Passive Alien energy/fuel siphon when surrounded by Aliens (more Aliens -> faster continuous drain!)
     if (nearbyAliens > 0 && !this.clamped && fuel[k] > 0 && (fuelMax[k] || 0) > 0) {
       const realDt = Math.min(h, h / Math.max(1, this._warp || 1));
-      const passiveRate = (fuelMax[k] * 0.0028 * nearbyAliens) * (info.solarOnBattery > 0 ? 1.8 : 1.0);
+      const passiveRate = (fuelMax[k] * 0.0028 * nearbyAliens * ufoBatShield) * (info.solarOnBattery > 0 ? 1.8 : 1.0);
       const prevF = fuel[k];
       fuel[k] = Math.max(0, fuel[k] - passiveRate * realDt);
       if (prevF > 0 && fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {

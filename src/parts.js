@@ -118,11 +118,11 @@ export const PARTS = {
   starshipNose: { name: 'Mũi Tàu Starship Đen Gạch Chịu Nhiệt & 2 Cánh Vây Trước (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 7.2, dry: 1.4, fuel: 10.0, thrustSL: 240, thrustVac: 420, ispSL: 280, ispVac: 380, engines: 1, hasFins: true, desc: 'Chóp mũi ogive của tàu Starship phủ gạch chịu nhiệt đen than chì kết hợp ánh thép không gỉ, 2 cánh vây khí động phía trước (Forward Flaps) và dù hạ cánh' },
   starshipShip: { name: 'Thân Tàu Starship (Đai Băng Trắng, 2 Cánh Vây Sau, Đai Hot-Stage & 6 Raptor · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 10.4, dry: 2.8, fuel: 32.0, thrustSL: 1350, thrustVac: 1950, ispSL: 300, ispVac: 380, engines: 6, autoStage: true, hasFins: true, desc: 'Thân tàu Starship chia 2 nửa trắng phủ băng lạnh & đen gạch chịu nhiệt, váy đáy xám đen kèm 2 cánh vây lớn phía sau (Aft Flaps), vành tách tầng nóng (Hot-Staging Ring) và 6 động cơ Raptor' },
   starshipBooster: { name: 'Tầng Đẩy Super Heavy (Thép Không Gỉ, 4 Cánh Lưới, 4 Sống Khí Động & 33 Động Cơ Raptor)', cat: 'Động cơ', kind: 'stack', height: 20.6, dry: 6.8, fuel: 82.0, thrustSL: 6200, thrustVac: 7100, ispSL: 310, ispVac: 350, engines: 33, autoStage: true, hasFins: true, desc: 'Siêu tầng đẩy Super Heavy bằng thép không gỉ với 4 cánh lưới xòe ngang ở đỉnh, vệt băng trắng dọc sống lưng, 4 gờ khí động (chines) nổi dọc thân dưới và cụm 33 động cơ Raptor phát sáng rực rỡ ở đáy' },
-  ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 55.0, isBattery: true, ufoTier: 1, ufoRadius: 4.2, thrustSL: 3200, thrustVac: 3600, ispSL: 6500, ispVac: 8000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
-  ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', kind: 'stack', height: 3.75, dry: 1.3, fuel: 68.0, isBattery: true, ufoTier: 2, ufoRadius: 4.45, thrustSL: 8200, thrustVac: 9200, ispSL: 9500, ispVac: 12000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Nhanh gấp ~1.8× Trinh Sát) bọc giáp đen-tím, 8 lưỡi kiếm khí động, phi công Chiến Binh giáp kính và pin lượng tử 68 tấn' },
-  ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', kind: 'stack', height: 4.05, dry: 1.5, fuel: 85.0, isBattery: true, ufoTier: 3, ufoRadius: 4.85, thrustSL: 18500, thrustVac: 21000, ispSL: 14500, ispVac: 18000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Nhanh gấp ~3× Trinh Sát) hai tầng giáp đỏ-vàng, vòng hào quang khiên năng lượng lơ lửng, chỉ huy Tàu Mẹ và pin lượng tử 85 tấn' },
-  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', kind: 'stack', height: 4.45, dry: 1.7, fuel: 105.0, isBattery: true, ufoTier: 4, ufoRadius: 5.2, thrustSL: 39000, thrustVac: 44000, ispSL: 22000, ispVac: 28000, engines: 1, restart: true, hasFins: true, desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Nhanh gấp ~5× Trinh Sát) vỏ hồng kim cương, 3 vòng hào quang hoàng gia, vương miện pha lê 8 đỉnh lơ lửng và pin lượng tử 105 tấn' },
-  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', kind: 'stack', height: 4.7, dry: 1.9, fuel: 125.0, isBattery: true, ufoTier: 5, ufoRadius: 5.5, thrustSL: 74000, thrustVac: 84000, ispSL: 32000, ispVac: 42000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Nhanh nhất vũ trụ, gấp ~8× Trinh Sát) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc, đại vương miện vàng lơ lửng và pin lượng tử 125 tấn' },
+  ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 60.0, isBattery: true, ufoTier: 1, ufoRadius: 4.2, thrustSL: 3600, thrustVac: 4000, ispSL: 7000, ispVac: 8500, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1 · Pin 60 tấn / 2 lõi) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, dù hạ cánh và lõi phản trọng lực' },
+  ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', kind: 'stack', height: 3.75, dry: 1.3, fuel: 150.0, isBattery: true, ufoTier: 2, ufoRadius: 4.45, thrustSL: 18500, thrustVac: 20800, ispSL: 26000, ispVac: 32000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Pin 150 tấn / 4 tế bào năng lượng) bọc giáp đen-tím, 8 lưỡi kiếm khí động và phi công Chiến Binh giáp kính' },
+  ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', kind: 'stack', height: 4.05, dry: 1.5, fuel: 350.0, isBattery: true, ufoTier: 3, ufoRadius: 4.85, thrustSL: 72000, thrustVac: 81000, ispSL: 80000, ispVac: 98000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Pin khủng 350 tấn / 6 tế bào năng lượng) hai tầng giáp đỏ-vàng, vòng hào quang khiên xoay và chỉ huy Tàu Mẹ' },
+  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', kind: 'stack', height: 4.45, dry: 1.7, fuel: 800.0, isBattery: true, ufoTier: 4, ufoRadius: 5.2, thrustSL: 245000, thrustVac: 278000, ispSL: 230000, ispVac: 285000, engines: 1, restart: true, hasFins: true, desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Siêu Pin 800 tấn / 8 tế bào năng lượng) vỏ hồng kim cương, 3 vòng hào quang hoàng gia và vương miện pha lê 8 đỉnh lơ lửng' },
+  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', kind: 'stack', height: 4.7, dry: 1.9, fuel: 1800.0, isBattery: true, ufoTier: 5, ufoRadius: 5.5, thrustSL: 790000, thrustVac: 895000, ispSL: 620000, ispVac: 760000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn / 12 tế bào năng lượng) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc và đại vương miện vàng lơ lửng' },
 };
 
 export function isUfoPart(type) {
@@ -13968,6 +13968,18 @@ function buildUfoSaucerVariant(variant = 'scout') {
   // Underbelly glowing anti-gravity concentric rings (pulsed when thrusting)
   g.add(mesh(new THREE.TorusGeometry(discR * 0.56, 0.075, 12, 56).rotateX(Math.PI / 2), underRing1, 0, 0.45, 0));
   g.add(mesh(new THREE.TorusGeometry(discR * 0.78, 0.065, 12, 64).rotateX(Math.PI / 2), underRing2, 0, 0.68, 0));
+
+  // Escalating Quantum Battery Cells mounted around the lower saucer core (2 -> 4 -> 6 -> 8 -> 12 cells)
+  const batCellCount = isKing ? 12 : isQueen ? 8 : isMother ? 6 : isWarrior ? 4 : 2;
+  const batCellRad = discR * 0.43;
+  for (let i = 0; i < batCellCount; i++) {
+    const a = (i / batCellCount) * Math.PI * 2;
+    const bx = Math.cos(a) * batCellRad;
+    const bz = Math.sin(a) * batCellRad;
+    const cellCap = mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.34, 14), MAT.darkMetal, bx, 0.44, bz);
+    g.add(cellCap);
+    g.add(mesh(new THREE.CylinderGeometry(0.195, 0.195, 0.16, 14), secondaryNeon, bx, 0.44, bz));
+  }
 
   // Underbelly Bio-Mechanical Energy Pylons / Talons for Mother (6) & Royal Queen/King (8)
   if (isBoss) {

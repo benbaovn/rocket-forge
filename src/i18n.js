@@ -467,24 +467,24 @@ export const PART_I18N = {
     en: { name: 'Super Heavy Stainless-Steel Booster (4 Grid Fins, 4 Lower Chines & 33 Glowing Raptors · Stage 1)', cat: 'Engines', desc: 'Super Heavy stainless-steel booster featuring 4 deployed dark waffle grid fins, 18 weld rings, vertical cryogenic frost spine, 4 tall lower aerodynamic chines & 33 glowing golden-white Raptor engines' },
   },
   ufoSaucer: {
-    vi: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
-    en: { name: 'Scout Alien UFO Saucer', cat: 'Command & Nose', desc: 'Scout UFO flying saucer (Speed Tier 1) with crystal green-Alien pilot dome, emerald plasma rim, 55-ton quantum battery, parachutes & anti-gravity core' },
+    vi: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1 · Pin lượng tử 60 tấn) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, dù hạ cánh và lõi phản trọng lực' },
+    en: { name: 'Scout Alien UFO Saucer', cat: 'Command & Nose', desc: 'Scout UFO flying saucer (Speed Tier 1 · 60-ton Quantum Battery) with crystal green-Alien pilot dome, emerald plasma rim, parachutes & anti-gravity core' },
   },
   ufoWarrior: {
-    vi: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Nhanh hơn UFO Trinh Sát) bọc giáp đen-tím, 8 lưỡi kiếm khí động, phi công Chiến Binh giáp kính và pin lượng tử 68 tấn' },
-    en: { name: 'Warrior Alien UFO Saucer', cat: 'Command & Nose', desc: 'Warrior UFO saucer (Speed Tier 2 · Faster than Scout UFO) with dark-purple armor, 8 swept combat blades, visor-armored Warrior Alien pilot & 68-ton quantum battery' },
+    vi: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Pin lượng tử 150 tấn) bọc giáp đen-tím, 8 lưỡi kiếm khí động, phi công Chiến Binh giáp kính và pin bền gấp đôi Trinh Sát' },
+    en: { name: 'Warrior Alien UFO Saucer', cat: 'Command & Nose', desc: 'Warrior UFO saucer (Speed Tier 2 · 150-ton Quantum Battery) with dark-purple armor, 8 swept combat blades, visor-armored Warrior Alien pilot & 2× battery endurance' },
   },
   ufoMother: {
-    vi: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Nhanh vượt trội UFO Chiến Binh) hai tầng giáp đỏ-vàng, vòng hào quang khiên năng lượng xoay, chỉ huy Tàu Mẹ và pin lượng tử 85 tấn' },
-    en: { name: 'Mothership Alien UFO Saucer', cat: 'Command & Nose', desc: 'Mothership UFO saucer (Speed Tier 3 · Much faster than Warrior UFO) with crimson-gold double command deck, spinning energy halo shield, Commander pilot & 85-ton quantum battery' },
+    vi: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Pin khủng 350 tấn) hai tầng giáp đỏ-vàng, vòng hào quang khiên năng lượng xoay, chỉ huy Tàu Mẹ và pin bền gấp 4× Trinh Sát' },
+    en: { name: 'Mothership Alien UFO Saucer', cat: 'Command & Nose', desc: 'Mothership UFO saucer (Speed Tier 3 · 350-ton Quantum Battery) with crimson-gold double command deck, spinning energy halo shield, Commander pilot & 4× battery endurance' },
   },
   ufoQueen: {
-    vi: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Siêu thanh vượt UFO Mẹ) vỏ hồng kim cương, 3 vòng hào quang hoàng gia, vương miện pha lê 8 đỉnh lơ lửng và pin lượng tử 105 tấn' },
-    en: { name: 'Queen Alien UFO Saucer', cat: 'Command & Nose', desc: 'Royal Queen UFO saucer (Speed Tier 4 · Hyper-fast above Mothership UFO) with rose-magenta metallic hull, triple royal halo rings, floating 8-spike diamond crown & 105-ton quantum battery' },
+    vi: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Siêu Pin 800 tấn) vỏ hồng kim cương, 3 vòng hào quang hoàng gia, vương miện pha lê 8 đỉnh lơ lửng và pin bền gấp 8× Trinh Sát' },
+    en: { name: 'Queen Alien UFO Saucer', cat: 'Command & Nose', desc: 'Royal Queen UFO saucer (Speed Tier 4 · 800-ton Quantum Battery) with rose-magenta metallic hull, triple royal halo rings, floating 8-spike diamond crown & 8× battery endurance' },
   },
   ufoKing: {
-    vi: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Nhanh nhất vũ trụ) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc, đại vương miện vàng lơ lửng và pin lượng tử 125 tấn' },
-    en: { name: 'King Alien UFO Saucer', cat: 'Command & Nose', desc: 'Supreme King UFO saucer (Speed Tier 5 · Fastest craft in the universe) with solid-gold imperial hull, triple ruby halo rings, floating golden royal crown & 125-ton quantum battery' },
+    vi: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc, đại vương miện vàng lơ lửng và pin bền gấp 16× Trinh Sát' },
+    en: { name: 'King Alien UFO Saucer', cat: 'Command & Nose', desc: 'Supreme King UFO saucer (Speed Tier 5 · 1,800-ton Mega Quantum Battery) with solid-gold imperial hull, triple ruby halo rings, floating golden royal crown & 16× battery endurance' },
   },
 };
 

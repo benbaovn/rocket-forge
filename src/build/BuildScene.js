@@ -525,6 +525,30 @@ export class BuildScene {
     audio.click();
   }
 
+  balancePartGrid(grid) {
+    const cards = Array.from(grid.children);
+    let col = 0;
+    let prevSingle = null;
+    for (const card of cards) {
+      if (card.classList.contains('part-card-wide')) {
+        if (col === 1 && prevSingle) {
+          prevSingle.classList.add('part-card-wide');
+        }
+        col = 0;
+        prevSingle = null;
+      } else if (col === 0) {
+        col = 1;
+        prevSingle = card;
+      } else {
+        col = 0;
+        prevSingle = null;
+      }
+    }
+    if (col === 1 && prevSingle) {
+      prevSingle.classList.add('part-card-wide');
+    }
+  }
+
   createPartCardEl(type, thumbs, onClickOverride = null) {
     const def = PARTS[type];
     const card = document.createElement('div');
@@ -620,6 +644,7 @@ export class BuildScene {
           grid.appendChild(this.createPartCardEl(type, thumbs));
           totalShown++;
         }
+        this.balancePartGrid(grid);
         list.appendChild(grid);
       }
     }
@@ -657,6 +682,7 @@ export class BuildScene {
         grid.appendChild(this.createPartCardEl(type, thumbs));
         totalShown++;
       }
+      this.balancePartGrid(grid);
       list.appendChild(grid);
     }
 

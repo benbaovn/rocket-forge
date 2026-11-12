@@ -236,8 +236,7 @@ select.btn option { background: #111a29; }
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
-.part-card.part-card-wide,
-.part-card:last-child:nth-child(odd) {
+#part-list .part-card.part-card-wide {
   grid-column: 1 / -1;
 }
 .part-card:hover {

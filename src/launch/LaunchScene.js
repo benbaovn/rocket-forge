@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { PARTS, G0, R as CORE_R } from '../parts.js';
+import { PARTS, G0, R as CORE_R, isUfoPart } from '../parts.js';
 import { buildRocket, segments, segmentInfo, layout } from '../rocket.js';
 import { createSkyMaterial, atmosphereJS, sunTransmittance, PLANET_R } from '../fx/atmosphere.js';
 import { createEarth, createStars, NOISE_GLSL } from '../fx/earth.js';
@@ -2246,7 +2246,8 @@ export class LaunchScene {
     if (activeItems.some((s) => s.type === 'saturnS1C' || s.type === 'saturnSII')) return 2.42;
     if (activeItems.some((s) => s.type.startsWith('saturn'))) return 1.65;
     if (activeItems.some((s) => s.type.startsWith('soyuz')) && (!P || (P.boosters && P.boosters().length > 0))) return 2.30;
-    if (activeItems.some((s) => s.type === 'ufoSaucer')) return 2.95;
+    const ufoItem = activeItems.find((s) => isUfoPart(s.type));
+    if (ufoItem) return (PARTS[ufoItem.type]?.ufoRadius || 4.2) * 0.70;
     return 1.28;
   }
 
@@ -5598,7 +5599,8 @@ export class LaunchScene {
           setTimeout(() => { this._heatWarn = false; }, 4500);
         }
       }
-      if (!v.hasHeatShield() && (v.heatLoad || 0) >= 1.0 && v.topType() !== 'ufoSaucer') {
+      const isUfoVessel = isUfoPart(v.topType());
+      if (!v.hasHeatShield() && (v.heatLoad || 0) >= 1.0 && !isUfoVessel) {
         this.explode(
           v,
           tr(
@@ -5608,6 +5610,7 @@ export class LaunchScene {
         );
         continue;
       }
+      if (isUfoVessel) continue;
       if (v.ref !== 'earth') continue;
       if (v.hasHeatShield() && v.vSurf.u < 0) continue;
       const a = Math.abs(v.aoa || 0), off = Math.min(a, Math.PI - a);
@@ -6835,14 +6838,17 @@ export class LaunchScene {
         this.harborLighthouseBeacon.rotation.y += 0.024;
       }
     }
-    // Boat propeller rotation
+    // Boat propeller & UFO halo/crown rotation
     if (this.rocket.partObjs) {
       const v = this.player;
       const spd = v ? (v.waterSpeed || 0) : 0;
       const running = v && (v.engineOn || Math.abs(spd) > 0.05);
-      if (running) {
-        const spinStep = (Math.abs(spd) * 0.4 + 12) * 0.08;
-        for (const po of this.rocket.partObjs) {
+      for (const po of this.rocket.partObjs) {
+        if (po.obj.userData.ufoSpinGroup) {
+          po.obj.userData.ufoSpinGroup.rotation.y += (v && v.engineOn) ? 0.036 : 0.018;
+        }
+        if (running) {
+          const spinStep = (Math.abs(spd) * 0.4 + 12) * 0.08;
           if (po.obj.userData.propGroups && Array.isArray(po.obj.userData.propGroups)) {
             for (const pg of po.obj.userData.propGroups) {
               pg.rotation.z += spinStep * (pg.userData?.spinSign || 1);

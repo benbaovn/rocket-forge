@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { PARTS, MAT, buildPart, radialPlacements } from '../parts.js';
+import { PARTS, MAT, buildPart, radialPlacements, isUfoPart } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
 import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
@@ -346,6 +346,11 @@ export class BuildScene {
       starshipNose: ['Starship · Mũi Đen Cánh Vây', 'Starship · Black Nose'],
       starshipShip: ['Starship · Thân 6 Raptor', 'Starship · Ship (6×Rap)'],
       starshipBooster: ['Starship · Super Heavy T1', 'Starship · Super Heavy'],
+      ufoSaucer: ['🛸 UFO Trinh Sát', '🛸 Scout UFO'],
+      ufoWarrior: ['⚔️ UFO Chiến Binh', '⚔️ Warrior UFO'],
+      ufoMother: ['👾 UFO Mẹ', '👾 Mothership UFO'],
+      ufoQueen: ['👸 UFO Hoàng Hậu', '👸 Queen UFO'],
+      ufoKing: ['👑 UFO Vua', '👑 King UFO'],
     };
     if (labels[type]) return tr(labels[type][0], labels[type][1]);
     return def.name.replace(/\s*×\d+$/i, '');
@@ -513,7 +518,7 @@ export class BuildScene {
   createPartCardEl(type, thumbs, onClickOverride = null) {
     const def = PARTS[type];
     const card = document.createElement('div');
-    card.className = type === 'ufoSaucer' ? 'part-card part-card-wide' : 'part-card';
+    card.className = isUfoPart(type) ? 'part-card part-card-wide' : 'part-card';
     if (this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) {
       card.classList.add('part-incompatible');
     }
@@ -1107,15 +1112,21 @@ export class BuildScene {
       }
       else obj = buildPart(type);
       sc.add(obj);
+      const isBoatStackPart = type.endsWith('Boat') && type !== 'floatsBoat';
+      const isUfo = isUfoPart(type);
+      if (isUfo && obj.userData?.chutes) obj.remove(obj.userData.chutes);
       const box = new THREE.Box3().setFromObject(obj);
       const size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
-      const isBoatStackPart = type.endsWith('Boat') && type !== 'floatsBoat';
       const maxDim = isBoatStackPart
         ? Math.max(size.x * 1.08, size.y * 0.96, size.z * 0.88)
-        : Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
+        : isUfo
+          ? Math.max(size.x * 1.04, size.y * 1.05, size.z * 1.04)
+          : Math.max(size.x * 1.08, size.y * 0.92, size.z * 1.08);
       const d = maxDim / (2 * Math.tan((cam.fov * Math.PI / 180) / 2)) * 0.96;
       if (isBoatStackPart) {
         cam.position.set(ctr.x + d * 0.78, ctr.y + d * 0.24, ctr.z + d * 0.56);
+      } else if (isUfo) {
+        cam.position.set(ctr.x + d * 0.22, ctr.y + d * 0.36, ctr.z + d * 0.88);
       } else {
         cam.position.set(ctr.x + d * 0.24, ctr.y + d * 0.14, ctr.z + d * 0.92);
       }

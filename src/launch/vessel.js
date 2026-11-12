@@ -1,7 +1,7 @@
 // A flying vehicle (player rocket, recovered booster, spent stage) simulated in the ECI frame.
 // Attitude is a single in-plane angle `beta` (clockwise from ECI +Y); `ang` = beta − local-vertical angle.
 import * as THREE from 'three';
-import { PARTS, G0, R as CORE_R } from '../parts.js';
+import { PARTS, G0, R as CORE_R, isUfoPart } from '../parts.js';
 import { rk4, keplerStep, coastStep, gravity, refBody, bodyInfo, bodyState, bodyPos, bodyRotation, bodyOmega, angOf, wrapPi } from '../sim/orbit.js';
 import { ATM_H, ATM_TOP, RHO0, EARTH_A, R_SUN } from '../sim/constants.js';
 import { tr } from '../i18n.js';
@@ -257,8 +257,11 @@ export class Vessel {
       const normSL = info.useChemFuel ? Math.max(0, info.tChemSL || 0) : 0;
       const normMdot = info.useChemFuel ? Math.max(0, info.mdotChem || 0) : 0;
       // Anti-gravity thrust scales directly with local gravity (stronger gravity -> faster, weaker gravity -> slower)
+      // Higher-tier UFOs maintain a quantum-warp anti-gravity floor so higher-tier UFOs fly dramatically faster even in deep space
       // Laser thrust scales inversely with local brightness (brighter -> slower, darker -> faster)
-      const curThrust = (normVac - (normVac - normSL) * pr) + (agVac * gRatio + lzVac * laserScale) * batBoost;
+      const ufoWarpFloor = info.ufoTier ? [0, 0.04, 0.08, 0.13, 0.19, 0.28][Math.min(5, info.ufoTier)] : 0;
+      const agGRatio = Math.max(gRatio, ufoWarpFloor);
+      const curThrust = (normVac - (normVac - normSL) * pr) + (agVac * agGRatio + lzVac * laserScale) * batBoost;
       const sciFiDrainScale = info.solarOnBattery > 0 ? 12.0 : 1.0;
       const curMdot = normMdot + (agMdot * Math.max(0.12, gRatio) + lzMdot * Math.max(0.18, laserScale * 0.75)) * sciFiDrainScale;
       thrust += curThrust * thr * engFrac;
@@ -347,7 +350,9 @@ export class Vessel {
     const tailFirst = Math.abs(aoa) > Math.PI / 2;
     const hasShield = this.hasHeatShield();
     const isFallingInAtm = inAtm && vu < -1.5 && !this.landed && !this.clamped && !this.isPlane && !this.isRover && !this.isBoat;
-    const cd0 = tailFirst ? 1.05 : top === 'nose' ? 0.28 : top === 'capsule' ? 0.42 : top === 'dockPort' ? 0.5 : 0.75;
+    const cd0 = isUfoPart(top)
+      ? (tailFirst ? 0.45 : 0.12)
+      : (tailFirst ? 1.05 : top === 'nose' ? 0.28 : top === 'capsule' ? 0.42 : top === 'dockPort' ? 0.5 : 0.75);
     let bodyCdA = (cd0 + 1.4 * Math.sin(aoa) ** 2) * area;
     bodyCdA += this.legsT * 6 + this.finsT * 5.0;
     if (hasShield && vu < -5) bodyCdA += 9.5;

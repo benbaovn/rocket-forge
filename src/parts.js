@@ -118,8 +118,16 @@ export const PARTS = {
   starshipNose: { name: 'Mũi Tàu Starship Đen Gạch Chịu Nhiệt & 2 Cánh Vây Trước (Tầng 3)', cat: 'Đầu', kind: 'stack', height: 7.2, dry: 1.4, fuel: 10.0, thrustSL: 240, thrustVac: 420, ispSL: 280, ispVac: 380, engines: 1, hasFins: true, desc: 'Chóp mũi ogive của tàu Starship phủ gạch chịu nhiệt đen than chì kết hợp ánh thép không gỉ, 2 cánh vây khí động phía trước (Forward Flaps) và dù hạ cánh' },
   starshipShip: { name: 'Thân Tàu Starship (Đai Băng Trắng, 2 Cánh Vây Sau, Đai Hot-Stage & 6 Raptor · Tầng 2)', cat: 'Nhiên liệu', kind: 'stack', height: 10.4, dry: 2.8, fuel: 32.0, thrustSL: 1350, thrustVac: 1950, ispSL: 300, ispVac: 380, engines: 6, autoStage: true, hasFins: true, desc: 'Thân tàu Starship chia 2 nửa trắng phủ băng lạnh & đen gạch chịu nhiệt, váy đáy xám đen kèm 2 cánh vây lớn phía sau (Aft Flaps), vành tách tầng nóng (Hot-Staging Ring) và 6 động cơ Raptor' },
   starshipBooster: { name: 'Tầng Đẩy Super Heavy (Thép Không Gỉ, 4 Cánh Lưới, 4 Sống Khí Động & 33 Động Cơ Raptor)', cat: 'Động cơ', kind: 'stack', height: 20.6, dry: 6.8, fuel: 82.0, thrustSL: 6200, thrustVac: 7100, ispSL: 310, ispVac: 350, engines: 33, autoStage: true, hasFins: true, desc: 'Siêu tầng đẩy Super Heavy bằng thép không gỉ với 4 cánh lưới xòe ngang ở đỉnh, vệt băng trắng dọc sống lưng, 4 gờ khí động (chines) nổi dọc thân dưới và cụm 33 động cơ Raptor phát sáng rực rỡ ở đáy' },
-  ufoSaucer: { name: 'Đĩa Bay UFO Siêu Cấp', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 55.0, isBattery: true, thrustSL: 3200, thrustVac: 3600, ispSL: 6500, ispVac: 8000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO của người ngoài hành tinh tích hợp vòm kính phi công, vành đĩa plasma neon, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
+  ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'Đầu', kind: 'stack', height: 3.6, dry: 1.2, fuel: 55.0, isBattery: true, ufoTier: 1, ufoRadius: 4.2, thrustSL: 3200, thrustVac: 3600, ispSL: 6500, ispVac: 8000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, pin lượng tử 55 tấn, dù hạ cánh và lõi phản trọng lực' },
+  ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'Đầu', kind: 'stack', height: 3.75, dry: 1.3, fuel: 68.0, isBattery: true, ufoTier: 2, ufoRadius: 4.45, thrustSL: 8200, thrustVac: 9200, ispSL: 9500, ispVac: 12000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh (Tốc độ Cấp 2 · Nhanh gấp ~1.8× Trinh Sát) bọc giáp đen-tím, 8 lưỡi kiếm khí động, phi công Chiến Binh giáp kính và pin lượng tử 68 tấn' },
+  ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'Đầu', kind: 'stack', height: 4.05, dry: 1.5, fuel: 85.0, isBattery: true, ufoTier: 3, ufoRadius: 4.85, thrustSL: 18500, thrustVac: 21000, ispSL: 14500, ispVac: 18000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ (Tốc độ Cấp 3 · Nhanh gấp ~3× Trinh Sát) hai tầng giáp đỏ-vàng, vòng hào quang khiên năng lượng lơ lửng, chỉ huy Tàu Mẹ và pin lượng tử 85 tấn' },
+  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'Đầu', kind: 'stack', height: 4.45, dry: 1.7, fuel: 105.0, isBattery: true, ufoTier: 4, ufoRadius: 5.2, thrustSL: 39000, thrustVac: 44000, ispSL: 22000, ispVac: 28000, engines: 1, restart: true, hasFins: true, desc: 'Tuyệt phẩm Đĩa Bay UFO Hoàng Hậu (Tốc độ Cấp 4 · Nhanh gấp ~5× Trinh Sát) vỏ hồng kim cương, 3 vòng hào quang hoàng gia, vương miện pha lê 8 đỉnh lơ lửng và pin lượng tử 105 tấn' },
+  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'Đầu', kind: 'stack', height: 4.7, dry: 1.9, fuel: 125.0, isBattery: true, ufoTier: 5, ufoRadius: 5.5, thrustSL: 74000, thrustVac: 84000, ispSL: 32000, ispVac: 42000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua (Tốc độ Cấp 5 Tối Thượng · Nhanh nhất vũ trụ, gấp ~8× Trinh Sát) vỏ vàng ròng hoàng đế, 3 vòng hào quang hồng ngọc, đại vương miện vàng lơ lửng và pin lượng tử 125 tấn' },
 };
+
+export function isUfoPart(type) {
+  return !!(type && PARTS[type] && PARTS[type].ufoTier);
+}
 
 export const MAT = {};
 
@@ -770,7 +778,11 @@ const builders = {
   starshipNose() { return buildStarshipNose(); },
   starshipShip() { return buildStarshipShip(); },
   starshipBooster() { return buildStarshipBooster(); },
-  ufoSaucer() { return buildUfoSaucer(); },
+  ufoSaucer() { return buildUfoSaucerVariant('scout'); },
+  ufoWarrior() { return buildUfoSaucerVariant('warrior'); },
+  ufoMother() { return buildUfoSaucerVariant('mother'); },
+  ufoQueen() { return buildUfoSaucerVariant('queen'); },
+  ufoKing() { return buildUfoSaucerVariant('king'); },
   gunAcid() { return buildGunAcid(); },
 };
 
@@ -13891,106 +13903,234 @@ function buildStarshipBooster() {
   return g;
 }
 
-function buildUfoSaucer() {
+function buildUfoSaucerVariant(variant = 'scout') {
   const g = new THREE.Group();
-  const neonGreen = new THREE.MeshStandardMaterial({
-    color: 0x4ade80,
-    emissive: new THREE.Color(0x22c55e),
-    emissiveIntensity: 2.2,
-    roughness: 0.2,
-    metalness: 0.2,
+  const isWarrior = variant === 'warrior';
+  const isMother = variant === 'mother';
+  const isQueen = variant === 'queen';
+  const isKing = variant === 'king';
+  const isRoyal = isQueen || isKing;
+  const isBoss = isMother || isRoyal;
+
+  const partKey = isKing ? 'ufoKing' : isQueen ? 'ufoQueen' : isMother ? 'ufoMother' : isWarrior ? 'ufoWarrior' : 'ufoSaucer';
+  const discR = PARTS[partKey].ufoRadius || 4.2;
+  const H = PARTS[partKey].height || 3.6;
+
+  const makeGlow = (col, emi, intensity = 2.3) => new THREE.MeshStandardMaterial({
+    color: col,
+    emissive: new THREE.Color(emi),
+    emissiveIntensity: intensity,
+    roughness: 0.18,
+    metalness: 0.25,
   });
-  const neonCyan = new THREE.MeshStandardMaterial({
-    color: 0x38bdf8,
-    emissive: new THREE.Color(0x0284c7),
-    emissiveIntensity: 2.3,
-    roughness: 0.2,
-    metalness: 0.2,
-  });
-  const neonPurple = new THREE.MeshStandardMaterial({
-    color: 0xc084fc,
-    emissive: new THREE.Color(0x9333ea),
-    emissiveIntensity: 2.0,
-    roughness: 0.2,
-    metalness: 0.2,
-  });
+
+  const neonGreen = makeGlow(0x4ade80, 0x22c55e, 2.25);
+  const neonCyan = makeGlow(0x38bdf8, 0x0284c7, 2.35);
+  const neonPurple = makeGlow(0xc084fc, 0x9333ea, 2.35);
+  const neonRed = makeGlow(0xfb7185, 0xe11d48, 2.55);
+  const neonGold = makeGlow(0xfacc15, 0xd97706, 2.65);
+  const neonPink = makeGlow(0xf472b6, 0xdb2777, 2.65);
+
+  const primaryNeon = isKing ? neonGold : isQueen ? neonPink : isMother ? neonRed : isWarrior ? neonPurple : neonGreen;
+  const secondaryNeon = isKing ? neonRed : isQueen ? neonCyan : isMother ? neonGold : isWarrior ? neonCyan : neonCyan;
+  const underRing1 = isKing ? neonGold.clone() : isQueen ? neonPink.clone() : isMother ? neonRed.clone() : neonCyan.clone();
+  const underRing2 = isKing ? neonRed.clone() : isQueen ? neonCyan.clone() : isMother ? neonGold.clone() : neonPurple.clone();
+
+  const upperHullMat = isKing
+    ? new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.94, roughness: 0.14, emissive: new THREE.Color(0x78350f), emissiveIntensity: 0.45 })
+    : isQueen
+      ? new THREE.MeshStandardMaterial({ color: 0xec4899, metalness: 0.90, roughness: 0.16, emissive: new THREE.Color(0x831843), emissiveIntensity: 0.45 })
+      : isMother
+        ? new THREE.MeshStandardMaterial({ color: 0x1e2230, metalness: 0.90, roughness: 0.20, emissive: new THREE.Color(0x4c0519), emissiveIntensity: 0.25 })
+        : isWarrior
+          ? new THREE.MeshStandardMaterial({ color: 0x181c2b, metalness: 0.88, roughness: 0.22, emissive: new THREE.Color(0x2e1065), emissiveIntensity: 0.22 })
+          : MAT.titanium;
+
+  const lowerHullMat = isKing
+    ? new THREE.MeshStandardMaterial({ color: 0xfef08a, metalness: 0.92, roughness: 0.18 })
+    : isQueen
+      ? new THREE.MeshStandardMaterial({ color: 0xfbcfe8, metalness: 0.90, roughness: 0.18 })
+      : MAT.silver;
+
   const alienPilotSkin = new THREE.MeshStandardMaterial({
-    color: 0x4ade80,
-    emissive: new THREE.Color(0x15803d),
-    emissiveIntensity: 0.85,
-    roughness: 0.35,
+    color: isKing ? 0xfacc15 : isQueen ? 0xf472b6 : isMother ? 0xf43f5e : isWarrior ? 0xa855f7 : 0x4ade80,
+    emissive: new THREE.Color(isKing ? 0xb45309 : isQueen ? 0xbe185d : isMother ? 0x9f1239 : isWarrior ? 0x6b21a8 : 0x15803d),
+    emissiveIntensity: isRoyal ? 1.25 : isMother ? 1.05 : 0.90,
+    roughness: 0.28,
+    metalness: isRoyal ? 0.35 : 0.12,
   });
 
-  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95)
-  g.add(mesh(new THREE.CylinderGeometry(1.5, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
-  g.add(mesh(new THREE.TorusGeometry(1.22, 0.08, 12, 48).rotateX(Math.PI / 2), neonCyan, 0, 0.18, 0));
-  g.add(mesh(new THREE.CylinderGeometry(4.1, 1.5, 0.65, 64), MAT.silver, 0, 0.66, 0));
+  // 1. Lower Anti-Gravity Saucer Base (y = 0 -> 0.95, base collar R = 1.25 for seamless stack mating)
+  g.add(mesh(new THREE.CylinderGeometry(1.55, R, 0.36, 48), MAT.darkMetal, 0, 0.18, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.24, 0.08, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 0.18, 0));
+  g.add(mesh(new THREE.CylinderGeometry(discR - 0.10, 1.55, 0.65, 64), lowerHullMat, 0, 0.66, 0));
 
-  // Underbelly glowing anti-gravity concentric rings
-  g.add(mesh(new THREE.TorusGeometry(2.35, 0.07, 12, 56).rotateX(Math.PI / 2), neonCyan, 0, 0.45, 0));
-  g.add(mesh(new THREE.TorusGeometry(3.25, 0.06, 12, 64).rotateX(Math.PI / 2), neonPurple, 0, 0.68, 0));
+  // Underbelly glowing anti-gravity concentric rings (pulsed when thrusting)
+  g.add(mesh(new THREE.TorusGeometry(discR * 0.56, 0.075, 12, 56).rotateX(Math.PI / 2), underRing1, 0, 0.45, 0));
+  g.add(mesh(new THREE.TorusGeometry(discR * 0.78, 0.065, 12, 64).rotateX(Math.PI / 2), underRing2, 0, 0.68, 0));
 
-  // 2. Main Wide Flying Saucer Disc & Glowing Plasma Rim (y = 0.95 -> 1.85)
-  g.add(mesh(new THREE.CylinderGeometry(4.2, 4.1, 0.24, 64), MAT.darkMetal, 0, 1.10, 0));
-  g.add(mesh(new THREE.TorusGeometry(4.22, 0.16, 16, 64).rotateX(Math.PI / 2), neonGreen, 0, 1.10, 0));
-  g.add(mesh(new THREE.CylinderGeometry(1.85, 4.2, 0.68, 64), MAT.titanium, 0, 1.56, 0));
-  g.add(mesh(new THREE.TorusGeometry(1.88, 0.07, 12, 48).rotateX(Math.PI / 2), neonCyan, 0, 1.90, 0));
+  // Underbelly Bio-Mechanical Energy Pylons / Talons for Mother (6) & Royal Queen/King (8)
+  if (isBoss) {
+    const pylonCount = isRoyal ? 8 : 6;
+    const pylonRad = discR * 0.62;
+    for (let i = 0; i < pylonCount; i++) {
+      const a = (i / pylonCount) * Math.PI * 2 + Math.PI / pylonCount;
+      const px = Math.cos(a) * pylonRad;
+      const pz = Math.sin(a) * pylonRad;
+      const p1 = mesh(new THREE.CylinderGeometry(0.11, 0.06, 0.46, 10), upperHullMat, px, 0.42, pz);
+      p1.rotation.z = Math.cos(a) * 0.35;
+      p1.rotation.x = -Math.sin(a) * 0.35;
+      g.add(p1);
+      g.add(mesh(new THREE.SphereGeometry(0.10, 10, 8), primaryNeon, px * 1.05, 0.20, pz * 1.05));
+    }
+  }
 
-  // 12 Glowing Plasma Orbs & Radial Rib Panels around the Saucer Disc
-  const orbGeo = new THREE.SphereGeometry(0.24, 16, 12);
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    const mat = i % 3 === 0 ? neonCyan : (i % 2 === 0 ? neonGreen : neonPurple);
-    g.add(mesh(orbGeo, mat, Math.cos(a) * 4.20, 1.12, Math.sin(a) * 4.20));
-    const rib = mesh(new THREE.BoxGeometry(0.14, 0.12, 2.15), MAT.darkMetal, Math.cos(a) * 2.9, 1.58, Math.sin(a) * 2.9);
+  // 2. Main Wide Flying Saucer Disc & Glowing Plasma Rim (y = 0.95 -> 1.92)
+  g.add(mesh(new THREE.CylinderGeometry(discR, discR - 0.10, 0.25, 64), MAT.darkMetal, 0, 1.10, 0));
+  g.add(mesh(new THREE.TorusGeometry(discR + 0.02, isRoyal ? 0.20 : 0.16, 16, 64).rotateX(Math.PI / 2), primaryNeon, 0, 1.10, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.92, discR, 0.68, 64), upperHullMat, 0, 1.56, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.94, 0.075, 12, 48).rotateX(Math.PI / 2), secondaryNeon, 0, 1.90, 0));
+
+  // Extra Elevated Command Deck Step for Mothership & Royal UFOs
+  if (isBoss) {
+    g.add(mesh(new THREE.CylinderGeometry(2.55, 3.35, 0.24, 56), upperHullMat, 0, 1.78, 0));
+    g.add(mesh(new THREE.TorusGeometry(2.95, 0.065, 12, 56).rotateX(Math.PI / 2), secondaryNeon, 0, 1.76, 0));
+  }
+
+  // Warrior Swept Combat Blades around the Saucer Rim
+  if (isWarrior) {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      const blade = mesh(new THREE.BoxGeometry(0.75, 0.06, 0.28), MAT.darkMetal, Math.cos(a) * (discR + 0.24), 1.12, Math.sin(a) * (discR + 0.24));
+      blade.rotation.y = -a + 0.38;
+      g.add(blade);
+      const bladeEdge = mesh(new THREE.BoxGeometry(0.78, 0.03, 0.06), neonPurple, Math.cos(a) * (discR + 0.26), 1.12, Math.sin(a) * (discR + 0.26));
+      bladeEdge.rotation.y = -a + 0.38;
+      g.add(bladeEdge);
+    }
+  }
+
+  // Perimeter Glowing Plasma Orbs & Radial Rib Panels around the Saucer Disc
+  const orbCount = isRoyal ? 16 : isMother ? 16 : isWarrior ? 14 : 12;
+  const orbGeo = new THREE.SphereGeometry(isRoyal ? 0.28 : 0.24, 16, 12);
+  for (let i = 0; i < orbCount; i++) {
+    const a = (i / orbCount) * Math.PI * 2;
+    const mat = variant === 'scout'
+      ? (i % 3 === 0 ? neonCyan : (i % 2 === 0 ? neonGreen : neonPurple))
+      : (i % 2 === 0 ? primaryNeon : secondaryNeon);
+    g.add(mesh(orbGeo, mat, Math.cos(a) * discR, 1.12, Math.sin(a) * discR));
+    const ribLen = (discR - 1.95) * 0.90;
+    const ribMid = 1.95 + (discR - 1.95) * 0.48;
+    const rib = mesh(new THREE.BoxGeometry(0.15, 0.12, ribLen), isRoyal ? primaryNeon : MAT.darkMetal, Math.cos(a) * ribMid, 1.58, Math.sin(a) * ribMid);
     rib.rotation.y = -a + Math.PI / 2;
-    rib.rotation.x = 0.26;
+    rib.rotation.x = Math.atan2(0.68, discR - 1.92);
     g.add(rib);
   }
 
-  // 3. Pilot & Holographic Console inside the UFO Cockpit (y = 1.85 -> 3.2)
-  g.add(mesh(new THREE.CylinderGeometry(1.65, 1.75, 0.18, 36), MAT.darkMetal, 0, 1.94, 0));
-  g.add(mesh(new THREE.BoxGeometry(0.75, 0.35, 0.36), MAT.silver, 0, 2.15, 0.55));
-  g.add(mesh(new THREE.BoxGeometry(0.62, 0.22, 0.04), neonCyan, 0, 2.38, 0.52));
+  // Dynamic Orbiting Halo Rings & Floating Overhead Royal Crown (for Mother, Queen, and King!)
+  const buildRoyalCrown = (scaleVal, yPos) => {
+    const cg = new THREE.Group();
+    cg.position.y = yPos;
+    cg.scale.setScalar(scaleVal);
+    const bandMat = isKing ? neonGold : neonPink;
+    const gemMat = isKing ? neonRed : neonCyan;
+    cg.add(mesh(new THREE.CylinderGeometry(0.48, 0.38, 0.24, 24), bandMat, 0, 0, 0));
+    const spikes = isKing ? 6 : 8;
+    const spikeGeo = new THREE.ConeGeometry(0.11, 0.44, 10);
+    const gemGeo = new THREE.OctahedronGeometry(0.11, 0);
+    for (let s = 0; s < spikes; s++) {
+      const ang = (s / spikes) * Math.PI * 2;
+      cg.add(mesh(spikeGeo, bandMat, Math.cos(ang) * 0.41, 0.28, Math.sin(ang) * 0.41));
+      cg.add(mesh(gemGeo, gemMat, Math.cos(ang) * 0.44, 0.02, Math.sin(ang) * 0.44));
+    }
+    return cg;
+  };
 
-  // Friendly Alien Pilot Commander inside the dome
-  g.add(mesh(new THREE.CylinderGeometry(0.32, 0.45, 0.65, 18), alienPilotSkin, 0, 2.25, -0.05));
-  const head = mesh(new THREE.SphereGeometry(0.58, 22, 16), alienPilotSkin, 0, 2.86, -0.02);
+  if (isBoss) {
+    const spinGroup = new THREE.Group();
+    g.add(spinGroup);
+    g.userData.ufoSpinGroup = spinGroup;
+
+    // Outer Floating Energy Shield Halo Ring
+    spinGroup.add(mesh(new THREE.TorusGeometry(discR * 1.12, 0.11, 14, 72).rotateX(Math.PI / 2), secondaryNeon, 0, 1.28, 0));
+
+    // Additional Imperial Double Halo Rings + Floating Royal Crown above the Dome for Queen & King!
+    if (isRoyal) {
+      spinGroup.add(mesh(new THREE.TorusGeometry(discR * 1.22, 0.13, 14, 72).rotateX(Math.PI / 2), primaryNeon, 0, 1.48, 0));
+      spinGroup.add(mesh(new THREE.TorusGeometry(discR * 1.09, 0.09, 12, 64).rotateX(Math.PI / 2), secondaryNeon, 0, 0.72, 0));
+      spinGroup.add(buildRoyalCrown(isKing ? 1.55 : 1.42, H - 0.52));
+    }
+  }
+
+  // 3. Pilot & Holographic Console inside the UFO Cockpit (y = 1.85 -> 3.45)
+  g.add(mesh(new THREE.CylinderGeometry(1.72, 1.82, 0.18, 36), MAT.darkMetal, 0, 1.94, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.78, 0.35, 0.36), lowerHullMat, 0, 2.15, 0.58));
+  g.add(mesh(new THREE.BoxGeometry(0.64, 0.22, 0.04), primaryNeon, 0, 2.38, 0.55));
+
+  // Alien Commander Pilot inside the dome
+  const pScale = isKing ? 1.12 : isQueen ? 1.08 : isMother ? 1.05 : 1.0;
+  const pilotGroup = new THREE.Group();
+  pilotGroup.position.set(0, 1.94, -0.05);
+  pilotGroup.scale.setScalar(pScale);
+  g.add(pilotGroup);
+
+  pilotGroup.add(mesh(new THREE.CylinderGeometry(0.32, 0.45, 0.65, 18), alienPilotSkin, 0, 0.32, 0));
+  const head = mesh(new THREE.SphereGeometry(0.58, 22, 16), alienPilotSkin, 0, 0.92, 0.03);
   head.scale.set(1.06, 1.22, 0.96);
-  g.add(head);
+  pilotGroup.add(head);
+
   for (const sgn of [-1, 1]) {
-    const eye = mesh(new THREE.SphereGeometry(0.19, 14, 12), MAT.black, sgn * 0.24, 2.92, 0.46);
+    const eye = mesh(new THREE.SphereGeometry(0.19, 14, 12), MAT.black, sgn * 0.24, 0.98, 0.50);
     eye.scale.set(1.15, 0.78, 0.65);
     eye.rotation.z = -sgn * 0.32;
     eye.rotation.y = sgn * 0.35;
-    g.add(eye);
-    const ant = mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.42, 8), alienPilotSkin, sgn * 0.28, 3.45, 0.02);
+    pilotGroup.add(eye);
+
+    const ant = mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.42, 8), alienPilotSkin, sgn * 0.28, 1.51, 0.06);
     ant.rotation.z = -sgn * 0.35;
-    g.add(ant);
-    g.add(mesh(new THREE.SphereGeometry(0.08, 12, 10), neonCyan, sgn * 0.40, 3.65, 0.02));
+    pilotGroup.add(ant);
+    pilotGroup.add(mesh(new THREE.SphereGeometry(0.085, 12, 10), primaryNeon, sgn * 0.40, 1.71, 0.06));
   }
 
-  // 4. Transparent Crystal Cockpit Dome (y = 1.90 -> 3.55)
+  // Distinct Tier Headgear inside the Dome!
+  if (isWarrior) {
+    const visor = mesh(new THREE.TorusGeometry(0.52, 0.045, 8, 24, Math.PI * 0.85), neonCyan, 0, 1.02, 0.14);
+    visor.rotation.y = -Math.PI * 0.425;
+    visor.rotation.x = Math.PI * 0.5;
+    pilotGroup.add(visor);
+  } else if (isMother) {
+    // Central Golden Mothership Command Crest Horn
+    pilotGroup.add(mesh(new THREE.ConeGeometry(0.10, 0.45, 10), neonGold, 0, 1.66, 0.12));
+  } else if (isRoyal) {
+    // Personal Royal Crown on the Alien Queen / Alien King pilot's head!
+    pilotGroup.add(buildRoyalCrown(0.88, 1.58));
+  }
+
+  // 4. Transparent Crystal Cockpit Dome
+  const domeColor = isKing ? 0xfde047 : isQueen ? 0xf9a8d4 : isMother ? 0xfda4af : isWarrior ? 0xd8b4fe : 0x7dd3fc;
   const domeMat = new THREE.MeshPhysicalMaterial({
-    color: 0x7dd3fc,
+    color: domeColor,
     transparent: true,
-    opacity: 0.42,
+    opacity: 0.40,
     roughness: 0.06,
     metalness: 0.1,
     clearcoat: 1.0,
   });
-  g.add(mesh(new THREE.SphereGeometry(1.78, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
+  const domeR = isRoyal ? 1.92 : isMother ? 1.85 : 1.78;
+  g.add(mesh(new THREE.SphereGeometry(domeR, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
 
   // Built-in Parachutes & Anti-Gravity Propulsion Nozzle
-  addParachutes(g, 3.4);
+  addParachutes(g, H - 0.2);
+  if (g.userData.chutePack) g.remove(g.userData.chutePack);
   const bellM = bellMaterial(true);
-  const ufoAgLight = new THREE.PointLight(0x22c55e, 0, 55, 2.0);
+  const lightHex = isKing ? 0xfacc15 : isQueen ? 0xf472b6 : isMother ? 0xf43f5e : isWarrior ? 0xa855f7 : 0x22c55e;
+  const ufoAgLight = new THREE.PointLight(lightHex, 0, 68, 2.0);
   ufoAgLight.position.set(0, 0.45, 0);
   g.add(ufoAgLight);
   g.userData.agLight = ufoAgLight;
-  g.userData.cyanGlow = neonCyan;
-  g.userData.violetGlow = neonPurple;
-  addNozzle(g, 0, 0, 0.95, [bellM, neonCyan, neonPurple], 'antigrav');
+  g.userData.cyanGlow = underRing1;
+  g.userData.violetGlow = underRing2;
+  addNozzle(g, 0, 0, 0.95, [bellM, underRing1, underRing2], 'antigrav');
 
   return g;
 }
@@ -14082,6 +14222,10 @@ export function buildPart(type) {
     } else if (g.userData.propGroup) {
       mergeGroupMeshesByMaterial(g.userData.propGroup);
       exclude.add(g.userData.propGroup);
+    }
+    if (g.userData.ufoSpinGroup) {
+      mergeGroupMeshesByMaterial(g.userData.ufoSpinGroup);
+      exclude.add(g.userData.ufoSpinGroup);
     }
     if (g.userData.chute) exclude.add(g.userData.chute);
     if (g.userData.chutes) exclude.add(g.userData.chutes);

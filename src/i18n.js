@@ -1872,11 +1872,15 @@ export function applyLanguage(lang, app) {
   setTxt('#lbl-quality-2', 'Đồ họa', 'Graphics Quality');
   setTxt('#lbl-lang-2', 'Ngôn ngữ', 'Language');
   setTxt('#lbl-gpu-api', 'Phần cứng', 'API & Hardware');
-  setTxt('#lbl-gpu-pipe', 'Pipeline', 'Render Pipeline');
+  setTxt('#lbl-gpu-pipe', 'Luồng dựng hình', 'Render Pipeline');
   setTxt('#lbl-gpu-perf', 'Hiệu năng', 'Live Performance');
   setAttr('#gpu-badge', 'title', 'Thông tin GPU & Cài đặt', 'GPU & Graphics Info');
   setAttr('#gpu-launch-badge', 'title', 'GPU & FPS (O)', 'GPU & FPS (O)');
   setTxt('#btn-settings-close', 'Đóng', 'Close');
+
+  document.querySelectorAll('[data-q="ultra"]').forEach((el) => { el.textContent = lang === 'en' ? 'Ultra' : 'Siêu cao'; });
+  document.querySelectorAll('[data-q="high"]').forEach((el) => { el.textContent = lang === 'en' ? 'High' : 'Cao'; });
+  document.querySelectorAll('[data-q="medium"]').forEach((el) => { el.textContent = lang === 'en' ? 'Medium' : 'Trung bình'; });
 
   setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Vietnamese');
   setTxt('#btn-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English');

@@ -296,10 +296,16 @@ class App {
     const q = this.qualityCfg;
     const msaa = Math.min(q.samples || 0, g.maxSamples || 8);
     const shSz = Math.min(q.shadow || 2048, g.maxTex || 8192);
-    const tierLabel = this.qualityName === 'rtx' ? 'RTX EXTREME' : this.qualityName.toUpperCase();
+    const tierLabel = this.qualityName === 'rtx'
+      ? tr('RTX TỐI ĐA', 'RTX EXTREME')
+      : this.qualityName === 'ultra'
+        ? tr('SIÊU CAO', 'ULTRA')
+        : this.qualityName === 'high'
+          ? tr('CAO', 'HIGH')
+          : tr('TRUNG BÌNH', 'MEDIUM');
 
     document.querySelectorAll('button.rtx-btn').forEach((btn) => {
-      btn.textContent = `⚡ ${g.shortName || 'RTX Ultra'}`;
+      btn.textContent = `⚡ ${g.shortName || tr('RTX Siêu cao', 'RTX Ultra')}`;
     });
 
     const bName = $('gpu-badge-name');
@@ -319,7 +325,7 @@ class App {
     if (pipe) {
       const bufSz = this.renderer.getDrawingBufferSize(new THREE.Vector2());
       const scalePct = Math.round((this.renderScale || 1) * 100);
-      pipe.textContent = `${bufSz.x}×${bufSz.y} (${scalePct}%) · Shadow ${shSz}² · Sky ${q.skySteps}st`;
+      pipe.textContent = `${bufSz.x}×${bufSz.y} (${scalePct}%) · ${tr('Bóng đổ', 'Shadow')} ${shSz}² · ${tr('Bầu trời', 'Sky')} ${q.skySteps}st`;
     }
   }
 
@@ -525,7 +531,7 @@ class App {
           if (perf && this.renderer.info) {
             const rInfo = this.renderer.info.render;
             const tris = rInfo.triangles >= 1000 ? (rInfo.triangles / 1000).toFixed(1) + 'k' : rInfo.triangles;
-            perf.textContent = `${this.currentFps} FPS (${this.currentMs.toFixed(1)} ms) · ${rInfo.calls} draws · ${tris} tris`;
+            perf.textContent = `${this.currentFps} FPS (${this.currentMs.toFixed(1)} ms) · ${rInfo.calls} ${tr('lệnh vẽ', 'draws')} · ${tris} ${tr('đa giác', 'tris')}`;
           }
         }
       }

@@ -984,6 +984,7 @@ select.btn option { background: #111a29; }
 #map-telemetry .tel-row span { color: #94a3b8; }
 #map-telemetry .tel-row b { color: #f1f5f9; font-weight: 700; font-family: var(--font-orbitron); }
 #map-obj-list { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+#map-obj-list:empty { display: none; }
 #map-obj-list h5, #map-obj-list .mol-title { margin: 0 0 6px 0; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #f59e0b; font-family: var(--font-orbitron); }
 .map-obj-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; border-radius: 7px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); margin-bottom: 4px; cursor: pointer; font-size: 11.5px; transition: all 0.15s; }
 .map-obj-item:hover { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.45); }

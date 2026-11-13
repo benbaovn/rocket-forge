@@ -2586,20 +2586,22 @@ export class MapView {
       }
     }
 
-    // Render list of persistent/active space objects in the telemetry card
+    // Render list of persistent/active non-alien space objects in the telemetry card
     if (this.objListBox) {
-      const others = S.others || [];
-      const sig = `${getLang()}|` + others.map((o) => `${o.id}:${o.name}:${Math.round((o.alt || 0) / 5000)}:${this.selectedObjectId === o.id ? 1 : 0}`).join('|');
+      const spaceObjs = (S.others || []).filter((o) => o.kind !== 'alien');
+      const sig = `${getLang()}|` + spaceObjs.map((o) => `${o.id}:${o.name}:${Math.round((o.alt || 0) / 5000)}:${this.selectedObjectId === o.id ? 1 : 0}`).join('|');
       if (this._objListSig !== sig) {
         this._objListSig = sig;
-        if (!others.length) {
+        if (!spaceObjs.length) {
           this.objListBox.innerHTML = '';
+          this.objListBox.classList.add('hidden');
         } else {
-          let listHtml = `<div class="mol-title">${tr('VẬT THỂ & ALIEN TRONG VŨ TRỤ', 'SPACE OBJECTS & ALIENS')} (${others.length})</div>`;
-          for (const o of others) {
+          this.objListBox.classList.remove('hidden');
+          let listHtml = `<div class="mol-title">${tr('VẬT THỂ TRONG VŨ TRỤ', 'SPACE OBJECTS')} (${spaceObjs.length})</div>`;
+          for (const o of spaceObjs) {
             const sel = this.selectedObjectId === o.id || resolvedFocus === 'obj:' + o.id;
             const isKing = !!(o.isKingUfo || o.isUfoKing);
-            const icon = isKing ? '👑' : o.kind === 'alien' ? '👽' : o.isUfo ? '🛸' : o.kind === 'vessel' ? '🚀' : '🛰️';
+            const icon = isKing ? '👑' : o.isUfo ? '🛸' : o.kind === 'vessel' ? '🚀' : '🛰️';
             const altStr = o.alt !== undefined ? `${fmt(o.alt / 1000, 0)} km` : '';
             listHtml += `<div class="map-obj-item ${sel ? 'active' : ''}" data-obj-id="${o.id}">
               <span class="moi-name">${icon} ${o.name}</span>

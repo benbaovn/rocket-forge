@@ -1469,11 +1469,11 @@ export class LaunchScene {
   initFX() {
     this.smoke = new ParticleSystem({ max: 28000, texture: TX.smokeSprite(), sort: true });
     this.fire = new ParticleSystem({ max: 6000, texture: TX.fireSprite(), additive: true });
-    this.world.add(this.smoke.mesh, this.fire.mesh);
+    this.scene.add(this.smoke.mesh, this.fire.mesh);
     this.engineLight = new THREE.PointLight(0xff8a3a, 0, 0, 2);
     this.scene.add(this.engineLight);
     this.flashLight = new THREE.PointLight(0xffaa55, 0, 0, 2);
-    this.world.add(this.flashLight);
+    this.scene.add(this.flashLight);
   }
 
   // =================================================================== UI
@@ -3202,6 +3202,7 @@ export class LaunchScene {
   }
 
   setWarp(d) {
+    if (this.phase === 'crashed' || this.player?.crashed) return;
     const cur = this.userWarp || this.warp || 1;
     let i = WARPS.findIndex((w) => w >= cur);
     if (i < 0) i = WARPS.length - 1;
@@ -4084,9 +4085,19 @@ export class LaunchScene {
     const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
     inv.decompose(p, q, sc);
     const b = v.beta, ax = Math.sin(b), ay = Math.cos(b), ex = Math.cos(b), ey = -Math.sin(b);
-    const s = { x: v.s.x + ex * p.x + ax * p.y, y: v.s.y + ey * p.x + ay * p.y, z: v.s.z + p.z, vx: v.s.vx, vy: v.s.vy, vz: v.s.vz };
-    let dx = p.x, dz = p.z; const dl = Math.hypot(dx, dz) || 1;
-    s.vx += (ex * dx / dl) * pushSpeed; s.vy += (ey * dx / dl) * pushSpeed; s.vz += (dz / dl) * pushSpeed;
+    const s = { x: v.s.x + ex * p.x + ax * p.y, y: v.s.y + ey * p.x + ay * p.y, z: (v.s.z || 0) + p.z, vx: v.s.vx, vy: v.s.vy, vz: v.s.vz || 0 };
+    let dx = p.x, dz = p.z;
+    let dl = Math.hypot(dx, dz);
+    if (dl < 0.25) {
+      const az = Math.random() * Math.PI * 2;
+      dx = Math.cos(az);
+      dz = Math.sin(az);
+      dl = 1;
+    }
+    const axialKick = (Math.random() - 0.35) * pushSpeed * 0.45;
+    s.vx += (ex * dx / dl) * pushSpeed + ax * axialKick;
+    s.vy += (ey * dx / dl) * pushSpeed + ay * axialKick;
+    s.vz += (dz / dl) * pushSpeed;
     this.scene.add(obj);
     obj.position.set(0, 0, 0); obj.quaternion.copy(q); obj.scale.copy(sc);
     this.debris.push({ obj, s, beta: b, q0: q.clone(), av: new THREE.Vector3((Math.random() - 0.5) * 0.4 * spin, (Math.random() - 0.5) * 0.4 * spin, (Math.random() - 0.5) * 0.4 * spin + (dx > 0 ? -0.2 : 0.2) * spin), life: 0, landed: false, dq: new THREE.Quaternion() });
@@ -4105,12 +4116,13 @@ export class LaunchScene {
   }
 
   burstAt(v, n, size) {
-    if (v.ref !== 'earth' && v.ref !== 'moon') return;
-    const k = v.ref === 'earth' ? Math.exp(-Math.max(0, v.alt) / 5600) : 0;
-    const x = v.sx, y = Math.max(v.alt, 1), z = v.s.z;
+    const vB = BODIES[v.ref] || BODIES.earth;
+    const hasAtm = (vB.atm || 0) > 0 && (vB.rho0 || 0) > 0 && v.alt < vB.atm;
+    const k = hasAtm ? Math.exp(-Math.max(0, v.alt) / (vB.atmH || 5600)) : 0;
+    const x = v.sx || 0, y = v.ref === 'earth' ? Math.max(v.alt, 1) : (v.alt ?? 1), z = v.s.z || 0;
     for (let i = 0; i < n; i++) {
       const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(8 + Math.random() * 10);
-      this.smoke.emit(x, y, z, v.vSurf.e + d.x, v.vSurf.u + d.y, d.z, { life: 3 + Math.random() * 2, size0: size, size1: size * (4 + 10 * (1 - k)), alpha: 0.5, drag: 0.6 * k + 0.02, buoy: 0, color: [0.9, 0.9, 0.9] });
+      this.smoke.emit(x, y, z, (v.vSurf?.e || 0) + d.x, (v.vSurf?.u || 0) + d.y, (v.vSurf?.z || 0) + d.z, { life: 3 + Math.random() * 2, size0: size, size1: size * (4 + 10 * (1 - k)), alpha: 0.5, drag: 0.6 * k + 0.02, buoy: 0, color: [0.9, 0.9, 0.9] });
     }
   }
 
@@ -4137,34 +4149,86 @@ export class LaunchScene {
       };
       this.phase = 'crashed';
       this.program = null;
+      this.warp = 1;
+      this.userWarp = 1;
+      this.autoWarp = 1;
+      this.reqWarpNext = null;
+      this.reqWarpPrev = 1;
+      if (this.docked) this.docked = null;
+      if (!v.crashAnchor) {
+        if (v.clamped || v.landed) {
+          const L = v.landed || v.clampSpot || {};
+          v.crashAnchor = {
+            mode: 'surface',
+            body: L.body || v.ref,
+            sx: L.sx ?? (v.sx || 0),
+            sz: L.sz ?? (v.s.z || 0),
+            h: L.h ?? v.alt,
+            betaOff: wrapPi(v.beta - v.phi),
+          };
+        } else {
+          v.crashAnchor = { mode: 'coast' };
+        }
+      }
+      if (this.camMode === 2) {
+        const h = v.height || this.rocketHeight || 20;
+        this.camMode = 0;
+        this.controls.enabled = true;
+        this.camera.fov = 50;
+        this.camera.updateProjectionMatrix();
+        this.camera.position.set(h * 0.7 + 14, h * 0.35 + 6, h * 1.15 + 22);
+        this.controls.target.set(0, 0, 0);
+      }
     }
     v.crashed = true; v.engineOn = false;
     this.event('💥 ' + (isPlayer ? '' : (v.kind === 'booster' ? tr('Tầng 1: ', 'Stage 1: ') : tr('Tầng bỏ: ', 'Spent Stage: '))) + reason, 'bad');
     const big = isPlayer || v.kind === 'booster';
-    if (v.ref === 'earth' || v.ref === 'moon') {
-      const x = v.sx, y = Math.max(v.alt, 1), z = v.s.z;
-      const air = v.ref === 'earth' ? Math.exp(-Math.max(0, v.alt) / 5600) : 0;
-      const nF = big ? 500 : 140, nS = big ? 260 : 70;
-      for (let i = 0; i < nF; i++) {
-        const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.3, Math.random() - 0.5).normalize().multiplyScalar(Math.random() * 45);
-        this.fire.emit(x + d.x * 0.1, y + d.y * 0.1, z + d.z * 0.1, v.vSurf.e * 0.3 + d.x, v.vSurf.u * 0.3 + d.y, d.z, { life: 0.8 + Math.random() * 1.4, size0: 5, size1: 22 + Math.random() * 20, alpha: 1, drag: 1.5, buoy: 3, color: [6, 3, 1.2] });
-      }
-      for (let i = 0; i < nS; i++) {
-        const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.2, Math.random() - 0.5).normalize().multiplyScalar(Math.random() * 30);
-        this.smoke.emit(x + d.x * 0.2, y + d.y * 0.2, z + d.z * 0.2, v.vSurf.e * 0.3 + d.x, v.vSurf.u * 0.3 + d.y, d.z, { life: 8 + Math.random() * 8, size0: 8, size1: 45 + Math.random() * 40, alpha: 0.85, drag: 0.8 * air + 0.05, buoy: 2.5 * air, heat: 1.2, color: [0.28, 0.26, 0.25] });
-      }
+    const vB = BODIES[v.ref] || BODIES.earth;
+    const hasAtm = (vB.atm || 0) > 0 && (vB.rho0 || 0) > 0 && v.alt < vB.atm;
+    const air = hasAtm ? Math.exp(-Math.max(0, v.alt) / (vB.atmH || 5600)) : 0;
+    const onSurfCrash = v.crashAnchor?.mode === 'surface';
+    const carry = onSurfCrash ? 0 : 0.85;
+    const cvE = (v.vSurf?.e || 0) * carry;
+    const cvU = (v.vSurf?.u || 0) * carry;
+    const cvZ = (v.vSurf?.z || 0) * carry;
+    const x = v.sx || 0, y = v.ref === 'earth' ? Math.max(v.alt, 0.8) : (v.alt ?? 0.8), z = v.s.z || 0;
+    const nF = big ? 500 : 140, nS = big ? 260 : 70;
+    for (let i = 0; i < nF; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - (onSurfCrash ? 0.15 : 0.45), Math.random() - 0.5).normalize().multiplyScalar(Math.random() * 45);
+      this.fire.emit(x + d.x * 0.1, y + d.y * 0.1, z + d.z * 0.1, cvE + d.x, cvU + d.y, cvZ + d.z, { life: 0.9 + Math.random() * 1.6, size0: 5, size1: 22 + Math.random() * 20, alpha: 1, drag: 0.9 * air + 0.35, buoy: 3 * air, color: [6, 3, 1.2] });
     }
+    for (let i = 0; i < nS; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - (onSurfCrash ? 0.1 : 0.45), Math.random() - 0.5).normalize().multiplyScalar(Math.random() * 30);
+      this.smoke.emit(x + d.x * 0.2, y + d.y * 0.2, z + d.z * 0.2, cvE + d.x, cvU + d.y, cvZ + d.z, { life: 8 + Math.random() * 8, size0: 8, size1: 45 + Math.random() * 40, alpha: 0.85, drag: 0.8 * air + 0.08, buoy: 2.5 * air, heat: 1.2, color: [0.28, 0.26, 0.25] });
+    }
+    const upX = v.up ? v.up.x : 0, upY = v.up ? v.up.y : 1;
     for (const k of v.segIdx) {
       const g = this.rocket.segGroups[k];
       for (const child of [...g.children]) {
         const d = this.makeDebris(v, child, 10 + Math.random() * 25, 12);
-        d.s.vx += (Math.random() - 0.5) * 8; d.s.vy += (Math.random() - 0.5) * 8;
+        const upKick = onSurfCrash ? (6 + Math.random() * 16) : 0;
+        d.s.vx += (Math.random() - 0.5) * 8 + upX * upKick;
+        d.s.vy += (Math.random() - 0.5) * 8 + upY * upKick;
+        d.s.vz += (Math.random() - 0.5) * 8;
       }
     }
-    for (const d of this.rocket.deployables) if (v.owns(d.seg)) for (const o of d.objs) if (o.parent && o.parent !== this.scene) this.makeDebris(v, o, 6, 8);
+    for (const d of this.rocket.deployables) {
+      if (v.owns(d.seg)) {
+        for (const o of d.objs) {
+          if (o.parent && o.parent !== this.scene) {
+            const db = this.makeDebris(v, o, 6, 8);
+            if (onSurfCrash) {
+              const upKick = 5 + Math.random() * 12;
+              db.s.vx += upX * upKick;
+              db.s.vy += upY * upKick;
+            }
+          }
+        }
+      }
+    }
     v.dead = true;
     if (v.root) v.root.visible = false;
-    if (big) { this.flash = 1; this.flashPos = { x: v.sx, y: v.alt, z: v.s.z }; this.shakeBoost = 3; audio.explosion(1); }
+    if (big) { this.flash = 1; this.flashPos = { x: v.sx || 0, y: v.alt || 0, z: v.s.z || 0 }; this.shakeBoost = 3; audio.explosion(1); }
     if (isPlayer) { audio.silenceEngine(); setTimeout(() => this.showResult(false, reason), 3500); }
   }
 
@@ -5137,6 +5201,7 @@ export class LaunchScene {
   }
 
   effectiveWarp() {
+    if (this.phase === 'crashed' || this.player?.crashed) return 1;
     let w = this.program
       ? (this.reqWarpPrev === 1 && this.player?.engineOn ? 1 : Math.max(this.reqWarpPrev || 1, this.userWarp || 1))
       : this.userWarp;
@@ -5162,6 +5227,11 @@ export class LaunchScene {
   }
 
   needsFine() {
+    if (this.player?.crashed && this.player?.crashAnchor?.mode === 'coast') {
+      const P = this.player;
+      if (P.ref === 'earth' && P.alt < ATM_TOP) return true;
+      if (P.ref !== 'earth' && P.alt < Math.max(50e3, (P.body?.atm || 0) + 15e3)) return true;
+    }
     for (const v of this.vessels) {
       if (v.dead) continue;
       if (v.engineOn || (v.clamped && this.phase === 'countdown')) return true;
@@ -5413,48 +5483,128 @@ export class LaunchScene {
     const T = this.simT;
     const fr = this.frameOf(d.s, T);
     d.life += h;
-    const surf = this.surfaceAt({ ref: fr.ref, sx: fr.phiRot * fr.B.R, phiRot: fr.phiRot });
     if (d.landed) {
-      if (d.life - d.landT > 45) d.dead = true;
+      if (d.life - d.landT > 120) d.dead = true;
       return;
     }
-    let ax = 0, ay = 0;
-    if (fr.ref === 'earth' && fr.alt < ATM_TOP) {
-      const rho = 1.225 * Math.exp(-Math.max(0, fr.alt) / 5600);
-      const vrx = d.s.vx + OMEGA_E * fr.dy, vry = d.s.vy - OMEGA_E * (d.s.x);
-      const sp = Math.hypot(vrx, vry);
+    let ax = 0, ay = 0, az = 0;
+    const hasAtm = (fr.B.atm || 0) > 0 && (fr.B.rho0 || 0) > 0 && fr.alt < fr.B.atm;
+    if (hasAtm) {
+      const rho = (fr.B.rho0 || 1.225) * Math.exp(-Math.max(0, fr.alt) / (fr.B.atmH || 5600));
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState(fr.ref, T, bp, bv);
+      const w = fr.B.omega !== undefined ? fr.B.omega : (fr.ref === 'earth' ? OMEGA_E : 0);
+      const vrx = (d.s.vx - bv.x) - w * fr.dy;
+      const vry = (d.s.vy - bv.y) + w * fr.dx;
+      const vrz = (d.s.vz || 0) - (bv.z || 0);
+      const sp = Math.hypot(vrx, vry, vrz);
       const k = 0.5 * rho * sp * 0.006;
-      ax = -k * vrx; ay = -k * vry;
+      ax = -k * vrx; ay = -k * vry; az = -k * vrz;
     }
-    const nsub = Math.max(1, Math.ceil(h / 0.1));
-    for (let i = 0; i < nsub; i++) rk4(d.s, T, h / nsub, ax, ay, 0);
+    const nsub = Math.min(80, Math.max(1, Math.ceil(h / 0.1)));
+    const hs = h / nsub;
+    for (let i = 0; i < nsub; i++) rk4(d.s, T + i * hs, hs, ax, ay, az);
     d.dq.setFromEuler(new THREE.Euler(d.av.x * h, d.av.y * h, d.av.z * h));
     d.q0.multiply(d.dq);
-    const fr2 = this.frameOf(d.s, T);
-    if (fr2.alt < surf.h + 0.8 && !d.landed) {
-      d.landed = true; d.landT = d.life;
-      const sp = Math.hypot(d.s.vx, d.s.vy);
-      d.av.set(0, 0, 0);
-      if (surf.water) { d.dead = true; return; }
-      d.landSx = fr2.phiRot * fr2.B.R; d.landRef = fr2.ref; d.landH = surf.h + 0.6;
-      if (sp > 40) this.puffAtDebris(fr2, surf.h);
+    const fr2 = this.frameOf(d.s, T + h);
+    if (fr2.ref !== 'sun' && !fr2.B.gasGiant) {
+      const surf = this.surfaceAt({ ref: fr2.ref, sx: fr2.phiRot * fr2.B.R, phiRot: fr2.phiRot, s: d.s });
+      if (fr2.alt < surf.h + 0.8 && !d.landed) {
+        const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+        bodyState(fr2.ref, T + h, bp, bv);
+        const sp = Math.hypot(d.s.vx - bv.x, d.s.vy - bv.y, (d.s.vz || 0) - (bv.z || 0));
+        d.landed = true;
+        d.landT = d.life;
+        d.av.set(0, 0, 0);
+        d.landSx = fr2.phiRot * fr2.B.R;
+        d.landSz = (d.s.z || 0) - (bp.z || 0);
+        d.landRef = fr2.ref;
+        d.landWater = !!surf.water;
+        d.landH = surf.water ? (Math.max(0, surf.h) + 0.15) : (surf.h + 0.6);
+        this.pinDebris(d, T + h);
+        if (sp > 35) this.puffAtDebris(fr2, surf.h, d.s.z || 0);
+        return;
+      }
     }
-    if (fr2.alt < -50 || d.life > 240) d.dead = true;
+    if (d.life > 300 || (fr2.ref === 'sun' && fr2.alt < -50000)) d.dead = true;
   }
 
-  puffAtDebris(fr, h) {
+  puffAtDebris(fr, h, sz = 0) {
     const x = fr.phiRot * fr.B.R;
-    for (let j = 0; j < 14; j++) this.fire.emit(x, h + 1, 0, (Math.random() - 0.5) * 25, Math.random() * 18, (Math.random() - 0.5) * 25, { life: 1, size0: 3, size1: 11, alpha: 0.9, drag: 1.2, buoy: 3, color: [6, 3, 1] });
-    for (let j = 0; j < 14; j++) this.smoke.emit(x, h + 1.5, 0, (Math.random() - 0.5) * 12, Math.random() * 8, (Math.random() - 0.5) * 12, { life: 8, size0: 5, size1: 24, alpha: 0.6, drag: 0.5, buoy: 1.5, color: [0.3, 0.28, 0.26], heat: 0.5 });
+    for (let j = 0; j < 14; j++) this.fire.emit(x, h + 1, sz, (Math.random() - 0.5) * 25, Math.random() * 18, (Math.random() - 0.5) * 25, { life: 1, size0: 3, size1: 11, alpha: 0.9, drag: 1.2, buoy: 3, color: [6, 3, 1] });
+    for (let j = 0; j < 14; j++) this.smoke.emit(x, h + 1.5, sz, (Math.random() - 0.5) * 12, Math.random() * 8, (Math.random() - 0.5) * 12, { life: 8, size0: 5, size1: 24, alpha: 0.6, drag: 0.5, buoy: 1.5, color: [0.3, 0.28, 0.26], heat: 0.5 });
   }
 
   /** fix landed debris onto the rotating surface */
-  pinDebris(d) {
-    const T = this.simT, B = bodyInfo(d.landRef), bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+  pinDebris(d, T = this.simT) {
+    const B = bodyInfo(d.landRef), bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
     bodyState(d.landRef, T, bp, bv);
-    const psi = d.landSx / B.R + bodyRotation(d.landRef, T), r = B.R + d.landH;
-    d.s.x = bp.x + Math.sin(psi) * r; d.s.y = bp.y + Math.cos(psi) * r; d.s.z = 0;
-    d.s.vx = d.s.vy = d.s.vz = 0;
+    const bob = d.landWater ? Math.sin(this.time * 2.2 + (d.landSx || 0)) * 0.18 : 0;
+    const psi = d.landSx / B.R + bodyRotation(d.landRef, T), r = B.R + d.landH + bob;
+    d.s.x = bp.x + Math.sin(psi) * r;
+    d.s.y = bp.y + Math.cos(psi) * r;
+    d.s.z = (bp.z || 0) + (d.landSz || 0);
+    d.s.vx = bv.x; d.s.vy = bv.y; d.s.vz = bv.z || 0;
+  }
+
+  /** keep a destroyed player's reference frame co-moving with its crash site or orbital debris cloud */
+  stepCrashedPlayer(v, h) {
+    const T = this.simT;
+    const ca = v.crashAnchor;
+    if (ca && ca.mode === 'surface') {
+      const B = bodyInfo(ca.body);
+      const psi = ca.sx / B.R + bodyRotation(ca.body, T + h);
+      v.placeOnSurface(ca.body, ca.sx, ca.h, T + h, psi + (ca.betaOff || 0));
+      if (ca.sz) {
+        v.s.z = ca.sz;
+        v.updateFrame(T + h);
+      }
+      v.agl = 0;
+      return;
+    }
+    v.updateFrame(T);
+    const B = v.body || bodyInfo(v.ref);
+    let ax = 0, ay = 0, az = 0;
+    const hasAtm = (B.atm || 0) > 0 && (B.rho0 || 0) > 0 && v.alt < B.atm;
+    if (hasAtm) {
+      const rho = (B.rho0 || 1.225) * Math.exp(-Math.max(0, v.alt) / (B.atmH || 5600));
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState(v.ref, T, bp, bv);
+      const w = B.omega !== undefined ? B.omega : (v.ref === 'earth' ? OMEGA_E : 0);
+      const dx = v.s.x - bp.x, dy = v.s.y - bp.y;
+      const vrx = (v.s.vx - bv.x) - w * dy;
+      const vry = (v.s.vy - bv.y) + w * dx;
+      const vrz = (v.s.vz || 0) - (bv.z || 0);
+      const sp = Math.hypot(vrx, vry, vrz);
+      const k = 0.5 * rho * sp * 0.006;
+      ax = -k * vrx; ay = -k * vry; az = -k * vrz;
+    }
+    const maxSafe = Math.max(0.05, coastStep(v.s.x, v.s.y, v.s.z, T) * 2.5);
+    const nsub = Math.min(80, Math.max(1, Math.ceil(h / Math.min(0.25, maxSafe))));
+    const hs = h / nsub;
+    for (let i = 0; i < nsub; i++) {
+      rk4(v.s, T + i * hs, hs, ax, ay, az);
+    }
+    v.updateFrame(T + h);
+    if (v.ref !== 'sun' && !B.gasGiant) {
+      const surf = this.surfaceAt(v);
+      if (v.alt <= surf.h + 1.5) {
+        const landH = (surf.water ? Math.max(0, surf.h) : surf.h) + 1.5;
+        const keepZ = v.s.z || 0;
+        const betaOff = wrapPi(v.beta - v.phi);
+        v.crashAnchor = { mode: 'surface', body: v.ref, sx: v.sx, sz: keepZ, h: landH, betaOff };
+        v.placeOnSurface(v.ref, v.sx, landH, T + h, v.beta);
+        if (keepZ) {
+          v.s.z = keepZ;
+          v.updateFrame(T + h);
+        }
+        v.agl = 0;
+      } else {
+        v.agl = v.alt - surf.h;
+      }
+    } else {
+      v.agl = v.alt;
+    }
   }
 
   simStep(h) {
@@ -5482,7 +5632,10 @@ export class LaunchScene {
     }
     for (const v of this.vessels) if (v.rec && !v.crashed && !v.dead) v.rec.update(h);
     for (const v of this.vessels.slice()) {
-      if (v.dead) continue;
+      if (v.dead) {
+        if (v === P && v.crashed) this.stepCrashedPlayer(v, h);
+        continue;
+      }
       if (v === P && this.docked) {
         const dRate = h * 0.6;
         v.legsT += THREE.MathUtils.clamp(v.legsTarget - v.legsT, -dRate, dRate);
@@ -5500,7 +5653,7 @@ export class LaunchScene {
       }
       this.handleEvents(v);
     }
-    for (const d of this.debris) { if (d.landed && d.landRef) this.pinDebris(d); else this.stepDebris(d, h); }
+    for (const d of this.debris) { if (d.landed && d.landRef) this.pinDebris(d, T + h); else this.stepDebris(d, h); }
     this.simT += h;
     if (this.phase !== 'ready') this.met += h;
     if (this.docked) this.applyDockLock();
@@ -5775,10 +5928,16 @@ export class LaunchScene {
     if (F.ref === 'earth') this.updateAtmosphere(camAlt); else this.spaceLighting();
     this.envForView(this.camera, F);
     this.updateEffects(dt, simDt);
-    const camLocal = this.camera.position.clone().sub(this.world.position);
+    const pOrigin = this._pOrigin || (this._pOrigin = { x: 0, y: 0, z: 0 });
+    pOrigin.x = F.sx || 0;
+    pOrigin.y = F.alt || 0;
+    pOrigin.z = F.s?.z || 0;
+    const particleGroundY = F.ref === 'earth' ? 0 : -Infinity;
     const pdt = Math.min(simDt, 1);
-    this.smoke.update(pdt, camLocal, 0);
-    this.fire.update(pdt, camLocal, 0);
+    this.smoke.update(pdt, this.camera.position, particleGroundY, pOrigin);
+    this.fire.update(pdt, this.camera.position, particleGroundY, pOrigin);
+    this.smoke.mesh.position.set(0, 0, 0);
+    this.fire.mesh.position.set(0, 0, 0);
     for (const c of this.clamps) c.visible = this.phase === 'ready' || this.phase === 'countdown' || this.simT < (this.launchT || 0) + 4;
     this.groundUniforms.uTime.value = t;
     this.cloudMat.uniforms.uTime.value = t;
@@ -5811,7 +5970,13 @@ export class LaunchScene {
     if (this.flagObj.userData.update && this.flagObj.visible && Math.floor(t * 10) % 3 === 0) this.flagObj.userData.update(t);
     this.flash = Math.max(0, this.flash - dt * 1.5);
     this.flashLight.intensity = this.flash * 4e6;
-    if (this.flashPos) this.flashLight.position.set(this.flashPos.x, this.flashPos.y, this.flashPos.z);
+    if (this.flashPos) {
+      this.flashLight.position.set(
+        this.flashPos.x - (F.sx || 0),
+        this.flashPos.y - (F.alt || 0),
+        (this.flashPos.z || 0) - (F.s?.z || 0)
+      );
+    }
     this.updateHUD(dt);
   }
 
@@ -6505,12 +6670,13 @@ export class LaunchScene {
 
   updateAliensAndWeapons(dt) {
     const P = this.player;
-    if (!P || P.dead || P.crashed) return;
+    if (!P) return;
+    const playerAlive = !P.dead && !P.crashed;
     if (!this.aliens) this.aliens = [];
     if (!this.weaponBeams) this.weaponBeams = [];
 
     this.weaponCooldown = (this.weaponCooldown || 0) - dt;
-    if (this.keys['v'] || this.keys['enter'] || this.firingHeld) {
+    if (playerAlive && (this.keys['v'] || this.keys['enter'] || this.firingHeld)) {
       let burstGuard = 0;
       while (this.weaponCooldown <= 0 && burstGuard++ < 4) {
         this.fireWeapons();
@@ -6528,7 +6694,7 @@ export class LaunchScene {
         }
         this.aliens = [];
       }
-    } else {
+    } else if (playerAlive) {
       // Spawn colossal Alien King & Alien Queen when player reaches altitude >= 1,000,000,000 km
       const curAltKm = (P.ref === 'earth' ? Math.max(0, P.alt - (this.startAlt || 0)) : Math.max(0, P.alt)) / 1000;
       const earthDistKm = Math.max(0, Math.hypot(P.s.x, P.s.y, P.s.z || 0) - R_E) / 1000;
@@ -6673,13 +6839,13 @@ export class LaunchScene {
     }
 
     // Rotate weapon turrets slightly toward the nearest Alien target & auto-fire when Autopilot is enabled
-    if (nearestAlien && this.rocket && this.rocket.weapons) {
+    if (playerAlive && nearestAlien && this.rocket && this.rocket.weapons) {
       for (const w of this.rocket.weapons) {
         if (!w.turret || !P.owns(w.seg)) continue;
         w.turret.rotation.z = Math.sin(this.time * 3.5) * 0.12;
       }
     }
-    if ((this.program || this.autoShootAliens) && nearestAlien) {
+    if (playerAlive && (this.program || this.autoShootAliens) && nearestAlien) {
       let burstGuard = 0;
       while (nearestAlien && !nearestAlien.dead && nearestAlien.hp > 0 && this.weaponCooldown <= 0 && burstGuard++ < 4) {
         this.fireWeapons(nearestAlien);
@@ -6715,7 +6881,7 @@ export class LaunchScene {
     const isInOortCloud = rSun >= OORT_CLOUD_INNER && rSun <= OORT_CLOUD_OUTER;
     const isOutsideSolarSystem = rSun >= SUN_SOI;
 
-    if (isInOortCloud && !this.flags.oortCloud && !P.clamped && !P.landed) {
+    if (playerAlive && isInOortCloud && !this.flags.oortCloud && !P.clamped && !P.landed) {
       this.setFlag('oortCloud');
       this.milestone(
         tr('☄️ TIẾN VÀO ĐÁM MÂY OORT!', '☄️ ENTERED THE OORT CLOUD!'),
@@ -6728,7 +6894,7 @@ export class LaunchScene {
     }
 
     // Milestone & event when crossing the outer boundary of the Solar System
-    if (isOutsideSolarSystem && !this.flags.interstellarSpace && !P.clamped && !P.landed) {
+    if (playerAlive && isOutsideSolarSystem && !this.flags.interstellarSpace && !P.clamped && !P.landed) {
       this.setFlag('interstellarSpace');
       this.milestone(
         tr('🌌 TIẾN VÀO KHÔNG GIAN LIÊN SAO!', '🌌 ENTERED INTERSTELLAR SPACE!'),
@@ -6919,7 +7085,10 @@ export class LaunchScene {
     const proj = (x, y, z, out) => out.set((x - S.x) * E.x + (y - S.y) * E.y, (x - S.x) * U.x + (y - S.y) * U.y, z - S.z);
     this._proj = proj;
     for (const v of this.vessels) {
-      if (v.dead) continue;
+      if (v.dead) {
+        if (v === this.player && v.root) proj(v.s.x, v.s.y, v.s.z, v.root.position);
+        continue;
+      }
       proj(v.s.x, v.s.y, v.s.z, v.root.position);
       if (v.isPlane) {
         const qBase = this._qPlaneBase || (this._qPlaneBase = new THREE.Quaternion(0.5, 0.5, 0.5, -0.5));
@@ -7353,8 +7522,14 @@ export class LaunchScene {
         }
       }
     }
-    // unrolled-surface world (ground, pad, sites, particles)
+    // unrolled-surface world (ground, pad, sites) + double-precision particle origin alignment
     this.world.position.set(-F.sx, -F.alt, -S.z);
+    if (this.smoke?.mesh) {
+      this.smoke.mesh.position.set((this.smoke.originX || 0) - F.sx, (this.smoke.originY || 0) - F.alt, (this.smoke.originZ || 0) - (S.z || 0));
+    }
+    if (this.fire?.mesh) {
+      this.fire.mesh.position.set((this.fire.originX || 0) - F.sx, (this.fire.originY || 0) - F.alt, (this.fire.originZ || 0) - (S.z || 0));
+    }
     const near = F.ref === 'earth' && F.alt < 60000;
     const isPlaneMode = !!(this.player && this.player.isPlane);
     const isRoverMode = !!(this.player && this.player.isRover);

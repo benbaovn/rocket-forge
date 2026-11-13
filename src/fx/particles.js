@@ -92,8 +92,11 @@ export class ParticleSystem {
     this.mesh = new THREE.Mesh(g, this.material);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = additive ? 6 : 5;
-    // CPU state (SoA)
-    this.p = new Float32Array(max * 3);
+    // CPU state (SoA) – Float64 positions avoid precision loss at planetary / interstellar distances
+    this.p = new Float64Array(max * 3);
+    this.originX = 0;
+    this.originY = 0;
+    this.originZ = 0;
     this.v = new Float32Array(max * 3);
     this.life = new Float32Array(max);
     this.maxLife = new Float32Array(max);
@@ -132,8 +135,14 @@ export class ParticleSystem {
     this.col[i * 3] = c[0]; this.col[i * 3 + 1] = c[1]; this.col[i * 3 + 2] = c[2];
   }
 
-  update(dt, camPosLocal, groundY = -Infinity) {
+  update(dt, camPosScene, groundY = -Infinity, origin = null) {
     const { p, v, life, maxLife } = this;
+    const ox = origin ? (origin.x || 0) : 0;
+    const oy = origin ? (origin.y || 0) : 0;
+    const oz = origin ? (origin.z || 0) : 0;
+    this.originX = ox;
+    this.originY = oy;
+    this.originZ = oz;
     let n = this.count;
     for (let i = 0; i < n; i++) {
       life[i] += dt;
@@ -154,10 +163,10 @@ export class ParticleSystem {
     // order
     const ord = this.order;
     for (let i = 0; i < n; i++) ord[i] = i;
-    if (this.sort && camPosLocal) {
+    if (this.sort && camPosScene) {
       const ds = this.dist;
       for (let i = 0; i < n; i++) {
-        const dx = p[i * 3] - camPosLocal.x, dy = p[i * 3 + 1] - camPosLocal.y, dz = p[i * 3 + 2] - camPosLocal.z;
+        const dx = (p[i * 3] - ox) - camPosScene.x, dy = (p[i * 3 + 1] - oy) - camPosScene.y, dz = (p[i * 3 + 2] - oz) - camPosScene.z;
         ds[i] = dx * dx + dy * dy + dz * dz;
       }
       const sub = ord.subarray(0, n);
@@ -170,7 +179,7 @@ export class ParticleSystem {
       const size = this.size0[i] + (this.size1[i] - this.size0[i]) * (1 - Math.pow(1 - t, 2.2));
       const fadeIn = Math.min(1, t * 12);
       const fadeOut = 1 - t * t;
-      P[k * 3] = p[i * 3]; P[k * 3 + 1] = p[i * 3 + 1]; P[k * 3 + 2] = p[i * 3 + 2];
+      P[k * 3] = p[i * 3] - ox; P[k * 3 + 1] = p[i * 3 + 1] - oy; P[k * 3 + 2] = p[i * 3 + 2] - oz;
       D[k * 4] = size; D[k * 4 + 1] = this.rot[i]; D[k * 4 + 2] = this.alpha[i] * fadeIn * fadeOut;
       D[k * 4 + 3] = this.heat[i] * Math.exp(-life[i] * 2.5);
       if (this.additive) {
@@ -199,5 +208,11 @@ export class ParticleSystem {
     this.drag[to] = this.drag[from]; this.buoy[to] = this.buoy[from];
   }
 
-  clear() { this.count = 0; this.geometry.instanceCount = 0; }
+  clear() {
+    this.count = 0;
+    this.originX = 0;
+    this.originY = 0;
+    this.originZ = 0;
+    this.geometry.instanceCount = 0;
+  }
 }

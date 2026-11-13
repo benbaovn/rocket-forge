@@ -862,6 +862,7 @@ export class Vessel {
 
     // ---------- translate (local accel → ECI)
     const prevPhi = this.phi;
+    const prevRef = this.ref, prevSx = this.sx, prevAlt = this.alt, prevZ = this.s.z || 0;
     const E = this.east, U = this.up;
     const axE = ae * E.x + au_ * U.x, ayE = ae * E.y + au_ * U.y;
     const maxSafe = coastStep(this.s.x, this.s.y, this.s.z, t) * 4.5;
@@ -956,21 +957,48 @@ export class Vessel {
         hasLegs: this.hasLegs(),
         where: surf.water ? 'water' : 'ground',
       };
+      const crashOnSurface = (reason, where) => {
+        const preSpeedSurf = this.speedSurf;
+        let impSx = this.sx;
+        let impZ = this.s.z || 0;
+        let impSurf = surf;
+        if (prevRef === this.ref && prevAlt > surf.h && bottom < -10) {
+          const prevBottom = prevAlt - this.bottomOffset() * Math.cos(this.ang) - surf.h;
+          const frac = prevBottom > 0 ? THREE.MathUtils.clamp(prevBottom / (prevBottom - bottom), 0, 1) : 0;
+          const dSx = wrapPi((this.sx - prevSx) / B.R) * B.R;
+          if (Math.abs(dSx) < B.R * 0.5) {
+            impSx = prevSx + dSx * frac;
+            impZ = prevZ + (impZ - prevZ) * frac;
+            impSurf = env.surface({ ...this, ref: this.ref, sx: impSx, phiRot: impSx / B.R, s: { ...this.s, z: impZ } });
+          }
+        }
+        const crashH = (impSurf.water ? Math.max(0, impSurf.h) : impSurf.h) + Math.max(0.8, Math.min(this.bottomOffset(), 6.0));
+        const keepBeta = this.beta;
+        this.placeOnSurface(this.ref, impSx, crashH, t + h, keepBeta);
+        if (impZ) {
+          this.s.z = impZ;
+          this.updateFrame(t + h);
+        }
+        this.speedSurf = preSpeedSurf;
+        this.agl = 0;
+        this.crashAnchor = { mode: 'surface', body: this.ref, sx: impSx, sz: impZ, h: crashH, betaOff: wrapPi(this.beta - this.phi) };
+        this.crash(reason, where, details);
+      };
       if (surf.water) {
         if (this.isBoat) {
           this.settle(surf, t, 'floating');
           return;
         }
         if (chuteOk && sp < 16) this.settle(surf, t, 'splash');
-        else this.crash(sp > 40 ? tr('Lao xuống biển!', 'Plunged into the ocean!') : tr('Rơi xuống biển!', 'Crashed into the ocean!'), 'water', details);
+        else crashOnSurface(sp > 40 ? tr('Lao xuống biển!', 'Plunged into the ocean!') : tr('Rơi xuống biển!', 'Crashed into the ocean!'), 'water');
       } else if (this.isRover) {
         if (sp < 55 && tilt < 0.7) {
           this.groundSpeed = vs.e;
           this.settle(surf, t, 'rover');
-        } else this.crash(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground', details);
+        } else crashOnSurface(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground');
       } else if (this.isBoat) {
         if (sp < 7) this.settle(surf, t, 'beached');
-        else this.crash(tr('Tàu va vào bờ đá!', 'Boat crashed into rocky shore!'), 'ground', details);
+        else crashOnSurface(tr('Tàu va vào bờ đá!', 'Boat crashed into rocky shore!'), 'ground');
       } else if (this.isPlane) {
         if (vs.u > 0) return; // Climbing/taking off
         const vertRate = Math.abs(vs.u);
@@ -979,12 +1007,12 @@ export class Vessel {
           this.planeRollSpeed = Math.max(0, vs.e);
           this.settle(surf, t, 'landed');
         } else if (surf.water) {
-          this.crash(tr('Máy bay rơi xuống biển!', 'Aircraft crashed into the ocean!'), 'water', details);
+          crashOnSurface(tr('Máy bay rơi xuống biển!', 'Aircraft crashed into the ocean!'), 'water');
         } else {
-          this.crash(vertRate > 30 ? tr('Lao máy bay xuống mặt đất!', 'Aircraft slammed into the ground!') : tr('Va chạm mạnh khi hạ cánh!', 'Hard impact on landing!'), 'ground', details);
+          crashOnSurface(vertRate > 30 ? tr('Lao máy bay xuống mặt đất!', 'Aircraft slammed into the ground!') : tr('Va chạm mạnh khi hạ cánh!', 'Hard impact on landing!'), 'ground');
         }
       } else if (sp < vLim && Math.abs(vs.e) < 4 && tilt < (legsOk ? 0.3 : 0.45)) this.settle(surf, t, 'landed');
-      else this.crash(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground', details);
+      else crashOnSurface(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground');
     }
   }
 

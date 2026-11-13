@@ -1793,6 +1793,7 @@ export function applyLanguage(lang, app) {
   setTxt('#map-focus-bar [data-focus="makemake"]', '🔶 Makemake', '🔶 Makemake');
   setTxt('#map-focus-bar [data-focus="eris"]', '💎 Eris', '💎 Eris');
   setTxt('#map-focus-bar [data-focus="oort"]', '☄️ Đám mây Oort', '☄️ Oort Cloud');
+  setTxt('#map-focus-bar [data-focus="king"]', '👑 UFO Vua', '👑 King UFO');
 
   setTxt('#map-telemetry h4', 'QUỸ ĐẠO', 'ORBITAL TELEMETRY');
   setTxt('#btn-map-delete', '🗑️ Xóa', '🗑️ Delete');

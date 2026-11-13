@@ -1201,26 +1201,27 @@ export class MapView {
 
   initVesselMarker() {
     this.vesselGroup = new THREE.Group();
+    this.vesselRocketGroup = new THREE.Group();
 
     // Stylized 3D spacecraft mesh
     const bodyGeo = new THREE.CylinderGeometry(5, 7, 30, 16);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3, metalness: 0.4 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 15;
-    this.vesselGroup.add(body);
+    this.vesselRocketGroup.add(body);
 
     const noseGeo = new THREE.ConeGeometry(5, 12, 16);
     const noseMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
     const nose = new THREE.Mesh(noseGeo, noseMat);
     nose.position.y = 36;
-    this.vesselGroup.add(nose);
+    this.vesselRocketGroup.add(nose);
 
     // Wings
     const finGeo = new THREE.BoxGeometry(22, 1.5, 6);
     const finMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.4 });
     const fin = new THREE.Mesh(finGeo, finMat);
     fin.position.y = 8;
-    this.vesselGroup.add(fin);
+    this.vesselRocketGroup.add(fin);
 
     // Attitude direction cone / beam
     const beamGeo = new THREE.ConeGeometry(3, 20, 8);
@@ -1228,7 +1229,34 @@ export class MapView {
     const beamMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, depthTest: false });
     this.vesselBeam = new THREE.Mesh(beamGeo, beamMat);
     this.vesselBeam.renderOrder = 999;
-    this.vesselGroup.add(this.vesselBeam);
+    this.vesselRocketGroup.add(this.vesselBeam);
+    this.vesselGroup.add(this.vesselRocketGroup);
+
+    // 3D UFO Saucer marker when player craft is a UFO (with golden crown/halo for UFO Vua)
+    this.vesselUfoGroup = new THREE.Group();
+    this.vesselSaucerMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false });
+    const vSaucerDisc = new THREE.Mesh(new THREE.CylinderGeometry(17, 17, 3.8, 28), this.vesselSaucerMat);
+    vSaucerDisc.renderOrder = 999;
+    this.vesselUfoGroup.add(vSaucerDisc);
+    const vSaucerDome = new THREE.Mesh(new THREE.SphereGeometry(9.0, 18, 12), new THREE.MeshBasicMaterial({ color: 0xe0f2fe, depthTest: false }));
+    vSaucerDome.position.y = 3.4;
+    vSaucerDome.renderOrder = 999;
+    this.vesselUfoGroup.add(vSaucerDome);
+
+    this.vesselKingCrown = new THREE.Group();
+    const vHalo = new THREE.Mesh(new THREE.TorusGeometry(23, 1.3, 10, 36), new THREE.MeshBasicMaterial({ color: 0xfef08a, depthTest: false }));
+    vHalo.rotation.x = Math.PI / 2;
+    vHalo.position.y = 1.6;
+    vHalo.renderOrder = 999;
+    this.vesselKingCrown.add(vHalo);
+    const vCrown = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 5.2, 4.6, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide, depthTest: false }));
+    vCrown.position.y = 13.5;
+    vCrown.renderOrder = 999;
+    this.vesselKingCrown.add(vCrown);
+    this.vesselKingCrown.visible = false;
+    this.vesselUfoGroup.add(this.vesselKingCrown);
+    this.vesselUfoGroup.visible = false;
+    this.vesselGroup.add(this.vesselUfoGroup);
 
     this.scene.add(this.vesselGroup);
 
@@ -1252,7 +1280,7 @@ export class MapView {
       noseMesh.renderOrder = 999;
       group.add(noseMesh);
 
-      // 3D Alien UFO Saucer marker for map
+      // 3D Alien / Saved UFO Saucer marker for map
       const ufoGroup = new THREE.Group();
       const saucerMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, depthTest: false });
       const saucerDisc = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 3.5, 24), saucerMat);
@@ -1263,6 +1291,26 @@ export class MapView {
       saucerDome.position.y = 3.2;
       saucerDome.renderOrder = 999;
       ufoGroup.add(saucerDome);
+
+      // Golden imperial halo & crown exclusively for the 1 King UFO
+      const kingCrownGroup = new THREE.Group();
+      const kingHalo = new THREE.Mesh(new THREE.TorusGeometry(22.5, 1.35, 10, 36), new THREE.MeshBasicMaterial({ color: 0xfef08a, depthTest: false }));
+      kingHalo.rotation.x = Math.PI / 2;
+      kingHalo.position.y = 1.6;
+      kingHalo.renderOrder = 999;
+      kingCrownGroup.add(kingHalo);
+      const kingOuterHalo = new THREE.Mesh(new THREE.TorusGeometry(27.5, 0.9, 8, 36), new THREE.MeshBasicMaterial({ color: 0xfb7185, depthTest: false }));
+      kingOuterHalo.rotation.x = Math.PI / 2;
+      kingOuterHalo.position.y = 2.8;
+      kingOuterHalo.renderOrder = 999;
+      kingCrownGroup.add(kingOuterHalo);
+      const kingCrown = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 5.0, 4.6, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide, depthTest: false }));
+      kingCrown.position.y = 13.5;
+      kingCrown.renderOrder = 999;
+      kingCrownGroup.add(kingCrown);
+      kingCrownGroup.visible = false;
+      ufoGroup.add(kingCrownGroup);
+
       ufoGroup.visible = false;
       group.add(ufoGroup);
 
@@ -1288,7 +1336,7 @@ export class MapView {
       orbitLine.visible = false;
       this.othersRoot.add(orbitLine);
 
-      this.otherPool.push({ group, bodyMat, bodyMesh, noseMesh, ufoGroup, saucerMat, orbitGeo, orbitMat, orbitLine });
+      this.otherPool.push({ group, bodyMat, bodyMesh, noseMesh, ufoGroup, saucerMat, domeMat, kingCrownGroup, orbitGeo, orbitMat, orbitLine });
     }
     return this.otherPool[idx];
   }
@@ -1407,7 +1455,13 @@ export class MapView {
     if (this.btnMapTeleport) {
       this.btnMapTeleport.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (this.onTeleport && (this.focus === 'iss' || BODIES[this.focus])) {
+        if (!this.onTeleport) return;
+        const isKingBossFocus =
+          this.focus === 'obj:alien_king_boss' ||
+          (this.focus === 'king' && !this.lastState?.vessel?.isUfoKing && (this.lastState?.others || []).some((o) => o.isKingUfo));
+        if (isKingBossFocus) {
+          this.onTeleport('royal1b');
+        } else if (this.focus === 'iss' || this.focus === 'oort' || BODIES[this.focus]) {
           this.onTeleport(this.focus);
         }
       });
@@ -1520,8 +1574,25 @@ export class MapView {
     }
   }
 
+  getKingMapObject(S = this.lastState) {
+    if (!S || !S.others) return null;
+    return S.others.find((o) => o.isKingUfo || o.isUfoKing) || null;
+  }
+
+  resolveFocusKey(focusName, S = this.lastState) {
+    if (focusName === 'king') {
+      if (S?.vessel?.isUfoKing) return 'vessel';
+      const kingObj = this.getKingMapObject(S);
+      if (kingObj) return 'obj:' + kingObj.id;
+      return 'vessel';
+    }
+    return focusName;
+  }
+
   cycleFocus() {
-    const list = ['vessel', 'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', ...NON_EARTH_BODIES.filter((b) => b !== 'mercury' && b !== 'venus'), 'oort'];
+    const S = this.lastState;
+    const hasKing = !!(S?.vessel?.isUfoKing || this.getKingMapObject(S));
+    const list = ['vessel', 'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', ...NON_EARTH_BODIES.filter((b) => b !== 'mercury' && b !== 'venus'), 'oort', ...(hasKing ? ['king'] : [])];
     const idx = (list.indexOf(this.focus) + 1) % list.length;
     this.setFocus(list[idx]);
   }
@@ -1533,9 +1604,10 @@ export class MapView {
         btn.classList.toggle('active', btn.dataset.focus === name);
       });
     }
-    if (name && name.startsWith('obj:')) {
-      this.selectedObjectId = name.slice(4);
-    } else if (name === 'vessel' && fromUserClick && this.lastState && this.lastState.vessel && this.lastState.vessel.deletable) {
+    const resolved = this.resolveFocusKey(name);
+    if (resolved && resolved.startsWith('obj:')) {
+      this.selectedObjectId = resolved.slice(4);
+    } else if (resolved === 'vessel' && fromUserClick && this.lastState && this.lastState.vessel && this.lastState.vessel.deletable) {
       this.selectedObjectId = 'vessel';
     } else {
       this.selectedObjectId = null;
@@ -1545,38 +1617,42 @@ export class MapView {
   }
 
   zoomToTarget(instant = false) {
-    const targetPos = this.getTargetWorldPos(this.focus);
+    const S = this.lastState;
+    const resolvedFocus = this.resolveFocusKey(this.focus, S);
+    const targetPos = this.getTargetWorldPos(resolvedFocus);
     if (!targetPos) return;
 
     let dist = 1800;
-    if (this.focus === 'sun') dist = 780000;
-    else if (this.focus === 'oort') dist = 2400000;
-    else if (this.focus === 'earth') dist = 14000;
-    else if (this.focus === 'moon') dist = 2600;
-    else if (this.focus === 'iss') dist = 900;
-    else if (BODIES[this.focus]) {
-      const B = BODIES[this.focus];
+    if (resolvedFocus === 'sun') dist = 780000;
+    else if (resolvedFocus === 'oort') dist = 2400000;
+    else if (resolvedFocus === 'earth') dist = 14000;
+    else if (resolvedFocus === 'moon') dist = 2600;
+    else if (resolvedFocus === 'iss') dist = 900;
+    else if (BODIES[resolvedFocus]) {
+      const B = BODIES[resolvedFocus];
       dist = Math.max(B.R * SCALE * 5.5, B.soi * SCALE * 1.25);
-    } else if (this.focus && this.focus.startsWith('obj:')) {
-      dist = 2200;
-    } else if (this.focus === 'vessel') {
-      const r = this.lastState && this.lastState.vessel ? Math.hypot(this.lastState.vessel.x, this.lastState.vessel.y) : R_E;
+    } else if (resolvedFocus && resolvedFocus.startsWith('obj:')) {
+      const objId = resolvedFocus.slice(4);
+      const found = S && S.others ? S.others.find((o) => o.id === objId) : null;
+      const rObj = found ? Math.hypot(found.x || 0, found.y || 0) : 0;
+      dist = found?.isRoyalDomainMarker || rObj > SUN_SOI ? 180000 : 2200;
+    } else if (resolvedFocus === 'vessel') {
+      const r = S && S.vessel ? Math.hypot(S.vessel.x, S.vessel.y) : R_E;
       dist = r > SUN_SOI ? 180000 : r > 2.5e6 ? 14000 : 2200;
     }
 
-    const S = this.lastState;
     let parentName = 'sun';
-    if (this.focus === 'vessel') {
+    if (resolvedFocus === 'vessel') {
       parentName = S && S.ref ? S.ref : 'earth';
-    } else if (this.focus && this.focus.startsWith('obj:')) {
-      const objId = this.focus.slice(4);
+    } else if (resolvedFocus && resolvedFocus.startsWith('obj:')) {
+      const objId = resolvedFocus.slice(4);
       const found = S && S.others ? S.others.find((o) => o.id === objId) : null;
       parentName = found && found.ref ? found.ref : 'earth';
-    } else if (BODIES[this.focus] && BODIES[this.focus].parent) {
-      parentName = BODIES[this.focus].parent;
+    } else if (BODIES[resolvedFocus] && BODIES[resolvedFocus].parent) {
+      parentName = BODIES[resolvedFocus].parent;
     }
-    const bodyCenter = (this.focus === 'sun' || this.focus === 'oort') ? new THREE.Vector3(0, 0, 0) : this.getTargetWorldPos(parentName);
-    const isCraft = this.focus === 'vessel' || this.focus === 'iss' || (this.focus && this.focus.startsWith('obj:'));
+    const bodyCenter = (resolvedFocus === 'sun' || resolvedFocus === 'oort') ? new THREE.Vector3(0, 0, 0) : this.getTargetWorldPos(parentName);
+    const isCraft = resolvedFocus === 'vessel' || resolvedFocus === 'iss' || (resolvedFocus && resolvedFocus.startsWith('obj:'));
     // Position camera toward the sunlit / parent-facing side of the planet
     const viewDir = isCraft
       ? targetPos.clone().sub(bodyCenter)
@@ -1589,7 +1665,7 @@ export class MapView {
     }
 
     const camOffset = viewDir.clone().multiplyScalar(dist);
-    camOffset.y += dist * ((this.focus === 'sun' || this.focus === 'oort') ? 0.62 : 0.42);
+    camOffset.y += dist * ((resolvedFocus === 'sun' || resolvedFocus === 'oort') ? 0.62 : 0.42);
     camOffset.x += dist * 0.2;
 
     this.controls.target.copy(targetPos);
@@ -1599,6 +1675,7 @@ export class MapView {
 
   getTargetWorldPos(focusName) {
     const S = this.lastState;
+    focusName = this.resolveFocusKey(focusName, S);
     const t = S ? S.t : 0;
     if (focusName === 'sun' || focusName === 'oort') return new THREE.Vector3(0, 0, 0);
     if (BODIES[focusName]) {
@@ -1716,6 +1793,17 @@ export class MapView {
     const vPos3D = to3D(v.x + ep.x, v.y + ep.y, v.z || 0);
     if (S.ref === 'ceres') vPos3D.y += CERES_MAP_Y;
     this.vesselGroup.position.copy(vPos3D);
+    if (this.vesselRocketGroup && this.vesselUfoGroup) {
+      const showUfo = !!v.isUfo;
+      this.vesselRocketGroup.visible = !showUfo;
+      this.vesselUfoGroup.visible = showUfo;
+      if (showUfo) {
+        this.vesselSaucerMat.color.set(v.isUfoKing ? '#facc15' : '#38bdf8');
+        if (this.vesselKingCrown) this.vesselKingCrown.visible = !!v.isUfoKing;
+        const uScale = v.isUfoKing ? 1.45 : 1.0;
+        this.vesselUfoGroup.scale.setScalar(uScale);
+      }
+    }
 
     // Adaptive scale so the rocket remains easily visible without dwarfing the planet
     const camDist = this.camera.position.distanceTo(vPos3D);
@@ -1729,6 +1817,13 @@ export class MapView {
 
     // Separated stages & persistent space objects (3D meshes + orbital rings)
     const others = S.others || [];
+    if (this.focusBar) {
+      const kingBtn = this.focusBar.querySelector('[data-focus="king"]');
+      if (kingBtn) {
+        const hasAnyKing = !!(v.isUfoKing || others.some((o) => o.isKingUfo || o.isUfoKing));
+        kingBtn.classList.toggle('hidden', !hasAnyKing);
+      }
+    }
     const tmpV3 = new THREE.Vector3();
     for (let i = 0; i < others.length; i++) {
       const o = others[i];
@@ -1742,16 +1837,23 @@ export class MapView {
         : to3D(o.x + ep.x, o.y + ep.y, o.z || 0);
       if (!o.isLiveAlien && o.ref === 'ceres') oPos.y += CERES_MAP_Y;
       slot.group.position.copy(oPos);
-      const os = Math.max(0.55, Math.min(this.camera.position.distanceTo(oPos) * 0.00055, 14));
+      const isKingMarker = !!(o.isKingUfo || o.isUfoKing);
+      const maxMarkerScale = isKingMarker ? 22 : 14;
+      const os = Math.max(isKingMarker ? 0.85 : 0.55, Math.min(this.camera.position.distanceTo(oPos) * (isKingMarker ? 0.00072 : 0.00055), maxMarkerScale));
       slot.group.scale.set(os, os, os);
       if (o.beta !== undefined) slot.group.rotation.set(0, -o.beta, 0);
-      const isSelected = this.selectedObjectId === o.id || this.focus === 'obj:' + o.id;
+      const resolvedFocus = this.resolveFocusKey(this.focus, S);
+      const isSelected = this.selectedObjectId === o.id || resolvedFocus === 'obj:' + o.id;
       const isAlien = o.kind === 'alien';
-      slot.bodyMesh.visible = !isAlien;
-      slot.noseMesh.visible = o.kind === 'vessel';
-      slot.ufoGroup.visible = isAlien;
-      if (isAlien) {
-        slot.saucerMat.color.set(isSelected ? '#ffffff' : (o.color || '#4ade80'));
+      const showSaucer = isAlien || !!o.isUfo;
+      slot.bodyMesh.visible = !showSaucer;
+      slot.noseMesh.visible = !showSaucer && o.kind === 'vessel';
+      slot.ufoGroup.visible = showSaucer;
+      if (showSaucer) {
+        slot.saucerMat.color.set(isSelected ? '#ffffff' : (isKingMarker ? '#facc15' : (o.color || '#4ade80')));
+        if (slot.domeMat) slot.domeMat.color.set(isKingMarker ? '#fef08a' : '#a855f7');
+        if (slot.kingCrownGroup) slot.kingCrownGroup.visible = isKingMarker;
+        slot.ufoGroup.scale.setScalar(isKingMarker ? 1.5 : 1.0);
       } else {
         slot.bodyMat.color.set(isSelected ? '#ffffff' : (o.color || '#ff7a3a'));
       }
@@ -2023,11 +2125,14 @@ export class MapView {
     const focusParent = BODIES[this.focus] ? BODIES[this.focus].parent : null;
 
     // 1. Draw current spacecraft (Tàu hiện tại) first so its badge always gets priority right at the vessel marker
+    const resolvedHudFocus = this.resolveFocusKey(this.focus, S);
     const vesselP = this.projectToScreen(vPos3D, W, H);
     if (vesselP) {
       const vAltKm = S.vessel.alt ? (S.vessel.alt / 1000).toFixed(1) : null;
       const sub = vAltKm ? `${vAltKm} km` : null;
-      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, '🚀 ' + (S.name || tr('Tàu vũ trụ', 'Spacecraft')), '#38bdf8', this.focus === 'vessel', sub, true);
+      const vIco = S.vessel?.isUfoKing ? '👑 ' : S.vessel?.isUfo ? '🛸 ' : '🚀 ';
+      const vCol = S.vessel?.isUfoKing ? '#facc15' : '#38bdf8';
+      const br = this.drawBadge(ctx, vesselP.x, vesselP.y, vIco + (S.name || tr('Tàu vũ trụ', 'Spacecraft')), vCol, resolvedHudFocus === 'vessel', sub, true);
       if (br) {
         this.hudTargets.push({
           x: vesselP.x,
@@ -2137,19 +2242,21 @@ export class MapView {
     }
 
     // 10. Draw stage / saved rocket / alien badges:
-    // Group unselected live Aliens near the player into 1 summary badge unless zoomed in very close (< 150 units)
+    // Group unselected live Aliens near the player into 1 summary badge unless zoomed in very close (< 150 units),
+    // while ALWAYS keeping the single unique King UFO badge clearly visible!
     const unselectedLiveAliens = [];
     const patrolShownPerBody = {};
     for (const o of S.others || []) {
       const fKey = 'obj:' + o.id;
-      const isFocused = this.focus === fKey || this.selectedObjectId === o.id;
+      const isKing = !!(o.isKingUfo || o.isUfoKing);
+      const isFocused = resolvedHudFocus === fKey || this.selectedObjectId === o.id;
 
-      if (o.isLiveAlien && !isFocused && camToVessel > 150) {
+      if (o.isLiveAlien && !isKing && !isFocused && camToVessel > 150) {
         unselectedLiveAliens.push(o);
         continue;
       }
 
-      if (o.isPatrolAlien && !isFocused) {
+      if (o.isPatrolAlien && !isKing && !isFocused) {
         const refName = o.ref || 'earth';
         const refV3 = refName === 'earth' ? earthV3 : refName === 'moon' ? moonV3 : planetV3s[refName];
         const camToRef = refV3 ? this.camera.position.distanceTo(refV3) : Infinity;
@@ -2174,9 +2281,9 @@ export class MapView {
       if (!o.isLiveAlien && o.ref === 'ceres') oV3.y += CERES_MAP_Y;
       const op = this.projectToScreen(oV3, W, H);
       if (op) {
-        const oAltKm = o.alt !== undefined ? `${(o.alt / 1000).toFixed(1)} km` : null;
-        const icon = o.kind === 'alien' ? '👽' : (o.kind === 'vessel' ? '🚀' : '🛰️');
-        const br = this.drawBadge(ctx, op.x, op.y, `${icon} ${o.name}`, o.color || '#ff7a3a', isFocused, oAltKm, true);
+        const oAltKm = o.alt !== undefined ? `${fmt(o.alt / 1000, o.alt >= 1e7 ? 0 : 1)} km` : null;
+        const icon = isKing ? '👑' : o.kind === 'alien' ? '👽' : o.isUfo ? '🛸' : o.kind === 'vessel' ? '🚀' : '🛰️';
+        const br = this.drawBadge(ctx, op.x, op.y, `${icon} ${o.name}`, isKing ? '#facc15' : (o.color || '#ff7a3a'), isFocused, oAltKm, true);
         if (br) {
           this.hudTargets.push({
             x: op.x,
@@ -2335,7 +2442,8 @@ export class MapView {
         return;
       }
       const refB = BODIES[S.ref] || BODIES.earth;
-      name = '🚀 ' + (S.name || tr('Tàu hiện tại', 'Current Craft'));
+      const vIco = S.vessel.isUfoKing ? '👑 ' : S.vessel.isUfo ? '🛸 ' : '🚀 ';
+      name = vIco + (S.name || tr('Tàu hiện tại', 'Current Craft'));
       meta = `${tr('Quanh', 'Orbiting')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((S.vessel.alt || 0) / 1000, 1)} km · ${fmt(S.vessel.speedOrb || 0, 0)} m/s`;
     } else {
       const found = (S.others || []).find((o) => o.id === this.selectedObjectId);
@@ -2345,9 +2453,10 @@ export class MapView {
         return;
       }
       const refB = BODIES[found.ref] || BODIES.earth;
-      const icon = found.kind === 'alien' ? '👽' : (found.kind === 'vessel' ? '🚀' : '🛰️');
+      const isKing = !!(found.isKingUfo || found.isUfoKing);
+      const icon = isKing ? '👑' : found.kind === 'alien' ? '👽' : found.isUfo ? '🛸' : found.kind === 'vessel' ? '🚀' : '🛰️';
       name = `${icon} ${found.name}`;
-      meta = `${tr('Vị trí:', 'Location:')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((found.alt || 0) / 1000, 1)} km · ${fmt(found.speedOrb || 0, 0)} m/s`;
+      meta = `${tr('Vị trí:', 'Location:')} ${refB.label} · ${tr('Độ cao', 'Alt')} ${fmt((found.alt || 0) / 1000, found.alt >= 1e7 ? 0 : 1)} km · ${fmt(found.speedOrb || 0, 0)} m/s`;
       if (this.btnDeleteObj) this.btnDeleteObj.classList.toggle('hidden', !found.deletable);
     }
     if (this.mopName) this.mopName.textContent = name;
@@ -2429,17 +2538,22 @@ export class MapView {
       rows.push({ label: tr('Tiếp cận ISS', 'ISS Approach'), val: fmt(pred.targetCA.d / 1000, 1) + ' km' });
     }
 
+    const resolvedFocus = this.resolveFocusKey(this.focus, S);
+    const isKingDomainFocus =
+      resolvedFocus === 'obj:alien_king_boss' ||
+      (resolvedFocus && resolvedFocus.startsWith('obj:') && !!(S.others || []).find((o) => 'obj:' + o.id === resolvedFocus && o.isKingUfo));
+
     let focusDisplay = this.focus;
-    if (this.focus === 'vessel') focusDisplay = S.name || tr('Tàu vũ trụ', 'Spacecraft');
-    else if (this.focus === 'iss') focusDisplay = 'ISS';
-    else if (this.focus === 'oort') focusDisplay = tr('☄️ Đám mây Oort', '☄️ Oort Cloud');
-    else if (BODIES[this.focus]) {
-      const fB = BODIES[this.focus];
+    if (resolvedFocus === 'vessel') focusDisplay = S.name || tr('Tàu vũ trụ', 'Spacecraft');
+    else if (resolvedFocus === 'iss') focusDisplay = 'ISS';
+    else if (resolvedFocus === 'oort') focusDisplay = tr('☄️ Đám mây Oort', '☄️ Oort Cloud');
+    else if (BODIES[resolvedFocus]) {
+      const fB = BODIES[resolvedFocus];
       const pB = fB.parent && fB.parent !== 'sun' ? BODIES[fB.parent] : null;
       focusDisplay = pB ? `${fB.label} (${pB.label})` : fB.label;
     }
-    if (this.focus && this.focus.startsWith('obj:')) {
-      const fObj = (S.others || []).find((o) => 'obj:' + o.id === this.focus);
+    if (resolvedFocus && resolvedFocus.startsWith('obj:')) {
+      const fObj = (S.others || []).find((o) => 'obj:' + o.id === resolvedFocus);
       if (fObj) focusDisplay = fObj.name;
     }
     rows.push({ label: tr('Tâm quan sát', 'Camera Focus'), val: focusDisplay });
@@ -2452,14 +2566,19 @@ export class MapView {
 
     if (this.btnMapTeleport) {
       const isPlane = !!S.vessel?.isPlane;
-      if (this.focus === 'iss' && !isPlane) {
+      if (isKingDomainFocus && !isPlane) {
+        this.btnMapTeleport.textContent = S.vessel?.isUfoKing
+          ? tr('⚡ Dịch chuyển tới 👑 Alien Vua (1 Tỷ km)', '⚡ Teleport to 👑 Alien King (1B km)')
+          : tr('⚡ Dịch chuyển tới 👑 UFO Vua (1 Tỷ km)', '⚡ Teleport to 👑 King UFO (1B km)');
+        this.btnMapTeleport.classList.remove('hidden');
+      } else if (resolvedFocus === 'iss' && !isPlane) {
         this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới Trạm ISS', '⚡ Teleport Craft to ISS');
         this.btnMapTeleport.classList.remove('hidden');
-      } else if (this.focus === 'oort' && !isPlane) {
+      } else if (resolvedFocus === 'oort' && !isPlane) {
         this.btnMapTeleport.textContent = tr('⚡ Dịch chuyển tàu tới ☄️ Đám mây Oort', '⚡ Teleport Craft to ☄️ Oort Cloud');
         this.btnMapTeleport.classList.remove('hidden');
-      } else if (BODIES[this.focus] && (!isPlane || (this.focus !== 'sun' && (BODIES[this.focus].atm || 0) > 0 && (BODIES[this.focus].rho0 || 0) > 0))) {
-        const fB = BODIES[this.focus];
+      } else if (BODIES[resolvedFocus] && (!isPlane || (resolvedFocus !== 'sun' && (BODIES[resolvedFocus].atm || 0) > 0 && (BODIES[resolvedFocus].rho0 || 0) > 0))) {
+        const fB = BODIES[resolvedFocus];
         this.btnMapTeleport.textContent = `⚡ ${tr('Dịch chuyển tàu tới', 'Teleport Craft to')} ${fB.icon} ${fB.label}`;
         this.btnMapTeleport.classList.remove('hidden');
       } else {
@@ -2478,8 +2597,9 @@ export class MapView {
         } else {
           let listHtml = `<div class="mol-title">${tr('VẬT THỂ & ALIEN TRONG VŨ TRỤ', 'SPACE OBJECTS & ALIENS')} (${others.length})</div>`;
           for (const o of others) {
-            const sel = this.selectedObjectId === o.id || this.focus === 'obj:' + o.id;
-            const icon = o.kind === 'alien' ? '👽' : (o.kind === 'vessel' ? '🚀' : '🛰️');
+            const sel = this.selectedObjectId === o.id || resolvedFocus === 'obj:' + o.id;
+            const isKing = !!(o.isKingUfo || o.isUfoKing);
+            const icon = isKing ? '👑' : o.kind === 'alien' ? '👽' : o.isUfo ? '🛸' : o.kind === 'vessel' ? '🚀' : '🛰️';
             const altStr = o.alt !== undefined ? `${fmt(o.alt / 1000, 0)} km` : '';
             listHtml += `<div class="map-obj-item ${sel ? 'active' : ''}" data-obj-id="${o.id}">
               <span class="moi-name">${icon} ${o.name}</span>

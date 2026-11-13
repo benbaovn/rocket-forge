@@ -82,6 +82,7 @@ export class LaunchScene {
     } catch {
       this.spaceObjects = [];
     }
+    this.sanitizeSpaceObjectsForSingleUfoKing();
     this.map = new MapView($('map'), $('map-legend'));
     this.map.onDeleteObject = (id) => this.deleteSpaceObject(id);
     this.map.onTeleport = (target) => this.teleportToBody(target, this.teleportMode);
@@ -3325,6 +3326,34 @@ export class LaunchScene {
   }
 
   // =================================================================== PERSISTENT SPACE OBJECTS
+  isUfoKingName(name) {
+    if (!name || typeof name !== 'string') return false;
+    return /ufo\s*vua|king\s*ufo|đĩa\s*bay\s*ufo\s*vua/i.test(name.normalize('NFC'));
+  }
+
+  vesselHasUfoPart(v) {
+    if (!v || !v.ctx?.segs || !v.ctx?.stack) return false;
+    return (v.segIdx || []).some((k) => (v.ctx.segs[k] || []).some((idx) => isUfoPart(v.ctx.stack[idx]?.type)));
+  }
+
+  vesselIsUfoKing(v, fallbackName = '') {
+    if (v?.ctx?.segs && v?.ctx?.stack) {
+      const hasKingPart = (v.segIdx || []).some((k) => (v.ctx.segs[k] || []).some((idx) => v.ctx.stack[idx]?.type === 'ufoKing'));
+      if (hasKingPart) return true;
+    }
+    return this.isUfoKingName(fallbackName || v?.label || '');
+  }
+
+  /** Purge saved UFO Vua clones from persistent storage so there is only 1 King UFO on the map */
+  sanitizeSpaceObjectsForSingleUfoKing() {
+    if (!Array.isArray(this.spaceObjects) || !this.spaceObjects.length) return;
+    const before = this.spaceObjects.length;
+    this.spaceObjects = this.spaceObjects.filter((obj) => !obj?.isUfoKing && !this.isUfoKingName(obj?.name));
+    if (this.spaceObjects.length !== before) {
+      this.saveSpaceObjects();
+    }
+  }
+
   saveSpaceObjects() {
     try { localStorage.setItem('rf-space-objects', JSON.stringify(this.spaceObjects)); } catch { /* ignore */ }
   }
@@ -3353,6 +3382,7 @@ export class LaunchScene {
 
   /** Save any in-space rockets or separated stages to persistent orbital storage across launches */
   archiveSpaceVessels() {
+    this.sanitizeSpaceObjectsForSingleUfoKing();
     if (!this.vessels || !this.vessels.length) return;
     let changed = false;
     for (const v of this.vessels) {
@@ -3361,15 +3391,19 @@ export class LaunchScene {
       if (!inSpace) continue;
       if (v === this.player && v.landed && v.ref === 'earth') continue;
       v.archived = true;
+      const isPlayer = v === this.player;
+      const rawName = v.label || (isPlayer ? tr(`Tên lửa #${(this.launchCounter || 0) + 1}`, `Rocket #${(this.launchCounter || 0) + 1}`) : '');
+      // Never persist UFO Vua clones into spaceObjects so only 1 King UFO exists on the map
+      if (this.vesselIsUfoKing(v, rawName)) continue;
       this.stabilizeSpaceVessel(v);
       const el = vesselElements(v);
-      const isPlayer = v === this.player;
       if (isPlayer) this.launchCounter = (this.launchCounter || 0) + 1;
       const name = v.label || (isPlayer ? tr(`Tên lửa #${this.launchCounter}`, `Rocket #${this.launchCounter}`) : tr(`Tầng tách #${++this.stageCounter}`, `Separated Stage #${++this.stageCounter}`));
       this.spaceObjects.push({
         id: v.mapId || ('pers_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
         name,
         kind: isPlayer ? 'vessel' : 'stage',
+        isUfo: this.vesselHasUfoPart(v),
         ref: v.ref || 'earth',
         a: isFinite(el.a) && el.a > 0 ? el.a : v.rRel.r,
         e: isFinite(el.e) && el.e < 0.85 ? el.e : 0.005,
@@ -7880,45 +7914,71 @@ export class LaunchScene {
       markers.push({ x: bp.x + sa * el.pe, y: bp.y + ca * el.pe, z: bp.z, type: 'pe', text: 'Pe ' + fmt((el.pe - R) / 1000, 0) + ' km', color: '#7dffc8' });
     }
     const ip = this.issOrbit.pos(t);
+    const craftName = P.label || this.app?.build?.getRocketName?.() || tr('Tàu hiện tại', 'Current Craft');
+    const activeIsUfo = this.vesselHasUfoPart(P);
+    const activeIsUfoKing = this.vesselIsUfoKing(P, craftName);
+    this.sanitizeSpaceObjectsForSingleUfoKing();
+
+    let seenKingOnMap = activeIsUfoKing;
     const liveOthers = this.vessels
       .filter((v) => v !== P && !v.dead && !v.crashed && !v.archived)
-      .map((v) => ({
-        id: v.mapId || ('live_' + v.id),
-        x: v.s.x,
-        y: v.s.y,
-        z: v.s.z || 0,
-        alt: v.alt,
-        speedOrb: v.speedOrb,
-        beta: v.beta,
-        ref: v.ref || 'earth',
-        kind: v.kind === 'booster' ? 'booster' : 'stage',
-        name: v.label || (v.kind === 'booster' ? tr('Tầng 1', 'Stage 1') : tr('Tầng tách', 'Separated Stage')),
-        color: '#ff7a3a',
-        el: vesselElements(v),
-        deletable: true,
-      }));
-    const persistedOthers = (this.spaceObjects || []).map((obj) => {
-      const st = this.evalSpaceObject(obj, t);
-      return {
-        id: obj.id,
-        x: st.x,
-        y: st.y,
-        z: st.z || 0,
-        alt: st.alt,
-        speedOrb: st.speedOrb,
-        beta: st.beta,
-        ref: obj.ref || 'earth',
-        kind: obj.kind || 'vessel',
-        name: obj.name || tr('Tên lửa vũ trụ', 'Spacecraft'),
-        color: obj.kind === 'vessel' ? '#a78bfa' : '#ff7a3a',
-        el: st.el,
-        deletable: true,
-      };
-    });
+      .map((v) => {
+        const stageIsKing = this.vesselIsUfoKing(v, v.label);
+        if (stageIsKing && seenKingOnMap) return null;
+        if (stageIsKing) seenKingOnMap = true;
+        return {
+          id: v.mapId || ('live_' + v.id),
+          x: v.s.x,
+          y: v.s.y,
+          z: v.s.z || 0,
+          alt: v.alt,
+          speedOrb: v.speedOrb,
+          beta: v.beta,
+          ref: v.ref || 'earth',
+          kind: v.kind === 'booster' ? 'booster' : 'stage',
+          isUfo: this.vesselHasUfoPart(v),
+          isUfoKing: stageIsKing,
+          name: v.label || (v.kind === 'booster' ? tr('Tầng 1', 'Stage 1') : tr('Tầng tách', 'Separated Stage')),
+          color: stageIsKing ? '#facc15' : '#ff7a3a',
+          el: vesselElements(v),
+          deletable: true,
+        };
+      })
+      .filter(Boolean);
+    const persistedOthers = (this.spaceObjects || [])
+      .filter((obj) => !obj?.isUfoKing && !this.isUfoKingName(obj?.name))
+      .map((obj) => {
+        const st = this.evalSpaceObject(obj, t);
+        return {
+          id: obj.id,
+          x: st.x,
+          y: st.y,
+          z: st.z || 0,
+          alt: st.alt,
+          speedOrb: st.speedOrb,
+          beta: st.beta,
+          ref: obj.ref || 'earth',
+          kind: obj.kind || 'vessel',
+          isUfo: !!obj.isUfo || /ufo/i.test(obj.name || ''),
+          name: obj.name || tr('Tên lửa vũ trụ', 'Spacecraft'),
+          color: obj.kind === 'vessel' ? '#a78bfa' : '#ff7a3a',
+          el: st.el,
+          deletable: true,
+        };
+      });
 
     // Live Aliens near the player vessel (when in space or at another planet/moon)
     const E = P.east, U = P.up;
-    const liveAlienMapObjs = (this.aliens || []).map((a, idx) => {
+    let hasLiveKingAlien = false;
+    const liveAlienMapObjs = [];
+    for (let idx = 0; idx < (this.aliens || []).length; idx++) {
+      const a = this.aliens[idx];
+      if (!a || a.dead) continue;
+      const isKingAlien = a.tier === 'king';
+      if (isKingAlien) {
+        if (hasLiveKingAlien) continue;
+        hasLiveKingAlien = true;
+      }
       const rx = a.relPos.x, ry = a.relPos.y, rz = a.relPos.z;
       const relX = E.x * rx + U.x * ry;
       const relY = E.y * rx + U.y * ry;
@@ -7927,8 +7987,14 @@ export class LaunchScene {
       const ay = P.s.y + relY;
       const az = (P.s.z || 0) + relZ;
       const curHp = Math.max(0, Math.round(a.hp));
-      const aLabel = tr(a.labelVi || `UFO Alien #${idx + 1}`, a.labelEn || `Alien UFO #${idx + 1}`);
-      return {
+      let aLabel = tr(a.labelVi || `UFO Alien #${idx + 1}`, a.labelEn || `Alien UFO #${idx + 1}`);
+      if (isKingAlien) {
+        aLabel = seenKingOnMap
+          ? tr('Alien Vua Khổng Lồ · Siêu Trùm 1 Tỷ km', 'Colossal Alien King · 1B km Mega-Boss')
+          : tr('UFO Vua · Siêu Trùm 1 Tỷ km', 'King UFO · 1B km Mega-Boss');
+        seenKingOnMap = true;
+      }
+      liveAlienMapObjs.push({
         id: a.id,
         x: ax,
         y: ay,
@@ -7937,6 +8003,9 @@ export class LaunchScene {
         relY,
         relZ,
         isLiveAlien: true,
+        tier: a.tier || 'scout',
+        isKingUfo: isKingAlien,
+        isRoyalAlien: !!a.isRoyal,
         alt: Math.max(0, P.alt + ry),
         speedOrb: P.speedOrb,
         beta: a.orbitAngle,
@@ -7946,8 +8015,38 @@ export class LaunchScene {
         color: a.mapColor || '#4ade80',
         el: null,
         deletable: false,
-      };
-    });
+      });
+    }
+
+    // Ensure there is exactly 1 King UFO boss marker on the map at 1,000,000,000 km (unless defeated or already live)
+    const royalKingMapObjs = [];
+    if (!this.flags?.killKing && !hasLiveKingAlien) {
+      const sunPhi = Math.atan2(SUN_ECI.x, SUN_ECI.y) - 0.35;
+      const rKing = R_E + (this.startAlt || 0) + 1000000000 * 1000;
+      const kingLabel = seenKingOnMap
+        ? tr('Alien Vua Khổng Lồ · 1.000.000.000 km (100.000 HP)', 'Colossal Alien King · 1,000,000,000 km (100,000 HP)')
+        : tr('UFO Vua · 1.000.000.000 km (100.000 HP)', 'King UFO · 1,000,000,000 km (100,000 HP)');
+      seenKingOnMap = true;
+      royalKingMapObjs.push({
+        id: 'alien_king_boss',
+        x: Math.sin(sunPhi) * rKing,
+        y: Math.cos(sunPhi) * rKing,
+        z: 0,
+        alt: 1000000000 * 1000,
+        speedOrb: 18062,
+        beta: t * 0.2,
+        ref: 'earth',
+        kind: 'alien',
+        tier: 'king',
+        isKingUfo: true,
+        isRoyalAlien: true,
+        isRoyalDomainMarker: true,
+        name: kingLabel,
+        color: '#facc15',
+        el: null,
+        deletable: false,
+      });
+    }
 
     // Solar System Alien Patrols (stationed in outer space & around planets/moons; more Aliens the further from Earth)
     if (!this.mapAlienFleet) {
@@ -8037,7 +8136,7 @@ export class LaunchScene {
       };
     });
 
-    const others = [...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
+    const others = [...royalKingMapObjs, ...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
     const _sunP = { x: 0, y: 0, z: 0 };
     bodyPos('sun', t, _sunP);
@@ -8059,8 +8158,7 @@ export class LaunchScene {
       }
     }
     if (pred && pred.targetCA && pred.targetCA.d < 1e7 && this.mission.id === 'iss') info.push(tr(`Tiếp cận ISS: ${fmt(pred.targetCA.d / 1000, 1)} km (sau ${fmt((pred.targetCA.t - t) / 60, 1)} phút)`, `ISS approach: ${fmt(pred.targetCA.d / 1000, 1)} km (in ${fmt((pred.targetCA.t - t) / 60, 1)} min)`));
-    const craftName = P.label || this.app?.build?.getRocketName?.() || tr('Tàu hiện tại', 'Current Craft');
-    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped, isPlane: !!P.isPlane }, beta: P.beta, name: craftName, ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
+    this.map.draw({ t, vessel: { x: P.s.x, y: P.s.y, z: P.s.z || 0, vx: P.s.vx, vy: P.s.vy, vz: P.s.vz, alt: P.alt, speedOrb: P.speedOrb, phi: P.phi, beta: P.beta, deletable: !P.clamped, isPlane: !!P.isPlane, isUfo: activeIsUfo, isUfoKing: activeIsUfoKing }, beta: P.beta, name: craftName, ref: P.ref, apR: el.e < 1 ? el.ap : 4e7, soiT: pred ? pred.soiT : null, sun: { x: SUN_ECI.x, y: SUN_ECI.y, z: SUN_ECI.z }, padAngle: OMEGA_E * t, iss: { r: ISS_R, x: ip.x, y: ip.y, z: ip.z || 0 }, pred, markers, others, info, el });
   }
 
   fmtTime(sec) {

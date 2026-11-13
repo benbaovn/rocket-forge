@@ -361,6 +361,7 @@ export class BuildScene {
       ufoMother: ['👾 UFO Mẹ', '👾 Mothership UFO'],
       ufoQueen: ['👸 UFO Hoàng Hậu', '👸 Queen UFO'],
       ufoKing: ['👑 UFO Vua', '👑 King UFO'],
+      solarUfo: ['☀️ Pin Mặt Trời UFO', '☀️ UFO Solar Wings'],
     };
     if (labels[type]) return tr(labels[type][0], labels[type][1]);
     return def.name.replace(/\s*×\d+$/i, '');
@@ -668,8 +669,9 @@ export class BuildScene {
       if (type === 'batteryGun' && !q.trim() && PARTS.solarUltra && !shownParts.has('solarUltra')) {
         cats[def.cat].push('solarUltra');
       }
-      if (type === 'ufoKing' && !q.trim() && PARTS.solarUfo && !shownParts.has('solarUfo')) {
-        cats[def.cat].push('solarUfo');
+      if (type === 'solarUfo' && !q.trim()) {
+        if (PARTS.engAntiGrav && !shownParts.has('engAntiGrav')) cats[def.cat].push('engAntiGrav');
+        if (PARTS.legs && !shownParts.has('legs')) cats[def.cat].push('legs');
       }
     }
     for (const [cat, types] of Object.entries(cats)) {
@@ -722,7 +724,7 @@ export class BuildScene {
         pCards.innerHTML = `<div class="search-empty" style="grid-column: 1 / -1;">${tr('🔍 Không tìm thấy mẫu tên lửa hoặc bộ phận phù hợp', '🔍 No matching rocket presets or parts found')}</div>`;
         return;
       }
-      pCards.innerHTML = matching.map((name) => {
+      const renderPresetCardHtml = (name) => {
         const ico = PRESET_ICONS[name] || '🚀';
         const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
         const partCount = PRESETS[name].length;
@@ -738,7 +740,30 @@ export class BuildScene {
             <div class="prc-meta">${metaTxt}</div>
           </div>
         </div>`;
-      }).join('');
+      };
+
+      if (!q.trim()) {
+        const ufoPresets = [];
+        const specialPresets = [];
+        const rocketPresets = [];
+        for (const name of matching) {
+          const topBase = (PRESETS[name][0] || '').split('+')[0];
+          if (isUfoPart(topBase)) ufoPresets.push(name);
+          else if (/Rover|Boat|Plane/i.test(topBase)) specialPresets.push(name);
+          else rocketPresets.push(name);
+        }
+        const sections = [
+          { title: `🚀 ${tr('Tên lửa & Tàu vũ trụ', 'Rockets & Spacecraft')}`, items: rocketPresets },
+          { title: '🛸 UFO', items: ufoPresets },
+          { title: `🚙 ${tr('Xe · Thuyền · Máy bay', 'Rover · Boat · Aircraft')}`, items: specialPresets },
+        ];
+        pCards.innerHTML = sections
+          .filter((sec) => sec.items.length > 0)
+          .map((sec, idx) => `<div class="cat" style="grid-column: 1 / -1; margin-top: ${idx === 0 ? '2px' : '12px'};">${sec.title}</div>` + sec.items.map(renderPresetCardHtml).join(''))
+          .join('');
+      } else {
+        pCards.innerHTML = matching.map(renderPresetCardHtml).join('');
+      }
       pCards.querySelectorAll('.preset-card').forEach((el) => {
         el.addEventListener('click', () => {
           this.loadPresetByName(el.dataset.preset);

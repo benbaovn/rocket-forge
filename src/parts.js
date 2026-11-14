@@ -121,13 +121,21 @@ export const PARTS = {
   ufoSaucer: { name: 'Đĩa Bay UFO Trinh Sát', cat: 'UFO', kind: 'stack', height: 3.6, dry: 1.2, fuel: 60.0, isBattery: true, ufoTier: 1, ufoScale: 1.0, ufoRadius: 4.2, thrustSL: 3600, thrustVac: 4000, ispSL: 7000, ispVac: 8500, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Trinh Sát (Tốc độ Cấp 1 · Pin 60 tấn / 2 lõi) tích hợp vòm kính phi công Alien xanh lá, vành plasma lục bảo, dù hạ cánh và lõi phản trọng lực' },
   ufoWarrior: { name: 'Đĩa Bay UFO Chiến Binh', cat: 'UFO', kind: 'stack', height: 5.0, dry: 1.3, fuel: 150.0, isBattery: true, ufoTier: 2, ufoScale: 1.38, ufoRadius: 5.86, thrustSL: 18500, thrustVac: 20800, ispSL: 26000, ispVac: 32000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa bay UFO Chiến Binh cỡ lớn (Tốc độ Cấp 2 · Pin 150 tấn / 4 tế bào năng lượng) bọc giáp đen-tím, 8 lưỡi kiếm khí động và phi công Chiến Binh giáp kính' },
   ufoMother: { name: 'Đĩa Bay UFO Mẹ', cat: 'UFO', kind: 'stack', height: 7.4, dry: 1.5, fuel: 350.0, isBattery: true, ufoTier: 3, ufoScale: 1.95, ufoRadius: 8.48, thrustSL: 72000, thrustVac: 81000, ispSL: 80000, ispVac: 98000, engines: 1, restart: true, hasFins: true, desc: 'Siêu Đĩa Bay UFO Mẹ cỡ đại rộng 19m (Tốc độ Cấp 3 · Pin khủng 350 tấn / 6 tế bào năng lượng) hai tầng giáp đỏ-vàng, vòng hào quang khiên xoay và chỉ huy Tàu Mẹ' },
-  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'UFO', kind: 'stack', height: 16.5, dry: 1.7, fuel: 800.0, isBattery: true, ufoTier: 4, ufoScale: 3.65, ufoRadius: 15.88, thrustSL: 245000, thrustVac: 278000, ispSL: 230000, ispVac: 285000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa Bay UFO Hoàng Hậu KHỔNG LỒ rộng ~39m (Tốc độ Cấp 4 · Siêu Pin 800 tấn / 8 tế bào năng lượng) vỏ hồng kim cương, phi công Hoàng Hậu khổng lồ, 3 vòng hào quang hoàng gia và đại vương miện pha lê lơ lửng' },
-  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'UFO', kind: 'stack', height: 19.3, dry: 1.9, fuel: 1800.0, isBattery: true, ufoTier: 5, ufoScale: 4.25, ufoRadius: 18.70, thrustSL: 790000, thrustVac: 895000, ispSL: 620000, ispVac: 760000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua SIÊU KHỔNG LỒ rộng ~46m (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn / 12 tế bào năng lượng) vỏ vàng ròng hoàng đế, phi công Vua Alien khổng lồ, 3 vòng hào quang hồng ngọc và đại vương miện vàng lơ lửng' },
-  solarUfo: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'UFO', kind: 'radial', count: 4, dry: 0.16, isUfoSolar: true, desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
+  ufoQueen: { name: 'Đĩa Bay UFO Hoàng Hậu', cat: 'UFO', kind: 'stack', height: 16.5, dry: 1.7, fuel: 800.0, isBattery: true, ufoTier: 4, ufoScale: 3.65, ufoRadius: 15.88, thrustSL: 245000, thrustVac: 278000, ispSL: 230000, ispVac: 285000, engines: 1, restart: true, hasFins: true, desc: 'Đĩa Bay UFO Hoàng Hậu KHỔNG LỒ rộng ~39m (Tốc độ Cấp 4 · Siêu Pin 800 tấn / 8 tế bào năng lượng) · Có thể chuyển đổi giữa Động cơ Phản Hấp Dẫn (🌀) và Động cơ Lazer (🔴) bằng phím E · Không gắn chung linh kiện tên lửa' },
+  ufoKing: { name: 'Đĩa Bay UFO Vua', cat: 'UFO', kind: 'stack', height: 19.3, dry: 1.9, fuel: 1800.0, isBattery: true, ufoTier: 5, ufoScale: 4.25, ufoRadius: 18.70, thrustSL: 790000, thrustVac: 895000, ispSL: 620000, ispVac: 760000, engines: 1, restart: true, hasFins: true, desc: 'Chúa tể Đĩa Bay UFO Vua SIÊU KHỔNG LỒ rộng ~46m (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin Lượng Tử 1,800 tấn / 12 tế bào năng lượng) · Có thể chuyển đổi giữa Động cơ Phản Hấp Dẫn (🌀) và Động cơ Lazer (🔴) bằng phím E · Không gắn chung linh kiện tên lửa' },
+  solarUfo: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'UFO', kind: 'radial', count: 4, dry: 0.16, isUfoSolar: true, desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Chỉ gắn riêng cho UFO (không gắn với tên lửa) · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
 };
 
 export function isUfoPart(type) {
   return !!(type && PARTS[type] && PARTS[type].ufoTier);
+}
+
+export function isRoyalUfoPart(type) {
+  return type === 'ufoQueen' || type === 'ufoKing';
+}
+
+export function isUfoFamilyPart(type) {
+  return isUfoPart(type) || type === 'solarUfo';
 }
 
 export function ufoEngineScale(ufoScale = 1) {
@@ -14291,7 +14299,12 @@ function buildUfoSaucerVariant(variant = 'scout') {
   const domeR = isRoyal ? 1.92 : isMother ? 1.85 : 1.78;
   hull.add(mesh(new THREE.SphereGeometry(domeR, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.52), domeMat, 0, 1.88, 0));
 
-  // Built-in Parachutes & Anti-Gravity Propulsion Nozzle
+  // Built-in Parachutes & Anti-Gravity / Dual-Mode Laser Propulsion Nozzle
+  if (isRoyal) {
+    // Ventral Dual-Mode Quantum / Ruby-Laser Aperture Lens at bottom center
+    hull.add(mesh(new THREE.CylinderGeometry(collarR * 0.72, collarR * 0.58, 0.10, 36), underRing1, 0, 0.05, 0));
+    hull.add(mesh(new THREE.TorusGeometry(collarR * 0.76, 0.06 / Math.sqrt(S), 12, 40).rotateX(Math.PI / 2), underRing2, 0, 0.06, 0));
+  }
   addParachutes(g, H - 0.2 * S);
   if (g.userData.chutePack) g.remove(g.userData.chutePack);
   if (g.userData.chutes && S > 1) g.userData.chutes.scale.setScalar(1 + (S - 1) * 0.45);
@@ -14301,9 +14314,17 @@ function buildUfoSaucerVariant(variant = 'scout') {
   ufoAgLight.position.set(0, 0.45 * S, 0);
   g.add(ufoAgLight);
   g.userData.agLight = ufoAgLight;
+  g.userData.agColorHex = lightHex;
   g.userData.cyanGlow = underRing1;
   g.userData.violetGlow = underRing2;
+  g.userData.origRing1Hex = underRing1.emissive.getHex();
+  g.userData.origRing1ColHex = underRing1.color.getHex();
+  g.userData.origRing2Hex = underRing2.emissive.getHex();
+  g.userData.origRing2ColHex = underRing2.color.getHex();
   addNozzle(g, 0, 0, 0.95 * Math.min(2.8, 1 + (S - 1) * 0.55), [bellM, underRing1, underRing2], 'antigrav');
+  if (isRoyal && g.userData.nozzles && g.userData.nozzles.length) {
+    g.userData.nozzles[g.userData.nozzles.length - 1].userData.switchableUfoEngine = true;
+  }
 
   return g;
 }

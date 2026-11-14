@@ -103,8 +103,8 @@ export const PART_I18N = {
     en: { name: 'Solar Array Wings ×2', cat: 'Structural', desc: 'Dual deployable solar arrays · Automatically regenerates battery energy when attached to a Quantum Battery Pack' },
   },
   solarUfo: {
-    vi: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'UFO', desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
-    en: { name: 'Radiant Curved UFO Solar Wings ×4', cat: 'UFO', desc: 'Quad gently curved prismatic UFO quantum solar wings glowing with radiant multi-spectrum light · Rapidly regenerates UFO battery energy' },
+    vi: { name: 'Cánh Pin Mặt Trời UFO Cong Rực Rỡ ×4', cat: 'UFO', desc: 'Bộ 4 cánh pin mặt trời lượng tử UFO uốn cong mềm mại phát sáng cầu vồng rực rỡ · Chỉ gắn riêng cho UFO (không gắn với tên lửa) · Tự động hấp thụ quang năng vũ trụ sạc hồi Pin siêu tốc cho UFO' },
+    en: { name: 'Radiant Curved UFO Solar Wings ×4', cat: 'UFO', desc: 'Quad gently curved prismatic UFO quantum solar wings glowing with radiant multi-spectrum light · Exclusive to UFOs (cannot attach to rockets) · Rapidly regenerates UFO battery energy' },
   },
   solarUltra: {
     vi: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', desc: 'Cặp cánh pin mặt trời vi mô siêu nhỏ (0.004 tấn) · Chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) để tự động sạc hồi năng lượng pin' },
@@ -483,12 +483,12 @@ export const PART_I18N = {
     en: { name: 'Mothership Alien UFO Saucer', cat: 'UFO', desc: 'Large 19m-wide Mothership UFO saucer (Speed Tier 3 · 350-ton Quantum Battery) with crimson-gold double command deck, spinning energy halo shield & Commander pilot' },
   },
   ufoQueen: {
-    vi: { name: 'Đĩa Bay UFO Hoàng Hậu (Khổng Lồ)', cat: 'UFO', desc: 'Đĩa Bay UFO Hoàng Hậu KHỔNG LỒ rộng ~39m (Tốc độ Cấp 4 · Siêu Pin 800 tấn) vỏ hồng kim cương, phi công Hoàng Hậu khổng lồ, 3 vòng hào quang hoàng gia và đại vương miện pha lê lơ lửng' },
-    en: { name: 'Colossal Queen Alien UFO Saucer', cat: 'UFO', desc: 'Colossal ~39m-wide Royal Queen UFO saucer (Speed Tier 4 · 800-ton Quantum Battery) with rose-magenta metallic hull, giant Queen Alien pilot, triple royal halo rings & floating diamond crown' },
+    vi: { name: 'Đĩa Bay UFO Hoàng Hậu (Khổng Lồ)', cat: 'UFO', desc: 'Đĩa Bay UFO Hoàng Hậu KHỔNG LỒ rộng ~39m (Tốc độ Cấp 4 · Siêu Pin 800 tấn) · Chuyển đổi linh hoạt giữa Động cơ Phản Hấp Dẫn (🌀) và Động cơ Lazer (🔴) bằng phím E · Không gắn chung linh kiện tên lửa' },
+    en: { name: 'Colossal Queen Alien UFO Saucer', cat: 'UFO', desc: 'Colossal ~39m-wide Royal Queen UFO saucer (Speed Tier 4 · 800-ton Quantum Battery) · Switchable between Anti-Gravity Engine (🌀) and Laser Engine (🔴) via Key E · Exclusive UFO chassis' },
   },
   ufoKing: {
-    vi: { name: 'Đĩa Bay UFO Vua (Siêu Khổng Lồ)', cat: 'UFO', desc: 'Chúa tể Đĩa Bay UFO Vua SIÊU KHỔNG LỒ rộng ~46m (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin 1,800 tấn) vỏ vàng ròng hoàng đế, phi công Vua Alien khổng lồ, 3 vòng hào quang hồng ngọc và đại vương miện vàng lơ lửng' },
-    en: { name: 'Colossal King Alien UFO Saucer', cat: 'UFO', desc: 'Gargantuan ~46m-wide Supreme King UFO saucer (Speed Tier 5 · 1,800-ton Mega Battery) with solid-gold imperial hull, colossal King Alien pilot, triple ruby halo rings & floating golden royal crown' },
+    vi: { name: 'Đĩa Bay UFO Vua (Siêu Khổng Lồ)', cat: 'UFO', desc: 'Chúa tể Đĩa Bay UFO Vua SIÊU KHỔNG LỒ rộng ~46m (Tốc độ Cấp 5 Tối Thượng · Đại Lò Pin 1,800 tấn) · Chuyển đổi linh hoạt giữa Động cơ Phản Hấp Dẫn (🌀) và Động cơ Lazer (🔴) bằng phím E · Không gắn chung linh kiện tên lửa' },
+    en: { name: 'Colossal King Alien UFO Saucer', cat: 'UFO', desc: 'Gargantuan ~46m-wide Supreme King UFO saucer (Speed Tier 5 · 1,800-ton Mega Battery) · Switchable between Anti-Gravity Engine (🌀) and Laser Engine (🔴) via Key E · Exclusive UFO chassis' },
   },
 };
 

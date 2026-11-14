@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { PARTS, MAT, buildPart, radialPlacements, isUfoPart } from '../parts.js';
+import { PARTS, MAT, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
 import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
@@ -228,7 +228,7 @@ export class BuildScene {
   loadStack() {
     try {
       const raw = JSON.parse(localStorage.getItem('rf-stack') || 'null');
-      if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0]])) {
+      if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0].split('@')[0]])) {
         return ensureStackHasWeapons(sanitizeStack(stackFromTypes(raw)));
       }
     } catch { /* ignore */ }
@@ -236,7 +236,10 @@ export class BuildScene {
   }
 
   saveStack() {
-    localStorage.setItem('rf-stack', JSON.stringify(this.stack.map((s) => [s.type, ...s.attach].join('+'))));
+    localStorage.setItem('rf-stack', JSON.stringify(this.stack.map((s) => {
+      const head = isRoyalUfoPart(s.type) && s.ufoEngineMode === 'laser' ? `${s.type}@laser` : s.type;
+      return [head, ...s.attach].join('+');
+    })));
   }
 
   pushHistory() {
@@ -249,8 +252,8 @@ export class BuildScene {
     const tip = $('part-tooltip');
     if (!tip || this.drag) return;
     const type = cardEl?.dataset?.part;
-    const incompat = type && this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)
-      ? `<div class="pt-incompat">🚫 ${getIncompatibilityWarning(type, this.stack)}</div>`
+    const incompat = type && !canPartAttachToStack(type, this.stack || [])
+      ? `<div class="pt-incompat">🚫 ${getIncompatibilityWarning(type, this.stack || [])}</div>`
       : '';
     const totalMass = (def.dry + (def.fuel || 0)).toFixed(2);
     const pills = [
@@ -554,7 +557,7 @@ export class BuildScene {
     const def = PARTS[type];
     const card = document.createElement('div');
     card.className = 'part-card';
-    if (this.stack && this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) {
+    if (!canPartAttachToStack(type, this.stack || [])) {
       card.classList.add('part-incompatible');
     }
     card.dataset.part = type;
@@ -668,10 +671,6 @@ export class BuildScene {
       }
       if (type === 'batteryGun' && !q.trim() && PARTS.solarUltra && !shownParts.has('solarUltra')) {
         cats[def.cat].push('solarUltra');
-      }
-      if (type === 'solarUfo' && !q.trim()) {
-        if (PARTS.engAntiGrav && !shownParts.has('engAntiGrav')) cats[def.cat].push('engAntiGrav');
-        if (PARTS.legs && !shownParts.has('legs')) cats[def.cat].push('legs');
       }
     }
     for (const [cat, types] of Object.entries(cats)) {
@@ -966,6 +965,7 @@ export class BuildScene {
     $('btn-clear').onclick = () => { this.pushHistory(); this.stack = []; this.select(null); this.rebuild(true); };
     $('btn-del').onclick = () => this.deleteSelection();
     if ($('btn-side-toggle')) $('btn-side-toggle').onclick = () => this.toggleSideAttach();
+    if ($('btn-vab-ufo-engine')) $('btn-vab-ufo-engine').onclick = () => this.toggleSelectedUfoEngineMode();
     $('btn-launchpad').onclick = () => {
       if ($('btn-launchpad').disabled) return;
       audio.init();
@@ -1082,8 +1082,13 @@ export class BuildScene {
         this.select(null);
       }
 
-      // 3-axis rotation shortcuts
+      // 3-axis rotation shortcuts & Royal UFO engine mode toggle
       const k = e.key.toLowerCase();
+      if (k === 'e' && this.stack.some((it) => isRoyalUfoPart(it.type) || (it.attach && it.attach.some(isRoyalUfoPart)))) {
+        this.toggleSelectedUfoEngineMode();
+        e.preventDefault();
+        return;
+      }
       const delta = e.shiftKey ? -Math.PI / 2 : Math.PI / 2;
       if (k === 'x' || e.key === '1') {
         this.rotateSelection('x', delta);
@@ -1307,7 +1312,7 @@ export class BuildScene {
     if (d.cand) this.applyCandidate(d.type, d.cand);
     else if (!d.moved) this.smartAdd(d.type);
     else {
-      if (this.stack.length > 0 && !canPartAttachToStack(d.type, this.stack)) {
+      if (!canPartAttachToStack(d.type, this.stack)) {
         this.flashIncompatibleWarning(d.type);
       } else {
         this.rebuild();
@@ -1331,7 +1336,7 @@ export class BuildScene {
   }
 
   findCandidate(type, mx, my) {
-    if (this.stack.length > 0 && !canPartAttachToStack(type, this.stack)) return null;
+    if (!canPartAttachToStack(type, this.stack)) return null;
     const def = PARTS[type];
     const lay = layout(this.stack);
     // 1. Pure radial parts can attach to any compatible part on the vehicle
@@ -1423,7 +1428,7 @@ export class BuildScene {
   smartAdd(type) {
     const def = PARTS[type];
     const st = this.stack;
-    if (st.length > 0 && !canPartAttachToStack(type, st)) {
+    if (!canPartAttachToStack(type, st)) {
       this.flashIncompatibleWarning(type);
       return;
     }
@@ -1589,6 +1594,7 @@ export class BuildScene {
     const def = PARTS[sel.attach || it.type];
     $('sel-name').textContent = def.name;
     $('sel-desc').textContent = def.desc;
+    this.updateVabUfoEngineBtn(sel, it);
     const sideBtn = $('btn-side-toggle');
     if (sideBtn) {
       if (sel.attach) {
@@ -1607,6 +1613,45 @@ export class BuildScene {
     }
     this.updateRotUI();
     box.classList.remove('hidden');
+  }
+
+  updateVabUfoEngineBtn(sel = this.selection, it = sel ? this.stack[sel.index] : null) {
+    const btn = $('btn-vab-ufo-engine');
+    if (!btn) return;
+    const targetType = sel ? (sel.attach || it?.type) : null;
+    if (!it || !isRoyalUfoPart(targetType)) {
+      btn.classList.add('hidden');
+      return;
+    }
+    const isLaser = it.ufoEngineMode === 'laser';
+    btn.classList.remove('hidden');
+    btn.classList.toggle('mode-laser', isLaser);
+    btn.textContent = isLaser
+      ? tr('🔴 Động cơ: Lazer · Đổi sang Phản Hấp Dẫn (E)', '🔴 Engine: Laser · Switch to Anti-Grav (E)')
+      : tr('🌀 Động cơ: Phản Hấp Dẫn · Đổi sang Lazer (E)', '🌀 Engine: Anti-Grav · Switch to Laser (E)');
+  }
+
+  toggleSelectedUfoEngineMode() {
+    let targetIt = null;
+    if (this.selection && this.stack[this.selection.index]) {
+      const cand = this.stack[this.selection.index];
+      const selType = this.selection.attach || cand.type;
+      if (isRoyalUfoPart(selType)) targetIt = cand;
+    }
+    if (!targetIt) {
+      targetIt = this.stack.find((it) => isRoyalUfoPart(it.type) || (it.attach && it.attach.some(isRoyalUfoPart)));
+    }
+    if (!targetIt) return;
+    this.pushHistory();
+    const nextMode = targetIt.ufoEngineMode === 'laser' ? 'antigrav' : 'laser';
+    for (const it of this.stack) {
+      if (isRoyalUfoPart(it.type) || (it.attach && it.attach.some(isRoyalUfoPart))) {
+        it.ufoEngineMode = nextMode;
+      }
+    }
+    audio.click();
+    this.rebuild(true, this.stack, this.selection);
+    this.updateVabUfoEngineBtn();
   }
 
   toggleSideAttach() {
@@ -1833,7 +1878,7 @@ export class BuildScene {
   updatePaletteCompatibility() {
     document.querySelectorAll('.part-card[data-part]').forEach((card) => {
       const t = card.dataset.part;
-      const compat = !this.stack || this.stack.length === 0 || canPartAttachToStack(t, this.stack);
+      const compat = canPartAttachToStack(t, this.stack || []);
       card.classList.toggle('part-incompatible', !compat);
     });
   }
@@ -1841,6 +1886,7 @@ export class BuildScene {
   updateStats() {
     const st = computeStats(this.stack);
     this.updatePaletteCompatibility();
+    this.updateVabUfoEngineBtn();
     this.syncRocketNameUI();
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
@@ -1852,10 +1898,16 @@ export class BuildScene {
     const fmtStageDv = (dv) => dv >= 1e6 ? `${(dv / 1e6).toFixed(1)}M` : dv >= 100000 ? `${Math.round(dv / 1000)}k` : `${Math.round(dv)}`;
     $('st-dv').textContent = fmtDv(st.totalDv);
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
-    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋${Math.round(s.batteryFuel)}t · ` : ''}Δv ${fmtStageDv(s.dv)}</span><span>TWR ${s.twr.toFixed(1)}</span></div>`).join('');
+    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.hasRoyalUfo ? (s.ufoEngineMode === 'laser' ? ' 🔴' : ' 🌀') : ''}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋${Math.round(s.batteryFuel)}t · ` : ''}Δv ${fmtStageDv(s.dv)}</span><span>TWR ${s.twr.toFixed(1)}</span></div>`).join('');
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
     const hasGunBat = st.stages.some((s) => s.hasGunBattery);
+    const royalStage = st.stages.find((s) => s.hasRoyalUfo);
+    const royalBadge = royalStage
+      ? (royalStage.ufoEngineMode === 'laser'
+        ? ` · 🔴 ${tr('Động cơ Lazer (Phím E đổi)', 'Laser Engine (Key E to switch)')}`
+        : ` · 🌀 ${tr('Động cơ Phản Hấp Dẫn (Phím E đổi)', 'Anti-Grav Engine (Key E to switch)')}`)
+      : '';
     const totalBatFuel = st.stages.reduce((sum, s) => sum + (s.batteryFuel || 0), 0);
     const vType = stackVehicleType(this.stack);
     const readyLabel = vType === 'boat'
@@ -1864,12 +1916,14 @@ export class BuildScene {
         ? tr('Sẵn sàng ra sân bay!', 'Ready for the airport!')
         : vType === 'rover'
           ? tr('Sẵn sàng lăn bánh!', 'Ready to deploy rover!')
-          : tr('Sẵn sàng phóng!', 'Ready for launch!');
+          : vType === 'ufo'
+            ? tr('Sẵn sàng phóng UFO!', 'UFO ready for launch!')
+            : tr('Sẵn sàng phóng!', 'Ready for launch!');
     const allWarnings = [...st.warnings];
     if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
     w.innerHTML = allWarnings.length
       ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
-      : `<div class="ok">✔ ${readyLabel}${totalBatFuel > 0 ? ` · 🔋 ${tr('Pin', 'Battery')}: ${Math.round(totalBatFuel)}t` : ''}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
+      : `<div class="ok">✔ ${readyLabel}${royalBadge}${totalBatFuel > 0 ? ` · 🔋 ${tr('Pin', 'Battery')}: ${Math.round(totalBatFuel)}t` : ''}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
     const btnLaunch = $('btn-launchpad');
     if (btnLaunch) {
       btnLaunch.disabled = !st.canLaunch;
@@ -1879,7 +1933,9 @@ export class BuildScene {
           ? tr('✈️ RA SÂN BAY', '✈️ TO AIRPORT')
           : vType === 'rover'
             ? tr('🚙 LĂN BÁNH', '🚙 DEPLOY ROVER')
-            : tr('🚀 PHÓNG', '🚀 LAUNCH');
+            : vType === 'ufo'
+              ? tr('🛸 PHÓNG UFO', '🛸 LAUNCH UFO')
+              : tr('🚀 PHÓNG', '🚀 LAUNCH');
     }
     this.stats = st;
   }

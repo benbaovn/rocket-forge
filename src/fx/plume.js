@@ -81,10 +81,10 @@ void main() {
   gl_FragColor = vec4(col * a, 1.0);
 }`;
 
-export function createPlume(radius, length = 1, seed = Math.random(), style = 'default') {
+export function createPlume(radius, length = 1, seed = Math.random(), style = 'default', allowLaserSwitch = false) {
   const group = new THREE.Group();
   const isAntiGrav = style === 'antigrav';
-  if (isAntiGrav) {
+  if (isAntiGrav && !allowLaserSwitch) {
     // Anti-gravity engine emits nothing at all
     group.visible = false;
     return {
@@ -94,7 +94,7 @@ export function createPlume(radius, length = 1, seed = Math.random(), style = 'd
       },
     };
   }
-  const isLaser = style === 'laser';
+  const isLaser = style === 'laser' || allowLaserSwitch;
   const styleCode = isLaser ? 2.0 : 0.0;
   const layers = isLaser
     ? [
@@ -136,7 +136,11 @@ export function createPlume(radius, length = 1, seed = Math.random(), style = 'd
   group.visible = false;
   return {
     group,
-    update(time, throttle, expand) {
+    update(time, throttle, expand, activeStyle = style) {
+      if (activeStyle === 'antigrav') {
+        group.visible = false;
+        return;
+      }
       group.visible = throttle > 0.01;
       for (const m of mats) {
         m.uniforms.uTime.value = time;

@@ -511,6 +511,14 @@ select.btn option { background: #111a29; }
 .hud-act-btn.act-map:hover { background: rgba(56, 189, 248, 0.34); border-color: #38bdf8; color: #fff; }
 .hud-act-btn.act-tp { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.55); color: #e9d5ff; }
 .hud-act-btn.act-tp:hover { background: rgba(168, 85, 247, 0.36); border-color: #c084fc; color: #fff; }
+.hud-act-btn.act-ufo-eng { grid-column: 1 / -1; background: rgba(56, 189, 248, 0.22); border-color: rgba(56, 189, 248, 0.65); color: #7dd3fc; box-shadow: 0 0 12px rgba(56, 189, 248, 0.22); }
+.hud-act-btn.act-ufo-eng:hover { background: rgba(56, 189, 248, 0.38); border-color: #38bdf8; color: #fff; }
+.hud-act-btn.act-ufo-eng.mode-laser { background: rgba(244, 63, 94, 0.28); border-color: rgba(251, 113, 133, 0.78); color: #fda4af; box-shadow: 0 0 14px rgba(244, 63, 94, 0.35); }
+.hud-act-btn.act-ufo-eng.mode-laser:hover { background: rgba(244, 63, 94, 0.44); border-color: #fb7185; color: #fff; }
+.vab-ufo-eng-btn { margin-bottom: 6px; font-size: 12px !important; padding: 9px 10px !important; background: rgba(56, 189, 248, 0.20); border-color: rgba(56, 189, 248, 0.58); color: #7dd3fc; }
+.vab-ufo-eng-btn:hover { background: rgba(56, 189, 248, 0.34); border-color: #38bdf8; color: #fff; }
+.vab-ufo-eng-btn.mode-laser { background: rgba(244, 63, 94, 0.24); border-color: rgba(251, 113, 133, 0.7); color: #fda4af; }
+.vab-ufo-eng-btn.mode-laser:hover { background: rgba(244, 63, 94, 0.38); border-color: #fb7185; color: #fff; }
 .hud-bottom { left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: row; gap: 14px; align-items: center; padding: 7px 14px; border-radius: 999px; max-width: calc(100vw - 320px); }
 .throttle { display: flex; align-items: center; gap: 8px; width: 200px; flex-shrink: 0; }
 .throttle label { font-family: var(--font-orbitron); font-size: 10px; color: var(--accent); letter-spacing: 1px; white-space: nowrap; }

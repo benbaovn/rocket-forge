@@ -2,8 +2,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { PARTS, G0, R as CORE_R, isUfoPart, ufoEngineScale } from '../parts.js';
-import { buildRocket, segments, segmentInfo, layout } from '../rocket.js';
+import { PARTS, G0, R as CORE_R, isUfoPart, isRoyalUfoPart, ufoEngineScale } from '../parts.js';
+import { buildRocket, segments, segmentInfo, layout, applyNozzleUfoMode } from '../rocket.js';
 import { createSkyMaterial, atmosphereJS, sunTransmittance, PLANET_R } from '../fx/atmosphere.js';
 import { createEarth, createStars, NOISE_GLSL } from '../fx/earth.js';
 import { ParticleSystem } from '../fx/particles.js';
@@ -1517,6 +1517,7 @@ export class LaunchScene {
       if (k === 'tab') { e.preventDefault(); this.map.cycleFocus(); }
       if (k === 'b') this.toggleBoosterFocus();
       if (k === 'p') this.toggleDeploy();
+      if (k === 'e') { e.preventDefault(); audio.init(); this.toggleUfoEngineMode(); }
       if (k === 'v' || e.key === 'Enter') { e.preventDefault(); audio.init(); this.fireWeapons(); }
       if (k === 'z' && !this.docked) this.throttle = 1;
       if (k === 'x') this.throttle = 0;
@@ -1603,6 +1604,13 @@ export class LaunchScene {
         audio.init();
         audio.click();
         this.deployAstronauts();
+      });
+    }
+    const btnUfoEng = $('btn-ufo-engine');
+    if (btnUfoEng) {
+      btnUfoEng.addEventListener('click', () => {
+        audio.init();
+        this.toggleUfoEngineMode();
       });
     }
     const btnFire = $('btn-fire-weapon');
@@ -3337,6 +3345,68 @@ export class LaunchScene {
     return (v.segIdx || []).some((k) => (v.ctx.segs[k] || []).some((idx) => isUfoPart(v.ctx.stack[idx]?.type)));
   }
 
+  hasRoyalUfoEngine(v = this.player) {
+    if (!v || !v.ctx?.segs || !v.ctx?.stack) return false;
+    return (v.segIdx || []).some((k) => (v.ctx.segs[k] || []).some((idx) => {
+      const it = v.ctx.stack[idx];
+      return it && (isRoyalUfoPart(it.type) || (Array.isArray(it.attach) && it.attach.some(isRoyalUfoPart)));
+    }));
+  }
+
+  getUfoEngineMode(v = this.player) {
+    if (!v || !v.ctx?.segs || !v.ctx?.stack) return 'antigrav';
+    const actSeg = v.activeSeg;
+    if (v.ctx.segInfo?.[actSeg]?.hasRoyalUfo) {
+      return v.ctx.segInfo[actSeg].ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+    }
+    for (const k of (v.segIdx || [])) {
+      if (v.ctx.segInfo?.[k]?.hasRoyalUfo) {
+        return v.ctx.segInfo[k].ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+      }
+    }
+    return 'antigrav';
+  }
+
+  toggleUfoEngineMode() {
+    const P = this.player;
+    if (!P || P.dead || P.crashed || !this.hasRoyalUfoEngine(P)) return;
+    const nextMode = this.getUfoEngineMode(P) === 'laser' ? 'antigrav' : 'laser';
+    for (const it of (this.stack || [])) {
+      if (isRoyalUfoPart(it.type) || (Array.isArray(it.attach) && it.attach.some(isRoyalUfoPart))) {
+        it.ufoEngineMode = nextMode;
+      }
+    }
+    if (this.app?.build?.stack) {
+      let buildChanged = false;
+      for (const bit of this.app.build.stack) {
+        if (isRoyalUfoPart(bit.type) || (Array.isArray(bit.attach) && bit.attach.some(isRoyalUfoPart))) {
+          bit.ufoEngineMode = nextMode;
+          buildChanged = true;
+        }
+      }
+      if (buildChanged && this.app.build.saveStack) this.app.build.saveStack();
+    }
+    if (this.segs && this.segInfo) {
+      for (let k = 0; k < this.segs.length; k++) {
+        this.segInfo[k] = segmentInfo(this.stack, this.segs[k]);
+      }
+    }
+    if (this.rocket?.nozzles) {
+      for (const nz of this.rocket.nozzles) {
+        if (nz.switchableUfoEngine) applyNozzleUfoMode(nz, nextMode);
+      }
+    }
+    audio.beep(nextMode === 'laser' ? 1040 : 660, 0.14, 0.25);
+    this.event(
+      nextMode === 'laser'
+        ? tr('🔴 Đã chuyển sang ĐỘNG CƠ LAZER (Chỗ càng tối gia tốc càng nhanh — tối đa 3.25×)!', '🔴 Switched to LASER ENGINE (Accelerates faster in darkness — up to 3.25×)!')
+        : tr('🌀 Đã chuyển sang ĐỘNG CƠ PHẢN HẤP DẪN (Trọng lực càng mạnh gia tốc càng nhanh)!', '🌀 Switched to ANTI-GRAVITY ENGINE (Accelerates faster in stronger gravity)!'),
+      'warn'
+    );
+    this.hudTimer = 0;
+    this.updateHUD(0);
+  }
+
   vesselIsUfoKing(v, fallbackName = '') {
     if (v?.ctx?.segs && v?.ctx?.stack) {
       const hasKingPart = (v.segIdx || []).some((k) => (v.ctx.segs[k] || []).some((idx) => v.ctx.stack[idx]?.type === 'ufoKing'));
@@ -3546,7 +3616,7 @@ export class LaunchScene {
     for (const b of this.rocket.boosters) b.fuelMax = b.fuel;
     this.ctx = { stack, lay: this.lay, segs: this.segs, segInfo: this.segInfo, fuel: this.fuel, fuelMax: this.fuelMax, rocket: this.rocket };
     this.plumes = this.rocket.nozzles.map((nz) => {
-      const p = createPlume(nz.r, nz.booster ? 1.3 : 1.0, Math.random(), nz.style || 'default');
+      const p = createPlume(nz.r, nz.booster ? 1.3 : 1.0, Math.random(), nz.style || 'default', !!nz.switchableUfoEngine);
       nz.node.add(p.group);
       return { ...p, nz, heat: 0, prev: null };
     });
@@ -7714,7 +7784,7 @@ export class LaunchScene {
       const pr = v ? this.airRatio(v) : 0;
       const expand = THREE.MathUtils.clamp(1 - pr * 1.6, 0, 1);
       const flick = on > 0 ? 0.92 + Math.random() * 0.08 : 0;
-      p.update(this.time, on * flick, expand);
+      p.update(this.time, on * flick, expand, nz.style);
       p.heat += ((on > 0 ? 0.5 + on * 0.5 : 0) - p.heat) * (1 - Math.exp(-dt * (on > 0 ? 0.6 : 0.15)));
 
       if (nz.style === 'antigrav') {
@@ -7730,6 +7800,15 @@ export class LaunchScene {
         }
         if (nz.agLight) {
           nz.agLight.intensity = isFiring ? (2.8e4 * on * (0.92 + Math.random() * 0.16)) : 0;
+        }
+      } else if (nz.switchableUfoEngine && nz.style === 'laser') {
+        const isFiring = on > 0.005;
+        const lzIntensity = isFiring ? (3.5 * on + Math.sin(this.time * 42.0) * 0.55 * on) : 0;
+        if (nz.bellMats) {
+          for (const m of nz.bellMats) m.emissiveIntensity = lzIntensity;
+        }
+        if (nz.agLight) {
+          nz.agLight.intensity = isFiring ? (3.2e4 * on * (0.92 + Math.random() * 0.16)) : 0;
         }
       } else {
         const bellDescentGlow = v ? (v.descentGlow || 0) * 1.65 : 0;
@@ -8532,6 +8611,21 @@ export class LaunchScene {
       btnAstroDeploy.textContent = `${info.icon} ${tr('Thả', 'Deploy')} (${toDeploy})`;
       btnAstroDeploy.title = `${bLabel} · ${this.astronautsAboard}/${maxAstro} ${info.icon}`;
     }
+    const btnUfoEng = $('btn-ufo-engine');
+    if (btnUfoEng) {
+      const canSwitchUfoEng = this.hasRoyalUfoEngine(P);
+      btnUfoEng.classList.toggle('hidden', !canSwitchUfoEng);
+      if (canSwitchUfoEng) {
+        const isLaser = this.getUfoEngineMode(P) === 'laser';
+        btnUfoEng.classList.toggle('mode-laser', isLaser);
+        btnUfoEng.innerHTML = isLaser
+          ? `🔴 ${tr('Động Cơ Lazer', 'Laser Engine')} <kbd>E</kbd>`
+          : `🌀 ${tr('Phản Hấp Dẫn', 'Anti-Grav')} <kbd>E</kbd>`;
+        btnUfoEng.title = isLaser
+          ? tr('Đang dùng Động Cơ Lazer (càng tối bay càng nhanh, tối đa 3.25×) · Nhấn E để đổi sang Động Cơ Phản Hấp Dẫn', 'Active: Laser Engine (faster in darkness, up to 3.25×) · Press E to switch to Anti-Gravity Engine')
+          : tr('Đang dùng Động Cơ Phản Hấp Dẫn (trọng lực càng mạnh bay càng nhanh) · Nhấn E để đổi sang Động Cơ Lazer', 'Active: Anti-Gravity Engine (faster in strong gravity) · Press E to switch to Laser Engine');
+      }
+    }
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       const activeWeapons = this.getActivePlayerWeapons();
@@ -8578,6 +8672,11 @@ export class LaunchScene {
       const alienDrainBadge = alienDrain && alienDrain.count > 0 && this.fuelMax[k] > 0
         ? ` <span style="color:#fb7185;font-size:10px;font-weight:700" title="${tr(`Có ${alienDrain.count} Alien xung quanh làm hao nhiên liệu/pin nhanh gấp ${fmt(alienDrain.drainMul, 2)}×!`, `${alienDrain.count} nearby Aliens accelerating fuel/battery drain by ${fmt(alienDrain.drainMul, 2)}×!`)}">👽⚡-${fmt(alienDrain.drainMul, 1)}×</span>`
         : '';
+      const royalModeBadge = att && sInf && sInf.hasRoyalUfo
+        ? (sInf.ufoEngineMode === 'laser'
+          ? ` <span style="color:#fb7185;font-size:10px;font-weight:700" title="${tr('Động cơ Lazer (Phím E để chuyển sang Phản Hấp Dẫn)', 'Laser Engine (Press E to switch to Anti-Gravity)')}">🔴LZ</span>`
+          : ` <span style="color:#38bdf8;font-size:10px;font-weight:700" title="${tr('Động cơ Phản Hấp Dẫn (Phím E để chuyển sang Lazer)', 'Anti-Gravity Engine (Press E to switch to Laser)')}">🌀AG</span>`)
+        : '';
       const barStyle = hasSolarBat && chgRate > 0.5 && this.fuel[k] < this.fuelMax[k] - 0.05
         ? `width:${f * 100}%;background:linear-gradient(90deg,#22d3ee,#4ade80);box-shadow:0 0 8px rgba(74,222,128,0.65)`
         : `width:${f * 100}%`;
@@ -8585,7 +8684,7 @@ export class LaunchScene {
       const fuelValTxt = this.fuelMax[k] > 0
         ? `${isBatStage ? '🔋 ' : ''}${fmt(this.fuel[k], 1)} t`
         : '—';
-      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${solarBadge}${gunBatBadge}${alienDrainBadge}</span><span>${fuelValTxt}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
+      html += `<div class="fuel-row ${active ? 'active' : ''} ${att ? '' : 'gone'}"><div class="fr-top"><span>S${this.segs.length - k}${active ? ' ▶' : ''}${royalModeBadge}${solarBadge}${gunBatBadge}${alienDrainBadge}</span><span>${fuelValTxt}</span></div><div class="fr-bar"><div style="${barStyle}"></div></div>`;
       for (const bb of this.rocket.boosters) if (bb.seg === k) {
         html += `<div class="fr-top" style="margin-top:3px;font-size:10px;opacity:${bb.attached ? 1 : 0.35}"><span>↳ SRB</span><span>${fmt(bb.fuel, 1)} t</span></div><div class="fr-bar boost"><div style="width:${(bb.fuel / bb.fuelMax) * 100}%"></div></div>`;
       }

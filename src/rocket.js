@@ -1,10 +1,14 @@
 // Rocket data model: stack layout, staging, stats, mesh assembly
 import * as THREE from 'three';
-import { PARTS, MAT, G0, R, buildPart, radialPlacements, isUfoPart, ufoEngineScale } from './parts.js';
+import { PARTS, MAT, G0, R, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoFamilyPart, ufoEngineScale } from './parts.js';
 import { tr } from './i18n.js';
 
 let uidCounter = 1;
-export function newItem(type) { return { id: uidCounter++, type, attach: [], rot: [0, 0, 0], attachRot: {} }; }
+export function newItem(type) {
+  const it = { id: uidCounter++, type, attach: [], rot: [0, 0, 0], attachRot: {} };
+  if (isRoyalUfoPart(type)) it.ufoEngineMode = 'antigrav';
+  return it;
+}
 
 export function cloneStack(stack) {
   return stack.map((s) => ({
@@ -12,14 +16,19 @@ export function cloneStack(stack) {
     type: s.type,
     attach: [...s.attach],
     rot: s.rot ? [...s.rot] : [0, 0, 0],
-    attachRot: s.attachRot ? JSON.parse(JSON.stringify(s.attachRot)) : {}
+    attachRot: s.attachRot ? JSON.parse(JSON.stringify(s.attachRot)) : {},
+    ...(s.ufoEngineMode ? { ufoEngineMode: s.ufoEngineMode } : {}),
   }));
 }
 
 export function stackFromTypes(list) {
   return list.map((e) => {
-    const [type, ...att] = e.split('+');
+    const [rawHead, ...att] = e.split('+');
+    const [type, modeTag] = rawHead.split('@');
     const it = newItem(type);
+    if (isRoyalUfoPart(type) && (modeTag === 'laser' || modeTag === 'antigrav')) {
+      it.ufoEngineMode = modeTag;
+    }
     it.attach = att;
     return it;
   });
@@ -27,18 +36,19 @@ export function stackFromTypes(list) {
 
 /**
  * Classify which vehicle family a part belongs to:
+ *  - 'ufo'    : UFO saucers & curved UFO solar wings (never mix with rocket parts)
  *  - 'rover'  : Rover parts
  *  - 'boat'   : Boat / Superyacht parts
  *  - 'plane'  : Airplane / Fighter jet parts
- *  - 'any'    : Universal accessories (weapons & solar panel)
- *  - 'rocket' : All rocket stages, tanks, engines, capsules, decouplers, fins, legs, boosters, UFO, etc.
+ *  - 'any'    : Universal accessories (weapons & rocket/boat solar panel)
+ *  - 'rocket' : All rocket stages, tanks, engines, capsules, decouplers, fins, legs, boosters, etc.
  */
 export function partVehicleType(type) {
   if (!type || !PARTS[type]) return 'rocket';
+  if (isUfoFamilyPart(type)) return 'ufo';
   if (type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric' || type === 'batteryGun' || type === 'solarPanel' || type === 'solarUltra') {
     return 'any';
   }
-  if (type === 'solarUfo') return 'rocket';
   if (type.endsWith('Rover')) return 'rover';
   if (type.endsWith('Boat')) return 'boat';
   if (type.endsWith('Plane') || type === 'engJet') return 'plane';
@@ -95,7 +105,13 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
   if (targetIndex !== null && stack?.[targetIndex] && (isWeaponPart(type) || type === 'batteryGun' || type === 'solarUltra') && partVehicleType(stack[targetIndex].type) === 'boat') {
     return false;
   }
+  // Rocket structural solar panels (`solarPanel`) cannot attach to UFOs (UFOs use `solarUfo` exclusively)
+  if (type === 'solarPanel') {
+    if (vStack === 'ufo') return false;
+    if (targetIndex !== null && stack?.[targetIndex] && partVehicleType(stack[targetIndex].type) === 'ufo') return false;
+  }
   if (type === 'batteryGun') {
+    if (vStack === 'ufo') return false;
     if (!Array.isArray(stack) || stack.length === 0) return false;
     if (targetIndex !== null && stack[targetIndex]) {
       const targetIt = stack[targetIndex];
@@ -105,6 +121,7 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
     return stack.some((it) => !isBigBatteryPart(it.type) && partVehicleType(it.type) !== 'boat' && Array.isArray(it.attach) && it.attach.some(isWeaponPart));
   }
   if (type === 'solarUltra') {
+    if (vStack === 'ufo') return false;
     if (!Array.isArray(stack) || stack.length === 0) return false;
     if (targetIndex !== null && stack[targetIndex]) {
       const targetIt = stack[targetIndex];
@@ -113,10 +130,12 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
     }
     return stack.some((it) => !isBigBatteryPart(it.type) && partVehicleType(it.type) !== 'boat' && Array.isArray(it.attach) && it.attach.includes('batteryGun') && it.attach.some(isWeaponPart));
   }
+  if (type === 'solarUfo' && (!Array.isArray(stack) || stack.length === 0)) {
+    return false;
+  }
   const vNew = partVehicleType(type);
   if (vNew === 'any') return true;
   if (!Array.isArray(stack) || stack.length === 0) {
-    // Radial-only vehicle parts still require a matching host part if stack is empty
     return true;
   }
   if (targetIndex !== null && stack[targetIndex]) {
@@ -137,13 +156,37 @@ export function getIncompatibilityWarning(type, stack) {
       'Boats cannot mount guns / weapons!'
     );
   }
+  if (type === 'solarPanel' && vStack === 'ufo') {
+    return tr(
+      'Không thể gắn Cánh Pin Mặt Trời của Tên lửa vào UFO! Hãy dùng Cánh Pin Mặt Trời UFO trong mục UFO.',
+      'Cannot attach Rocket Solar Panels to a UFO! Use the UFO Solar Wings from the UFO category instead.'
+    );
+  }
+  if (type === 'solarUfo' && (!Array.isArray(stack) || stack.length === 0)) {
+    return tr(
+      'Hãy đặt một Đĩa Bay UFO trước khi gắn Cánh Pin Mặt Trời UFO!',
+      'Place a UFO Saucer first before attaching UFO Solar Wings!'
+    );
+  }
   if (type === 'solarUltra') {
+    if (vStack === 'ufo') {
+      return tr(
+        'Không thể gắn linh kiện của Tên lửa vào UFO!',
+        'Cannot attach Rocket parts to a UFO!'
+      );
+    }
     return tr(
       'Pin Mặt Trời Siêu Nhỏ (Ultra) chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng)! Hãy gắn Pin Siêu Siêu Nhỏ vào Súng trước.',
       'Ultra-Tiny Solar Panel only attaches onto an Ultra-Tiny Gun Battery! Attach an Ultra-Tiny Gun Battery onto a Gun first.'
     );
   }
   if (type === 'batteryGun') {
+    if (vStack === 'ufo') {
+      return tr(
+        'UFO đã có sẵn lõi Pin Lượng Tử, không gắn linh kiện của Tên lửa!',
+        'UFOs already have a built-in Quantum Battery and cannot mount Rocket parts!'
+      );
+    }
     const hasOnlyBigBat = Array.isArray(stack) && stack.length > 0 && stack.some((it) => isBigBatteryPart(it.type)) && !stack.some((it) => !isBigBatteryPart(it.type) && Array.isArray(it.attach) && it.attach.some(isWeaponPart));
     if (hasOnlyBigBat) {
       return tr(
@@ -157,13 +200,14 @@ export function getIncompatibilityWarning(type, stack) {
     );
   }
   const nameOf = (v) => {
+    if (v === 'ufo') return tr('UFO', 'UFO');
     if (v === 'rover') return tr('Xe Rover', 'Rover');
     if (v === 'boat') return tr('Thuyền', 'Boat');
     if (v === 'plane') return tr('Máy bay', 'Airplane');
     return tr('Tên lửa', 'Rocket');
   };
   return tr(
-    `Không thể gắn đồ của ${nameOf(vNew)} với đồ của ${nameOf(vStack)}! Hãy xóa thiết kế hiện tại nếu muốn lắp ${nameOf(vNew)}.`,
+    `Không thể gắn linh kiện của ${nameOf(vNew)} với linh kiện của ${nameOf(vStack)}! Hãy xóa thiết kế hiện tại nếu muốn lắp ${nameOf(vNew)}.`,
     `Cannot attach ${nameOf(vNew)} parts to ${nameOf(vStack)} parts! Clear the current build first to assemble a ${nameOf(vNew)}.`
   );
 }
@@ -177,11 +221,13 @@ export function sanitizeStack(stack) {
   for (const it of stack) {
     const vt = partVehicleType(it.type);
     if (vt !== 'any' && vt !== vStack) continue;
+    if (vStack === 'ufo' && it.type === 'solarPanel') continue;
     if (Array.isArray(it.attach)) {
       const hasGun = it.attach.some(isWeaponPart);
       const hasGunBat = hasGun && !isBigBatteryPart(it.type) && it.attach.includes('batteryGun');
       it.attach = it.attach.filter((a) => {
         if (vStack === 'boat' && (isWeaponPart(a) || a === 'batteryGun' || a === 'solarUltra')) return false;
+        if (vStack === 'ufo' && (a === 'solarPanel' || a === 'batteryGun' || a === 'solarUltra')) return false;
         if (a === 'batteryGun' && (!hasGun || isBigBatteryPart(it.type))) return false;
         if (a === 'solarUltra' && !hasGunBat) return false;
         const va = partVehicleType(a);
@@ -236,11 +282,11 @@ export const PRESETS = {
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'heatShield', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
-  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Chiến Binh': ['ufoWarrior+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Mẹ': ['ufoMother+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Hoàng Hậu': ['ufoQueen+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
-  'UFO Vua': ['ufoKing+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric+legs', 'engAntiGrav'],
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Chiến Binh': ['ufoWarrior+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Mẹ': ['ufoMother+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Hoàng Hậu': ['ufoQueen+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Vua': ['ufoKing+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
 };
 
 export function ensureStackHasWeapons(stack) {
@@ -339,6 +385,7 @@ export function segmentInfo(stack, idx) {
     bDry: 0, bFuel: 0, bTSL: 0, bTVac: 0, bMdot: 0,
     fins: false, engines: 0, engCount: 0, restart: false,
     legs: false, gridfins: false, antiGrav: false, laser: false, ufoTier: 0,
+    hasRoyalUfo: false, ufoEngineMode: 'antigrav',
     needsBattery: false, needsChemFuel: false,
     useChemFuel: false, useBatteryFuel: false,
   };
@@ -357,7 +404,20 @@ export function segmentInfo(stack, idx) {
     if (isUfoPart(it.type)) {
       s.ufoTier = Math.max(s.ufoTier, d.ufoTier || 1);
     }
-    if (it.type === 'engAntiGrav' || isUfoPart(it.type)) {
+    if (isRoyalUfoPart(it.type)) {
+      const ufoMode = it.ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+      s.hasRoyalUfo = true;
+      s.ufoEngineMode = ufoMode;
+      if (ufoMode === 'laser') {
+        s.laser = true;
+        s.tLaser += d.thrustVac;
+        s.mdotLaser += d.thrustVac / (d.ispVac * G0);
+      } else {
+        s.antiGrav = true;
+        s.tAntiGrav += d.thrustVac;
+        s.mdotAntiGrav += d.thrustVac / (d.ispVac * G0);
+      }
+    } else if (it.type === 'engAntiGrav' || isUfoPart(it.type)) {
       s.antiGrav = true;
       s.tAntiGrav += d.thrustVac;
       s.mdotAntiGrav += d.thrustVac / (d.ispVac * G0);
@@ -416,7 +476,20 @@ export function segmentInfo(stack, idx) {
         if (isUfoPart(a)) {
           s.ufoTier = Math.max(s.ufoTier, ad.ufoTier || 1);
         }
-        if (a === 'engAntiGrav' || isUfoPart(a)) {
+        if (isRoyalUfoPart(a)) {
+          const ufoMode = it.ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+          s.hasRoyalUfo = true;
+          s.ufoEngineMode = ufoMode;
+          if (ufoMode === 'laser') {
+            s.laser = true;
+            s.tLaser += ad.thrustVac * cnt;
+            s.mdotLaser += (cnt * ad.thrustVac) / (ad.ispVac * G0);
+          } else {
+            s.antiGrav = true;
+            s.tAntiGrav += ad.thrustVac * cnt;
+            s.mdotAntiGrav += (cnt * ad.thrustVac) / (ad.ispVac * G0);
+          }
+        } else if (a === 'engAntiGrav' || isUfoPart(a)) {
           s.antiGrav = true;
           s.tAntiGrav += ad.thrustVac * cnt;
           s.mdotAntiGrav += (cnt * ad.thrustVac) / (ad.ispVac * G0);
@@ -512,17 +585,22 @@ export function computeStats(stack) {
       t += fuelLeft / s.mdot;
     }
     const thrust = first ? s.tSL + s.bTSL : s.tVac + s.bTVac;
-    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery, batteryFuel: s.useBatteryFuel ? s.batteryFuel : 0, batteryCount: s.batteryCount || 0 });
+    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery, batteryFuel: s.useBatteryFuel ? s.batteryFuel : 0, batteryCount: s.batteryCount || 0, hasRoyalUfo: !!s.hasRoyalUfo, ufoEngineMode: s.ufoEngineMode || 'antigrav' });
     totalDv += dv;
     remainingAbove -= s.mass;
   }
+  const isUfo = stackVehicleType(stack) === 'ufo';
   const isRover = stack.some((it) => it.type.includes('Rover') || it.attach.some((a) => a.includes('Rover')));
   const isBoat = stack.some((it) => it.type.includes('Boat') || it.attach.some((a) => a.includes('Boat')));
   const isPlane = stack.some((it) => it.type.includes('Plane') || it.attach.some((a) => a.includes('Plane')) || it.type === 'engJet');
   const warnings = [];
   const st1 = stages[0];
   if (!stack.length) warnings.push(tr('Hãy thêm linh kiện để bắt đầu lắp ráp.', 'Add parts to start building your rocket.'));
-  else if (isRover) {
+  else if (isUfo) {
+    if (!stack.some((it) => isUfoPart(it.type))) {
+      warnings.push(tr('Cần có ít nhất 1 Đĩa Bay UFO làm thân chính!', 'Requires at least 1 UFO Saucer as the main craft!'));
+    }
+  } else if (isRover) {
     if (!stack.some((it) => it.type === 'cockpitRover')) warnings.push(tr('Xe Rover nên có Cabin xe để điều khiển.', 'Rover should have a Rover Cockpit to steer.'));
     if (!stack.some((it) => it.attach.includes('wheelsRover'))) warnings.push(tr('Xe Rover cần gắn Bánh xe địa hình ×4 để di chuyển.', 'Rover needs Off-Road Wheels ×4 to drive.'));
   } else if (isBoat) {
@@ -625,6 +703,23 @@ function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
   };
 }
 
+export function applyNozzleUfoMode(nz, mode) {
+  if (!nz || !nz.switchableUfoEngine) return;
+  const isLaser = mode === 'laser';
+  nz.style = isLaser ? 'laser' : 'antigrav';
+  if (nz.agLight) {
+    nz.agLight.color.setHex(isLaser ? 0xff2a55 : (nz.agColorHex ?? 0xfacc15));
+  }
+  if (nz.cyanGlow) {
+    if (nz.cyanGlow.color) nz.cyanGlow.color.setHex(isLaser ? 0xff4d6d : (nz.origRing1ColHex ?? 0xfacc15));
+    if (nz.cyanGlow.emissive) nz.cyanGlow.emissive.setHex(isLaser ? 0xff1e56 : (nz.origRing1Hex ?? 0xd97706));
+  }
+  if (nz.violetGlow) {
+    if (nz.violetGlow.color) nz.violetGlow.color.setHex(isLaser ? 0xff8fa3 : (nz.origRing2ColHex ?? 0xfb7185));
+    if (nz.violetGlow.emissive) nz.violetGlow.emissive.setHex(isLaser ? 0xe11d48 : (nz.origRing2Hex ?? 0xe11d48));
+  }
+}
+
 export function buildRocket(stack) {
   const root = new THREE.Group();
   const lay = layout(stack);
@@ -663,7 +758,33 @@ export function buildRocket(stack) {
     if (p.item.type === 'heatShield' || p.def.isHeatShield) {
       heatShields.push({ seg: k, obj, shieldGlowMats: obj.userData.shieldGlowMats || [] });
     }
-    if (obj.userData.nozzles) for (const n of obj.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: p.def, bellMats: obj.userData.bellMats, booster: null, center: n === obj.userData.centerNozzle, agLight: obj.userData.agLight, cyanGlow: obj.userData.cyanGlow, violetGlow: obj.userData.violetGlow });
+    if (obj.userData.nozzles) {
+      const initMode = isRoyalUfoPart(p.item.type) && p.item.ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+      for (const n of obj.userData.nozzles) {
+        const nzDesc = {
+          seg: k,
+          node: n,
+          r: n.userData.r,
+          style: n.userData.style || 'default',
+          def: p.def,
+          bellMats: obj.userData.bellMats,
+          booster: null,
+          center: n === obj.userData.centerNozzle,
+          agLight: obj.userData.agLight,
+          agColorHex: obj.userData.agColorHex,
+          cyanGlow: obj.userData.cyanGlow,
+          violetGlow: obj.userData.violetGlow,
+          origRing1Hex: obj.userData.origRing1Hex,
+          origRing1ColHex: obj.userData.origRing1ColHex,
+          origRing2Hex: obj.userData.origRing2Hex,
+          origRing2ColHex: obj.userData.origRing2ColHex,
+          switchableUfoEngine: !!n.userData.switchableUfoEngine,
+          itemIndex: p.index,
+        };
+        if (nzDesc.switchableUfoEngine) applyNozzleUfoMode(nzDesc, initMode);
+        nozzles.push(nzDesc);
+      }
+    }
     if (p.item.type === 'titan4Voyager' && stack[p.index + 1]?.type === 'titan4Fairing') {
       if (obj.userData.voyagerBooms) obj.userData.voyagerBooms.visible = false;
     }
@@ -841,7 +962,31 @@ export function buildRocket(stack) {
         if (a === 'booster') {
           for (const n of ao.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, def: PARTS.booster, bellMats: ao.userData.bellMats, booster: ao });
         } else if (ao.userData.nozzles) {
-          for (const n of ao.userData.nozzles) nozzles.push({ seg: k, node: n, r: n.userData.r, style: n.userData.style || 'default', def: PARTS[a], bellMats: ao.userData.bellMats, booster: null, center: false });
+          const initMode = isRoyalUfoPart(a) && p.item.ufoEngineMode === 'laser' ? 'laser' : 'antigrav';
+          for (const n of ao.userData.nozzles) {
+            const nzDesc = {
+              seg: k,
+              node: n,
+              r: n.userData.r,
+              style: n.userData.style || 'default',
+              def: PARTS[a],
+              bellMats: ao.userData.bellMats,
+              booster: null,
+              center: false,
+              agLight: ao.userData.agLight,
+              agColorHex: ao.userData.agColorHex,
+              cyanGlow: ao.userData.cyanGlow,
+              violetGlow: ao.userData.violetGlow,
+              origRing1Hex: ao.userData.origRing1Hex,
+              origRing1ColHex: ao.userData.origRing1ColHex,
+              origRing2Hex: ao.userData.origRing2Hex,
+              origRing2ColHex: ao.userData.origRing2ColHex,
+              switchableUfoEngine: !!n.userData.switchableUfoEngine,
+              itemIndex: p.index,
+            };
+            if (nzDesc.switchableUfoEngine) applyNozzleUfoMode(nzDesc, initMode);
+            nozzles.push(nzDesc);
+          }
         }
       }
       if (a === 'booster') {

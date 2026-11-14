@@ -942,19 +942,20 @@ export class Vessel {
       const vs = this.vSurf;
       const sp = Math.hypot(vs.e, vs.u);
       const tilt = Math.abs(this.ang);
-      const legsOk = this.hasLegs() && this.legsT > 0.95;
+      const isUfo = !!(info && info.ufoTier > 0);
+      const legsOk = isUfo || (this.hasLegs() && this.legsT > 0.95);
       const chuteOk = this.capsule() && chute > 0.65;
-      const vLim = chuteOk ? 14 : legsOk ? 8 : 6;
+      const vLim = chuteOk ? 14 : isUfo ? 12 : legsOk ? 8 : 6;
       const details = {
         sp,
-        vLim: surf.water && chuteOk ? 16 : vLim,
+        vLim: surf.water && (chuteOk || isUfo) ? 16 : vLim,
         vertSp: Math.abs(vs.u),
         horizSp: Math.abs(vs.e),
         tiltDeg: Math.round(tilt * 180 / Math.PI),
         chuteOk,
         legsOk,
         hasCapsule: !!this.capsule(),
-        hasLegs: this.hasLegs(),
+        hasLegs: this.hasLegs() || isUfo,
         where: surf.water ? 'water' : 'ground',
       };
       const crashOnSurface = (reason, where) => {
@@ -989,7 +990,7 @@ export class Vessel {
           this.settle(surf, t, 'floating');
           return;
         }
-        if (chuteOk && sp < 16) this.settle(surf, t, 'splash');
+        if ((chuteOk || isUfo) && sp < 16) this.settle(surf, t, 'splash');
         else crashOnSurface(sp > 40 ? tr('Lao xuống biển!', 'Plunged into the ocean!') : tr('Rơi xuống biển!', 'Crashed into the ocean!'), 'water');
       } else if (this.isRover) {
         if (sp < 55 && tilt < 0.7) {
@@ -1011,7 +1012,7 @@ export class Vessel {
         } else {
           crashOnSurface(vertRate > 30 ? tr('Lao máy bay xuống mặt đất!', 'Aircraft slammed into the ground!') : tr('Va chạm mạnh khi hạ cánh!', 'Hard impact on landing!'), 'ground');
         }
-      } else if (sp < vLim && Math.abs(vs.e) < 4 && tilt < (legsOk ? 0.3 : 0.45)) this.settle(surf, t, 'landed');
+      } else if (sp < vLim && Math.abs(vs.e) < (isUfo ? 8 : 4) && tilt < (isUfo ? 0.45 : legsOk ? 0.3 : 0.45)) this.settle(surf, t, 'landed');
       else crashOnSurface(sp > 60 ? tr('Lao xuống mặt đất!', 'Slammed into the ground!') : tr('Va chạm mạnh khi tiếp đất!', 'Hard impact on touchdown!'), 'ground');
     }
   }

@@ -306,17 +306,17 @@ export const PART_I18N = {
     vi: { name: 'Tầng 1 Siêu Nặng N1 (Block A · 30× NK-15) (Tầng 1)', cat: 'Động cơ', desc: 'Tầng 1 hình nón khổng lồ màu xám kim loại với 8 khối hộp khí động lớn, 4 cánh lưới chống ngang, váy đáy loe và vòng 30 động cơ NK-15' },
     en: { name: 'N1 Block A Super-Heavy First Stage · 30× NK-15 (Stage 1)', cat: 'Engines', desc: 'Giant conical metallic-grey Block A stage with 8 large faceted blisters, 4 strut-braced fins, flared base skirt & 30 NK-15 engines' },
   },
-  buranNose: {
-    vi: { name: 'Chóp Mũi Buran-Energia & Đai Gân Caro (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động màu xám xanh của hệ Buran, bồn trắng trên và đai gân dọc in 2 ô vuông caro đen + dù hạ cánh' },
-    en: { name: 'Buran-Energia Nose Cone & Ribbed Checker Collar (Stage 3)', cat: 'Command & Nose', desc: 'Bluish-grey Energia aerodynamic nose cone, white upper tank & vertically ribbed interstage collar with 2 staggered black squares + parachutes' },
-  },
   buranShuttle: {
-    vi: { name: 'Tàu Con Thoi Buran & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu vũ trụ con thoi Buran gắn lưng Energia với buồng lái kính đen 6 ô, 2 cửa sổ nóc, mũi gạch chịu nhiệt đen, cánh tam giác kép viền đen, đuôi đứng & dù hạ cánh' },
-    en: { name: 'Buran Space Shuttle Orbiter & Mid Energia Core (Stage 2)', cat: 'Fuel Tanks', desc: 'Piggyback Soviet Buran space shuttle orbiter with 6-pane black V-windshield, 2 overhead windows, black thermal nose cap, double-delta wings & vertical tail fin' },
+    vi: { name: 'Tàu Con Thoi Buran (Буран · Tầng 3 – Cuối)', cat: 'Đầu', desc: 'Tàu vũ trụ con thoi Buran Liên Xô (Tầng 3 – Cuối, tách ra bay độc lập sau khi Tầng 2 Energia tắt máy) với buồng lái kính đen 6 ô chữ V, 2 cửa sổ nóc, mũi & bụng gạch chịu nhiệt đen, Cờ Liên Xô + chữ СССР / БУРАН, cánh tam giác kép viền đen, đuôi đứng, 2 động cơ quỹ đạo 17D12 & dù hạ cánh' },
+    en: { name: 'Soviet Buran Space Shuttle Orbiter ("Буран" · Stage 3 – Final)', cat: 'Command & Nose', desc: 'Standalone Soviet Buran space shuttle orbiter (Stage 3 – Final, separates cleanly after Energia Stage 2 cutoff) with 6-pane black V-windshield, 2 overhead windows, black thermal nose & belly tiles, USSR flag + СССР / БУРАН markings, double-delta wings, vertical tail fin, twin 17D12 OMS engines & parachutes' },
+  },
+  buranNose: {
+    vi: { name: 'Thân Chính & Chóp Mũi Energia (Buran · Tầng 2)', cat: 'Nhiên liệu', desc: 'Thân lõi trung tâm tên lửa Energia (Block Ts · Tầng 2), khung giằng đỡ lưng tàu Buran, đai gân dọc in 2 ô vuông caro đen và chóp mũi khí động xám xanh (tách bỏ sau khi đưa tàu con thoi Buran lên cận quỹ đạo)' },
+    en: { name: 'Energia Central Core & Nose Cone (Buran · Stage 2)', cat: 'Fuel Tanks', desc: 'Energia central core upper barrel (Block Ts · Stage 2), Buran piggyback support struts, ribbed collar with 2 staggered black squares & bluish-grey ogive nose cone' },
   },
   buranEnergia: {
-    vi: { name: 'Tầng Đẩy Buran-Energia & 4 Booster Zenit (Tầng 1)', cat: 'Động cơ', desc: 'Thân dưới Energia kèm 4 tầng đẩy phụ Zenit (Block A) ốp sườn xám xanh, 4 siêu động cơ RD-0120 ở tâm và 4 cụm động cơ RD-170' },
-    en: { name: 'Buran-Energia Super-Heavy Core & 4× Zenit Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 strap-on Zenit (Block A) boosters in bluish-grey shrouds, 4 central RD-0120 cryogenic engines & 4 RD-170 clusters' },
+    vi: { name: 'Đáy Energia & 4 Tên Lửa Đẩy Phụ Zenit (Buran · Tầng 1)', cat: 'Động cơ', desc: 'Phần đáy thân lõi Energia với 4 siêu động cơ RD-0120 ở tâm kèm trọn bộ 4 tên lửa đẩy phụ Zenit (Block A · cụm động cơ RD-170) ốp khí động xám xanh tách ra đầu tiên ở Tầng 1' },
+    en: { name: 'Lower Energia Core & 4× Zenit Strap-On Boosters (Buran · Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 central RD-0120 cryogenic engines & all 4 full-height Zenit (Block A) strap-on boosters with RD-170 clusters separating first at Stage 1' },
   },
   energiaNose: {
     vi: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },

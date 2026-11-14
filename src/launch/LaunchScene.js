@@ -277,7 +277,7 @@ export class LaunchScene {
       const off = AIRPORT_SCATTER_OFFSETS[i];
       const lx = sx - off.dx;
       const lz = sz - off.dz;
-      const d = Math.max(-260.0 - lx, lx - 2460.0, -190.0 - lz, lz - 130.0);
+      const d = Math.max(-260.0 - lx, lx - 2500.0, -190.0 - lz, lz - 130.0);
       if (d < best) best = d;
     }
     return best;
@@ -354,6 +354,7 @@ export class LaunchScene {
       uBend: { value: BEND },
       uShowPad: { value: 1.0 },
       uShowAirport: { value: 0.0 },
+      uAirport0Off: { value: 0.0 },
       uWaveSeed: { value: this.groundWaveSeed },
     };
     const waveGLSL = /* glsl */`
@@ -386,12 +387,26 @@ export class LaunchScene {
         return trigFbm(sx * 0.0022, -sz * 0.0022, 11.0, 4);
       }
       float airportBoxDistGLSL(float sx, float sz) {
-        float d0 = max(max(-260.0 - sx, sx - 2460.0), max(-190.0 - sz, sz - 130.0));
-        float d1 = max(max(-260.0 - (sx + 25000.0), (sx + 25000.0) - 2460.0), max(-190.0 - (sz + 14000.0), (sz + 14000.0) - 130.0));
-        float d2 = max(max(-260.0 - (sx + 52000.0), (sx + 52000.0) - 2460.0), max(-190.0 - (sz - 16000.0), (sz - 16000.0) - 130.0));
-        float d3 = max(max(-260.0 - (sx + 82000.0), (sx + 82000.0) - 2460.0), max(-190.0 - (sz + 18000.0), (sz + 18000.0) - 130.0));
-        float d4 = max(max(-260.0 - (sx + 115000.0), (sx + 115000.0) - 2460.0), max(-190.0 - (sz - 15000.0), (sz - 15000.0) - 130.0));
+        float d0 = max(max(-260.0 - sx, sx - 2500.0), max(-190.0 - sz, sz - 130.0));
+        float d1 = max(max(-260.0 - (sx + 25000.0), (sx + 25000.0) - 2500.0), max(-190.0 - (sz + 14000.0), (sz + 14000.0) - 130.0));
+        float d2 = max(max(-260.0 - (sx + 52000.0), (sx + 52000.0) - 2500.0), max(-190.0 - (sz - 16000.0), (sz - 16000.0) - 130.0));
+        float d3 = max(max(-260.0 - (sx + 82000.0), (sx + 82000.0) - 2500.0), max(-190.0 - (sz + 18000.0), (sz + 18000.0) - 130.0));
+        float d4 = max(max(-260.0 - (sx + 115000.0), (sx + 115000.0) - 2500.0), max(-190.0 - (sz - 15000.0), (sz - 15000.0) - 130.0));
         return min(d0, min(min(d1, d2), min(d3, d4)));
+      }
+      float singleAirportPavedDist(float lx, float lz) {
+        float dRwy = max(max(-170.0 - lx, lx - 2250.0), abs(lz) - 24.0);
+        float dApr = max(max(-120.0 - lx, lx - 260.0), max(-107.0 - lz, lz + 21.0));
+        float dTax = max(max(-120.0 - lx, lx - 800.0), max(-43.0 - lz, lz + 25.0));
+        return min(dRwy, min(dApr, dTax));
+      }
+      float airportPavedDistGLSL(float sx, float sz, float ap0Off) {
+        float p0 = singleAirportPavedDist(sx - ap0Off, sz);
+        float p1 = singleAirportPavedDist(sx + 25000.0, sz + 14000.0);
+        float p2 = singleAirportPavedDist(sx + 52000.0, sz - 16000.0);
+        float p3 = singleAirportPavedDist(sx + 82000.0, sz + 18000.0);
+        float p4 = singleAirportPavedDist(sx + 115000.0, sz - 15000.0);
+        return min(p0, min(min(p1, p2), min(p3, p4)));
       }
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
         if (showAirport > 0.5) return 0.0;
@@ -417,16 +432,26 @@ export class LaunchScene {
         return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
       }
     `;
-    const gmat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0, transparent: true, side: THREE.DoubleSide });
+    const gmat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.92,
+      metalness: 0,
+      transparent: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 4,
+      polygonOffsetUnits: 8,
+    });
     gmat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = this.groundUniforms.uTime;
       sh.uniforms.uOff = this.groundUniforms.uOff;
       sh.uniforms.uBend = this.groundUniforms.uBend;
       sh.uniforms.uShowPad = this.groundUniforms.uShowPad;
       sh.uniforms.uShowAirport = this.groundUniforms.uShowAirport;
+      sh.uniforms.uAirport0Off = this.groundUniforms.uAirport0Off;
       sh.uniforms.uWaveSeed = this.groundUniforms.uWaveSeed;
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform vec2 uOff;\nuniform float uBend;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}`)
+        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform vec2 uOff;\nuniform float uBend;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uAirport0Off;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}`)
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLocal = position.xy + uOff;')
         .replace('#include <project_vertex>', `
           vec4 mvPosition = vec4( transformed, 1.0 );
@@ -436,7 +461,7 @@ export class LaunchScene {
           mvPosition = viewMatrix * wpB;
           gl_Position = projectionMatrix * mvPosition;`);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform float uTime;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}\n
+        .replace('#include <common>', `#include <common>\nvarying vec2 vLocal;\nuniform float uTime;\nuniform float uShowPad;\nuniform float uShowAirport;\nuniform float uAirport0Off;\nuniform float uWaveSeed;\n${NOISE_GLSL}\n${waveGLSL}\n
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
@@ -469,6 +494,8 @@ export class LaunchScene {
             max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
           ) * apDry;
           landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
+          float apPaved = smoothstep(1.5, -1.5, airportPavedDistGLSL(p.x, -p.y, uAirport0Off));
+          landCol = mix(landCol, vec3(0.065, 0.07, 0.082) * (0.9 + 0.2 * n2), apPaved);
           float pad = uShowPad * smoothstep(${(PAD_RADIUS + 70).toFixed(1)}, ${(PAD_RADIUS + 55).toFixed(1)}, length(p));
           landCol = mix(landCol, vec3(0.4, 0.39, 0.37) * (0.85 + 0.3 * n2), pad);
           float ghShade = groundWaveHeight(p, uShowPad, uShowAirport);
@@ -517,7 +544,7 @@ export class LaunchScene {
     const ground = new THREE.Mesh(groundGeo, gmat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
-    ground.renderOrder = 2;
+    ground.renderOrder = 0;
     this.ground = ground;
     this.world.add(ground);
 
@@ -798,14 +825,46 @@ export class LaunchScene {
     const concMap = conc.map.clone();
     concMap.repeat.set(16, 6);
     concMap.needsUpdate = true;
-    const asphaltMat = new THREE.MeshStandardMaterial({ map: asphaltMap, color: 0x2b2e34, roughness: 0.88, metalness: 0.06 });
-    const shoulderMat = new THREE.MeshStandardMaterial({ map: concMap, color: 0x585c64, roughness: 0.9 });
-    const apronMat = new THREE.MeshStandardMaterial({ map: concMap, color: 0x6c7078, roughness: 0.85 });
+    const asphaltMat = new THREE.MeshStandardMaterial({
+      map: asphaltMap,
+      color: 0x2b2e34,
+      roughness: 0.88,
+      metalness: 0.06,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -4,
+    });
+    const shoulderMat = new THREE.MeshStandardMaterial({
+      map: concMap,
+      color: 0x585c64,
+      roughness: 0.9,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    });
+    const apronMat = new THREE.MeshStandardMaterial({
+      map: concMap,
+      color: 0x6c7078,
+      roughness: 0.85,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -2,
+    });
     const foundMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.25 });
     const mastMat = new THREE.MeshStandardMaterial({ color: 0xd9dbe0, metalness: 0.5, roughness: 0.45 });
     const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff1d6, emissiveIntensity: 25 });
-    const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xf4f6fa });
-    const yellowLineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const whiteLineMat = new THREE.MeshBasicMaterial({
+      color: 0xf4f6fa,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -8,
+    });
+    const yellowLineMat = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -8,
+    });
 
     const rwyLen = 2400, rwyW = 38, rwyCenterX = 1040;
     const shoulderGeo = new THREE.BoxGeometry(rwyLen + 20, 0.14, rwyW + 10);
@@ -932,11 +991,11 @@ export class LaunchScene {
         subAirport.add(conn);
 
         const hold = new THREE.Mesh(holdGeo, yellowLineMat);
-        hold.position.set(tx, 0.258, -19.5);
+        hold.position.set(tx, 0.262, -19.5);
         subAirport.add(hold);
 
         const tLine = new THREE.Mesh(taxiLineGeo, yellowLineMat);
-        tLine.position.set(tx, 0.225, -22);
+        tLine.position.set(tx, 0.232, -22);
         subAirport.add(tLine);
       }
 
@@ -7608,6 +7667,9 @@ export class LaunchScene {
       if (this.groundUniforms.uBend) this.groundUniforms.uBend.value = 1 / (2 * curBodyR);
       if (this.groundUniforms.uShowPad) this.groundUniforms.uShowPad.value = (isPlaneMode || isRoverMode) ? 0.0 : 1.0;
       if (this.groundUniforms.uShowAirport) this.groundUniforms.uShowAirport.value = isPlaneMode ? 1.0 : 0.0;
+      if (this.groundUniforms.uAirport0Off) {
+        this.groundUniforms.uAirport0Off.value = this.getAirportSite('earth', 0).sx;
+      }
     }
     const hasAtmoAirports = this.hasSurfaceAirports(F.ref);
     const apAnchor = hasAtmoAirports ? this.getNearestAirportAnchor(F.ref, F.sx || 0, S.z || 0) : { sx: 0, sz: 0, h: 0 };
@@ -7667,6 +7729,13 @@ export class LaunchScene {
     eu.uTime.value = this.time;
     this.earth.visible = earthRef && camAlt > 4000;
     const gOp = earthRef ? 1 - THREE.MathUtils.smoothstep(camAlt, 12000, 32000) : 0;
+    const wantTrans = gOp < 0.999;
+    if (this.groundMat.transparent !== wantTrans) {
+      this.groundMat.transparent = wantTrans;
+      this.groundMat.depthWrite = !wantTrans;
+      this.ground.renderOrder = wantTrans ? 2 : 0;
+      this.groundMat.needsUpdate = true;
+    }
     this.groundMat.opacity = gOp;
     this.ground.visible = gOp > 0.001 && F.alt < 60000 && earthRef;
     this.nearPlane = THREE.MathUtils.clamp(camAlt * 0.25, 1, 5e4);
@@ -7714,7 +7783,11 @@ export class LaunchScene {
     renderer.clearDepth();
     // near pass
     cam.layers.disableAll(); cam.layers.enable(0);
-    cam.near = Math.min(0.5, this.nearPlane); cam.far = 3e5; cam.updateProjectionMatrix();
+    const camDist = cam.position.length();
+    const safeNear = (cam === this.camera && this.camMode === 2)
+      ? 0.5
+      : THREE.MathUtils.clamp(Math.min((this.viewCamAlt || 0) * 0.25, Math.max(0, camDist - 220) * 0.2), 0.5, 250);
+    cam.near = safeNear; cam.far = 3e5; cam.updateProjectionMatrix();
     renderer.render(this.scene, cam);
     cam.layers.enable(1);
     cam.near = oldNear; cam.far = oldFar; cam.updateProjectionMatrix();

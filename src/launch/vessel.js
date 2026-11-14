@@ -151,9 +151,14 @@ export class Vessel {
     this.phi = angOf(dx, dy);                       // ECI downrange angle about ref body
     this.up = { x: dx / r, y: dy / r };
     this.east = { x: this.up.y, y: -this.up.x };
-    this.alt = (this.landed || this.clamped || this.isSpecial || (r - B.R) < 80000)
-      ? (r - B.R)
-      : (Math.hypot(dx, dy, dz) - B.R);
+    const altCyl = r - B.R;
+    const zAltFrac = (this.landed || this.clamped || this.isSpecial || altCyl <= 70000)
+      ? 0
+      : altCyl >= 140000
+        ? 1
+        : ((altCyl - 70000) / 70000);
+    const dzEff = dz * (zAltFrac * zAltFrac * (3 - 2 * zAltFrac));
+    this.alt = Math.hypot(r, dzEff) - B.R;
     this.ang = wrapPi(this.beta - this.phi);
     // velocity relative to the body (inertial) and to its rotating surface
     const vrx = s.vx - _bv.x, vry = s.vy - _bv.y;

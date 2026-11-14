@@ -753,23 +753,23 @@ export class BoatHarborHopProgram {
     const curZ = v.s.z || 0;
     const zErr = site.sz - curZ;
     const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 100);
-    let maxRouteCoastX = Math.max(curCoastX, site.coastX ?? site.berthX);
+    let maxRouteCoastX = Math.max(curCoastX, site.coastX ?? site.berthX, 4460);
     if (sc.getCoastX) {
-      const steps = 16;
+      const steps = Math.min(96, Math.max(16, Math.ceil(Math.abs(zErr) / 2500)));
       for (let i = 1; i <= steps; i++) {
         const zSample = curZ + (zErr * i) / steps;
         const cx = sc.getCoastX(zSample);
         if (cx > maxRouteCoastX) maxRouteCoastX = cx;
       }
     }
-    const safeOceanX = Math.max(maxRouteCoastX + 650, site.berthX + 550, 4600);
+    const safeOceanX = Math.max(maxRouteCoastX + 750, site.berthX + 650, 5200);
     let wpX;
     let wpZ;
     if (Math.abs(zErr) > 36) {
       if (curX < safeOceanX - 80) {
         // Phase 1: Sail straight East out of the harbor channel into deep open ocean BEFORE turning North/South
         this.phase = 'depart';
-        wpX = safeOceanX + 60;
+        wpX = safeOceanX + 80;
         wpZ = curZ;
       } else {
         // Phase 2: Cruise North/South along the offshore deep-sea lane clear of all capes & peninsulas
@@ -797,9 +797,10 @@ export class BoatHarborHopProgram {
     if (isDocking) {
       sc.requestWarp(dist > 800 ? 4 : dist > 320 ? 2 : 1);
     } else if (this.phase === 'depart') {
-      sc.requestWarp(curX < curCoastX + 450 ? 2 : 4);
+      sc.requestWarp(curX < curCoastX + 450 ? 2 : 10);
     } else {
-      sc.requestWarp(Math.abs(zErr) > 3500 ? 10 : Math.abs(zErr) > 600 ? 4 : 2);
+      const absZ = Math.abs(zErr);
+      sc.requestWarp(absZ > 25000 ? 200 : absZ > 12000 ? 100 : absZ > 4500 ? 50 : absZ > 1500 ? 10 : absZ > 500 ? 4 : 2);
     }
   }
 }
@@ -832,10 +833,17 @@ export class PlaneAirportHopProgram {
       v.planeRollSpeed = 0;
       return 'done';
     }
-    const rwyIdx = (doneCount + 1) % 5;
-    const site = sc.getAirportSite
-      ? sc.getAirportSite(v.ref, rwyIdx)
-      : { sx: 0, sz: 0, h: 0 };
+    if (!this._targetSite || this._targetDoneCount !== doneCount || this._targetBody !== v.ref) {
+      const rwyIdx = (doneCount + 1) % 5;
+      this._targetSite = sc.getNextAirportSite
+        ? sc.getNextAirportSite(v)
+        : sc.getAirportSite
+          ? sc.getAirportSite(v.ref, rwyIdx)
+          : { sx: 0, sz: 0, h: 0 };
+      this._targetDoneCount = doneCount;
+      this._targetBody = v.ref;
+    }
+    const site = this._targetSite;
 
     if (v.landed || v.clamped) {
       this.phase = 'takeoff';
@@ -852,19 +860,24 @@ export class PlaneAirportHopProgram {
     }
 
     this.airborneTime = (this.airborneTime || 0) + dt;
+    const B = bodyInfo(v.ref);
+    const curSx = v.sx || 0;
     const entryX = site.sx + 220;
     const entryZ = site.sz;
-    const dx = entryX - (v.sx || 0);
+    const dx = v.ref === 'earth' ? (entryX - curSx) : (wrapPi((entryX - curSx) / B.R) * B.R);
     const dz = entryZ - (v.s.z || 0);
     const dist = Math.hypot(dx, dz);
+    const relRwyX = v.ref === 'earth' ? (curSx - site.sx) : (wrapPi((curSx - site.sx) / B.R) * B.R);
     const onFinal = this.airborneTime >= 2.2 &&
-      (v.sx || 0) >= site.sx - 60 &&
-      (v.sx || 0) <= site.sx + 1650 &&
-      Math.abs((v.s.z || 0) - site.sz) <= 18;
+      relRwyX >= -80 &&
+      relRwyX <= 1900 &&
+      (this.phase === 'land' || (v.vSurf.e || 0) > 15) &&
+      Math.abs((v.s.z || 0) - site.sz) <= 20 &&
+      Math.abs(v.alt - site.h) <= 160;
 
     if (!onFinal && dist > 140) {
       this.phase = 'hop';
-      sc.requestWarp(dist > 4500 ? 10 : dist > 900 ? 4 : 2);
+      sc.requestWarp(dist > 25000 ? 300 : dist > 10000 ? 100 : dist > 4000 ? 50 : dist > 1500 ? 10 : dist > 500 ? 4 : 2);
       v.engineOn = true;
       v.throttle = 0.88;
       const ux = dx / Math.max(1, dist);
@@ -881,8 +894,9 @@ export class PlaneAirportHopProgram {
       const hErr = wrapPi(Math.atan2(-dz, dx) - desiredHeading);
       v.heading = desiredHeading;
       v.bank = Math.max(-0.38, Math.min(0.38, -hErr * 1.2));
-      const altErr = (site.h + 62) - v.alt;
-      const targetVu = Math.max(-16, Math.min(20, altErr * 0.45));
+      const targetClearance = dist > 2500 ? 160 : (62 + 98 * Math.max(0, (dist - 500) / 2000));
+      const altErr = (site.h + targetClearance) - v.alt;
+      const targetVu = Math.max(-18, Math.min(22, altErr * 0.45));
       const dvU = (targetVu - v.vSurf.u) * Math.min(1, dt * 5.0);
       v.s.vx += dvU * v.up.x;
       v.s.vy += dvU * v.up.y;
@@ -902,8 +916,10 @@ export class PlaneAirportHopProgram {
     v.s.vz = 0;
     v.heading = 0;
     v.bank = 0;
-    if ((v.sx || 0) - site.sx > 1650 || (v.sx || 0) - site.sx < -60) {
-      const shiftX = (site.sx + 220) - (v.sx || 0);
+    if (relRwyX > 1650 || relRwyX < -60) {
+      const shiftX = v.ref === 'earth'
+        ? ((site.sx + 220) - curSx)
+        : (wrapPi(((site.sx + 220) - curSx) / B.R) * B.R);
       v.s.x += v.east.x * shiftX;
       v.s.y += v.east.y * shiftX;
       v.updateFrame(sc.simT);

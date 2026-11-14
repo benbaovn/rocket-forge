@@ -125,7 +125,15 @@ export function gravity(x, y, z, t, out) {
     const B = BODIES[ref];
     bodyPos(ref, t, _m);
     bodyAcc(ref, t, _ba);
-    const dx = x - _m.x, dy = y - _m.y, dz = z - _m.z;
+    const dx = x - _m.x, dy = y - _m.y, dzRaw = z - _m.z;
+    const rCylB = Math.hypot(dx, dy);
+    const atmB = B.atm || 0;
+    const zFracB = atmB <= 0 || rCylB - B.R >= atmB * 2
+      ? 1
+      : rCylB - B.R <= atmB
+        ? 0
+        : ((rCylB - B.R - atmB) / atmB);
+    const dz = dzRaw * (zFracB * zFracB * (3 - 2 * zFracB));
     const d2 = dx * dx + dy * dy + dz * dz, d = Math.sqrt(d2);
     // Inside a gas giant (d < B.R), use smooth interior shell gravity (-mu / R^3) so spacecraft can pass straight through the center without a singularity
     const dEff = B.gasGiant ? Math.max(d, B.R) : Math.max(d, 1);
@@ -135,18 +143,25 @@ export function gravity(x, y, z, t, out) {
     out.z = _ba.z + kB * dz;
     return out;
   }
-  const r2 = x * x + y * y + z * z, r = Math.sqrt(r2);
+  const rCyl2 = x * x + y * y, rCyl = Math.sqrt(rCyl2);
+  const altCyl = rCyl - R_E;
+  // Below ATM_TOP (70 km), z is the unrolled North/South surface tangent coordinate (up to ±580 km at distant harbors/airports),
+  // so atmospheric flight uses cylindrical radius rCyl with zero phantom sideways Z pull; smoothly blend to 3D spherical gravity in space.
+  const zSpaceFrac = altCyl <= ATM_TOP ? 0 : altCyl >= 140e3 ? 1 : ((altCyl - ATM_TOP) / (140e3 - ATM_TOP));
+  const zSmooth = zSpaceFrac * zSpaceFrac * (3 - 2 * zSpaceFrac);
+  const zGrav = z * zSmooth;
+  const r2 = rCyl2 + zGrav * zGrav, r = Math.sqrt(r2);
   const kE = -MU_E / (r2 * r);
-  let gx = kE * x, gy = kE * y, gz = kE * z;
+  let gx = kE * x, gy = kE * y, gz = kE * zGrav;
   // Lunar 3-body tidal perturbation in Earth SOI
   bodyPos('moon', t, _m);
-  const dx = x - _m.x, dy = y - _m.y, dz = z - _m.z;
+  const dx = x - _m.x, dy = y - _m.y, dz = zGrav - _m.z;
   const d2 = dx * dx + dy * dy + dz * dz, d = Math.sqrt(d2);
   const kM = -MU_M / (d2 * d);
   const kI = MU_M / (MOON_A ** 3);
   gx += kM * dx + kI * _m.x;
   gy += kM * dy + kI * _m.y;
-  gz += kM * dz;
+  gz += (kM * dz) * zSmooth;
   out.x = gx;
   out.y = gy;
   out.z = gz;

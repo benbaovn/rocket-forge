@@ -28,13 +28,13 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: 0,       dz: 0,      planetDz: 0 },      // Airport #1 (East / Central Base)
-  { dx: -25000,  dz: -14000, planetDz: -900 },   // Airport #2 (Northwest — ~25-29 km away)
-  { dx: -52000,  dz: 16000,  planetDz: 900 },    // Airport #3 (Southwest — ~27-40 km from AP2)
-  { dx: -82000,  dz: -18000, planetDz: -1100 },  // Airport #4 (Far Northwest — ~30-45 km from AP3)
-  { dx: -115000, dz: 15000,  planetDz: 1100 },   // Airport #5 (Far Southwest — ~33-47 km from AP4)
+  { dx: -24000,   dz: 0,       planetDx: 0,        planetDz: 0 },      // Airport #1 (~26.6 km West of Harbor #1 — 10x Harbor-to-Airport!)
+  { dx: -274000,  dz: -140000, planetDx: -250000,  planetDz: -9000 },  // Airport #2 (~286.5 km from AP1 — 10x!)
+  { dx: -544000,  dz: 160000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3 (~403.6 km from AP2 — 10x!)
+  { dx: -844000,  dz: -180000, planetDx: -820000,  planetDz: -11000 }, // Airport #4 (~453.4 km from AP3 — 10x!)
+  { dx: -1174000, dz: 150000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5 (~466.7 km from AP4 — 10x!)
 ];
-const HARBOR_SCATTER_Z = [0, -18000, -38000, 20000, 42000, -58000];
+const HARBOR_SCATTER_Z = [0, -180000, -380000, 200000, 420000, -580000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
 const fmt = (v, d = 0) => v.toLocaleString('vi-VN', { maximumFractionDigits: d, minimumFractionDigits: d });
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -326,7 +326,8 @@ export class LaunchScene {
       return t * t * (3 - 2 * t);
     };
     const seed = this.groundWaveSeed || 0.0;
-    const landMask = smooth(2520.0, 2220.0, sx);
+    const cX = this.earthCoastX(sz);
+    const landMask = smooth(cX - 20.0, cX - 260.0, sx);
     const padFlat = 1.0 - showPad * smooth(150.0, 95.0, Math.hypot(sx, sz));
     const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
     const boxDist = this.earthAirportBoxDist(sx, sz);
@@ -386,12 +387,18 @@ export class LaunchScene {
       float lagoonNoiseGLSL(float sx, float sz) {
         return trigFbm(sx * 0.0022, -sz * 0.0022, 11.0, 4);
       }
+      float coastXGLSL(float py) {
+        float capeJut = 1450.0 * exp(-pow((py + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(py));
+        float coastWave = 1100.0 * sin(py * 0.00016) * smoothstep(2000.0, 5000.0, abs(py));
+        float coastRecede = 0.025 * min(45000.0, max(0.0, abs(py) - 3500.0));
+        return 2600.0 + capeJut + coastWave - coastRecede;
+      }
       float airportBoxDistGLSL(float sx, float sz) {
-        float d0 = max(max(-260.0 - sx, sx - 2500.0), max(-190.0 - sz, sz - 130.0));
-        float d1 = max(max(-260.0 - (sx + 25000.0), (sx + 25000.0) - 2500.0), max(-190.0 - (sz + 14000.0), (sz + 14000.0) - 130.0));
-        float d2 = max(max(-260.0 - (sx + 52000.0), (sx + 52000.0) - 2500.0), max(-190.0 - (sz - 16000.0), (sz - 16000.0) - 130.0));
-        float d3 = max(max(-260.0 - (sx + 82000.0), (sx + 82000.0) - 2500.0), max(-190.0 - (sz + 18000.0), (sz + 18000.0) - 130.0));
-        float d4 = max(max(-260.0 - (sx + 115000.0), (sx + 115000.0) - 2500.0), max(-190.0 - (sz - 15000.0), (sz - 15000.0) - 130.0));
+${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
+  const ox = (-off.dx).toFixed(1);
+  const oz = (-off.dz).toFixed(1);
+  return `        float d${i} = max(max(-260.0 - (sx + (${ox})), (sx + (${ox})) - 2500.0), max(-190.0 - (sz + (${oz})), (sz + (${oz})) - 130.0));`;
+}).join('\n')}
         return min(d0, min(min(d1, d2), min(d3, d4)));
       }
       float singleAirportPavedDist(float lx, float lz) {
@@ -401,18 +408,20 @@ export class LaunchScene {
         return min(dRwy, min(dApr, dTax));
       }
       float airportPavedDistGLSL(float sx, float sz, float ap0Off) {
-        float p0 = singleAirportPavedDist(sx - ap0Off, sz);
-        float p1 = singleAirportPavedDist(sx + 25000.0, sz + 14000.0);
-        float p2 = singleAirportPavedDist(sx + 52000.0, sz - 16000.0);
-        float p3 = singleAirportPavedDist(sx + 82000.0, sz + 18000.0);
-        float p4 = singleAirportPavedDist(sx + 115000.0, sz - 15000.0);
+${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
+  const oz = (-off.dz).toFixed(1);
+  if (i === 0) return `        float p0 = singleAirportPavedDist(sx - ap0Off, sz + (${oz}));`;
+  const ox = (-off.dx).toFixed(1);
+  return `        float p${i} = singleAirportPavedDist(sx + (${ox}), sz + (${oz}));`;
+}).join('\n')}
         return min(p0, min(min(p1, p2), min(p3, p4)));
       }
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
         if (showAirport > 0.5) return 0.0;
         float sx = p.x;
         float sz = -p.y;
-        float landMask = smoothstep(2520.0, 2220.0, sx);
+        float cX = coastXGLSL(p.y);
+        float landMask = smoothstep(cX - 20.0, cX - 260.0, sx);
         float padFlat = 1.0 - showPad * smoothstep(150.0, 95.0, length(vec2(sx, sz)));
         float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
         float boxDist = airportBoxDistGLSL(sx, sz);
@@ -465,14 +474,11 @@ export class LaunchScene {
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
-          // Cape Canaveral, Florida & Atlantic coastline with bays and peninsulas extending +/-45 km North/South
-          float capeJut = 1450.0 * exp(-pow((p.y + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(p.y));
-          float coastWave = 1100.0 * sin(p.y * 0.00016) * smoothstep(2000.0, 5000.0, abs(p.y));
-          float coastRecede = 0.025 * min(45000.0, max(0.0, abs(p.y) - 3500.0));
-          float coast = 2600.0 + capeJut + coastWave - coastRecede;
+          // Cape Canaveral, Florida & Atlantic coastline with bays and peninsulas extending North/South
+          float coast = coastXGLSL(p.y);
           float land = max(smoothstep(coast + 30.0, coast - 30.0, p.x), smoothstep(59950.0, 60050.0, p.x));
-          // Continental west coast across the mainland at far -X
-          land *= smoothstep(-149500.0, -147000.0, p.x);
+          // Continental west coast across the mainland at far -X (accommodating 10x scattered airports out past -1,174 km)
+          land *= smoothstep(-1495000.0, -1470000.0, p.x);
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
@@ -563,9 +569,17 @@ export class LaunchScene {
     this.treeGrid = new Map();
     const TREE_CELL = 32;
     let n = 0;
-    for (let tries = 0; n < N && tries < N * 4; tries++) {
-      const ang = Math.random() * Math.PI * 2, dist = 160 + Math.pow(Math.random(), 0.7) * 2800;
-      const x = Math.cos(ang) * dist, z = Math.sin(ang) * dist;
+    for (let tries = 0; n < N && tries < N * 5; tries++) {
+      let x, z;
+      if (tries % 3 === 0) {
+        const ap = AIRPORT_SCATTER_OFFSETS[Math.floor(tries / 3) % AIRPORT_SCATTER_OFFSETS.length];
+        const ang = Math.random() * Math.PI * 2, dist = 180 + Math.pow(Math.random(), 0.72) * 2400;
+        x = ap.dx + 1040 + Math.cos(ang) * dist;
+        z = ap.dz + Math.sin(ang) * dist;
+      } else {
+        const ang = Math.random() * Math.PI * 2, dist = 160 + Math.pow(Math.random(), 0.7) * 2800;
+        x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
+      }
       if (x > 1800) continue;                      // near coast/ocean
       if (this.earthAirportBoxDist(x, z) < 35.0) continue; // keep all 5 scattered airport runways & aprons clear
       if (x <= 0 && Math.abs(z) < 22) continue;    // keep clear inland Rover corridor heading west
@@ -869,7 +883,7 @@ export class LaunchScene {
     const rwyLen = 2400, rwyW = 38, rwyCenterX = 1040;
     const shoulderGeo = new THREE.BoxGeometry(rwyLen + 20, 0.14, rwyW + 10);
     const runwayGeo = new THREE.BoxGeometry(rwyLen, 0.25, rwyW);
-    const foundGeo = new THREE.BoxGeometry(rwyLen + 40, 26, 150);
+    const foundGeo = new THREE.BoxGeometry(rwyLen + 40, 48, 150);
     const sideStripeGeo = new THREE.PlaneGeometry(rwyLen - 40, 0.75);
     sideStripeGeo.rotateX(-Math.PI / 2);
     const dashGeo = new THREE.PlaneGeometry(28, 0.85);
@@ -929,7 +943,7 @@ export class LaunchScene {
       if (aIdx === 0) this.airportCenterGroup = subAirport;
 
       const foundMesh = new THREE.Mesh(foundGeo, foundMat);
-      foundMesh.position.set(rwyCenterX, -13.0, -34);
+      foundMesh.position.set(rwyCenterX, -24.0, -34);
       foundMesh.visible = false;
       subAirport.add(foundMesh);
       this.airportFoundations.push(foundMesh);
@@ -1815,20 +1829,23 @@ export class LaunchScene {
     return bestSite || this.getHarborSite(fallbackIdx);
   }
 
+  bodyDeltaX(bodyKey, x1, x2) {
+    if (!bodyKey || bodyKey === 'earth') return x1 - x2;
+    const B = BODIES[bodyKey] || BODIES.mars;
+    return wrapPi((x1 - x2) / B.R) * B.R;
+  }
+
   getAirportSite(bodyKey = 'earth', aIdx = 0) {
     const idx = Math.max(0, Math.min(AIRPORT_SCATTER_OFFSETS.length - 1, Number(aIdx) || 0));
     const sc = AIRPORT_SCATTER_OFFSETS[idx] || AIRPORT_SCATTER_OFFSETS[0];
     if (!bodyKey || bodyKey === 'earth') {
-      const isPlaneOrSelected = !!(
-        (this.player && this.player.isPlane) ||
-        this.selectedAirportBody === 'earth'
-      );
-      const offset = (idx === 0 && !isPlaneOrSelected) ? 180 : 0;
-      return { sx: sc.dx + offset, sz: sc.dz, h: 0, aIdx: idx };
+      return { sx: sc.dx, sz: sc.dz, h: 0, aIdx: idx };
     }
     const B = BODIES[bodyKey] || BODIES.mars;
     const originSx = this.getPlanetAirportOrigin(bodyKey);
-    const sx = originSx + sc.dx;
+    const pScale = Math.min(1, B.R / 230000);
+    const rawPlanetDx = (sc.planetDx !== undefined ? sc.planetDx : sc.dx) * pScale;
+    const sx = wrapPi((originSx + rawPlanetDx) / B.R) * B.R;
     const sz = sc.planetDz !== undefined ? sc.planetDz : sc.dz;
     if (B.gasGiant) {
       return { sx, sz, h: 0, aIdx: idx };
@@ -1837,14 +1854,19 @@ export class LaunchScene {
     const cacheKey = `${bodyKey}:${idx}:${Math.round(originSx)}`;
     let h = this._planetApHeightCache[cacheKey];
     if (h === undefined) {
-      const uz = sz / B.R;
-      let maxH = -Infinity;
-      for (const sampleDx of [0, 550, 1100, 1650, 2200]) {
+      let maxSurfY = -Infinity;
+      for (const sampleDx of [-170, 450, 1100, 1650, 2250]) {
         const psi = (sx + sampleDx) / B.R;
-        const mh = moonHeight(Math.sin(psi), Math.cos(psi), uz, bodyKey);
-        if (mh > maxH) maxH = mh;
+        const spx = Math.sin(psi), spy = Math.cos(psi);
+        for (const sampleDz of [-110, 0, 30]) {
+          const zSample = sz + sampleDz;
+          const uz = zSample / B.R;
+          const mh = moonHeight(spx, spy, uz, bodyKey);
+          const surfY = mh - (zSample * zSample) / (2 * B.R);
+          if (surfY > maxSurfY) maxSurfY = surfY;
+        }
       }
-      h = maxH - (sz * sz) / (2 * B.R);
+      h = maxSurfY;
       this._planetApHeightCache[cacheKey] = h;
     }
     return { sx, sz, h, aIdx: idx };
@@ -1856,13 +1878,47 @@ export class LaunchScene {
     const sz = v.s ? (v.s.z || 0) : 0;
     for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
       const site = this.getAirportSite(v.ref, i);
-      const dx = sx - site.sx;
+      const dx = this.bodyDeltaX(v.ref, sx, site.sx);
       const dz = sz - site.sz;
       if (dx >= -180 && dx <= 2255 && (Math.abs(dz) <= 28 || (dx >= -125 && dx <= 820 && dz >= -110 && dz <= 25))) {
         return `${v.ref}:${i}`;
       }
     }
     return null;
+  }
+
+  getNextUnvisitedAirportSite(v = this.player) {
+    const bodyKey = v?.ref || 'earth';
+    const curSx = v?.sx || 0;
+    const curSz = v?.s ? (v.s.z || 0) : 0;
+    const curApId = (v?.landed || v?.clamped) ? this.getCurrentAirportId(v) : null;
+    let bestSite = null;
+    let bestDist = Infinity;
+    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+      const apId = `${bodyKey}:${i}`;
+      if (apId === curApId || apId === this.lastLandedAirportId) continue;
+      if (this.airportsLandedSet && this.airportsLandedSet.has(apId)) continue;
+      if (this.visitedAirportIds && this.visitedAirportIds.has(apId)) continue;
+      const site = this.getAirportSite(bodyKey, i);
+      const d = Math.hypot(this.bodyDeltaX(bodyKey, site.sx, curSx), site.sz - curSz);
+      if (d < bestDist) {
+        bestDist = d;
+        bestSite = site;
+      }
+    }
+    if (bestSite) return bestSite;
+    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+      const apId = `${bodyKey}:${i}`;
+      if (apId === curApId || apId === this.lastLandedAirportId) continue;
+      const site = this.getAirportSite(bodyKey, i);
+      const d = Math.hypot(this.bodyDeltaX(bodyKey, site.sx, curSx), site.sz - curSz);
+      if (d < bestDist) {
+        bestDist = d;
+        bestSite = site;
+      }
+    }
+    const fallbackIdx = ((this.airportsLandedSet ? this.airportsLandedSet.size : 0) + 1) % AIRPORT_SCATTER_OFFSETS.length;
+    return bestSite || this.getAirportSite(bodyKey, fallbackIdx);
   }
 
   getPlanetAirportOrigin(bodyKey) {
@@ -1888,7 +1944,7 @@ export class LaunchScene {
     let bestD2 = Infinity;
     for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
       const site = this.getAirportSite(bodyKey, i);
-      const dx = curSx - (site.sx + 1040);
+      const dx = this.bodyDeltaX(bodyKey, curSx, site.sx + 1040);
       const dz = curSz - site.sz;
       const d2 = dx * dx + dz * dz;
       if (d2 < bestD2) {
@@ -3169,7 +3225,9 @@ export class LaunchScene {
         if (P.isPlane) {
           P.planeRollSpeed = 0;
           this.wasAirborneForAirport = false;
-          this.lastLandedAirportId = this.getCurrentAirportId(P) || `${bodyKey}:${aIdx}`;
+          const curApId = this.getCurrentAirportId(P) || `${bodyKey}:${aIdx}`;
+          this.lastLandedAirportId = curApId;
+          this.visitedAirportIds = new Set([...(this.airportsLandedSet || []), curApId]);
         }
         if (P.isRover) P.groundSpeed = 0;
         if (hasHarborOpt) {
@@ -3772,14 +3830,16 @@ export class LaunchScene {
       this.player.planeRollSpeed = 0;
       this.player.planeDistTotal = 0;
       this.player.planeDistByBody = {};
+      const ap0 = this.getAirportSite('earth', 0);
       const rwyH = 0.25 + this.player.bottomOffset();
-      this.player.placeOnSurface('earth', 0, rwyH, this.simT);
+      this.player.placeOnSurface('earth', ap0.sx, rwyH, this.simT);
+      this.player.s.z = ap0.sz;
       this.player.beta = this.player.phi + Math.PI / 2;
       this.player.updateFrame(this.simT);
       this.player.syncDir3DFromBeta();
       this.player.clamped = false;
-      this.player.clampSpot = { body: 'earth', sx: 0, h: rwyH };
-      this.player.landed = { body: 'earth', sx: 0, h: rwyH, site: 'runway', how: 'plane' };
+      this.player.clampSpot = { body: 'earth', sx: ap0.sx, sz: ap0.sz, h: rwyH };
+      this.player.landed = { body: 'earth', sx: ap0.sx, sz: ap0.sz, h: rwyH, site: 'runway', how: 'plane' };
       this.phase = 'flight';
       this.ignited = true;
       this.released = true;
@@ -3877,6 +3937,7 @@ export class LaunchScene {
     this.toggleTeleportModal(false);
     this.updateTeleportActiveButtons('earth');
     this.airportsLandedSet = new Set();
+    this.visitedAirportIds = new Set(['earth:0']);
     this.wasAirborneForAirport = false;
     this.lastLandedAirportId = 'earth:0';
     this.harborsVisitedSet = new Set();
@@ -3976,6 +4037,7 @@ export class LaunchScene {
       getAirportsLandedCount: () => (self.airportsLandedSet ? self.airportsLandedSet.size : 0),
       getAirportAnchor: (bKey, sx) => self.getNearestAirportAnchor(bKey, sx),
       getAirportSite: (bKey, idx) => self.getAirportSite(bKey, idx),
+      getNextAirportSite: (v) => self.getNextUnvisitedAirportSite(v),
       getHarborsVisitedCount: () => (self.harborsVisitedSet ? self.harborsVisitedSet.size : 0),
       getHarborSite: (idx) => self.getHarborSite(idx),
       getNextHarborSite: (v) => self.getNextUnvisitedHarborSite(v),
@@ -4415,7 +4477,7 @@ export class LaunchScene {
       if (b.mode === 'plane' && !isPlaneMode) continue;
       if (b.mode === 'pad' && !isPadMode) continue;
       const apSite = b.mode === 'plane' ? this.getAirportSite(v.ref, b.aIdx || 0) : null;
-      const offX = apSite ? apSite.sx : 0;
+      const offX = apSite ? (isEarth ? apSite.sx : (curX - this.bodyDeltaX(v.ref, curX, apSite.sx))) : 0;
       const offY = apSite ? apSite.h : 0;
       const offZ = apSite ? apSite.sz : 0;
       if (bottomAlt >= offY + b.maxY - 0.5) continue;
@@ -4490,7 +4552,7 @@ export class LaunchScene {
     if (!this.hasSurfaceAirports(bodyKey)) return null;
     for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
       const site = this.getAirportSite(bodyKey, i);
-      const rwyH = this.isPointOnSingleAirport(sx - site.sx, sz - site.sz);
+      const rwyH = this.isPointOnSingleAirport(this.bodyDeltaX(bodyKey, sx, site.sx), sz - site.sz);
       if (rwyH !== null) {
         return { h: site.h + rwyH, aIdx: i };
       }
@@ -4892,6 +4954,8 @@ export class LaunchScene {
         if (apId && (this.wasAirborneForAirport || (apId !== this.lastLandedAirportId && (v.planeDistTotal || 0) > 40))) {
           this.wasAirborneForAirport = false;
           this.lastLandedAirportId = apId;
+          if (!this.visitedAirportIds) this.visitedAirportIds = new Set(['earth:0']);
+          this.visitedAirportIds.add(apId);
           if (!this.airportsLandedSet) this.airportsLandedSet = new Set();
           const keyToAdd = this.airportsLandedSet.has(apId)
             ? `${apId}_flight_${this.airportsLandedSet.size + 1}`
@@ -7323,7 +7387,10 @@ export class LaunchScene {
         ud.coronaMesh.scale.setScalar(atSun ? 1.0 : 0.012);
       }
     }
-    proj(0, 0, 0, this.earth.position);
+    const earthFollowZ = (F.ref === 'earth' && F.alt < 140e3)
+      ? (S.z || 0) * (1 - THREE.MathUtils.smoothstep(F.alt, 45e3, 140e3))
+      : 0;
+    proj(0, 0, earthFollowZ, this.earth.position);
     this.earth.rotation.set(0, 0, phi - OMEGA_E * t);
     const mp = moonPos(t);
     proj(mp.x, mp.y, mp.z, this.moon.position);
@@ -7716,13 +7783,19 @@ export class LaunchScene {
     }
     const hasAtmoAirports = this.hasSurfaceAirports(F.ref);
     const apAnchor = hasAtmoAirports ? this.getNearestAirportAnchor(F.ref, F.sx || 0, S.z || 0) : { sx: 0, sz: 0, h: 0 };
-    const showAirport = hasAtmoAirports && Math.abs(F.alt - apAnchor.h) < 60000 && Math.hypot((F.sx || 0) - apAnchor.sx, (S.z || 0) - (apAnchor.sz || 0)) < 55000;
+    const apDist = hasAtmoAirports
+      ? Math.hypot(this.bodyDeltaX(F.ref, F.sx || 0, apAnchor.sx + 1040), (S.z || 0) - (apAnchor.sz || 0))
+      : Infinity;
+    const showAirport = hasAtmoAirports && Math.abs(F.alt - apAnchor.h) < 60000 && apDist < 55000;
     if (this.airport && showAirport) {
       this.airport.position.set(0, 0, 0);
       if (this.subAirports) {
         for (let i = 0; i < this.subAirports.length; i++) {
           const site = this.getAirportSite(F.ref, i);
-          this.subAirports[i].position.set(site.sx, site.h, site.sz);
+          const wx = F.ref === 'earth'
+            ? site.sx
+            : ((F.sx || 0) + this.bodyDeltaX(F.ref, site.sx, F.sx || 0));
+          this.subAirports[i].position.set(wx, site.h, site.sz);
         }
       }
       if (this.airportFoundations) {

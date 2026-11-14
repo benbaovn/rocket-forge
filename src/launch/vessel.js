@@ -273,10 +273,11 @@ export class Vessel {
       const sciFiDrainScale = info.solarOnBattery > 0 ? 12.0 : 1.0;
       const curMdot = normMdot + (agMdot * Math.max(0.12, gRatio) + lzMdot * Math.max(0.18, laserScale * 0.75)) * sciFiDrainScale;
       thrust += curThrust * thr * engFrac;
-      const planeFuelFloor = (this.isPlane && nearbyAliens === 0) ? (fuelMax[k] || 0) * 0.25 : 0;
+      const planeFuelFloor = this.isPlane ? (fuelMax[k] || 0) * (nearbyAliens === 0 ? 0.25 : 0.15) : 0;
       const drainScale = this.isPlane ? 0.005 : 1.0;
       const effAlienDrainMul = 1 + (alienDrainMul - 1) * ufoBatShield;
-      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * effAlienDrainMul * thr * engFrac * h);
+      const fuelStepH = (this.isPlane && nearbyAliens > 0) ? Math.min(h, h / Math.max(1, this._warp || 1)) : h;
+      fuel[k] = Math.max(planeFuelFloor, fuel[k] - curMdot * drainScale * effAlienDrainMul * thr * engFrac * fuelStepH);
       if (fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
         this.events.push(['fuelOut', k]);
       }
@@ -287,7 +288,8 @@ export class Vessel {
       const realDt = Math.min(h, h / Math.max(1, this._warp || 1));
       const passiveRate = (fuelMax[k] * 0.0028 * nearbyAliens * ufoBatShield) * (info.solarOnBattery > 0 ? 1.8 : 1.0);
       const prevF = fuel[k];
-      fuel[k] = Math.max(0, fuel[k] - passiveRate * realDt);
+      const passiveFloor = this.isPlane ? (fuelMax[k] || 0) * 0.15 : 0;
+      fuel[k] = Math.max(passiveFloor, fuel[k] - passiveRate * realDt);
       if (prevF > 0 && fuel[k] === 0 && !(info.solarOnBattery > 0 && info.batteryCount > 0)) {
         this.events.push(['fuelOut', k]);
       }
@@ -541,12 +543,14 @@ export class Vessel {
 
     // Airplane flight control authority (elevator pitch & aileron roll & rudder yaw)
     if (this.isPlane) {
+      const warpScale = Math.max(1, this._warp || 1);
+      const ctrlH = h > 0.25 ? (h / warpScale) : h;
       const qNorm = Math.min(2.5, Math.max(0.2, q / 1200));
       // W = +1 (pitch up -> negative angAcc), S = -1 (pitch down -> positive angAcc)
       const pitchInput = (this.ctl.drive || 0);
       const rollInput = this.ctl.input || 0; // A = -1 (bank/turn left), D = +1 (bank/turn right)
-      this.bank = (this.bank || 0) + rollInput * 2.4 * h;
-      this.bank *= Math.exp(-1.2 * h); // self-leveling bank damping
+      this.bank = (this.bank || 0) + rollInput * 2.4 * ctrlH;
+      this.bank *= Math.exp(-1.2 * ctrlH); // self-leveling bank damping
       this.bank = THREE.MathUtils.clamp(this.bank, -1.35, 1.35);
 
       // Pitch angular acceleration (negative angAcc decreases this.ang -> pitches nose UP)
@@ -562,7 +566,7 @@ export class Vessel {
       const pullFactor = (pitchInput > 0) ? (1.0 + pitchInput * 1.6) : 1.0;
       const turnYawRate = -(Math.sin(this.bank) * 0.95 * pullFactor + rollInput * 0.5) * Math.min(2.4, Math.max(0.4, v / 30));
       this.turnYawRate = turnYawRate;
-      this.heading = (this.heading || 0) + turnYawRate * h;
+      this.heading = (this.heading || 0) + turnYawRate * ctrlH;
     }
     this.aoa = aoa;
 
@@ -752,18 +756,25 @@ export class Vessel {
         this.planeRollSpeed = this.planeRollSpeed || 0;
         const jetThrust = this.thrustNow > 0 ? this.thrustNow : (this.throttle * 450 * rhoF);
         const vMaxRoll = Math.max(18, 235 * rhoF);
-        const rawAccel = (drive * jetThrust) / this.mass;
-        const ramDragAccel = (rawAccel > 0 ? rawAccel : (450 * rhoF / this.mass)) * ((this.planeRollSpeed / vMaxRoll) ** 2);
-        const rollFric = 0.35 * Math.min(1.0, rhoF);
-        this.planeRollSpeed = Math.max(0, this.planeRollSpeed + (rawAccel - ramDragAccel - rollFric) * h);
-        if (drive === 0) this.planeRollSpeed *= Math.exp(-0.8 * h);
-        if (this.planeRollSpeed < 0.05 && drive === 0) this.planeRollSpeed = 0;
+        if (h > 0.25) {
+          const targetRoll = drive > 0 ? vMaxRoll * Math.sqrt(drive) : 0;
+          this.planeRollSpeed += (targetRoll - this.planeRollSpeed) * (1 - Math.exp(-h * 0.6));
+          if (this.planeRollSpeed < 0.05 && drive === 0) this.planeRollSpeed = 0;
+        } else {
+          const rawAccel = (drive * jetThrust) / this.mass;
+          const ramDragAccel = (rawAccel > 0 ? rawAccel : (450 * rhoF / this.mass)) * ((this.planeRollSpeed / vMaxRoll) ** 2);
+          const rollFric = 0.35 * Math.min(1.0, rhoF);
+          this.planeRollSpeed = Math.max(0, this.planeRollSpeed + (rawAccel - ramDragAccel - rollFric) * h);
+          if (drive === 0) this.planeRollSpeed *= Math.exp(-0.8 * h);
+          if (this.planeRollSpeed < 0.05 && drive === 0) this.planeRollSpeed = 0;
+        }
 
         // Ground steering with A / D (A = -1 -> +heading = left; D = +1 -> -heading = right)
         const steer = this.ctl.input || 0;
         if (steer !== 0 && this.planeRollSpeed > 0.5) {
           const steerRate = THREE.MathUtils.clamp(-steer * 1.2 * Math.min(1.0, 18 / (this.planeRollSpeed + 5)), -0.8, 0.8);
-          this.heading = (this.heading || 0) + steerRate * h;
+          const steerH = h > 0.25 ? (h / Math.max(1, this._warp || 1)) : h;
+          this.heading = (this.heading || 0) + steerRate * steerH;
         }
 
         const pitchControl = this.ctl.drive || 0; // W = +1 (pitch up), S = -1 (pitch down)
@@ -821,6 +832,22 @@ export class Vessel {
         }
 
         const surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
+        if (surf.water) {
+          this.landed = null;
+          this.landedLock = 0;
+          const crashH = Math.max(0, surf.h) + Math.max(0.8, Math.min(this.bottomOffset(), 4.0));
+          this.placeOnSurface(this.ref, newSx, crashH, t + h, targetBeta);
+          this.s.z = newZ;
+          this.updateFrame(t + h);
+          this.speedSurf = this.planeRollSpeed;
+          this.agl = 0;
+          this.crashAnchor = { mode: 'surface', body: this.ref, sx: newSx, sz: newZ, h: crashH, betaOff: wrapPi(targetBeta - this.phi) };
+          this.crash(tr('Máy bay lao ra khỏi đảo rơi xuống biển!', 'Aircraft rolled off the island into the ocean!'), 'water', {
+            sp: this.planeRollSpeed, vLim: 0, vertSp: 0, horizSp: this.planeRollSpeed, tiltDeg: 0,
+            chuteOk: false, legsOk: true, hasCapsule: false, hasLegs: true, where: 'water',
+          });
+          return;
+        }
         const targetH = surf.h + this.bottomOffset();
         this.beta = targetBeta;
         this.omega = 0;
@@ -854,42 +881,105 @@ export class Vessel {
       this.events.push(['liftoff']);
     }
 
-    if (!this.isSpecial && !this.clamped && !this.landed && this.kind === 'player' && this.ctl.targetBeta === null) {
-      this.omega = 0;
-      this.syncBetaFromDir3D();
-    } else {
-      this.omega += angAcc * h;
-      this.omega *= Math.exp(-(inAtm ? 0.35 : 0.08) * h);
-      this.beta += this.omega * h;
-      this.syncDir3DFromBeta();
-      if (this.holdDir3D && this.dir3D) this.holdDir3D.copy(this.dir3D);
-    }
-
-    // ---------- translate (local accel → ECI)
     const prevPhi = this.phi;
     const prevRef = this.ref, prevSx = this.sx, prevAlt = this.alt, prevZ = this.s.z || 0;
-    const E = this.east, U = this.up;
-    const axE = ae * E.x + au_ * U.x, ayE = ae * E.y + au_ * U.y;
-    const maxSafe = coastStep(this.s.x, this.s.y, this.s.z, t) * 4.5;
-    if (!inAtm && Math.abs(axE) < 1e-6 && Math.abs(ayE) < 1e-6 && Math.abs(az) < 1e-6 && h > maxSafe) {
-      if (!keplerStep(this.s, this.ref, t, h)) {
-        const nSub = Math.min(80, Math.ceil(h / maxSafe));
-        const hs = h / nSub;
-        for (let i = 0; i < nSub; i++) rk4(this.s, t + i * hs, hs, 0, 0, 0);
+
+    // Unconditionally stable quasi-steady macro flight step for airplanes at extreme time warp (10,000x – 10,000,000x)
+    if (this.isPlane && !this.clamped && !this.landed && h > 0.25) {
+      const warpScale = Math.max(1, this._warp || 1);
+      const ctrlH = h / warpScale;
+      const vMaxAir = Math.max(18, 235 * planeRhoFactor * Math.max(0.35, planeAtmFactor));
+      const targetSpd = (this.coreFiring && thr > 0) ? (vMaxAir * Math.sqrt(thr)) : 0;
+      const vNew = v3D + (targetSpd - v3D) * (1 - Math.exp(-h * 0.45));
+      const minFlySpd = Math.max(14, 32 * planeRhoFactor);
+      const pitchInput = this.ctl.drive || 0;
+      let dAlt = 0;
+      if (vNew < minFlySpd) {
+        dAlt = -Math.max(8, gLocal * 1.4) * h;
+      } else if (pitchInput !== 0) {
+        const manualClimbRate = Math.min(1800, Math.max(250, planeAtmLimit * 0.08));
+        dAlt = pitchInput * manualClimbRate * ctrlH;
+      } else if (typeof this._guidedTargetAlt === 'number') {
+        dAlt = (this._guidedTargetAlt - this.alt) * (1 - Math.exp(-h * 0.12));
+      } else if (!B.gasGiant) {
+        const curSurf = env.surface(this);
+        const safeFloor = (curSurf.water ? Math.max(0, curSurf.h) : curSurf.h) + 85;
+        if (this.alt < safeFloor && this.alt > curSurf.h + 4) {
+          dAlt = (safeFloor - this.alt) * (1 - Math.exp(-h * 0.2));
+        }
       }
-    } else {
-      rk4(this.s, t, h, axE, ayE, az);
-    }
-    this.updateFrame(t + h);
-    if (this.isPlane && !this.clamped && !this.landed) {
-      this.beta = wrapPi(this.beta + wrapPi(this.phi - prevPhi));
-      this.syncDir3DFromBeta();
-      if (this.holdDir3D && this.dir3D) this.holdDir3D.copy(this.dir3D);
-      const airDist = Math.hypot(this.vSurf.e, this.s.vz || 0) * h;
+      let hitCeil = false;
+      let newAlt = this.alt + dAlt;
+      if (newAlt > planeAtmLimit) {
+        newAlt = planeAtmLimit;
+        hitCeil = true;
+      }
+      const vuEff = h > 1e-6 ? (newAlt - this.alt) / h : 0;
+      const vHorizNew = Math.sqrt(Math.max(0, vNew * vNew - Math.min(vNew * vNew * 0.5, vuEff * vuEff)));
+      const cosH = Math.cos(this.heading || 0), sinH = Math.sin(this.heading || 0);
+      const newSx = wrapPi((this.sx + vHorizNew * cosH * h) / B.R) * B.R;
+      const maxPolarZ = 0.48 * Math.PI * B.R;
+      const newZ = THREE.MathUtils.clamp((this.s.z || 0) - vHorizNew * sinH * h, -maxPolarZ, maxPolarZ);
+      const airDist = vHorizNew * h;
       if (airDist > 0) {
         this.planeDistTotal = (this.planeDistTotal || 0) + airDist;
         if (!this.planeDistByBody) this.planeDistByBody = {};
         this.planeDistByBody[this.ref] = (this.planeDistByBody[this.ref] || 0) + airDist;
+      }
+      const visPitch = pitchInput !== 0
+        ? (pitchInput * 0.14)
+        : THREE.MathUtils.clamp(Math.atan2(vuEff, Math.max(20, vHorizNew)), -0.18, 0.22);
+      const psiNew = newSx / B.R + bodyRotation(this.ref, t + h);
+      const betaNew = wrapPi(psiNew + Math.PI / 2 - visPitch);
+      this.omega = 0;
+      this.placeOnSurface(this.ref, newSx, newAlt, t + h, betaNew);
+      this.s.z = newZ;
+      this.s.vz = -vHorizNew * sinH;
+      this.s.vx += vHorizNew * cosH * this.east.x + vuEff * this.up.x;
+      this.s.vy += vHorizNew * cosH * this.east.y + vuEff * this.up.y;
+      this.updateFrame(t + h);
+      this.syncDir3DFromBeta();
+      if (this.holdDir3D && this.dir3D) this.holdDir3D.copy(this.dir3D);
+      if (hitCeil && (!this._ceilWarnT || t - this._ceilWarnT > 8)) {
+        this._ceilWarnT = t;
+        this.events.push(['atmCeiling']);
+      }
+    } else {
+      if (!this.isSpecial && !this.clamped && !this.landed && this.kind === 'player' && this.ctl.targetBeta === null) {
+        this.omega = 0;
+        this.syncBetaFromDir3D();
+      } else {
+        this.omega += angAcc * h;
+        this.omega *= Math.exp(-(inAtm ? 0.35 : 0.08) * h);
+        this.beta += this.omega * h;
+        this.syncDir3DFromBeta();
+        if (this.holdDir3D && this.dir3D) this.holdDir3D.copy(this.dir3D);
+      }
+
+      // ---------- translate (local accel → ECI)
+      const E = this.east, U = this.up;
+      const axE = ae * E.x + au_ * U.x, ayE = ae * E.y + au_ * U.y;
+      const maxSafe = coastStep(this.s.x, this.s.y, this.s.z, t) * 4.5;
+      if (!inAtm && Math.abs(axE) < 1e-6 && Math.abs(ayE) < 1e-6 && Math.abs(az) < 1e-6 && h > maxSafe) {
+        if (!keplerStep(this.s, this.ref, t, h)) {
+          const nSub = Math.min(80, Math.ceil(h / maxSafe));
+          const hs = h / nSub;
+          for (let i = 0; i < nSub; i++) rk4(this.s, t + i * hs, hs, 0, 0, 0);
+        }
+      } else {
+        rk4(this.s, t, h, axE, ayE, az);
+      }
+      this.updateFrame(t + h);
+      if (this.isPlane && !this.clamped && !this.landed) {
+        this.beta = wrapPi(this.beta + wrapPi(this.phi - prevPhi));
+        this.syncDir3DFromBeta();
+        if (this.holdDir3D && this.dir3D) this.holdDir3D.copy(this.dir3D);
+        const airDist = Math.hypot(this.vSurf.e, this.s.vz || 0) * h;
+        if (airDist > 0) {
+          this.planeDistTotal = (this.planeDistTotal || 0) + airDist;
+          if (!this.planeDistByBody) this.planeDistByBody = {};
+          this.planeDistByBody[this.ref] = (this.planeDistByBody[this.ref] || 0) + airDist;
+        }
       }
     }
 

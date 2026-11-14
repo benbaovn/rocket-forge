@@ -627,6 +627,11 @@ export class PlaneLoopProgram {
     this._lastDistKm = distKm;
     if (distKm >= this.targetDistKm) {
       this.phase = 'done';
+      v._guidedTargetAlt = null;
+      v.throttle = 0;
+      v.engineOn = false;
+      v.ctl.drive = 0;
+      v.ctl.input = 0;
       return 'done';
     }
     v.engineOn = true;
@@ -656,8 +661,11 @@ export class PlaneLoopProgram {
     const cruiseAlt = B.gasGiant
       ? Math.max(12000, Math.round((B.atm || 60000) * 0.35))
       : Math.min(2600, Math.max(1800, Math.round((B.atm || 30000) * 0.08)));
+    v._guidedTargetAlt = cruiseAlt;
     const altErr = cruiseAlt - v.alt;
-    const targetVu = Math.max(-18, Math.min(28, altErr * 0.16));
+    const maxSafeVu = dt > 0.05 ? Math.abs(altErr) / (dt * 1.25) : Infinity;
+    const rawVu = Math.max(-18, Math.min(28, altErr * 0.16));
+    const targetVu = Math.sign(rawVu) * Math.min(Math.abs(rawVu), maxSafeVu);
     const vuErr = targetVu - v.vSurf.u;
     const stepGain = Math.min(1, dt * 4.0);
     const dvU = vuErr * stepGain;
@@ -666,7 +674,7 @@ export class PlaneLoopProgram {
     v.vSurf.u += dvU;
     const vH = Math.max(25, Math.hypot(v.vSurf.e, v.s.vz || 0));
     const climbAngle = Math.max(-0.16, Math.min(0.24, Math.atan2(targetVu, vH)));
-    const trimPitch = climbAngle + 0.02;
+    const trimPitch = climbAngle + (dt > 0.25 ? 0 : 0.02);
     v.beta = wrapPi(v.phi + Math.PI / 2 - trimPitch);
     v.omega = 0;
     v.ctl.drive = 0;

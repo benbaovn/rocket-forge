@@ -28,11 +28,11 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: -24000,   dz: 0,       planetDx: 0,        planetDz: 0 },      // Airport #1 (~26.6 km West of Harbor #1 — 10x Harbor-to-Airport!)
-  { dx: -274000,  dz: -140000, planetDx: -250000,  planetDz: -9000 },  // Airport #2 (~286.5 km from AP1 — 10x!)
-  { dx: -544000,  dz: 160000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3 (~403.6 km from AP2 — 10x!)
-  { dx: -844000,  dz: -180000, planetDx: -820000,  planetDz: -11000 }, // Airport #4 (~453.4 km from AP3 — 10x!)
-  { dx: -1174000, dz: 150000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5 (~466.7 km from AP4 — 10x!)
+  { dx: 28000,   dz: -16000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Offshore Island #1 (~29.9 km across ocean from Harbor #1 — 10x!)
+  { dx: 278000,  dz: -156000, planetDx: -250000,  planetDz: -9000 },  // Airport #2: Offshore Island #2 (~286.5 km across ocean from AP1 — 10x!)
+  { dx: 548000,  dz: 144000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3: Offshore Island #3 (~403.6 km across ocean from AP2 — 10x!)
+  { dx: 848000,  dz: -196000, planetDx: -820000,  planetDz: -11000 }, // Airport #4: Offshore Island #4 (~453.4 km across ocean from AP3 — 10x!)
+  { dx: 1178000, dz: 134000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5: Offshore Island #5 (~466.7 km across ocean from AP4 — 10x!)
 ];
 const HARBOR_SCATTER_Z = [0, -180000, -380000, 200000, 420000, -580000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
@@ -183,7 +183,123 @@ export class LaunchScene {
     this.scene.add(this.sun, this.sun.target);
     this.hemi = new THREE.HemisphereLight(0x8899bb, 0x2a2418, 0.6);
     this.scene.add(this.hemi);
+    this.nightDirLight = new THREE.DirectionalLight(0xeef4ff, 0);
+    this.nightDirLight.position.set(140, 350, 128);
+    this.scene.add(this.nightDirLight, this.nightDirLight.target);
+    this.siteNightLights = [];
+    for (let i = 0; i < 4; i++) {
+      const pl = new THREE.PointLight(0xfff2dc, 0, 2200, 1.0);
+      pl.visible = false;
+      this.scene.add(pl);
+      this.siteNightLights.push(pl);
+    }
+    this.siteOverheadLight = new THREE.PointLight(0xdcebff, 0, 4600, 1.0);
+    this.siteOverheadLight.visible = false;
+    this.scene.add(this.siteOverheadLight);
     this.scene.fog = new THREE.FogExp2(0x9aa6b8, 5e-5);
+  }
+
+  updateNightSiteLighting(F = this.focus || this.player) {
+    if (!F || !this.nightDirLight || !this.siteNightLights) return;
+    const sunElev = this.sunDir ? this.sunDir.y : 1;
+    const nightAmt = THREE.MathUtils.clamp((0.22 - sunElev) / 0.30, 0, 1);
+    if (nightAmt <= 0.001) {
+      this.nightDirLight.intensity = 0;
+      for (const pl of this.siteNightLights) {
+        pl.intensity = 0;
+        pl.visible = false;
+      }
+      if (this.siteOverheadLight) {
+        this.siteOverheadLight.intensity = 0;
+        this.siteOverheadLight.visible = false;
+      }
+      return;
+    }
+
+    const fsx = F.sx || 0;
+    const fal = F.alt || 0;
+    const fsz = F.s?.z || 0;
+    const isEarth = F.ref === 'earth';
+    const padShown = isEarth && !!(this.pad && this.pad.visible);
+    const padDist = isEarth ? Math.hypot(fsx, fsz) : Infinity;
+    const nearPad = padShown && padDist < 4800 && fal < 4000
+      ? (1 - THREE.MathUtils.smoothstep(padDist, 1800, 4800)) * (1 - THREE.MathUtils.smoothstep(fal, 1600, 4000))
+      : 0;
+
+    const hasAp = this.hasSurfaceAirports(F.ref);
+    const apAnchor = hasAp ? this.getNearestAirportAnchor(F.ref, fsx, fsz) : null;
+    const apDx = apAnchor ? this.bodyDeltaX(F.ref, fsx, apAnchor.sx + 1040) : Infinity;
+    const apDz = apAnchor ? (fsz - (apAnchor.sz || 0)) : Infinity;
+    const apDist = apAnchor ? Math.hypot(apDx, apDz) : Infinity;
+    const apRelAlt = apAnchor ? Math.abs(fal - (apAnchor.h || 0)) : Infinity;
+    const nearAirport = apAnchor && apDist < 7500 && apRelAlt < 4500
+      ? (1 - THREE.MathUtils.smoothstep(apDist, 3200, 7500)) * (1 - THREE.MathUtils.smoothstep(apRelAlt, 1800, 4500))
+      : 0;
+
+    const siteBoost = Math.max(nearPad, nearAirport);
+    this.nightDirLight.intensity = nightAmt * (0.38 + 2.35 * siteBoost);
+    if (siteBoost > 0.01) {
+      const boost = nightAmt * siteBoost;
+      this.hemi.color.r = Math.max(this.hemi.color.r, 0.44 * boost);
+      this.hemi.color.g = Math.max(this.hemi.color.g, 0.48 * boost);
+      this.hemi.color.b = Math.max(this.hemi.color.b, 0.58 * boost);
+      this.hemi.groundColor.r = Math.max(this.hemi.groundColor.r, 0.24 * boost);
+      this.hemi.groundColor.g = Math.max(this.hemi.groundColor.g, 0.22 * boost);
+      this.hemi.groundColor.b = Math.max(this.hemi.groundColor.b, 0.19 * boost);
+      this.hemi.intensity = Math.max(this.hemi.intensity, 0.9 + 0.65 * boost);
+    }
+
+    if (nearPad >= nearAirport && nearPad > 0.01) {
+      const pInt = 185 * nightAmt * nearPad;
+      for (let i = 0; i < 4; i++) {
+        const a = i * Math.PI / 2 + 0.4;
+        const pl = this.siteNightLights[i];
+        pl.position.set(Math.cos(a) * 95 - fsx, 42 - fal, Math.sin(a) * 95 - fsz);
+        pl.distance = 1800;
+        pl.intensity = pInt;
+        pl.visible = true;
+      }
+      if (this.siteOverheadLight) {
+        this.siteOverheadLight.position.set(-fsx, 240 - fal, -fsz);
+        this.siteOverheadLight.distance = 3800;
+        this.siteOverheadLight.intensity = 420 * nightAmt * nearPad;
+        this.siteOverheadLight.visible = true;
+      }
+    } else if (nearAirport > 0.01 && apAnchor) {
+      const wx = isEarth ? apAnchor.sx : (fsx + this.bodyDeltaX(F.ref, apAnchor.sx, fsx));
+      const wy = apAnchor.h || 0;
+      const wz = apAnchor.sz || 0;
+      const spots = [
+        [75, 36, -68],
+        [420, 38, 34],
+        [1140, 38, 34],
+        [1880, 38, 34],
+      ];
+      const aInt = 210 * nightAmt * nearAirport;
+      for (let i = 0; i < 4; i++) {
+        const pl = this.siteNightLights[i];
+        const [lx, ly, lz] = spots[i];
+        pl.position.set(wx + lx - fsx, wy + ly - fal, wz + lz - fsz);
+        pl.distance = 2400;
+        pl.intensity = aInt;
+        pl.visible = true;
+      }
+      if (this.siteOverheadLight) {
+        this.siteOverheadLight.position.set(wx + 1040 - fsx, wy + 280 - fal, wz - fsz);
+        this.siteOverheadLight.distance = 5200;
+        this.siteOverheadLight.intensity = 480 * nightAmt * nearAirport;
+        this.siteOverheadLight.visible = true;
+      }
+    } else {
+      for (const pl of this.siteNightLights) {
+        pl.intensity = 0;
+        pl.visible = false;
+      }
+      if (this.siteOverheadLight) {
+        this.siteOverheadLight.intensity = 0;
+        this.siteOverheadLight.visible = false;
+      }
+    }
   }
 
   updateAtmosphere(alt) {
@@ -283,6 +399,26 @@ export class LaunchScene {
     return best;
   }
 
+  singleAirportIslandDist(dx, dz, seed) {
+    const qx = Math.max(Math.abs(dx) - 1450.0, 0.0);
+    const qz = Math.max(Math.abs(dz) - 420.0, 0.0);
+    const core = Math.hypot(qx, qz) + Math.min(Math.max(Math.abs(dx) - 1450.0, Math.abs(dz) - 420.0), 0.0) - 1150.0;
+    const wob = Math.sin(dx * 0.0017 + seed * 1.7) * 185.0
+      + Math.cos(dz * 0.0023 - seed * 2.3) * 145.0
+      + Math.sin((dx - dz) * 0.0013 + seed * 0.9) * 95.0;
+    return core + wob;
+  }
+
+  earthAirportIslandDist(sx, sz) {
+    let best = Infinity;
+    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+      const off = AIRPORT_SCATTER_OFFSETS[i];
+      const d = this.singleAirportIslandDist(sx - (off.dx + 1120.0), sz - (off.dz - 20.0), i + 1.0);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
   trigFbmJS(px, py, seed, oct = 3) {
     const fract = (v) => v - Math.floor(v);
     const TAU = 6.283185307179586;
@@ -327,7 +463,10 @@ export class LaunchScene {
     };
     const seed = this.groundWaveSeed || 0.0;
     const cX = this.earthCoastX(sz);
-    const landMask = smooth(cX - 20.0, cX - 260.0, sx);
+    const islDist = this.earthAirportIslandDist(sx, sz);
+    const mainlandMask = smooth(cX - 20.0, cX - 260.0, sx) * smooth(-1495000.0, -1470000.0, sx);
+    const islMask = smooth(-20.0, -260.0, islDist);
+    const landMask = Math.max(mainlandMask, islMask);
     const padFlat = 1.0 - showPad * smooth(150.0, 95.0, Math.hypot(sx, sz));
     const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
     const boxDist = this.earthAirportBoxDist(sx, sz);
@@ -401,6 +540,22 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
 }).join('\n')}
         return min(d0, min(min(d1, d2), min(d3, d4)));
       }
+      float singleAirportIslandDist(float dx, float dz, float seed) {
+        vec2 q = abs(vec2(dx, dz)) - vec2(1450.0, 420.0);
+        float core = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 1150.0;
+        float wob = sin(dx * 0.0017 + seed * 1.7) * 185.0
+                  + cos(dz * 0.0023 - seed * 2.3) * 145.0
+                  + sin((dx - dz) * 0.0013 + seed * 0.9) * 95.0;
+        return core + wob;
+      }
+      float airportIslandDistGLSL(float sx, float sz) {
+${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
+  const cx = (off.dx + 1120.0).toFixed(1);
+  const cz = (off.dz - 20.0).toFixed(1);
+  return `        float isl${i} = singleAirportIslandDist(sx - (${cx}), sz - (${cz}), ${(i + 1).toFixed(1)});`;
+}).join('\n')}
+        return min(isl0, min(min(isl1, isl2), min(isl3, isl4)));
+      }
       float singleAirportPavedDist(float lx, float lz) {
         float dRwy = max(max(-170.0 - lx, lx - 2250.0), abs(lz) - 24.0);
         float dApr = max(max(-120.0 - lx, lx - 260.0), max(-107.0 - lz, lz + 21.0));
@@ -421,7 +576,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         float sx = p.x;
         float sz = -p.y;
         float cX = coastXGLSL(p.y);
-        float landMask = smoothstep(cX - 20.0, cX - 260.0, sx);
+        float mainlandMask = smoothstep(cX - 20.0, cX - 260.0, sx) * smoothstep(-1495000.0, -1470000.0, sx);
+        float islMask = smoothstep(-20.0, -260.0, airportIslandDistGLSL(sx, sz));
+        float landMask = max(mainlandMask, islMask);
         float padFlat = 1.0 - showPad * smoothstep(150.0, 95.0, length(vec2(sx, sz)));
         float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
         float boxDist = airportBoxDistGLSL(sx, sz);
@@ -474,11 +631,14 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
-          // Cape Canaveral, Florida & Atlantic coastline with bays and peninsulas extending North/South
+          // Cape Canaveral, Florida & Atlantic coastline + 5 offshore ocean airport islands
           float coast = coastXGLSL(p.y);
-          float land = max(smoothstep(coast + 30.0, coast - 30.0, p.x), smoothstep(59950.0, 60050.0, p.x));
-          // Continental west coast across the mainland at far -X (accommodating 10x scattered airports out past -1,174 km)
-          land *= smoothstep(-1495000.0, -1470000.0, p.x);
+          float mainland = smoothstep(coast + 30.0, coast - 30.0, p.x) * smoothstep(-1495000.0, -1470000.0, p.x);
+          float islDist = airportIslandDistGLSL(p.x, -p.y);
+          float islLand = smoothstep(30.0, -30.0, islDist);
+          float land = max(mainland, islLand);
+          float inlandMain = min(coast - p.x, p.x + 1482500.0);
+          float inlandDist = max(inlandMain, -islDist);
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
@@ -486,7 +646,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           grass = mix(grass, vec3(0.20, 0.18, 0.11), smoothstep(0.55, 0.72, n2) * 0.65);
           grass = mix(grass, vec3(0.04, 0.095, 0.035), smoothstep(0.6, 0.8, fbm3(vec3(p * 0.004, 8.0), 4)) * 0.8);
           vec3 sand = vec3(0.68, 0.61, 0.47);
-          float beach = smoothstep(coast - 15.0, coast - 180.0, p.x);
+          float beach = smoothstep(15.0, 180.0, inlandDist);
           vec3 landCol = mix(sand, grass, beach);
           // Banana River & Indian River Lagoon (Merritt Island / Cape Canaveral, Florida) + Everglades marshes
           float road = min(segDist(p, vec2(0.0), vec2(-1500.0, 2500.0)), segDist(p, vec2(-1500.0, 2500.0), vec2(-10500.0, 2600.0)));
@@ -496,7 +656,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 24000.0);
           float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 32000.0);
           float lagoon = max(
-            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, coast - 300.0),
+            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, coast - 300.0) * step(-1470000.0, p.x),
             max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
           ) * apDry;
           landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
@@ -506,12 +666,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           landCol = mix(landCol, vec3(0.4, 0.39, 0.37) * (0.85 + 0.3 * n2), pad);
           float ghShade = groundWaveHeight(p, uShowPad, uShowAirport);
           landCol *= (0.78 + 0.44 * n3) * (1.0 + ghShade * 0.08);
-          float distOff = clamp((p.x - coast) / 4000.0, 0.0, 1.0);
-          vec3 ocean = mix(vec3(0.025, 0.11, 0.13), vec3(0.008, 0.035, 0.075), distOff);
+          float seaDist = max(0.0, -inlandDist);
+          float distOff = clamp(seaDist / 3200.0, 0.0, 1.0);
+          vec3 ocean = mix(vec3(0.032, 0.145, 0.175), vec3(0.008, 0.035, 0.075), distOff);
           float oceanMask = max(1.0 - land, lagoon);
           vec3 col = mix(landCol, ocean, oceanMask);
-          // surf line
-          col = mix(col, vec3(0.75), smoothstep(30.0, 0.0, abs(p.x - coast - 25.0 - sin(p.y * 0.01 + uTime) * 6.0)) * 0.5 * land);
+          // surf line around both mainland coast and all 5 offshore airport islands
+          float shoreSigned = -inlandDist;
+          float surf = smoothstep(28.0, 0.0, abs(shoreSigned - 20.0 - sin((p.x * 0.6 + p.y) * 0.01 + uTime) * 6.0)) * smoothstep(58.0, 4.0, shoreSigned);
+          col = mix(col, vec3(0.80), surf * 0.55);
           vec4 diffuseColor = vec4(col, opacity);
         `)
         .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.06, oceanMask);')
@@ -571,20 +734,22 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     let n = 0;
     for (let tries = 0; n < N && tries < N * 5; tries++) {
       let x, z;
-      if (tries % 3 === 0) {
+      const isIslandTree = tries % 3 === 0;
+      if (isIslandTree) {
         const ap = AIRPORT_SCATTER_OFFSETS[Math.floor(tries / 3) % AIRPORT_SCATTER_OFFSETS.length];
-        const ang = Math.random() * Math.PI * 2, dist = 180 + Math.pow(Math.random(), 0.72) * 2400;
-        x = ap.dx + 1040 + Math.cos(ang) * dist;
-        z = ap.dz + Math.sin(ang) * dist;
+        const ang = Math.random() * Math.PI * 2, dist = 180 + Math.pow(Math.random(), 0.72) * 2350;
+        x = ap.dx + 1120 + Math.cos(ang) * dist;
+        z = ap.dz - 20 + Math.sin(ang) * dist;
+        if (this.earthAirportIslandDist(x, z) > -170.0) continue; // keep trees well inside each island above sandy beach
       } else {
         const ang = Math.random() * Math.PI * 2, dist = 160 + Math.pow(Math.random(), 0.7) * 2800;
         x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
+        if (x > 1800) continue;                    // near mainland coast/ocean
       }
-      if (x > 1800) continue;                      // near coast/ocean
       if (this.earthAirportBoxDist(x, z) < 35.0) continue; // keep all 5 scattered airport runways & aprons clear
-      if (x <= 0 && Math.abs(z) < 22) continue;    // keep clear inland Rover corridor heading west
-      if (Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
-      if (this.isLagoonWater(x, z)) continue;      // keep inland lagoons clear of trees
+      if (!isIslandTree && x <= 0 && Math.abs(z) < 22) continue; // keep clear inland Rover corridor heading west
+      if (!isIslandTree && Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
+      if (!isIslandTree && this.isLagoonWater(x, z)) continue; // keep inland lagoons clear of trees
       const cluster = TX.fbm(x / 300 + 50, z / 300 + 50, 1000, 3, 7);
       if (cluster < 0.48) continue;
       const sc = 0.7 + Math.random() * 0.9;
@@ -729,13 +894,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     this.buildingColliders.push(wtCol);
     this.waveObjects.push({ obj: wt, wx: 140, wz: -170, baseY: 0, waveY: wtY, collider: wtCol, colH: 64 });
     // flood light poles
-    const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff1d6, emissiveIntensity: 25 });
-    for (let i = 0; i < 4; i++) {
-      const a = i * Math.PI / 2 + 0.4;
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 40, 8), mastMat);
-      pole.position.set(Math.cos(a) * 95, 20, Math.sin(a) * 95); pole.castShadow = true;
-      const head = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.6), headMat);
-      head.position.set(Math.cos(a) * 95, 40, Math.sin(a) * 95); head.lookAt(0, 20, 0);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff5e4, emissiveIntensity: 38 });
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI * 2) / 6 + 0.35;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.44, 42, 8), mastMat);
+      pole.position.set(Math.cos(a) * 95, 21, Math.sin(a) * 95); pole.castShadow = true;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.4, 0.7), headMat);
+      head.position.set(Math.cos(a) * 95, 42, Math.sin(a) * 95); head.lookAt(0, 18, 0);
       pad.add(pole, head);
     }
     // Vehicle Assembly Building (far)
@@ -866,7 +1031,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     });
     const foundMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.25 });
     const mastMat = new THREE.MeshStandardMaterial({ color: 0xd9dbe0, metalness: 0.5, roughness: 0.45 });
-    const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff1d6, emissiveIntensity: 25 });
+    const headMat = new THREE.MeshStandardMaterial({ color: 0, emissive: 0xfff5e4, emissiveIntensity: 38 });
     const whiteLineMat = new THREE.MeshBasicMaterial({
       color: 0xf4f6fa,
       polygonOffset: true,
@@ -903,10 +1068,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     const edgeLightGeo = new THREE.SphereGeometry(0.28, 8, 8);
     const stemGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.45, 6);
     const stemMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
-    const whiteLightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff7ed, emissiveIntensity: 8 });
-    const amberLightMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: 8 });
-    const greenLightMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x22c55e, emissiveIntensity: 10 });
-    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 10 });
+    const whiteLightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff7ed, emissiveIntensity: 13 });
+    const amberLightMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: 13 });
+    const greenLightMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x22c55e, emissiveIntensity: 15 });
+    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 15 });
 
     const hangarWallMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.35, roughness: 0.55 });
     const hangarRoofMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.45, roughness: 0.45 });
@@ -1172,12 +1337,21 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       wsGroup.add(sockPivot);
       subAirport.add(wsGroup);
 
-      for (const lx of [-85, 35, 195]) {
+      for (const lx of [-85, 35, 195, 420, 740]) {
         const pole = new THREE.Mesh(poleGeo, mastMat);
         pole.position.set(lx, 14, -104);
         pole.castShadow = true;
         const head = new THREE.Mesh(headGeo, headMat);
         head.position.set(lx, 28, -104);
+        head.lookAt(lx, 0, 0);
+        subAirport.add(pole, head);
+      }
+      for (const lx of [120, 620, 1160, 1700, 2140]) {
+        const pole = new THREE.Mesh(poleGeo, mastMat);
+        pole.position.set(lx, 14, 38);
+        pole.castShadow = true;
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.set(lx, 28, 38);
         head.lookAt(lx, 0, 0);
         subAirport.add(pole, head);
       }
@@ -1559,6 +1733,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       this.keys[k] = true;
       if (e.code === 'Space') {
         e.preventDefault();
+        if (this.missionSuccessStopped) return;
         if (this.phase === 'ready') {
           this.startCountdown();
         } else if (this.player && this.player.landed && (!this.player.engineOn || this.throttle <= 0.01)) {
@@ -1592,9 +1767,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       if (k === 'p') this.toggleDeploy();
       if (k === 'e') { e.preventDefault(); audio.init(); this.toggleUfoEngineMode(); }
       if (k === 'v' || e.key === 'Enter') { e.preventDefault(); audio.init(); this.fireWeapons(); }
-      if (k === 'z' && !this.docked) this.throttle = 1;
+      if (k === 'z' && !this.docked && !this.missionSuccessStopped) this.throttle = 1;
       if (k === 'x') this.throttle = 0;
-      if (k === '.') this.setWarp(1);
+      if (k === '.' && !this.missionSuccessStopped) this.setWarp(1);
       if (k === ',') this.setWarp(-1);
       if (e.key === 'Escape') {
         const tpModal = $('teleport-modal');
@@ -2807,6 +2982,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     // Reset flight & mission UI states
     this.program = null;
     this.programDone = false;
+    this.missionSuccessStopped = false;
+    this.missionStopAnchor = null;
+    P._guidedTargetAlt = null;
     this.autopilotOutcomeRolled = false;
     this.autopilotWillFail = false;
     this.autopilotActiveSec = 0;
@@ -3886,6 +4064,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     this.maxAlt = 0; this.maxVel = 0; this.maxG = 1; this.maxQ = 0; this.maxQPassed = false;
     this.flags = {};
     this.missionCompletedMarked = false;
+    this.missionSuccessStopped = false;
+    this.missionStopAnchor = null;
     this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     if (this.completeTimer) clearTimeout(this.completeTimer);
@@ -4112,7 +4292,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   }
 
   toggleAutopilot() {
-    if (!this.player || this.player.crashed || this.docked) return;
+    if (!this.player || this.player.crashed || this.docked || this.missionSuccessStopped) return;
     if (!this.mission || this.mission.id === 'free' || this.mission.noAutopilot) {
       this.program = null;
       this.autoShootAliens = false;
@@ -4139,6 +4319,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     if (this.program || this.autoShootAliens) {
       this.program = null;
       this.autoShootAliens = false;
+      this.player._guidedTargetAlt = null;
       this.player.ctl.targetBeta = null;
       this.player.ctl.rcs = [0, 0, 0];
       this.holdAttitude();
@@ -4602,9 +4783,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       }
     }
     const dynCoastBase = this.earthCoastX(sz) - 100;
+    const islDist = this.earthAirportIslandDist(sx, sz);
     if (isPlaneMode) {
       if (this.shipX !== null && Math.abs(sx - this.shipX) < 44) return { h: 3.0, water: false, site: 'ship' };
-      if (sx > dynCoastBase) return { h: 0, water: true, site: 'sea' };
+      const onIsland = islDist <= 0.0;
+      if ((sx > dynCoastBase || sx < -1482500) && !onIsland) return { h: 0, water: true, site: 'sea' };
       return { h: this.earthGroundWave(sx, sz, 0.0, 1.0), water: false, site: 'land' };
     }
     if (!isRoverMode && !isBoatMode) {
@@ -4626,8 +4809,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         }
       }
     }
-    if (sx > coastLimit && (!isRoverMode || sx < 60000)) return { h: 0, water: true, site: 'sea' };
-    if (!isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
+    const islLimit = isRoverMode ? -28.0 : isBoatMode ? 22.0 : 0.0;
+    const onIsland = islDist <= islLimit;
+    if ((sx > coastLimit || sx < -1482500) && !onIsland) return { h: 0, water: true, site: 'sea' };
+    if (!onIsland && !isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
     return { h: this.earthGroundWave(sx, sz, isRoverMode ? 0.0 : 1.0, 0.0), water: false, site: 'land' };
   }
 
@@ -5111,6 +5296,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     // mission completion
     const objs = this.mission.objectives;
     if (objs.length && objs.every((o) => F[o.id])) {
+      this.stopVesselOnMissionSuccess();
       if (!this.missionCompletedMarked) {
         this.missionCompletedMarked = true;
         markMissionCompleted(this.mission.id);
@@ -5355,7 +5541,115 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     return reasons;
   }
 
+  stopVesselOnMissionSuccess() {
+    if (this.missionSuccessStopped) return;
+    const P = this.player;
+    if (!P || P.crashed || P.dead) return;
+    this.missionSuccessStopped = true;
+    this.program = null;
+    this.programDone = true;
+    this.autoShootAliens = false;
+    this.firingHeld = false;
+    this.throttle = 0;
+    this.userWarp = 1;
+    this.warp = 1;
+    this.reqWarpNext = 1;
+    this.reqWarpPrev = 1;
+    P._warp = 1;
+    P._guidedTargetAlt = null;
+    P.throttle = 0;
+    P.engineOn = false;
+    P.coreFiring = false;
+    P.boosterFiring = false;
+    P.thrustNow = 0;
+    P.accelNow = 0;
+    P.qNow = 0;
+    P.omega = 0;
+    P.turnYawRate = 0;
+    P.bank = 0;
+    P.groundSpeed = 0;
+    P.waterSpeed = 0;
+    P.planeRollSpeed = 0;
+    if (P.ctl) {
+      P.ctl.input = 0;
+      P.ctl.drive = 0;
+      P.ctl.rcs = [0, 0, 0];
+      P.ctl.targetBeta = null;
+    }
+    audio.silenceEngine();
+    if (this.docked) {
+      this.missionStopAnchor = null;
+      return;
+    }
+    if (P.landed || P.clamped) {
+      const L = P.landed || P.clampSpot;
+      if (L) {
+        P.placeOnSurface(L.body || P.ref, L.sx ?? P.sx, L.h ?? P.alt, this.simT, P.beta);
+        if (L.sz !== undefined) {
+          P.s.z = L.sz;
+          P.updateFrame(this.simT);
+        }
+      }
+      P.vSurf.e = 0;
+      P.vSurf.u = 0;
+      P.vSurf.z = 0;
+      P.speedSurf = 0;
+      this.missionStopAnchor = { mode: 'landed' };
+      return;
+    }
+    const B = P.body || bodyInfo(P.ref);
+    const inAtmOrPlane = P.isPlane || ((B.atm || 0) > 0 && P.alt < B.atm);
+    if (inAtmOrPlane) {
+      const keepZ = P.s.z || 0;
+      const keepBeta = P.isPlane ? wrapPi(P.phi + Math.PI / 2) : P.beta;
+      const betaOff = wrapPi(keepBeta - P.phi);
+      this.missionStopAnchor = {
+        mode: 'air',
+        body: P.ref,
+        sx: P.sx || 0,
+        sz: keepZ,
+        alt: P.alt,
+        betaOff,
+      };
+      P.placeOnSurface(P.ref, P.sx || 0, P.alt, this.simT, keepBeta);
+      if (keepZ) {
+        P.s.z = keepZ;
+        P.updateFrame(this.simT);
+      }
+      P.vSurf.e = 0;
+      P.vSurf.u = 0;
+      P.vSurf.z = 0;
+      P.speedSurf = 0;
+    } else {
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState(P.ref, this.simT, bp, bv);
+      this.missionStopAnchor = {
+        mode: 'space',
+        body: P.ref,
+        dx: P.s.x - bp.x,
+        dy: P.s.y - bp.y,
+        dz: (P.s.z || 0) - (bp.z || 0),
+        beta: P.beta,
+      };
+      P.s.vx = bv.x;
+      P.s.vy = bv.y;
+      P.s.vz = bv.z || 0;
+      P.updateFrame(this.simT);
+      P.vOrb.e = 0;
+      P.vOrb.u = 0;
+      P.vSurf.e = 0;
+      P.vSurf.u = 0;
+      P.vSurf.z = 0;
+      P.speedOrb = 0;
+      P.speedSurf = 0;
+    }
+    this.holdAttitude();
+  }
+
   showResult(success, sub) {
+    if (success && this.mission && this.mission.id !== 'free') {
+      this.stopVesselOnMissionSuccess();
+    }
     if (this.resultShown) return;
     this.resultShown = true;
     if (success && this.mission && this.mission.id !== 'free') {
@@ -5409,7 +5703,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
 
   // =================================================================== SIMULATION
   getAlienFuelDrainInfo(v) {
-    if (!v || v !== this.player || v.clamped || this.docked) {
+    if (!v || v !== this.player || v.clamped || this.docked || this.missionSuccessStopped) {
       return { count: 0, drainMul: 1.0 };
     }
     const list = this.aliens || [];
@@ -5437,7 +5731,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   }
 
   effectiveWarp() {
-    if (this.phase === 'crashed' || this.player?.crashed) return 1;
+    if (this.phase === 'crashed' || this.player?.crashed || this.missionSuccessStopped) return 1;
     let w = this.program
       ? (this.reqWarpPrev === 1 && this.player?.engineOn ? 1 : Math.max(this.reqWarpPrev || 1, this.userWarp || 1))
       : this.userWarp;
@@ -5457,7 +5751,20 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       cap = Math.min(cap, 1000);
     }
     if (this.player && this.player.isPlane) {
-      cap = Math.min(cap, 1000);
+      if ((this.player.landed || this.player.clamped) && this.player.engineOn && this.player.throttle > 0.01) {
+        cap = Math.min(cap, 10);
+      } else if (this.program instanceof PlaneAirportHopProgram) {
+        const tgt = this.program._targetSite;
+        if (tgt) {
+          const d = Math.hypot(
+            this.bodyDeltaX(this.player.ref, tgt.sx + 220, this.player.sx || 0),
+            (tgt.sz || 0) - (this.player.s?.z || 0)
+          );
+          cap = Math.min(cap, d > 60000 ? 1500 : d > 20000 ? 500 : d > 6000 ? 80 : d > 2000 ? 10 : 2);
+        } else {
+          cap = Math.min(cap, 10);
+        }
+      }
     }
     return Math.min(w, cap);
   }
@@ -5484,6 +5791,16 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   applyControls(h) {
     const v = this.player;
     if (!v || v.crashed) return;
+    if (this.missionSuccessStopped) {
+      v.ctl.input = 0;
+      v.ctl.drive = 0;
+      v.ctl.rcs = [0, 0, 0];
+      v.ctl.targetBeta = null;
+      this.throttle = 0;
+      v.throttle = 0;
+      v.engineOn = false;
+      return;
+    }
     const kb = this.keys;
     const input = (kb['d'] || kb['arrowright'] ? 1 : 0) - (kb['a'] || kb['arrowleft'] ? 1 : 0);
     v.ctl.input = input;
@@ -5857,7 +6174,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         const r = this.program.update(P, this.sc, h);
         this.checkAutoStage(P);
         if (r === 'done' && !this.programDone) {
-          this.programDone = true; this.program = null; P.ctl.targetBeta = null; this.holdAttitude();
+          this.programDone = true; this.program = null; P._guidedTargetAlt = null; P.ctl.targetBeta = null; this.holdAttitude();
           if (!P.isPlane) {
             P.engineOn = false;
             if (P.isBoat) { this.throttle = 0; P.throttle = 0; }
@@ -5877,6 +6194,63 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         v.legsT += THREE.MathUtils.clamp(v.legsTarget - v.legsT, -dRate, dRate);
         v.finsT += THREE.MathUtils.clamp(v.finsTarget - v.finsT, -h * 1.5, h * 1.5);
         continue;
+      }
+      if (v === P && this.missionSuccessStopped && !v.crashed) {
+        v.throttle = 0;
+        v.engineOn = false;
+        v.coreFiring = false;
+        v.boosterFiring = false;
+        v.thrustNow = 0;
+        v.accelNow = 0;
+        v.qNow = 0;
+        v.omega = 0;
+        v.turnYawRate = 0;
+        v.bank = 0;
+        v.groundSpeed = 0;
+        v.waterSpeed = 0;
+        v.planeRollSpeed = 0;
+        const anc = this.missionStopAnchor;
+        if (!v.landed && !v.clamped && anc && anc.mode === 'air') {
+          const dRate = h * 0.6;
+          v.legsT += THREE.MathUtils.clamp(v.legsTarget - v.legsT, -dRate, dRate);
+          v.finsT += THREE.MathUtils.clamp(v.finsTarget - v.finsT, -h * 1.5, h * 1.5);
+          const B = bodyInfo(anc.body);
+          const psi = anc.sx / B.R + bodyRotation(anc.body, T + h);
+          v.placeOnSurface(anc.body, anc.sx, anc.alt, T + h, wrapPi(psi + (anc.betaOff || 0)));
+          if (anc.sz) {
+            v.s.z = anc.sz;
+            v.updateFrame(T + h);
+          }
+          v.vSurf.e = 0;
+          v.vSurf.u = 0;
+          v.vSurf.z = 0;
+          v.speedSurf = 0;
+          continue;
+        }
+        if (!v.landed && !v.clamped && anc && anc.mode === 'space') {
+          const dRate = h * 0.6;
+          v.legsT += THREE.MathUtils.clamp(v.legsTarget - v.legsT, -dRate, dRate);
+          v.finsT += THREE.MathUtils.clamp(v.finsTarget - v.finsT, -h * 1.5, h * 1.5);
+          const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+          bodyState(anc.body, T + h, bp, bv);
+          v.s.x = bp.x + anc.dx;
+          v.s.y = bp.y + anc.dy;
+          v.s.z = (bp.z || 0) + anc.dz;
+          v.s.vx = bv.x;
+          v.s.vy = bv.y;
+          v.s.vz = bv.z || 0;
+          v.beta = anc.beta;
+          v.updateFrame(T + h);
+          v.syncDir3DFromBeta();
+          v.vOrb.e = 0;
+          v.vOrb.u = 0;
+          v.vSurf.e = 0;
+          v.vSurf.u = 0;
+          v.vSurf.z = 0;
+          v.speedOrb = 0;
+          v.speedSurf = 0;
+          continue;
+        }
       }
       v.step(h, T, this.env);
       if (v !== P && !v.rec && !v.crashed && !v.landed) {
@@ -5901,7 +6275,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     const t = this.time;
     if (!this.rocket || !this.player) return;
     const kb = this.keys;
-    if (!this.docked) {
+    if (!this.docked && !this.missionSuccessStopped) {
       if (kb['shift'] || (this.player?.isPlane && this.player?.landed && (kb['w'] || kb['arrowup']))) {
         this.throttle = Math.min(1, this.throttle + dt * 0.8);
       }
@@ -5967,6 +6341,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       h = Math.min(h, remaining);
       this.simStep(h);
       remaining -= h;
+      if (this.phase === 'flight' && !P.crashed && !this.missionSuccessStopped && eff >= 50) {
+        this.checkObjectives();
+        if (this.missionSuccessStopped) break;
+      }
     }
     const simDt = dt * eff;
     this.reqWarpPrev = this.reqWarpNext || 1; this.reqWarpNext = null;
@@ -6162,6 +6540,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     const F = this.focus;
     const camAlt = Math.max(0, F.alt + this.camera.position.y);
     if (F.ref === 'earth') this.updateAtmosphere(camAlt); else this.spaceLighting();
+    this.updateNightSiteLighting(F);
     this.envForView(this.camera, F);
     this.updateEffects(dt, simDt);
     const pOrigin = this._pOrigin || (this._pOrigin = { x: 0, y: 0, z: 0 });
@@ -7878,6 +8257,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     }
     this.placeScene(F);
     this.scene.updateMatrixWorld(true);
+    this.updateNightSiteLighting(F);
     this.envForView(cam, F);
     if (F.ref === 'earth') this.scene.environmentIntensity = 1;
     const prevAuto = renderer.autoClear, prevShadow = renderer.shadowMap.autoUpdate;

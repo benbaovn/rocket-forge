@@ -1782,6 +1782,39 @@ export class LaunchScene {
     return null;
   }
 
+  getNextUnvisitedHarborSite(v = this.player) {
+    const curZ = v?.s ? (v.s.z || 0) : 0;
+    const curHId = this.getCurrentHarborId(v);
+    let bestSite = null;
+    let bestDist = Infinity;
+    for (let i = 0; i < HARBOR_SCATTER_Z.length; i++) {
+      const hId = `earth:${i}`;
+      if (hId === curHId || hId === this.lastVisitedHarborId) continue;
+      if (this.harborsVisitedSet && this.harborsVisitedSet.has(hId)) continue;
+      if (this.visitedHarborIds && this.visitedHarborIds.has(hId)) continue;
+      const hs = this.getHarborSite(i);
+      const dz = Math.abs(hs.sz - curZ);
+      if (dz < bestDist) {
+        bestDist = dz;
+        bestSite = hs;
+      }
+    }
+    if (bestSite) return bestSite;
+    for (let i = 0; i < HARBOR_SCATTER_Z.length; i++) {
+      const hId = `earth:${i}`;
+      if (hId === curHId || hId === this.lastVisitedHarborId) continue;
+      if (this.harborsVisitedSet && this.harborsVisitedSet.has(hId)) continue;
+      const hs = this.getHarborSite(i);
+      const dz = Math.abs(hs.sz - curZ);
+      if (dz < bestDist) {
+        bestDist = dz;
+        bestSite = hs;
+      }
+    }
+    const fallbackIdx = ((this.harborsVisitedSet ? this.harborsVisitedSet.size : 0) + 1) % HARBOR_SCATTER_Z.length;
+    return bestSite || this.getHarborSite(fallbackIdx);
+  }
+
   getAirportSite(bodyKey = 'earth', aIdx = 0) {
     const idx = Math.max(0, Math.min(AIRPORT_SCATTER_OFFSETS.length - 1, Number(aIdx) || 0));
     const sc = AIRPORT_SCATTER_OFFSETS[idx] || AIRPORT_SCATTER_OFFSETS[0];
@@ -3131,8 +3164,7 @@ export class LaunchScene {
           this.leftHarborForVoyage = false;
           const curHId = this.getCurrentHarborId(P) || `earth:${hIdx}`;
           this.lastVisitedHarborId = curHId;
-          if (!this.visitedHarborIds) this.visitedHarborIds = new Set();
-          this.visitedHarborIds.add(curHId);
+          this.visitedHarborIds = new Set([...(this.harborsVisitedSet || []), curHId]);
         }
         if (P.isPlane) {
           P.planeRollSpeed = 0;
@@ -3946,6 +3978,7 @@ export class LaunchScene {
       getAirportSite: (bKey, idx) => self.getAirportSite(bKey, idx),
       getHarborsVisitedCount: () => (self.harborsVisitedSet ? self.harborsVisitedSet.size : 0),
       getHarborSite: (idx) => self.getHarborSite(idx),
+      getNextHarborSite: (v) => self.getNextUnvisitedHarborSite(v),
       getCoastX: (sz) => self.earthCoastX(sz),
       get docked() { return self.docked; },
     };
@@ -4051,23 +4084,7 @@ export class LaunchScene {
       return;
     }
     const id = this.mission.id;
-    if (this.mission.category === 'plane') {
-      if (this.mission.targetAirports) {
-        this.throttle = 1;
-        this.player.throttle = 1;
-        this.player.engineOn = true;
-        this.program = new PlaneAirportHopProgram(this.mission.targetAirports);
-      } else {
-        const tb = this.mission.targetBody || 'earth';
-        if (this.player.ref !== tb && BODIES[tb]) {
-          this.teleportToBody(tb, 'surface');
-        }
-        this.throttle = 1;
-        this.player.throttle = 1;
-        this.player.engineOn = true;
-        this.program = new PlaneLoopProgram(tb, this.mission.targetDistKm || 1000);
-      }
-    } else if (this.mission.category === 'boat') {
+    if (this.player.isBoat || this.mission.category === 'boat') {
       this.throttle = 1;
       this.player.throttle = 1;
       this.player.engineOn = true;
@@ -4075,6 +4092,22 @@ export class LaunchScene {
         this.program = new BoatHarborHopProgram(this.mission.targetHarbors);
       } else {
         this.program = new BoatCruiseProgram(this.mission.targetDistKm || 500);
+      }
+    } else if (this.player.isPlane || this.mission.category === 'plane') {
+      if (this.mission.targetAirports) {
+        this.throttle = 1;
+        this.player.throttle = 1;
+        this.player.engineOn = true;
+        this.program = new PlaneAirportHopProgram(this.mission.targetAirports);
+      } else {
+        const tb = this.mission.targetBody || 'earth';
+        if (this.player.ref !== tb && BODIES[tb] && this.canPlaneTeleportTo(tb)) {
+          this.teleportToBody(tb, 'surface');
+        }
+        this.throttle = 1;
+        this.player.throttle = 1;
+        this.player.engineOn = true;
+        this.program = new PlaneLoopProgram(this.player.ref || 'earth', this.mission.targetDistKm || 1000);
       }
     } else if (id === 'iss') this.program = new RendezvousProgram(this.issOrbit, 85e3);
     else if (BODIES[id] && id !== 'earth' && id !== 'sun' && !BODIES[id].gasGiant) this.program = new MoonProgram(id);
@@ -4520,7 +4553,17 @@ export class LaunchScene {
     }
     if (this.shipX !== null && Math.abs(sx - this.shipX) < 44 && Math.abs(sz) < 28) return { h: 3.0, water: false, site: 'ship' };
     if (Math.abs(sx - LZ_X) < 44) return { h: 0.3, water: false, site: 'lz' };
-    const coastLimit = isRoverMode ? (dynCoastBase - 32) : isBoatMode ? (dynCoastBase + 22) : dynCoastBase;
+    let coastLimit = isRoverMode ? (dynCoastBase - 32) : isBoatMode ? (dynCoastBase + 22) : dynCoastBase;
+    if (isBoatMode) {
+      for (let i = 0; i < HARBOR_SCATTER_Z.length; i++) {
+        const hz = HARBOR_SCATTER_Z[i];
+        if (Math.abs(sz - hz) <= 156) {
+          const hs = this.getHarborSite(i);
+          coastLimit = Math.max(coastLimit, hs.seawallX + 3);
+          break;
+        }
+      }
+    }
     if (sx > coastLimit && (!isRoverMode || sx < 60000)) return { h: 0, water: true, site: 'sea' };
     if (!isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
     return { h: this.earthGroundWave(sx, sz, isRoverMode ? 0.0 : 1.0, 0.0), water: false, site: 'land' };

@@ -679,6 +679,7 @@ export class BoatCruiseProgram {
   constructor(targetDistKm = 500) {
     this.targetDistKm = targetDistKm;
     this.phase = 'cruise';
+    this.dirEast = true;
   }
   status() {
     const distKm = Math.min(this.targetDistKm, this._lastDistKm || 0);
@@ -693,15 +694,25 @@ export class BoatCruiseProgram {
       v.ctl.drive = 0;
       v.throttle = 0;
       v.engineOn = false;
+      v.waterSpeed = 0;
       return 'done';
+    }
+    const curX = v.sx || 0;
+    const curZ = v.s?.z || 0;
+    const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 100);
+    const minSafeX = Math.max(curCoastX + 3500, 8000);
+    if (curX < minSafeX) {
+      this.dirEast = true;
+    } else if (curX > 1200000) {
+      this.dirEast = false;
     }
     v.engineOn = true;
     v.throttle = 1.0;
     v.ctl.drive = 1;
     v.ctl.input = 0;
-    v.heading = 0;
+    v.heading = this.dirEast ? 0 : Math.PI;
     v.turnYawRate = 0;
-    sc.requestWarp(distKm > 0.3 ? 100 : 4);
+    sc.requestWarp(curX < curCoastX + 800 ? 4 : 100);
   }
 }
 
@@ -712,6 +723,9 @@ export class BoatHarborHopProgram {
   }
   status() {
     const doneCount = Math.min(this.targetHarbors, this._lastCount || 0);
+    if (this.phase === 'depart') {
+      return tr(`Đang rời cảng ra luồng biển sâu (${doneCount}/${this.targetHarbors})`, `Departing harbor to deep sea lane (${doneCount}/${this.targetHarbors})`);
+    }
     if (this.phase === 'dock') {
       return tr(`Đang cập cảng biển (${doneCount}/${this.targetHarbors})`, `Docking at harbor (${doneCount}/${this.targetHarbors})`);
     }
@@ -729,36 +743,64 @@ export class BoatHarborHopProgram {
       v.waterSpeed = 0;
       return 'done';
     }
-    const harborIdx = (doneCount + 1) % 6;
-    const site = sc.getHarborSite
-      ? sc.getHarborSite(harborIdx)
-      : { seawallX: sc.coastX + 115, berthX: sc.coastX + 160, sz: 0 };
+    const fallbackIdx = (doneCount + 1) % 6;
+    const site = sc.getNextHarborSite
+      ? sc.getNextHarborSite(v)
+      : sc.getHarborSite
+        ? sc.getHarborSite(fallbackIdx)
+        : { seawallX: sc.coastX + 115, berthX: sc.coastX + 160, sz: 0, coastX: sc.coastX + 100 };
     const curX = v.sx || 0;
     const curZ = v.s.z || 0;
     const zErr = site.sz - curZ;
-    const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 200);
+    const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 100);
+    let maxRouteCoastX = Math.max(curCoastX, site.coastX ?? site.berthX);
+    if (sc.getCoastX) {
+      const steps = 16;
+      for (let i = 1; i <= steps; i++) {
+        const zSample = curZ + (zErr * i) / steps;
+        const cx = sc.getCoastX(zSample);
+        if (cx > maxRouteCoastX) maxRouteCoastX = cx;
+      }
+    }
+    const safeOceanX = Math.max(maxRouteCoastX + 650, site.berthX + 550, 4600);
     let wpX;
     let wpZ;
-    if (Math.abs(zErr) > 55) {
-      this.phase = 'cruise';
-      const safeChannelX = Math.max(curCoastX + 220, site.berthX + 140, 4180);
-      wpX = curX < curCoastX + 140 ? curCoastX + 240 : safeChannelX;
-      wpZ = site.sz;
+    if (Math.abs(zErr) > 36) {
+      if (curX < safeOceanX - 80) {
+        // Phase 1: Sail straight East out of the harbor channel into deep open ocean BEFORE turning North/South
+        this.phase = 'depart';
+        wpX = safeOceanX + 60;
+        wpZ = curZ;
+      } else {
+        // Phase 2: Cruise North/South along the offshore deep-sea lane clear of all capes & peninsulas
+        this.phase = 'cruise';
+        wpX = safeOceanX;
+        wpZ = site.sz;
+      }
     } else {
+      // Phase 3: Aligned with target harbor mouth — approach straight West down the channel
       this.phase = 'dock';
-      wpX = site.berthX;
+      wpX = site.berthX + 25;
       wpZ = site.sz;
     }
     const dx = wpX - curX;
     const dz = wpZ - curZ;
     const dist = Math.hypot(dx, dz);
+    const isDocking = this.phase === 'dock';
+    const thr = isDocking ? Math.max(0.25, Math.min(1.0, dist / 220)) : 1.0;
     v.engineOn = true;
-    v.throttle = 1.0;
-    v.ctl.drive = 1;
+    v.throttle = thr;
+    v.ctl.drive = thr;
     v.ctl.input = 0;
-    v.heading = Math.atan2(-dz, dx);
+    v.heading = dist > 1 ? Math.atan2(-dz, dx) : Math.PI;
     v.turnYawRate = 0;
-    sc.requestWarp(dist > 3500 ? 10 : dist > 550 ? 4 : 2);
+    if (isDocking) {
+      sc.requestWarp(dist > 800 ? 4 : dist > 320 ? 2 : 1);
+    } else if (this.phase === 'depart') {
+      sc.requestWarp(curX < curCoastX + 450 ? 2 : 4);
+    } else {
+      sc.requestWarp(Math.abs(zErr) > 3500 ? 10 : Math.abs(zErr) > 600 ? 4 : 2);
+    }
   }
 }
 

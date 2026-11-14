@@ -239,7 +239,8 @@ export function sanitizeStack(stack) {
   for (let i = 0; i < cleaned.length - 1; i++) {
     if (
       (cleaned[i].type === 'shuttleNose' && cleaned[i + 1].type === 'shuttleOrbiter') ||
-      (cleaned[i].type === 'buranNose' && cleaned[i + 1].type === 'buranShuttle')
+      (cleaned[i].type === 'buranNose' && cleaned[i + 1].type === 'buranShuttle') ||
+      (cleaned[i].type === 'energiaNose' && cleaned[i + 1].type === 'energiaPolyus')
     ) {
       const noseIt = cleaned[i];
       const orbIt = cleaned[i + 1];
@@ -263,7 +264,7 @@ export const PRESETS = {
   'Titan IV (Tàu Voyager)': ['titan4Voyager+gunLaser+waterCannon+batteryGun', 'titan4Fairing', 'titan4Stage2', 'titan4Stage1'],
   'Tàu con thoi Space Shuttle': ['shuttleOrbiter+gunLaser+waterCannon+batteryGun', 'shuttleNose', 'shuttleSrb'],
   'Energia – Buran': ['buranShuttle+gunLaser+waterCannon+batteryGun', 'buranNose', 'buranEnergia'],
-  'Tên lửa Energia (Мир-2 / Polyus)': ['energiaNose+gunLaser+waterCannon+batteryGun', 'energiaPolyus', 'energiaCore'],
+  'Tên lửa Energia (Мир-2 / Polyus)': ['energiaPolyus+gunLaser+waterCannon+batteryGun', 'energiaNose', 'energiaCore'],
   'Proton-M (Nga)': ['protonFairing+gunLaser+waterCannon+batteryGun', 'protonStage3', 'protonStage2', 'protonStage1'],
   'Ariane 5 (James Webb)': ['ariane5Fairing+gunLaser+waterCannon+batteryGun', 'ariane5Stage2', 'ariane5Stage1'],
   'Atlas V (Sao Hỏa)': ['atlasVFairing+gunLaser+waterCannon+batteryGun', 'atlasVStage2', 'atlasVStage1'],
@@ -348,6 +349,8 @@ export function layout(stack) {
       (stack[i].type === 'buranShuttle' && stack[i + 1]?.type === 'buranNose')
     ) {
       out[i] = { item: stack[i], def, y: Math.max(0, out[i + 1].y - 11.85), height: effH, scale: partScale, index: i };
+    } else if (stack[i].type === 'energiaPolyus' && stack[i + 1]?.type === 'energiaNose') {
+      out[i] = { item: stack[i], def, y: Math.max(0, out[i + 1].y - 13.65), height: effH, scale: partScale, index: i };
     } else {
       out[i] = { item: stack[i], def, y, height: effH, scale: partScale, index: i };
       y += effH;
@@ -694,6 +697,14 @@ function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
       posZ: Math.sin(pl.angle) * effDist + 2.65 + (pl.offsetZ || 0),
     };
   }
+  if (itemType === 'energiaPolyus') {
+    const effDist = 1.14;
+    return {
+      posX: Math.cos(pl.angle) * effDist,
+      posY: pY + 11.0 + 11.5 * hFrac,
+      posZ: Math.sin(pl.angle) * effDist + 2.48 + (pl.offsetZ || 0),
+    };
+  }
   const isUfo = isUfoPart(itemType);
   const ufoRadRatio = isUfo ? ((PARTS[itemType]?.ufoRadius || 4.2) / 4.2) : 1;
   const ufoHScale = isUfo ? (PARTS[itemType]?.ufoScale || 1) : 1;
@@ -898,13 +909,14 @@ export function buildRocket(stack) {
           const isBoatHull = p.item.type === 'hullBoat';
           const isSailHull = p.item.type === 'hullSailBoat';
           const isOrbiter = p.item.type === 'shuttleOrbiter' || p.item.type === 'buranShuttle';
+          const isPolyus = p.item.type === 'energiaPolyus';
           const isUfo = isUfoPart(p.item.type);
           const ufoS = isUfo ? (p.def.ufoScale || 1) : 1;
           if (ufoS > 1) ao.scale.setScalar(1 + (ufoS - 1) * 0.5);
-          const effRad = isUfo ? ((p.def.ufoRadius || 4.2) - 0.12 * ufoS) : isOrbiter ? 1.68 : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist;
+          const effRad = isUfo ? ((p.def.ufoRadius || 4.2) - 0.12 * ufoS) : isOrbiter ? 1.68 : isPolyus ? 1.16 : isBoatHull ? 1.12 : isSailHull ? 0.94 : pl.dist;
           posX = Math.cos(pl.angle) * effRad;
-          posY = isUfo ? (p.y + 1.12 * ufoS) : isOrbiter ? (p.y + 13.5) : (p.y + partH * ((isBoatHull || isSailHull) ? 0.96 : 0.55));
-          posZ = Math.sin(pl.angle) * effRad + (isOrbiter ? 2.65 : 0) + (pl.offsetZ || 0);
+          posY = isUfo ? (p.y + 1.12 * ufoS) : isOrbiter ? (p.y + 13.5) : isPolyus ? (p.y + 16.5) : (p.y + partH * ((isBoatHull || isSailHull) ? 0.96 : 0.55));
+          posZ = Math.sin(pl.angle) * effRad + (isOrbiter ? 2.65 : isPolyus ? 2.48 : 0) + (pl.offsetZ || 0);
         } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
           const gc = getGunPlacementCoords(p.item.type, partH, p.y, a, pl);
           posX = gc.posX; posY = gc.posY; posZ = gc.posZ;

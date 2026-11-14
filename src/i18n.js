@@ -318,17 +318,17 @@ export const PART_I18N = {
     vi: { name: 'Đáy Energia & 4 Tên Lửa Đẩy Phụ Zenit (Buran · Tầng 1)', cat: 'Động cơ', desc: 'Phần đáy thân lõi Energia với 4 siêu động cơ RD-0120 ở tâm kèm trọn bộ 4 tên lửa đẩy phụ Zenit (Block A · cụm động cơ RD-170) ốp khí động xám xanh tách ra đầu tiên ở Tầng 1' },
     en: { name: 'Lower Energia Core & 4× Zenit Strap-On Boosters (Buran · Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 central RD-0120 cryogenic engines & all 4 full-height Zenit (Block A) strap-on boosters with RD-170 clusters separating first at Stage 1' },
   },
-  energiaNose: {
-    vi: { name: 'Chóp Mũi Trắng ЭНЕРГИЯ & Đai Caro (Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi trắng của tên lửa siêu nặng Energia in chữ đỏ ЭНЕРГИЯ, đai gân xám in 2 ô vuông caro đen + dù hạ cánh' },
-    en: { name: 'Energia White Nose Cone ("ЭНЕРГИЯ") & Checker Collar (Stage 3)', cat: 'Command & Nose', desc: 'White Energia nose cone with button tip, red ЭНЕРГИЯ markings, ribbed grey collar with 2 staggered black squares + parachutes' },
-  },
   energiaPolyus: {
-    vi: { name: 'Trạm Vũ Trụ МИР-2 (Polyus) & Thân Giữa Energia (Tầng 2)', cat: 'Nhiên liệu', desc: 'Tàu/Trạm chiến đấu quỹ đạo Polyus (МИР-2) sơn đen tuyền gắn lưng Energia kèm 2 bình phụ bên hông, cổ tản nhiệt kẻ sọc bạc & dù hạ cánh' },
-    en: { name: 'Polyus ("МИР-2") Orbital Spacecraft & Mid Energia Core (Stage 2)', cat: 'Fuel Tanks', desc: 'Matte-black Polyus (МИР-2) spacecraft mounted piggyback on Energia with conical nose, white МИР-2 lettering, side pods & ribbed silver radiator' },
+    vi: { name: 'Trạm Vũ Trụ Đen Polyus (МИР-2 · Tầng 3 – Cuối)', cat: 'Đầu', desc: 'Tàu/Trạm chiến đấu laser quỹ đạo Polyus (Skif-DM · МИР-2, Tầng 3 – Cuối, tách ra bay độc lập sau khi Tầng 2 Energia tắt máy) sơn đen tuyền với chóp nón nhọn, chữ trắng МИР-2, 2 bình phụ bên hông, cổ tản nhiệt kẻ sọc bạc, động cơ quỹ đạo & dù hạ cánh' },
+    en: { name: 'Matte-Black Polyus ("МИР-2" · Stage 3 – Final)', cat: 'Command & Nose', desc: 'Standalone matte-black Polyus / Skif-DM ("МИР-2") orbital spacecraft (Stage 3 – Final, separates cleanly after Energia Stage 2 cutoff) with conical nose, white МИР-2 markings, side pods, ribbed silver radiator, orbital engines & parachutes' },
+  },
+  energiaNose: {
+    vi: { name: 'Thân Chính & Chóp Mũi Trắng ЭНЕРГИЯ (Tầng 2)', cat: 'Nhiên liệu', desc: 'Thân lõi trung tâm tên lửa siêu nặng Energia (Block Ts · Tầng 2), khung giằng đỡ trạm Polyus, đai gân xám in 2 ô vuông caro đen và chóp mũi trắng in chữ đỏ ЭНЕРГИЯ (tách bỏ sau khi đưa Polyus lên cận quỹ đạo)' },
+    en: { name: 'Energia Central Core & White "ЭНЕРГИЯ" Nose (Stage 2)', cat: 'Fuel Tanks', desc: 'Energia central core upper barrel (Block Ts · Stage 2), Polyus piggyback support struts, ribbed grey collar with 2 staggered black squares & white nose cone with red ЭНЕРГИЯ markings' },
   },
   energiaCore: {
-    vi: { name: 'Tầng Đẩy Siêu Nặng Energia (Энергия) & 4 Booster (Tầng 1)', cat: 'Động cơ', desc: 'Thân dưới tên lửa Energia kèm 4 tầng đẩy phụ Zenit ốp khí động xám đá, 4 động cơ chính RD-0120 đai đen và 4 cụm RD-170' },
-    en: { name: 'Energia ("Энергия") Super-Heavy Core & 4× Zenit Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 Zenit strap-on boosters in stone-grey fairings, 4 central RD-0120 engines with black bands & 4 RD-170 nozzles' },
+    vi: { name: 'Đáy Energia & 4 Tên Lửa Đẩy Phụ Zenit (Tầng 1)', cat: 'Động cơ', desc: 'Phần đáy thân lõi Energia với 4 động cơ chính RD-0120 đai đen kèm trọn bộ 4 tên lửa đẩy phụ Zenit (Block A · cụm RD-170) ốp khí động xám đá tách ra đầu tiên ở Tầng 1' },
+    en: { name: 'Lower Energia Core & 4× Zenit Strap-On Boosters (Stage 1)', cat: 'Engines', desc: 'Lower Energia core with 4 central RD-0120 engines with black bands & all 4 full-height Zenit (Block A) strap-on boosters in stone-grey fairings separating first at Stage 1' },
   },
   cz5Fairing: {
     vi: { name: 'Chóp Mũi Trường Chinh 5 (Cờ CHN · Tầng 3)', cat: 'Đầu', desc: 'Chóp mũi khí động Trường Chinh 5 (CZ-5) in Quốc kỳ Trung Quốc, chữ CHN, cổ chuyển tầng viền đồng và dù hạ cánh' },

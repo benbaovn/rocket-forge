@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { PARTS, MAT, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart } from '../parts.js';
+import { PARTS, MAT, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoUnlocked } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
-import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
+import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, getUfoUnlockWarning, getUfoShortLockHint, getPresetLockedPart, getStackLockedUfoPart, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
 import * as TX from '../textures.js';
 import { audio } from '../audio.js';
@@ -229,7 +229,10 @@ export class BuildScene {
     try {
       const raw = JSON.parse(localStorage.getItem('rf-stack') || 'null');
       if (Array.isArray(raw) && raw.every((r) => typeof r === 'string' && PARTS[r.split('+')[0].split('@')[0]])) {
-        return ensureStackHasWeapons(sanitizeStack(stackFromTypes(raw)));
+        const loaded = ensureStackHasWeapons(sanitizeStack(stackFromTypes(raw)));
+        if (!getStackLockedUfoPart(loaded)) {
+          return loaded;
+        }
       }
     } catch { /* ignore */ }
     return ensureStackHasWeapons(stackFromTypes(Object.values(PRESETS)[0]));
@@ -252,9 +255,12 @@ export class BuildScene {
     const tip = $('part-tooltip');
     if (!tip || this.drag) return;
     const type = cardEl?.dataset?.part;
-    const incompat = type && !canPartAttachToStack(type, this.stack || [])
-      ? `<div class="pt-incompat">🚫 ${getIncompatibilityWarning(type, this.stack || [])}</div>`
-      : '';
+    const locked = type && !isUfoUnlocked(type);
+    const incompat = locked
+      ? `<div class="pt-locked">${getUfoUnlockWarning(type)}</div>`
+      : type && !canPartAttachToStack(type, this.stack || [])
+        ? `<div class="pt-incompat">🚫 ${getIncompatibilityWarning(type, this.stack || [])}</div>`
+        : '';
     const totalMass = (def.dry + (def.fuel || 0)).toFixed(2);
     const pills = [
       `<span class="pt-pill">⚖️ <b>${totalMass} t</b>${def.kind === 'radial' ? tr(' / chiếc', ' / ea') : ''}</span>`,
@@ -519,6 +525,13 @@ export class BuildScene {
 
   loadPresetByName(pName) {
     if (!pName || !PRESETS[pName]) return;
+    const lockedPart = getPresetLockedPart(pName);
+    if (lockedPart) {
+      if ($('preset-modal')) $('preset-modal').classList.add('hidden');
+      this.flashIncompatibleWarning(lockedPart);
+      audio.click();
+      return;
+    }
     this.pushHistory();
     this.stack = stackFromTypes(PRESETS[pName]);
     const presetLabel = (PRESET_LABELS[pName]?.[getLang()] || pName).replace(/\s*\([^)]*\)\s*$/, '').trim();
@@ -557,25 +570,30 @@ export class BuildScene {
     const def = PARTS[type];
     const card = document.createElement('div');
     card.className = 'part-card';
-    if (!canPartAttachToStack(type, this.stack || [])) {
+    const locked = !isUfoUnlocked(type);
+    if (locked) {
+      card.classList.add('part-locked');
+    } else if (!canPartAttachToStack(type, this.stack || [])) {
       card.classList.add('part-incompatible');
     }
     card.dataset.part = type;
     const fmtCompact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 10000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${n}`;
     const fmtCompactK = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${n}`;
-    const badgeTxt = isUfoPart(type)
-      ? `⚡${fmtCompactK(def.thrustVac)}·🔋${fmtCompactK(Math.round(def.fuel))}t`
-      : def.thrustVac
-        ? `🔥${fmtCompact(def.thrustVac)}`
-        : def.isGunBattery
-          ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-          : def.isUltraSolar
-            ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
-            : def.isHeatShield
-              ? `🛡️${(def.dry + (def.fuel || 0)).toFixed(2)}t`
-              : def.isBattery
-                ? `🔋${(def.fuel || 0).toFixed(0)}t`
-                : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
+    const badgeTxt = locked
+      ? tr('🔒 Khóa', '🔒 Locked')
+      : isUfoPart(type)
+        ? `⚡${fmtCompactK(def.thrustVac)}·🔋${fmtCompactK(Math.round(def.fuel))}t`
+        : def.thrustVac
+          ? `🔥${fmtCompact(def.thrustVac)}`
+          : def.isGunBattery
+            ? `⚡${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+            : def.isUltraSolar
+              ? `☀️${(def.dry + (def.fuel || 0)).toFixed(3)}t`
+              : def.isHeatShield
+                ? `🛡️${(def.dry + (def.fuel || 0)).toFixed(2)}t`
+                : def.isBattery
+                  ? `🔋${(def.fuel || 0).toFixed(0)}t`
+                  : `${(def.dry + (def.fuel || 0)).toFixed(1)}t`;
     const shortName = this.getPartCardLabel(type, def);
     card.innerHTML = `<span class="pc-badge">${badgeTxt}</span><img src="${thumbs[type]}" alt=""><div class="pc-name">${shortName}</div>`;
     card.addEventListener('pointerenter', () => this.showPartTooltip(def, card));
@@ -583,11 +601,22 @@ export class BuildScene {
     if (onClickOverride) {
       card.addEventListener('click', () => {
         this.hidePartTooltip();
+        if (!isUfoUnlocked(type)) {
+          this.flashIncompatibleWarning(type);
+          audio.click();
+          return;
+        }
         onClickOverride(type);
       });
     } else {
       card.addEventListener('pointerdown', (e) => {
         this.hidePartTooltip();
+        if (!isUfoUnlocked(type)) {
+          e.preventDefault();
+          this.flashIncompatibleWarning(type);
+          audio.click();
+          return;
+        }
         this.startDrag(e, type, thumbs[type]);
       });
     }
@@ -618,13 +647,14 @@ export class BuildScene {
         const pList = document.createElement('div');
         pList.className = 'palette-preset-list';
         for (const name of matchingPresets) {
-          const ico = PRESET_ICONS[name] || '🚀';
+          const lockedPart = getPresetLockedPart(name);
+          const ico = lockedPart ? '🔒' : (PRESET_ICONS[name] || '🚀');
           const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'palette-preset-item';
+          btn.className = lockedPart ? 'palette-preset-item preset-locked' : 'palette-preset-item';
           btn.innerHTML = `<span class="ppi-ico">${ico}</span><span class="ppi-name">${cleanLabel}</span>`;
-          btn.title = `${tr('Nạp mẫu tên lửa', 'Load rocket preset')}: ${cleanLabel}`;
+          btn.title = lockedPart ? getUfoUnlockWarning(lockedPart) : `${tr('Nạp mẫu tên lửa', 'Load rocket preset')}: ${cleanLabel}`;
           btn.onclick = () => this.loadPresetByName(name);
           pList.appendChild(btn);
           totalShown++;
@@ -704,8 +734,10 @@ export class BuildScene {
       for (const name of Object.keys(PRESETS)) {
         const o = document.createElement('option');
         o.value = name;
-        const ico = PRESET_ICONS[name] || '🚀';
-        o.textContent = `${ico} ${PRESET_LABELS[name]?.[lang] || name}`;
+        const lockedPart = getPresetLockedPart(name);
+        const ico = lockedPart ? '🔒' : (PRESET_ICONS[name] || '🚀');
+        const lbl = PRESET_LABELS[name]?.[lang] || name;
+        o.textContent = lockedPart ? `${ico} ${lbl} (${tr('Chưa mở khóa', 'Locked')})` : `${ico} ${lbl}`;
         sel.appendChild(o);
       }
     }
@@ -724,15 +756,18 @@ export class BuildScene {
         return;
       }
       const renderPresetCardHtml = (name) => {
-        const ico = PRESET_ICONS[name] || '🚀';
+        const lockedPart = getPresetLockedPart(name);
+        const ico = lockedPart ? '🔒' : (PRESET_ICONS[name] || '🚀');
         const cleanLabel = PRESET_LABELS[name]?.[lang] || name;
         const partCount = PRESETS[name].length;
         const topBase = (PRESETS[name][0] || '').split('+')[0];
         const ufoDef = isUfoPart(topBase) ? PARTS[topBase] : null;
-        const metaTxt = ufoDef
-          ? `${partCount} ${tr('tầng/khối', 'modules')} · 🔋 ${tr('Pin', 'Battery')} ${Math.round(ufoDef.fuel)}t · ⚡ ${tr('Cấp', 'Tier')} ${ufoDef.ufoTier}`
-          : `${partCount} ${tr('tầng/khối', 'modules')}`;
-        return `<div class="preset-card" data-preset="${name}">
+        const metaTxt = lockedPart
+          ? getUfoShortLockHint(lockedPart)
+          : ufoDef
+            ? `🔓 ${tr('Đã mở khóa', 'Unlocked')} · 🔋 ${tr('Pin', 'Battery')} ${Math.round(ufoDef.fuel)}t · ⚡ ${tr('Cấp', 'Tier')} ${ufoDef.ufoTier}`
+            : `${partCount} ${tr('tầng/khối', 'modules')}`;
+        return `<div class="preset-card${lockedPart ? ' preset-locked' : ''}" data-preset="${name}">
           <div class="prc-ico">${ico}</div>
           <div>
             <div class="prc-name">${cleanLabel}</div>
@@ -968,6 +1003,11 @@ export class BuildScene {
     if ($('btn-vab-ufo-engine')) $('btn-vab-ufo-engine').onclick = () => this.toggleSelectedUfoEngineMode();
     $('btn-launchpad').onclick = () => {
       if ($('btn-launchpad').disabled) return;
+      const lockedPart = getStackLockedUfoPart(this.stack);
+      if (lockedPart) {
+        this.flashIncompatibleWarning(lockedPart);
+        return;
+      }
       audio.init();
       ensureStackHasWeapons(this.stack);
       this.rebuild(true);
@@ -1397,7 +1437,7 @@ export class BuildScene {
   }
 
   applyCandidate(type, cand) {
-    if (this.stack.length > 0 && !canPartAttachToStack(type, this.stack, cand.attach ?? null)) {
+    if (!isUfoUnlocked(type) || (this.stack.length > 0 && !canPartAttachToStack(type, this.stack, cand.attach ?? null))) {
       this.flashIncompatibleWarning(type);
       return;
     }
@@ -1878,8 +1918,10 @@ export class BuildScene {
   updatePaletteCompatibility() {
     document.querySelectorAll('.part-card[data-part]').forEach((card) => {
       const t = card.dataset.part;
-      const compat = canPartAttachToStack(t, this.stack || []);
-      card.classList.toggle('part-incompatible', !compat);
+      const locked = !isUfoUnlocked(t);
+      const compat = !locked && canPartAttachToStack(t, this.stack || []);
+      card.classList.toggle('part-locked', locked);
+      card.classList.toggle('part-incompatible', !locked && !compat);
     });
   }
 
@@ -1945,6 +1987,8 @@ export class BuildScene {
     this.active = true;
     this.controls.enabled = true;
     $('build-ui').classList.remove('hidden');
+    this.renderPalette();
+    this.renderPresets();
     this.renderMissionCards();
     this.updateStats();
     audio.ambience(true);

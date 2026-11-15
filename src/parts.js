@@ -138,6 +138,85 @@ export function isUfoFamilyPart(type) {
   return isUfoPart(type) || type === 'solarUfo';
 }
 
+export const UFO_UNLOCK_STORAGE_KEY = 'rf-unlocked-ufos';
+
+export const ALIEN_TIER_TO_UFO_PART = {
+  scout: 'ufoSaucer',
+  warrior: 'ufoWarrior',
+  boss: 'ufoMother',
+  queen: 'ufoQueen',
+  king: 'ufoKing',
+};
+
+export const UFO_PART_TO_ALIEN_TIER = {
+  ufoSaucer: 'scout',
+  ufoWarrior: 'warrior',
+  ufoMother: 'boss',
+  ufoQueen: 'queen',
+  ufoKing: 'king',
+};
+
+let _memUnlockedUfos = {};
+
+export function getUnlockedUfos() {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage?.getItem) {
+      const raw = localStorage.getItem(UFO_UNLOCK_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return { ...parsed };
+        }
+      }
+      return {};
+    }
+  } catch { /* ignore */ }
+  return { ..._memUnlockedUfos };
+}
+
+function saveUnlockedUfos(map) {
+  _memUnlockedUfos = { ...map };
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage?.setItem) {
+      localStorage.setItem(UFO_UNLOCK_STORAGE_KEY, JSON.stringify(_memUnlockedUfos));
+    }
+  } catch { /* ignore */ }
+}
+
+export function isUfoUnlocked(type) {
+  if (!type) return true;
+  if (isUfoPart(type)) {
+    const unlocked = getUnlockedUfos();
+    return Boolean(unlocked[type]);
+  }
+  if (type === 'solarUfo') {
+    const unlocked = getUnlockedUfos();
+    return Object.keys(UFO_PART_TO_ALIEN_TIER).some((k) => Boolean(unlocked[k]));
+  }
+  return true;
+}
+
+export function unlockUfoByAlienTier(alienTier) {
+  const partType = ALIEN_TIER_TO_UFO_PART[alienTier];
+  if (!partType) return { unlockedPart: null, newlyUnlocked: false };
+  const unlocked = getUnlockedUfos();
+  if (unlocked[partType]) {
+    return { unlockedPart: partType, newlyUnlocked: false };
+  }
+  unlocked[partType] = true;
+  saveUnlockedUfos(unlocked);
+  return { unlockedPart: partType, newlyUnlocked: true };
+}
+
+export function resetUnlockedUfos() {
+  _memUnlockedUfos = {};
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage?.removeItem) {
+      localStorage.removeItem(UFO_UNLOCK_STORAGE_KEY);
+    }
+  } catch { /* ignore */ }
+}
+
 export function ufoEngineScale(ufoScale = 1) {
   return ufoScale > 1 ? Math.min(2.25, 1 + (ufoScale - 1) * 0.38) : 1;
 }

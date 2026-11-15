@@ -1,6 +1,6 @@
 // Rocket data model: stack layout, staging, stats, mesh assembly
 import * as THREE from 'three';
-import { PARTS, MAT, G0, R, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoFamilyPart, ufoEngineScale } from './parts.js';
+import { PARTS, MAT, G0, R, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoFamilyPart, isUfoUnlocked, ufoEngineScale } from './parts.js';
 import { tr } from './i18n.js';
 
 let uidCounter = 1;
@@ -92,6 +92,68 @@ export function isBigBatteryPart(type) {
   return type === 'batteryPack' || type === 'batteryPackL' || isUfoPart(type) || type === 'chassisRover' || !!PARTS[type].isBattery;
 }
 
+export function getUfoUnlockWarning(type) {
+  if (type === 'ufoSaucer') {
+    return tr(
+      '🔒 Chưa mở khóa UFO Trinh Sát! Hãy bắn hạ UFO Trinh Sát ngoài vũ trụ để sử dụng Đĩa Bay UFO Trinh Sát.',
+      '🔒 Scout UFO locked! Defeat a Scout UFO in outer space to unlock the Scout UFO.'
+    );
+  }
+  if (type === 'ufoWarrior') {
+    return tr(
+      '🔒 Chưa mở khóa UFO Chiến Binh! Hãy bắn hạ UFO Chiến Binh ngoài vũ trụ để sử dụng Đĩa Bay UFO Chiến Binh.',
+      '🔒 Warrior UFO locked! Defeat a Warrior UFO in outer space to unlock the Warrior UFO.'
+    );
+  }
+  if (type === 'ufoMother') {
+    return tr(
+      '🔒 Chưa mở khóa UFO Mẹ! Hãy bắn hạ UFO Mẹ (Tàu Mẹ Alien) ngoài vũ trụ để sử dụng Đĩa Bay UFO Mẹ.',
+      '🔒 Mothership UFO locked! Defeat a Mothership UFO in outer space to unlock the Mothership UFO.'
+    );
+  }
+  if (type === 'ufoQueen') {
+    return tr(
+      '🔒 Chưa mở khóa UFO Hoàng Hậu! Hãy bắn hạ UFO Hoàng Hậu (ở độ cao 1 tỷ km) để sử dụng Đĩa Bay UFO Hoàng Hậu.',
+      '🔒 Queen UFO locked! Defeat the Queen UFO (at 1 billion km altitude) to unlock the Queen UFO.'
+    );
+  }
+  if (type === 'ufoKing') {
+    return tr(
+      '🔒 Chưa mở khóa UFO Vua! Hãy bắn hạ UFO Vua (ở độ cao 1 tỷ km) để sử dụng Đĩa Bay UFO Vua.',
+      '🔒 King UFO locked! Defeat the King UFO (at 1 billion km altitude) to unlock the King UFO.'
+    );
+  }
+  if (type === 'solarUfo') {
+    return tr(
+      '🔒 Chưa mở khóa Cánh Pin Mặt Trời UFO! Hãy bắn hạ ít nhất 1 UFO ngoài vũ trụ trước.',
+      '🔒 UFO Solar Wings locked! Defeat at least 1 UFO in outer space first.'
+    );
+  }
+  return '';
+}
+
+export function getUfoShortLockHint(type) {
+  if (type === 'ufoSaucer') return tr('🔒 Diệt UFO Trinh Sát để mở khóa', '🔒 Defeat Scout UFO to unlock');
+  if (type === 'ufoWarrior') return tr('🔒 Diệt UFO Chiến Binh để mở khóa', '🔒 Defeat Warrior UFO to unlock');
+  if (type === 'ufoMother') return tr('🔒 Diệt UFO Mẹ để mở khóa', '🔒 Defeat Mothership UFO to unlock');
+  if (type === 'ufoQueen') return tr('🔒 Diệt UFO Hoàng Hậu để mở khóa', '🔒 Defeat Queen UFO to unlock');
+  if (type === 'ufoKing') return tr('🔒 Diệt UFO Vua để mở khóa', '🔒 Defeat King UFO to unlock');
+  return tr('🔒 Diệt UFO ngoài vũ trụ để mở khóa', '🔒 Defeat a UFO in space to unlock');
+}
+
+export function getStackLockedUfoPart(stack) {
+  if (!Array.isArray(stack)) return null;
+  for (const it of stack) {
+    if (it && !isUfoUnlocked(it.type)) return it.type;
+    if (it && Array.isArray(it.attach)) {
+      for (const a of it.attach) {
+        if (!isUfoUnlocked(a)) return a;
+      }
+    }
+  }
+  return null;
+}
+
 /**
  * Returns true if `type` is allowed to attach to or be inserted into `stack`.
  * Rocket parts cannot attach to Rover, Boat, or Plane parts (and vice versa).
@@ -100,6 +162,7 @@ export function isBigBatteryPart(type) {
  */
 export function canPartAttachToStack(type, stack, targetIndex = null) {
   if (!type || !PARTS[type]) return false;
+  if (!isUfoUnlocked(type)) return false;
   const vStack = stackVehicleType(stack);
   if ((isWeaponPart(type) || type === 'batteryGun' || type === 'solarUltra') && vStack === 'boat') return false;
   if (targetIndex !== null && stack?.[targetIndex] && (isWeaponPart(type) || type === 'batteryGun' || type === 'solarUltra') && partVehicleType(stack[targetIndex].type) === 'boat') {
@@ -148,6 +211,9 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
 
 /** Human-readable warning when attempting to mix incompatible vehicle parts */
 export function getIncompatibilityWarning(type, stack) {
+  if (type && !isUfoUnlocked(type)) {
+    return getUfoUnlockWarning(type);
+  }
   const vNew = partVehicleType(type);
   const vStack = stackVehicleType(stack);
   if ((isWeaponPart(type) || type === 'batteryGun' || type === 'solarUltra') && vStack === 'boat') {
@@ -292,6 +358,24 @@ export const PRESETS = {
   'UFO Hoàng Hậu': ['ufoQueen+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
   'UFO Vua': ['ufoKing+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
 };
+
+export function getPresetLockedPart(presetName) {
+  const entries = PRESETS[presetName];
+  if (!Array.isArray(entries)) return null;
+  for (const raw of entries) {
+    const [rawHead, ...att] = String(raw).split('+');
+    const [baseType] = rawHead.split('@');
+    if (!isUfoUnlocked(baseType)) return baseType;
+    for (const a of att) {
+      if (!isUfoUnlocked(a)) return a;
+    }
+  }
+  return null;
+}
+
+export function isPresetUnlocked(presetName) {
+  return !getPresetLockedPart(presetName);
+}
 
 export function ensureStackHasWeapons(stack) {
   if (!Array.isArray(stack) || !stack.length) return stack;
@@ -670,8 +754,12 @@ export function computeStats(stack) {
     (st1Info.bTSL > 0 && st1Info.bFuel > 0) ||
     st1HasRoverDrive
   );
+  const lockedUfo = getStackLockedUfoPart(stack);
+  if (lockedUfo) {
+    warnings.unshift(getUfoUnlockWarning(lockedUfo));
+  }
   const hasMotorBoat = stack.some((it) => isBoatMotorPart(it.type) || it.attach.some(isBoatMotorPart));
-  const canLaunch = stack.length > 0 && (isBoat ? hasMotorBoat : st1HasEngineAndFuel);
+  const canLaunch = stack.length > 0 && !lockedUfo && (isBoat ? hasMotorBoat : st1HasEngineAndFuel);
   return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
 }
 

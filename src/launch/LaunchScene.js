@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { PARTS, G0, R as CORE_R, isUfoPart, isRoyalUfoPart, ufoEngineScale } from '../parts.js';
+import { PARTS, G0, R as CORE_R, isUfoPart, isRoyalUfoPart, ufoEngineScale, unlockUfoByAlienTier } from '../parts.js';
 import { buildRocket, segments, segmentInfo, layout, applyNozzleUfoMode } from '../rocket.js';
 import { createSkyMaterial, atmosphereJS, sunTransmittance, PLANET_R } from '../fx/atmosphere.js';
 import { createEarth, createStars, NOISE_GLSL } from '../fx/earth.js';
@@ -4901,121 +4901,17 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       : this.mission?.id === 'alien100' ? 100
       : 0;
     if (alienTarget > 0) {
-      if (kills >= 25 && !F.kill25) {
-        this.setFlag('kill25');
-        if (alienTarget === 100) {
-          this.milestone(
-            tr(`👽 ĐÃ DIỆT 25/${alienTarget} ALIEN!`, `👽 25/${alienTarget} ALIENS ELIMINATED!`),
-            tr(`Tiếp tục truy quét UFO Alien ngoài vũ trụ! (Mục tiêu: ${alienTarget} Alien)`, `Keep hunting Alien UFOs across space! (Target: ${alienTarget} Aliens)`)
-          );
-        }
-      }
-      if (kills >= 50 && !F.kill50) {
-        this.setFlag('kill50');
-        if (alienTarget === 100) {
-          this.milestone(
-            tr(`👽 ĐÃ DIỆT 50/${alienTarget} ALIEN!`, `👽 50/${alienTarget} ALIENS ELIMINATED!`),
-            tr('Đã hoàn thành một nửa mục tiêu chiến dịch 100 Alien!', 'Halfway through the 100 Aliens campaign objective!')
-          );
-        }
-      }
-      if (kills >= 100 && !F.kill100 && alienTarget >= 100) {
-        this.setFlag('kill100');
-        if (alienTarget === 100 || alienTarget === 500) {
-          this.milestone(
-            alienTarget === 100
-              ? tr('👽💥 ĐÃ TIÊU DIỆT ĐỦ 100 ALIEN!', '👽💥 100 ALIENS ELIMINATED!')
-              : tr(`👽💥 ĐÃ DIỆT 100/${alienTarget} ALIEN!`, `👽💥 100/${alienTarget} ALIENS ELIMINATED!`),
-            alienTarget === 100
-              ? tr('Chiến thắng tuyệt đối trước hạm đội UFO ngoài hành tinh!', 'Total victory over the Alien UFO fleet!')
-              : tr(`Đạt cột mốc 100/${alienTarget} Alien! Tiếp tục chiến dịch!`, `Reached 100/${alienTarget} Aliens milestone! Keep fighting!`)
-          );
-        }
-      }
-      if (kills >= 250 && !F.kill250 && alienTarget >= 500) {
-        this.setFlag('kill250');
-        if (alienTarget === 500) {
-          this.milestone(
-            tr('👽🔥 ĐÃ DIỆT 250/500 ALIEN!', '👽🔥 250/500 ALIENS ELIMINATED!'),
-            tr('Đã hoàn thành 50% chặng đường Đại Chiến 500 Alien!', 'Halfway through the 500 Aliens Galactic War!')
-          );
-        }
-      }
-      if (kills >= 300 && !F.kill300 && alienTarget >= 1500) {
-        this.setFlag('kill300');
-        if (alienTarget === 1500) {
-          this.milestone(
-            tr('👽🔥 ĐÃ DIỆT 300/1500 ALIEN!', '👽🔥 300/1500 ALIENS ELIMINATED!'),
-            tr('Đạt cột mốc 300/1500 Alien! Tiến sâu hơn vào vũ trụ để săn thêm Alien!', 'Reached 300/1500 Aliens milestone! Fly deeper into space to hunt more Aliens!')
-          );
-        }
-      }
-      if (kills >= 500 && !F.kill500 && alienTarget >= 500) {
-        this.setFlag('kill500');
-        if (alienTarget === 1500 || alienTarget === 5000) {
-          this.milestone(
-            tr(`👽🔥 ĐÃ DIỆT 500/${alienTarget} ALIEN!`, `👽🔥 500/${alienTarget} ALIENS ELIMINATED!`),
-            alienTarget === 1500
-              ? tr('Đã hoàn thành 1/3 chặng đường Hủy Diệt 1500 Alien!', 'One-third through the 1500 Aliens Annihilation War!')
-              : tr('Đạt cột mốc 500/5000 Alien! Tiếp tục tiến sâu vào vũ trụ!', 'Reached 500/5000 Aliens milestone! Keep pushing into deep space!')
-          );
-        } else if (alienTarget === 500) {
-          this.milestone(
-            tr('👑👽💥 ĐẠI THẮNG: ĐÃ TIÊU DIỆT ĐỦ 500 ALIEN!', '👑👽💥 ULTIMATE VICTORY: 500 ALIENS ELIMINATED!'),
-            tr('Huyền thoại vũ trụ! Bạn đã tiêu diệt toàn bộ 500 UFO Alien cứu rỗi dải Ngân Hà!', 'Galactic Legend! You eliminated all 500 Alien UFOs and saved the Galaxy!')
-          );
-        }
-      }
-      if (kills >= 750 && !F.kill750 && alienTarget >= 1500) {
-        this.setFlag('kill750');
-        if (alienTarget === 1500) {
-          this.milestone(
-            tr('👽⚡ ĐÃ DIỆT 750/1500 ALIEN!', '👽⚡ 750/1500 ALIENS ELIMINATED!'),
-            tr('Đã hoàn thành 50% chặng đường Hủy Diệt 1500 Alien!', 'Halfway through the 1500 Aliens Annihilation War!')
-          );
-        }
-      }
-      if (kills >= 1000 && !F.kill1000 && alienTarget >= 5000) {
-        this.setFlag('kill1000');
-        if (alienTarget === 5000) {
-          this.milestone(
-            tr('👽🔥 ĐÃ DIỆT 1000/5000 ALIEN!', '👽🔥 1000/5000 ALIENS ELIMINATED!'),
-            tr('Đạt cột mốc 1000/5000 Alien! Hãy tiến tới 1.000.000.000 km để săn Vua & Hoàng Hậu!', 'Reached 1000/5000 Aliens milestone! Push toward 1,000,000,000 km to hunt the King & Queen!')
-          );
-        }
-      }
-      if (kills >= 1500 && !F.kill1500 && alienTarget >= 1500) {
-        this.setFlag('kill1500');
-        if (alienTarget === 5000) {
-          this.milestone(
-            tr('👽🔥 ĐÃ DIỆT 1500/5000 ALIEN!', '👽🔥 1500/5000 ALIENS ELIMINATED!'),
-            tr('Tiếp tục đại chiến tiêu diệt đủ 5000 Alien cùng Hoàng Hậu & Vua!', 'Keep fighting to eliminate all 5000 Aliens along with the Queen & King!')
-          );
-        } else if (alienTarget === 1500) {
-          this.milestone(
-            tr('👑🌌💥 BÁ CHỦ VŨ TRỤ: ĐÃ HỦY DIỆT ĐỦ 1500 ALIEN!', '👑🌌💥 COSMIC OVERLORD: 1500 ALIENS ANNIHILATED!'),
-            tr('Kỳ tích bất tử! Bạn đã quét sạch 1500 UFO Alien trên toàn bộ Hệ Mặt Trời và Không gian Liên sao!', 'Immortal feat! You wiped out 1500 Alien UFOs across the Solar System and Interstellar Space!')
-          );
-        }
-      }
-      if (kills >= 2500 && !F.kill2500 && alienTarget >= 5000) {
-        this.setFlag('kill2500');
-        if (alienTarget === 5000) {
-          this.milestone(
-            tr('👽⚡ ĐÃ DIỆT 2500/5000 ALIEN!', '👽⚡ 2500/5000 ALIENS ELIMINATED!'),
-            tr('Đã hoàn thành 50% số lượng UFO Alien trong chiến dịch 5000 Alien!', 'Halfway through the 5000 Alien UFOs target!')
-          );
-        }
-      }
-      if (kills >= 5000 && !F.kill5000 && alienTarget >= 5000) {
-        this.setFlag('kill5000');
-        this.milestone(
-          tr('⚔️🌌💥 ĐẠI THẦN CHIẾN: ĐÃ TIÊU DIỆT ĐỦ 5000 ALIEN!', '⚔️🌌💥 GODSLAYER WAR: 5000 ALIENS ANNIHILATED!'),
-          F.killKing && F.killQueen
-            ? tr('Huyền thoại tối thượng! Đã diệt đủ 5000 Alien cùng cả Hoàng Hậu & Vua Alien!', 'Supreme Legend! Eliminated all 5000 Aliens along with both the Alien Queen & King!')
-            : tr('Đã diệt đủ 5000 UFO Alien! Hãy tiêu diệt nốt Alien Hoàng Hậu & Vua ở độ cao 1.000.000.000 km!', '5000 Alien UFOs destroyed! Now defeat the Alien Queen & King at 1,000,000,000 km!')
-        );
-      }
+      if (kills >= 25 && !F.kill25) this.setFlag('kill25');
+      if (kills >= 50 && !F.kill50) this.setFlag('kill50');
+      if (kills >= 100 && !F.kill100 && alienTarget >= 100) this.setFlag('kill100');
+      if (kills >= 250 && !F.kill250 && alienTarget >= 500) this.setFlag('kill250');
+      if (kills >= 300 && !F.kill300 && alienTarget >= 1500) this.setFlag('kill300');
+      if (kills >= 500 && !F.kill500 && alienTarget >= 500) this.setFlag('kill500');
+      if (kills >= 750 && !F.kill750 && alienTarget >= 1500) this.setFlag('kill750');
+      if (kills >= 1000 && !F.kill1000 && alienTarget >= 5000) this.setFlag('kill1000');
+      if (kills >= 1500 && !F.kill1500 && alienTarget >= 1500) this.setFlag('kill1500');
+      if (kills >= 2500 && !F.kill2500 && alienTarget >= 5000) this.setFlag('kill2500');
+      if (kills >= 5000 && !F.kill5000 && alienTarget >= 5000) this.setFlag('kill5000');
     }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.space) { this.setFlag('space'); this.setFlag('alt70'); }
     if (v.ref === 'earth' && v.alt > ATM_TOP && !F.orbit) {
@@ -6769,21 +6665,6 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       vel: new THREE.Vector3(),
     };
     this.aliens.push(alien);
-
-    if (!this._alienAnnounced || tier === 'boss' || (this.aliens.length === 1 && Math.random() < 0.35)) {
-      this._alienAnnounced = true;
-      const bodyLabel = (BODIES[this.player.ref] || BODIES.earth).label;
-      const locText = this.player.alt > 40000
-        ? tr(`ngoài không gian quanh ${bodyLabel}`, `in outer space near ${bodyLabel}`)
-        : tr(`trên ${bodyLabel}`, `at ${bodyLabel}`);
-      this.event(
-        tr(
-          `👽 Phát hiện ${labelVi} (${maxHp} HP • Tự hồi 10 HP/s) xuất hiện ${locText}! Nhấn phím V để bắn!`,
-          `👽 ${labelEn} (${maxHp} HP • Regen 10 HP/s) detected ${locText}! Press V to fire!`
-        ),
-        tier === 'boss' ? 'warn' : ''
-      );
-    }
   }
 
   /**
@@ -7129,6 +7010,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     if (alien.mesh && alien.mesh.parent) alien.mesh.parent.remove(alien.mesh);
     this.aliens = this.aliens.filter((a) => a !== alien);
     this.aliensKilled = (this.aliensKilled || 0) + 1;
+    if (weaponType !== 'supernova') {
+      const { newlyUnlocked } = unlockUfoByAlienTier(alien.tier);
+      if (newlyUnlocked && this.app?.build) {
+        this.app.build.renderPalette?.();
+        this.app.build.renderPresets?.();
+      }
+    }
     if (alien.tier === 'king') this.setFlag('killKing');
     else if (alien.tier === 'queen') this.setFlag('killQueen');
     if (this.mission?.id === 'alien100' || this.mission?.id === 'alien500' || this.mission?.id === 'alien1500' || this.mission?.id === 'alien5000') {
@@ -7139,33 +7027,36 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     this.flash = Math.max(this.flash || 0, 0.55);
     this.flashPos = { x: hitX, y: hitY, z: hitZ };
 
-    const aName = tr(alien.labelVi || 'UFO Alien', alien.labelEn || 'Alien UFO');
-    const wLabel = weaponType === 'supernova'
-      ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
-      : weaponType === 'water'
-        ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
-        : weaponType === 'acid'
-          ? tr('Súng Acid Ăn Mòn', 'Corrosive Acid Cannon')
-          : weaponType === 'electric'
-            ? tr('Súng Điện 1,000,000 WATT', '1,000,000 WATT Electric Cannon')
-            : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
-    this.event(
-      tr(
-        `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
-        `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
-      )
-    );
-    if (alien.tier === 'king') {
-      this.milestone(
-        tr('👑💥 ĐÃ TIÊU DIỆT ALIEN VUA (100.000 HP)!', '👑💥 COLOSSAL ALIEN KING (100,000 HP) DEFEATED!'),
-        tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
+    if (alien.tier === 'king' || alien.tier === 'queen') {
+      const aName = tr(alien.labelVi || 'UFO Alien', alien.labelEn || 'Alien UFO');
+      const wLabel = weaponType === 'supernova'
+        ? tr('Vụ Nổ Siêu Tân Tinh', 'Supernova Shockwave')
+        : weaponType === 'water'
+          ? tr('Máy Phun Nước 1,000,000 PSI', '1,000,000 PSI Water Cannon')
+          : weaponType === 'acid'
+            ? tr('Súng Acid Ăn Mòn', 'Corrosive Acid Cannon')
+            : weaponType === 'electric'
+              ? tr('Súng Điện 1,000,000 WATT', '1,000,000 WATT Electric Cannon')
+              : tr('Súng Lazer Siêu Hạng', 'Plasma Laser Turret');
+      this.event(
+        tr(
+          `👽💥 Đã hạ gục ${aName} (${alien.maxHp} HP) bằng ${wLabel}! (Tổng diệt: ${this.aliensKilled})`,
+          `👽💥 Destroyed ${aName} (${alien.maxHp} HP) with ${wLabel}! (Total kills: ${this.aliensKilled})`
+        )
       );
-    } else if (alien.tier === 'queen') {
-      this.milestone(
-        tr('👸💥 ĐÃ TIÊU DIỆT ALIEN HOÀNG HẬU (90.500 HP)!', '👸💥 COLOSSAL ALIEN QUEEN (90,500 HP) DEFEATED!'),
-        tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km!', 'Cosmic victory at 1,000,000,000 km altitude!')
-      );
+      if (alien.tier === 'king') {
+        this.milestone(
+          tr('👑💥 ĐÃ TIÊU DIỆT ALIEN VUA (100.000 HP)!', '👑💥 COLOSSAL ALIEN KING (100,000 HP) DEFEATED!'),
+          tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km! 🔓 Đã mở khóa Đĩa Bay UFO Vua!', 'Cosmic victory at 1,000,000,000 km altitude! 🔓 King UFO unlocked!')
+        );
+      } else {
+        this.milestone(
+          tr('👸💥 ĐÃ TIÊU DIỆT ALIEN HOÀNG HẬU (90.500 HP)!', '👸💥 COLOSSAL ALIEN QUEEN (90,500 HP) DEFEATED!'),
+          tr('Chiến công chấn động vũ trụ ở độ cao 1.000.000.000 km! 🔓 Đã mở khóa Đĩa Bay UFO Hoàng Hậu!', 'Cosmic victory at 1,000,000,000 km altitude! 🔓 Queen UFO unlocked!')
+        );
+      }
     }
+
     // Heavy Boss / Royal Alien core collapses into a mini Supernova on destruction (only in outer space, never on planets/moons)!
     const onPlanetOrMoon = !P || P.clamped || P.landed || (P.ref !== 'sun' && P.alt < ATM_TOP);
     if ((alien.tier === 'boss' || alien.isRoyal) && weaponType !== 'supernova' && !onPlanetOrMoon) {
@@ -7261,22 +7152,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       const starName = starNames[Math.floor(Math.random() * starNames.length)];
       this.milestone(
         tr('💥 SIÊU TÂN TINH LIÊN SAO BÙNG NỔ!', '💥 INTERSTELLAR SUPERNOVA ERUPTION!'),
-        doomed.length
-          ? tr(`Ngoài Hệ Mặt Trời, sao ${starName} phát nổ Siêu Tân Tinh — Sóng xung kích quét sạch ${doomed.length} UFO Alien!`, `Beyond the Solar System, ${starName} erupted into a Supernova — shockwave vaporized ${doomed.length} Alien UFOs!`)
-          : tr(`Tên lửa đang bay trong Không gian Liên sao ngoài Hệ Mặt Trời thì sao ${starName} phát nổ Siêu Tân Tinh chói lọi!`, `Cruising in Interstellar Space beyond the Solar System, star ${starName} erupted into a brilliant Supernova!`)
+        tr(`Tên lửa đang bay trong Không gian Liên sao ngoài Hệ Mặt Trời thì sao ${starName} phát nổ Siêu Tân Tinh chói lọi!`, `Cruising in Interstellar Space beyond the Solar System, star ${starName} erupted into a brilliant Supernova!`)
       );
       this.event(
         tr(
-          `💥🌟 [Không gian Liên sao] Vụ nổ Siêu Tân Tinh (${starName}) bùng phát rực rỡ ngoài Hệ Mặt Trời${doomed.length ? ` (Quét sạch ${doomed.length} Alien)` : ''}!`,
-          `💥🌟 [Interstellar Space] Supernova explosion (${starName}) erupted brightly beyond the Solar System${doomed.length ? ` (Vaporized ${doomed.length} Aliens)` : ''}!`
-        ),
-        'warn'
-      );
-    } else {
-      this.event(
-        tr(
-          '💥🌟 Lõi Tàu Mẹ Alien sụp đổ tạo ra Vụ Nổ Siêu Tân Tinh Mini!',
-          '💥🌟 Boss Alien core collapsed into a Mini Supernova Explosion!'
+          `💥🌟 [Không gian Liên sao] Vụ nổ Siêu Tân Tinh (${starName}) bùng phát rực rỡ ngoài Hệ Mặt Trời!`,
+          `💥🌟 [Interstellar Space] Supernova explosion (${starName}) erupted brightly beyond the Solar System!`
         ),
         'warn'
       );

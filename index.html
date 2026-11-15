@@ -261,6 +261,57 @@
       </div>
     </div>
 
+    <div id="airport-compass" class="glass hidden" aria-label="Airport Compass">
+      <div class="ac-dial" title="La bàn sân bay · Mũi máy bay hướng thẳng lên trên (12h)">
+        <div class="ac-lubber">▼</div>
+        <svg class="ac-rose" id="ac-rose" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="44" class="ac-ring" />
+          <line x1="50" y1="6" x2="50" y2="14.5" class="ac-tick ac-tick-n" />
+          <line x1="72" y1="11.9" x2="69" y2="17.1" class="ac-tick" />
+          <line x1="88.1" y1="28" x2="82.9" y2="31" class="ac-tick" />
+          <line x1="94" y1="50" x2="85.5" y2="50" class="ac-tick ac-tick-card" />
+          <line x1="88.1" y1="72" x2="82.9" y2="69" class="ac-tick" />
+          <line x1="72" y1="88.1" x2="69" y2="82.9" class="ac-tick" />
+          <line x1="50" y1="94" x2="50" y2="85.5" class="ac-tick ac-tick-card" />
+          <line x1="28" y1="88.1" x2="31" y2="82.9" class="ac-tick" />
+          <line x1="11.9" y1="72" x2="17.1" y2="69" class="ac-tick" />
+          <line x1="6" y1="50" x2="14.5" y2="50" class="ac-tick ac-tick-card" />
+          <line x1="11.9" y1="28" x2="17.1" y2="31" class="ac-tick" />
+          <line x1="28" y1="11.9" x2="31" y2="17.1" class="ac-tick" />
+          <text x="50" y="24.5" class="ac-card ac-card-n" id="ac-lbl-n">B</text>
+          <text x="76.5" y="53.5" class="ac-card" id="ac-lbl-e">Đ</text>
+          <text x="50" y="81.5" class="ac-card" id="ac-lbl-s">N</text>
+          <text x="23.5" y="53.5" class="ac-card" id="ac-lbl-w">T</text>
+        </svg>
+        <svg class="ac-needle" id="ac-needle" viewBox="0 0 100 100" aria-hidden="true">
+          <line x1="50" y1="70" x2="50" y2="19" class="ac-needle-shaft" />
+          <polygon points="50,7 41.5,25 50,20.5 58.5,25" class="ac-needle-head" />
+          <circle cx="50" cy="70" r="3.2" class="ac-needle-tail" />
+        </svg>
+        <svg class="ac-plane-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <polygon points="50,35 52.8,45 63.5,52.5 63.5,55.5 52.8,52.2 52.2,60.5 57,63.8 57,66 50,64.2 43,66 43,63.8 47.8,60.5 47.2,52.2 36.5,55.5 36.5,52.5 47.2,45" />
+        </svg>
+      </div>
+      <div class="ac-info">
+        <div class="ac-top-row">
+          <span class="ac-target" id="ac-target">🛫 Sân bay #1</span>
+          <b class="ac-dist" id="ac-dist">0.0 km</b>
+        </div>
+        <div class="ac-mid-row">
+          <span class="ac-turn" id="ac-turn">▲ Bay thẳng tiến!</span>
+          <span class="ac-brg" id="ac-brg">🧭 090° Đ</span>
+        </div>
+        <div class="ac-targets" id="ac-targets">
+          <button type="button" class="ac-tbtn active" data-ac-idx="auto" id="ac-btn-auto">Tự động</button>
+          <button type="button" class="ac-tbtn" data-ac-idx="0">#1</button>
+          <button type="button" class="ac-tbtn" data-ac-idx="1">#2</button>
+          <button type="button" class="ac-tbtn" data-ac-idx="2">#3</button>
+          <button type="button" class="ac-tbtn" data-ac-idx="3">#4</button>
+          <button type="button" class="ac-tbtn" data-ac-idx="4">#5</button>
+        </div>
+      </div>
+    </div>
+
     <div id="mission-panel" class="glass hidden">
       <div class="mp-title" id="mp-title">Mission</div>
       <div id="mp-list"></div>

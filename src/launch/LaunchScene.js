@@ -93,6 +93,7 @@ export class LaunchScene {
     this.maxAstronauts = 10;
     this.deployedAstronauts = [];
     this.padAstronautMeshes = [];
+    this.compassAirportTarget = 'auto';
 
     this.initSky();
     this.initGround();
@@ -1729,6 +1730,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         if (!this.map.visible) this.updateMap();
         this.map.toggle();
         if (this.map.visible) this.updateMap();
+        this.updateAirportCompass(this.player);
       }
       if (k === 'y') { e.preventDefault(); audio.init(); this.toggleTeleportModal(); }
       if (k === 'tab') { e.preventDefault(); this.map.cycleFocus(); }
@@ -1761,6 +1763,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       if (!this.map.visible) this.updateMap();
       this.map.toggle();
       if (this.map.visible) this.updateMap();
+      this.updateAirportCompass(this.player);
     };
     const btnTp = $('btn-teleport');
     if (btnTp) btnTp.onclick = () => { audio.init(); this.toggleTeleportModal(); };
@@ -1821,6 +1824,18 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         audio.init();
         audio.click();
         this.deployAstronauts();
+      });
+    }
+    const acTargets = $('ac-targets');
+    if (acTargets) {
+      acTargets.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-ac-idx]');
+        if (!btn) return;
+        audio.init();
+        audio.click();
+        const raw = btn.dataset.acIdx;
+        this.compassAirportTarget = raw === 'auto' ? 'auto' : Math.max(0, Math.min(4, Number(raw) || 0));
+        this.updateAirportCompass(this.player);
       });
     }
     const btnUfoEng = $('btn-ufo-engine');
@@ -2070,6 +2085,141 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     }
     const fallbackIdx = ((this.airportsLandedSet ? this.airportsLandedSet.size : 0) + 1) % AIRPORT_SCATTER_OFFSETS.length;
     return bestSite || this.getAirportSite(bodyKey, fallbackIdx);
+  }
+
+  computeAirportCompassData(v = this.player) {
+    if (!v || v.dead || v.crashed || !v.isPlane || !this.hasSurfaceAirports(v.ref)) {
+      return null;
+    }
+    const mode = this.compassAirportTarget ?? 'auto';
+    const site = mode === 'auto'
+      ? this.getNextUnvisitedAirportSite(v)
+      : this.getAirportSite(v.ref, mode);
+    const targetIdx = site.aIdx ?? 0;
+    const targetApId = `${v.ref}:${targetIdx}`;
+    const curApId = this.getCurrentAirportId(v);
+    const onTargetAirport = curApId === targetApId && (!!v.landed || (v.agl !== undefined && v.agl < 25));
+    const visited = !!(this.airportsLandedSet && this.airportsLandedSet.has(targetApId));
+
+    const curSx = v.sx || 0;
+    const curSz = v.s ? (v.s.z || 0) : 0;
+    const targetSx = site.sx + 1040;
+    const targetSz = site.sz;
+    const dx = this.bodyDeltaX(v.ref, targetSx, curSx);
+    const dz = targetSz - curSz;
+    const dist = Math.hypot(dx, dz);
+
+    const h = v.heading || 0;
+    const fwdX = Math.cos(h);
+    const fwdZ = -Math.sin(h);
+    const planeBearingDeg = ((Math.atan2(fwdX, -fwdZ) * 180 / Math.PI) % 360 + 360) % 360;
+    const targetBearingDeg = dist > 1
+      ? (((Math.atan2(dx, -dz) * 180 / Math.PI) % 360 + 360) % 360)
+      : planeBearingDeg;
+
+    let relDeg = targetBearingDeg - planeBearingDeg;
+    while (relDeg > 180) relDeg -= 360;
+    while (relDeg < -180) relDeg += 360;
+    if (onTargetAirport) relDeg = 0;
+
+    const cardIdx = Math.round(targetBearingDeg / 45) % 8;
+    const cardsVi = ['B', 'ĐB', 'Đ', 'ĐN', 'N', 'TN', 'T', 'TB'];
+    const cardsEn = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const cardinal = tr(cardsVi[cardIdx], cardsEn[cardIdx]);
+
+    return {
+      mode,
+      targetIdx,
+      targetApId,
+      onTargetAirport,
+      visited,
+      dx,
+      dz,
+      dist,
+      planeBearingDeg,
+      targetBearingDeg,
+      relDeg,
+      cardinal,
+    };
+  }
+
+  updateAirportCompass(P = this.player) {
+    const wrap = $('airport-compass');
+    if (!wrap) return;
+    const data = this.map?.visible ? null : this.computeAirportCompassData(P);
+    if (!data) {
+      wrap.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+
+    const aligned = data.onTargetAirport || Math.abs(data.relDeg) <= 7;
+    wrap.classList.toggle('aligned', aligned);
+
+    const rose = $('ac-rose');
+    if (rose) rose.style.transform = `rotate(${(-data.planeBearingDeg).toFixed(2)}deg)`;
+    const needle = $('ac-needle');
+    if (needle) needle.style.transform = `rotate(${data.relDeg.toFixed(2)}deg)`;
+
+    const setTxt = (el, txt) => {
+      if (el && el._lastTxt !== txt) {
+        el._lastTxt = txt;
+        el.textContent = txt;
+      }
+    };
+
+    setTxt($('ac-lbl-n'), tr('B', 'N'));
+    setTxt($('ac-lbl-e'), tr('Đ', 'E'));
+    setTxt($('ac-lbl-s'), tr('N', 'S'));
+    setTxt($('ac-lbl-w'), tr('T', 'W'));
+
+    const apNum = data.targetIdx + 1;
+    const targetStr = data.onTargetAirport
+      ? tr(`🛬 Sân bay #${apNum}`, `🛬 Airport #${apNum}`)
+      : tr(`🛫 Sân bay #${apNum}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${apNum}${data.visited ? ' ✔' : ''}`);
+    setTxt($('ac-target'), targetStr);
+
+    const distStr = data.dist >= 1000
+      ? `${(data.dist / 1000).toFixed(1)} km`
+      : `${Math.round(data.dist)} m`;
+    setTxt($('ac-dist'), distStr);
+
+    let turnStr;
+    if (data.onTargetAirport) {
+      turnStr = tr('🛬 Đã tới sân bay!', '🛬 At airport!');
+    } else if (Math.abs(data.relDeg) <= 5) {
+      turnStr = tr('▲ Bay thẳng tiến!', '▲ Fly straight!');
+    } else if (data.relDeg < 0) {
+      const deg = Math.round(Math.abs(data.relDeg));
+      turnStr = tr(`↰ Rẽ trái ${deg}° (A)`, `↰ Turn left ${deg}° (A)`);
+    } else {
+      const deg = Math.round(data.relDeg);
+      turnStr = tr(`↱ Rẽ phải ${deg}° (D)`, `↱ Turn right ${deg}° (D)`);
+    }
+    setTxt($('ac-turn'), turnStr);
+
+    const brgNum = String(Math.round(data.targetBearingDeg) % 360).padStart(3, '0');
+    setTxt($('ac-brg'), `🧭 ${brgNum}° ${data.cardinal}`);
+    setTxt($('ac-btn-auto'), tr('Tự động', 'Auto'));
+
+    const targetsEl = $('ac-targets');
+    if (targetsEl) {
+      const btns = targetsEl.querySelectorAll('button[data-ac-idx]');
+      for (let i = 0; i < btns.length; i++) {
+        const b = btns[i];
+        const raw = b.dataset.acIdx;
+        if (raw === 'auto') {
+          b.classList.toggle('active', data.mode === 'auto');
+        } else {
+          const idx = Number(raw);
+          const apId = `${P.ref}:${idx}`;
+          const isVisited = !!(this.airportsLandedSet && this.airportsLandedSet.has(apId));
+          b.classList.toggle('active', data.mode === idx);
+          b.classList.toggle('auto-target', data.mode === 'auto' && data.targetIdx === idx);
+          b.classList.toggle('visited', isVisited);
+        }
+      }
+    }
   }
 
   getPlanetAirportOrigin(bodyKey) {
@@ -4096,6 +4246,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.visitedAirportIds = new Set(['earth:0']);
     this.wasAirborneForAirport = false;
     this.lastLandedAirportId = 'earth:0';
+    this.compassAirportTarget = 'auto';
     this.harborsVisitedSet = new Set();
     this.visitedHarborIds = new Set(['earth:0']);
     this.leftHarborForVoyage = false;
@@ -8848,6 +8999,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     if (this.map.visible) this.updateMap();
     if (this.pipKeep > 0) this.pipKeep -= dt;
     const P = this.player;
+    this.updateAirportCompass(P);
     const b = this.vessels.find((v) => v.kind === 'booster' && !v.dead);
     let showPip = false;
     this.pipTarget = null;

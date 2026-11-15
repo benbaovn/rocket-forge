@@ -774,7 +774,10 @@ export class Vessel {
         if (steer !== 0 && this.planeRollSpeed > 0.5) {
           const steerRate = THREE.MathUtils.clamp(-steer * 1.2 * Math.min(1.0, 18 / (this.planeRollSpeed + 5)), -0.8, 0.8);
           const steerH = h > 0.25 ? (h / Math.max(1, this._warp || 1)) : h;
+          this.turnYawRate = steerRate;
           this.heading = (this.heading || 0) + steerRate * steerH;
+        } else {
+          this.turnYawRate = 0;
         }
 
         const pitchControl = this.ctl.drive || 0; // W = +1 (pitch up), S = -1 (pitch down)

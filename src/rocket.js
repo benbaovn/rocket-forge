@@ -612,6 +612,11 @@ export function segmentInfo(stack, idx) {
     s.chemFuel = 4.5;
   }
   const hasSciFi = s.antiGrav || s.laser;
+  const rawSciFiSL = (s.tAntiGrav ? 2600 * (s.tAntiGrav / 2600) : 0) + (s.tLaser ? 2400 * (s.tLaser / 2600) : 0);
+  const rawSciFiVac = s.tAntiGrav + s.tLaser;
+  s.rawTSL = s.tChemSL + rawSciFiSL + s.bTSL;
+  s.rawTVac = s.tChemVac + rawSciFiVac + s.bTVac;
+  s.wrongFuel = (hasSciFi && s.batteryFuel <= 0 && s.chemFuel > 0) || (s.chemEngines > 0 && s.chemFuel <= 0 && s.batteryFuel > 0);
   if (hasSciFi && s.batteryFuel <= 0) {
     // Laser & Anti-Gravity engines ONLY work with batteryPack (never with regular fuel tanks)
     s.needsBattery = true;
@@ -677,8 +682,33 @@ export function computeStats(stack) {
       dv += ve * Math.log(m / (m - fuelLeft));
       t += fuelLeft / s.mdot;
     }
-    const thrust = first ? s.tSL + s.bTSL : s.tVac + s.bTVac;
-    stages.push({ num: infos.length - k, dv, twr: thrust / (m0 * G0), burn: t, thrust, mass: m0, segIndex: k, solarOnBattery: s.solarOnBattery || 0, hasGunBattery: !!s.hasGunBattery, batteryFuel: s.useBatteryFuel ? s.batteryFuel : 0, batteryCount: s.batteryCount || 0, hasRoyalUfo: !!s.hasRoyalUfo, ufoEngineMode: s.ufoEngineMode || 'antigrav' });
+    const thrustSL = s.tSL + s.bTSL;
+    const thrustVac = s.tVac + s.bTVac;
+    const thrust = first ? thrustSL : thrustVac;
+    const displaySL = (thrustSL > 0 || s.wrongFuel) ? thrustSL : (s.rawTSL || 0);
+    const displayVac = (thrustVac > 0 || s.wrongFuel) ? thrustVac : (s.rawTVac || 0);
+    const displayThrust = first ? displaySL : displayVac;
+    stages.push({
+      num: infos.length - k,
+      dv,
+      twr: m0 > 0 ? thrust / (m0 * G0) : 0,
+      burn: t,
+      thrust,
+      thrustSL,
+      thrustVac,
+      thrustTons: displayThrust / G0,
+      thrustSLTons: displaySL / G0,
+      thrustVacTons: displayVac / G0,
+      wrongFuel: !!s.wrongFuel,
+      mass: m0,
+      segIndex: k,
+      solarOnBattery: s.solarOnBattery || 0,
+      hasGunBattery: !!s.hasGunBattery,
+      batteryFuel: s.useBatteryFuel ? s.batteryFuel : 0,
+      batteryCount: s.batteryCount || 0,
+      hasRoyalUfo: !!s.hasRoyalUfo,
+      ufoEngineMode: s.ufoEngineMode || 'antigrav',
+    });
     totalDv += dv;
     remainingAbove -= s.mass;
   }
@@ -760,7 +790,10 @@ export function computeStats(stack) {
   }
   const hasMotorBoat = stack.some((it) => isBoatMotorPart(it.type) || it.attach.some(isBoatMotorPart));
   const canLaunch = stack.length > 0 && !lockedUfo && (isBoat ? hasMotorBoat : st1HasEngineAndFuel);
-  return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch };
+  const liftoffThrustTons = stages[0] ? stages[0].thrustSLTons : 0;
+  const liftoffThrustVacTons = stages[0] ? stages[0].thrustVacTons : 0;
+  const totalThrustTons = stages.reduce((sum, stg) => sum + (stg.thrustTons || 0), 0);
+  return { totalMass, height: lay.height, stages, totalDv, warnings, segments: segs, infos, canLaunch, liftoffThrustTons, liftoffThrustVacTons, totalThrustTons };
 }
 
 /**

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { PARTS, MAT, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoUnlocked } from '../parts.js';
+import { PARTS, MAT, G0, buildPart, radialPlacements, isUfoPart, isRoyalUfoPart, isUfoUnlocked } from '../parts.js';
 import { MISSIONS, missionById, isMissionCompleted } from '../missions.js';
 import { buildRocket, computeStats, layout, newItem, cloneStack, stackFromTypes, PRESETS, ensureStackHasWeapons, canPartAttachToStack, getIncompatibilityWarning, getUfoUnlockWarning, getUfoShortLockHint, getPresetLockedPart, getStackLockedUfoPart, sanitizeStack, isWeaponPart, stackVehicleType } from '../rocket.js';
 import { latticeTower, lightCone } from '../env.js';
@@ -29,6 +29,16 @@ function matchesQuery(haystack, rawQuery) {
 }
 
 const $ = (id) => document.getElementById(id);
+
+function fmtTonsNum(tons) {
+  if (!(tons > 0)) return '0';
+  if (tons >= 1000) return Math.round(tons).toLocaleString('en-US');
+  return tons.toFixed(1);
+}
+
+function fmtTons(tons) {
+  return `${fmtTonsNum(tons)} ${tr('tấn', 't')}`;
+}
 
 export class BuildScene {
   constructor(app) {
@@ -271,7 +281,17 @@ export class BuildScene {
         : `<span class="pt-pill">⛽ <b>${def.fuel.toFixed(1)} t</b></span>`);
     }
     if (def.thrustVac) {
-      pills.push(`<span class="pt-pill">🔥 <b>${def.thrustSL}–${def.thrustVac} kN</b></span>`);
+      const slT = def.thrustSL / G0;
+      const vacT = def.thrustVac / G0;
+      const unit = tr('tấn', 't');
+      const perUnit = def.kind === 'radial' ? tr(' / chiếc', ' / ea') : '';
+      const tonsLabel = Math.abs(vacT - slT) >= 0.1
+        ? `${fmtTonsNum(slT)}–${fmtTonsNum(vacT)} ${unit}`
+        : `${fmtTonsNum(slT)} ${unit}`;
+      const knLabel = def.thrustSL !== def.thrustVac
+        ? `${def.thrustSL.toLocaleString('en-US')}–${def.thrustVac.toLocaleString('en-US')} kN`
+        : `${def.thrustSL.toLocaleString('en-US')} kN`;
+      pills.push(`<span class="pt-pill">🔥 <b>${tonsLabel}</b>${perUnit} <span style="opacity:.7">(${knLabel})</span></span>`);
       pills.push(`<span class="pt-pill">⚡ Isp <b>${def.ispVac}s</b></span>`);
     }
     pills.push(`<span class="pt-pill">🔗 ${def.kind === 'radial' ? tr('Gắn sườn', 'Radial') : tr('Trục chính', 'Stack')}</span>`);
@@ -1631,9 +1651,30 @@ export class BuildScene {
         this.desiredTarget.set(0, pObj.y + (pObj.height ?? pObj.def.height) * 0.5, 0);
       }
     }
-    const def = PARTS[sel.attach || it.type];
+    const selType = sel.attach || it.type;
+    const def = PARTS[selType];
     $('sel-name').textContent = def.name;
-    $('sel-desc').textContent = def.desc;
+    let descTxt = def.desc;
+    if (def.thrustVac) {
+      const cnt = sel.attach ? (def.count || 2) : 1;
+      let slK = def.thrustSL * cnt;
+      let vacK = def.thrustVac * cnt;
+      if (isRoyalUfoPart(selType)) {
+        vacK = def.thrustVac * cnt;
+        slK = it.ufoEngineMode === 'laser' ? (2400 / 2600) * vacK : vacK;
+      } else if (selType === 'engAntiGrav' || isUfoPart(selType)) {
+        vacK = def.thrustVac * cnt;
+        slK = vacK;
+      }
+      const slT = slK / G0;
+      const vacT = vacK / G0;
+      const unit = tr('tấn', 't');
+      const tStr = Math.abs(vacT - slT) >= 0.1
+        ? `${fmtTonsNum(slT)}–${fmtTonsNum(vacT)} ${unit}`
+        : `${fmtTonsNum(slT)} ${unit}`;
+      descTxt = `🔥 ${tr('Lực đẩy', 'Thrust')}: ${tStr}${cnt > 1 ? ` (×${cnt})` : ''} · ${descTxt}`;
+    }
+    $('sel-desc').textContent = descTxt;
     this.updateVabUfoEngineBtn(sel, it);
     const sideBtn = $('btn-side-toggle');
     if (sideBtn) {
@@ -1692,6 +1733,7 @@ export class BuildScene {
     audio.click();
     this.rebuild(true, this.stack, this.selection);
     this.updateVabUfoEngineBtn();
+    if (this.selection) this.select(this.selection);
   }
 
   toggleSideAttach() {
@@ -1930,17 +1972,71 @@ export class BuildScene {
     this.updatePaletteCompatibility();
     this.updateVabUfoEngineBtn();
     this.syncRocketNameUI();
+    const vType = stackVehicleType(this.stack);
+    const hasParts = this.stack.length > 0;
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
-    const twr = st.stages[0] ? st.stages[0].twr : 0;
+    const slTons = hasParts ? (st.liftoffThrustTons || 0) : 0;
+    const vacTons = hasParts ? (st.liftoffThrustVacTons || 0) : 0;
+    const st1WrongFuel = !!(hasParts && st.stages[0]?.wrongFuel);
+    const thrustEl = $('st-thrust');
+    const thrustSubEl = $('st-thrust-sub');
+    const thrustBoxEl = $('st-thrust-box');
+    if (thrustEl) {
+      thrustEl.textContent = fmtTons(slTons);
+      if (!hasParts || vType === 'rover') {
+        thrustEl.style.color = slTons > 0 ? 'var(--accent)' : 'var(--muted)';
+      } else if (vType === 'boat' || vType === 'plane') {
+        thrustEl.style.color = slTons > 0 ? 'var(--accent)' : 'var(--danger)';
+      } else if (slTons <= 0) {
+        thrustEl.style.color = 'var(--danger)';
+      } else if (st.totalMass > 0 && slTons >= st.totalMass * 1.2) {
+        thrustEl.style.color = 'var(--ok)';
+      } else if (st.totalMass > 0 && slTons >= st.totalMass) {
+        thrustEl.style.color = '#ffd23d';
+      } else {
+        thrustEl.style.color = 'var(--danger)';
+      }
+    }
+    if (thrustSubEl) {
+      if (!hasParts || (slTons <= 0 && !st1WrongFuel)) {
+        thrustSubEl.textContent = '';
+        thrustSubEl.style.color = 'var(--muted)';
+      } else if (st1WrongFuel && slTons <= 0) {
+        thrustSubEl.textContent = tr('⚠ Sai nhiên liệu', '⚠ Wrong fuel');
+        thrustSubEl.style.color = 'var(--danger)';
+      } else if (vType !== 'boat' && vType !== 'plane' && Math.abs(vacTons - slTons) >= 0.1) {
+        thrustSubEl.textContent = `${tr('Chân không', 'Vac')}: ${fmtTons(vacTons)}`;
+        thrustSubEl.style.color = 'var(--muted)';
+      } else {
+        thrustSubEl.textContent = `${Math.round(slTons * G0).toLocaleString('en-US')} kN`;
+        thrustSubEl.style.color = 'var(--muted)';
+      }
+    }
+    if (thrustBoxEl) {
+      thrustBoxEl.title = hasParts && st.stages.length
+        ? st.stages.map((s, idx) => {
+          const kN = Math.round((idx === 0 ? s.thrustSLTons : s.thrustTons) * G0).toLocaleString('en-US');
+          return idx === 0 && Math.abs(s.thrustVacTons - s.thrustSLTons) >= 0.1
+            ? `S${s.num}: ${fmtTons(s.thrustSLTons)} (${tr('Chân không', 'Vac')}: ${fmtTons(s.thrustVacTons)} · ${kN} kN)`
+            : `S${s.num}: ${fmtTons(s.thrustTons)} (${kN} kN)`;
+        }).join('\n')
+        : '';
+    }
+    const twr = hasParts && st.stages[0] ? st.stages[0].twr : 0;
     const twrEl = $('st-twr');
-    twrEl.textContent = st.stages.length ? twr.toFixed(2) : '–';
-    twrEl.style.color = twr >= 1.2 ? 'var(--ok)' : twr >= 1 ? '#ffd23d' : 'var(--danger)';
+    twrEl.textContent = hasParts && st.stages.length ? twr.toFixed(2) : '–';
+    twrEl.style.color = !hasParts ? 'var(--muted)' : twr >= 1.2 ? 'var(--ok)' : twr >= 1 ? '#ffd23d' : 'var(--danger)';
     const fmtDv = (dv) => dv >= 1e6 ? `${(dv / 1000).toFixed(0)} km/s` : `${Math.round(dv)} m/s`;
     const fmtStageDv = (dv) => dv >= 1e6 ? `${(dv / 1e6).toFixed(1)}M` : dv >= 100000 ? `${Math.round(dv / 1000)}k` : `${Math.round(dv)}`;
     $('st-dv').textContent = fmtDv(st.totalDv);
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
-    $('stage-list').innerHTML = st.stages.map((s) => `<div class="stage-row"><span class="sn">S${s.num}${s.hasRoyalUfo ? (s.ufoEngineMode === 'laser' ? ' 🔴' : ' 🌀') : ''}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋${Math.round(s.batteryFuel)}t · ` : ''}Δv ${fmtStageDv(s.dv)}</span><span>TWR ${s.twr.toFixed(1)}</span></div>`).join('');
+    $('stage-list').innerHTML = st.stages.map((s, idx) => {
+      const stgTons = idx === 0 ? s.thrustSLTons : s.thrustTons;
+      const stgKN = Math.round(stgTons * G0).toLocaleString('en-US');
+      const stgTitle = `🔥 ${tr('Lực đẩy', 'Thrust')} S${s.num}: ${fmtTons(stgTons)} (${stgKN} kN)`;
+      return `<div class="stage-row" title="${stgTitle}"><span class="sn">S${s.num}${s.hasRoyalUfo ? (s.ufoEngineMode === 'laser' ? ' 🔴' : ' 🌀') : ''}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋${Math.round(s.batteryFuel)}t · ` : ''}Δv ${fmtStageDv(s.dv)}</span><span>TWR ${s.twr.toFixed(1)}</span></div>`;
+    }).join('');
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
     const hasGunBat = st.stages.some((s) => s.hasGunBattery);
@@ -1951,7 +2047,6 @@ export class BuildScene {
         : ` · 🌀 ${tr('Động cơ Phản Hấp Dẫn (Phím E đổi)', 'Anti-Grav Engine (Key E to switch)')}`)
       : '';
     const totalBatFuel = st.stages.reduce((sum, s) => sum + (s.batteryFuel || 0), 0);
-    const vType = stackVehicleType(this.stack);
     const readyLabel = vType === 'boat'
       ? tr('Sẵn sàng ra cảng!', 'Ready for the harbor!')
       : vType === 'plane'

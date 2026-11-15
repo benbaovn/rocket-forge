@@ -468,7 +468,26 @@ select.btn option { background: #111a29; }
   flex-shrink: 0;
 }
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.stat { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; }
+.stat { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; min-width: 0; }
+.stat.stat-wide {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px 8px;
+  background: linear-gradient(135deg, rgba(255, 138, 61, 0.09), rgba(79, 216, 255, 0.06));
+  border: 1px solid rgba(255, 170, 90, 0.22);
+}
+.stat-wide-main { min-width: 0; }
+.stat-sub {
+  font-family: var(--font-orbitron);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
 .stat label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
 .stat b { font-family: var(--font-orbitron); font-size: 17px; font-weight: 800; }
 .dv-target { margin-top: 14px; }
@@ -1618,6 +1637,7 @@ body.touch .big-btn:hover, body.touch .btn:hover, body.touch .part-card:hover { 
   #stats.open { display: block !important; }
   .stat { padding: 7px; }
   .stat b { font-size: 14px; }
+  .stat-sub { font-size: 9px; }
 
   /* --- VAB selection box & rotate bar --- */
   #sel-box { top: calc(50px + var(--sat)); min-width: 0; width: min(380px, calc(100vw - 16px)); padding: 8px 10px; }

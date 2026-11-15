@@ -1623,13 +1623,11 @@ export function applyLanguage(lang, app) {
   setAttr('#hud-rocket-name-input', 'placeholder', 'Đặt tên tên lửa…', 'Enter rocket name…');
   setAttr('#btn-hud-rename', 'title', 'Đặt lại tên tên lửa', 'Rename rocket');
 
-  const statLabels = document.querySelectorAll('#stats .stat-grid .stat label');
-  if (statLabels.length >= 4) {
-    statLabels[0].textContent = tr('⚖ Khối lượng', '⚖ Mass');
-    statLabels[1].textContent = tr('📏 Chiều cao', '📏 Height');
-    statLabels[2].textContent = tr('🚀 TWR', '🚀 TWR');
-    statLabels[3].textContent = tr('⚡ Tổng Δv', '⚡ Total Δv');
-  }
+  setTxt('#st-lbl-mass', '⚖ Khối lượng', '⚖ Mass');
+  setTxt('#st-lbl-height', '📏 Chiều cao', '📏 Height');
+  setTxt('#st-lbl-thrust', '🔥 Lực đẩy', '🔥 Thrust');
+  setTxt('#st-lbl-twr', '🚀 TWR', '🚀 TWR');
+  setTxt('#st-lbl-dv', '⚡ Tổng Δv', '⚡ Total Δv');
   const dvMarks = document.querySelectorAll('#stats .dv-bar i');
   if (dvMarks.length >= 2) {
     dvMarks[0].setAttribute('data-l', tr('Vũ trụ', 'Space'));

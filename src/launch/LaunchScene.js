@@ -28,7 +28,7 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: 28000, dz: -38000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Mainland Peninsula #1 (separated by deep ocean bay from Launchpad/Harbor #1)
+  { dx: 28000, dz: -38000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Mainland Peninsula #1 (separated by deep ocean bay from Launchpad/Harbor 0)
   { dx: 52000, dz: -280000, planetDx: -250000,  planetDz: -9000 },  // Airport #2: Mainland Peninsula #2 (fastest route crosses ~243 km of open ocean bay)
   { dx: 46000, dz: 110000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3: Mainland Peninsula #3 (fastest route crosses open ocean bays)
   { dx: 58000, dz: -485000, planetDx: -820000,  planetDz: -11000 }, // Airport #4: Mainland Peninsula #4 (fastest route crosses ~205 km of open ocean bay)
@@ -109,6 +109,15 @@ export class LaunchScene {
   refreshLanguage() {
     this.camModes = tr(CAM_MODES_VI, CAM_MODES_EN);
     this.setTeleportMode(this.teleportMode || 'surface');
+    if (this.harborSignMats) {
+      for (const item of this.harborSignMats) {
+        const nextTex = this.makeHarborSignTexture(item.hIdx);
+        if (item.mat.map) item.mat.map.dispose();
+        item.mat.map = nextTex;
+        item.mat.emissiveMap = nextTex;
+        item.mat.needsUpdate = true;
+      }
+    }
 
     if (this.player) {
       if (this.program && this.mission) {
@@ -1333,6 +1342,32 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.world.add(airport);
   }
 
+  makeHarborSignTexture(hIdx) {
+    const cv = document.createElement('canvas');
+    cv.width = 512;
+    cv.height = 128;
+    const ctx = cv.getContext && cv.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#061826';
+      ctx.fillRect(0, 0, 512, 128);
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 8;
+      if (ctx.strokeRect) ctx.strokeRect(8, 8, 496, 112);
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.78)';
+      ctx.lineWidth = 2.5;
+      if (ctx.strokeRect) ctx.strokeRect(18, 18, 476, 92);
+      ctx.fillStyle = '#f0fdfa';
+      ctx.font = '900 58px Orbitron, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tr(`⚓ CẢNG ${hIdx}`, `⚓ HARBOR ${hIdx}`), 256, 66);
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
   initHarbor() {
     const harbor = new THREE.Group();
     harbor.visible = false;
@@ -1340,6 +1375,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.subHarbors = [];
     this.harborRadars = [];
     this.harborLighthouseBeacons = [];
+    this.harborSignMats = [];
 
     const concreteMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.82, metalness: 0.12 });
     const darkQuayMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.18 });
@@ -1547,7 +1583,51 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.harborRadars.push(hRadar);
       if (hIdx === 0) this.harborRadar = hRadar;
       termGroup.add(hRadar);
+
+      const signTex = this.makeHarborSignTexture(hIdx);
+      const signMat = new THREE.MeshStandardMaterial({
+        map: signTex,
+        emissive: 0xffffff,
+        emissiveMap: signTex,
+        emissiveIntensity: 0.85,
+        roughness: 0.28,
+        metalness: 0.12,
+      });
+      this.harborSignMats.push({ hIdx, mat: signMat });
+
+      const roofBackEast = new THREE.Mesh(new THREE.BoxGeometry(0.9, 5.2, 20.8), darkQuayMat);
+      roofBackEast.position.set(23.2, 18.0, -6);
+      const roofFaceEast = new THREE.Mesh(new THREE.PlaneGeometry(20.0, 4.6), signMat);
+      roofFaceEast.rotation.y = Math.PI / 2;
+      roofFaceEast.position.set(23.7, 18.0, -6);
+      termGroup.add(roofBackEast, roofFaceEast);
+
+      const roofBackSouth = new THREE.Mesh(new THREE.BoxGeometry(20.8, 5.2, 0.9), darkQuayMat);
+      roofBackSouth.position.set(-8, 18.0, 32.2);
+      const roofFaceSouth = new THREE.Mesh(new THREE.PlaneGeometry(20.0, 4.6), signMat);
+      roofFaceSouth.position.set(-8, 18.0, 32.7);
+      termGroup.add(roofBackSouth, roofFaceSouth);
+
       subHarbor.add(termGroup);
+
+      // Berth / channel welcome signboard right beside the South channel lane (visible on boat spawn at Cảng 0 & from sea)
+      const berthSignGroup = new THREE.Group();
+      berthSignGroup.position.set(H_X + 162, 0, 18.5);
+      for (const szOff of [-4.2, 4.2]) {
+        const sPost = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 9.0, 10), pilingMat);
+        sPost.position.set(0, 2.0, szOff);
+        berthSignGroup.add(sPost);
+      }
+      const berthSignBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3.0, 11.6), darkQuayMat);
+      berthSignBox.position.set(0, 6.2, 0);
+      const berthSignWest = new THREE.Mesh(new THREE.PlaneGeometry(11.0, 2.65), signMat);
+      berthSignWest.rotation.y = -Math.PI / 2;
+      berthSignWest.position.set(-0.34, 6.2, 0);
+      const berthSignEast = new THREE.Mesh(new THREE.PlaneGeometry(11.0, 2.65), signMat);
+      berthSignEast.rotation.y = Math.PI / 2;
+      berthSignEast.position.set(0.34, 6.2, 0);
+      berthSignGroup.add(berthSignBox, berthSignWest, berthSignEast);
+      subHarbor.add(berthSignGroup);
 
       for (const cz of [48, 92]) {
         const crane = new THREE.Group();
@@ -2334,16 +2414,17 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     setTxt($('ac-lbl-s'), tr('N', 'S'));
     setTxt($('ac-lbl-w'), tr('T', 'W'));
 
-    const num = data.targetIdx + 1;
     let targetStr;
     if (data.isBoatCompass) {
+      const hNum = data.targetIdx;
       targetStr = arrived
-        ? tr(`⚓ Cảng #${num}`, `⚓ Harbor #${num}`)
-        : tr(`⚓ Cảng #${num}${data.visited ? ' ✔' : ''}`, `⚓ Harbor #${num}${data.visited ? ' ✔' : ''}`);
+        ? tr(`⚓ Cảng ${hNum}`, `⚓ Harbor ${hNum}`)
+        : tr(`⚓ Cảng ${hNum}${data.visited ? ' ✔' : ''}`, `⚓ Harbor ${hNum}${data.visited ? ' ✔' : ''}`);
     } else {
+      const apNum = data.targetIdx + 1;
       targetStr = arrived
-        ? tr(`🛬 Sân bay #${num}`, `🛬 Airport #${num}`)
-        : tr(`🛫 Sân bay #${num}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${num}${data.visited ? ' ✔' : ''}`);
+        ? tr(`🛬 Sân bay #${apNum}`, `🛬 Airport #${apNum}`)
+        : tr(`🛫 Sân bay #${apNum}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${apNum}${data.visited ? ' ✔' : ''}`);
     }
     setTxt($('ac-target'), targetStr);
 
@@ -2398,9 +2479,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           const idx = Number(raw);
           const maxCount = data.isBoatCompass ? HARBOR_SCATTER_Z.length : AIRPORT_SCATTER_OFFSETS.length;
           b.classList.toggle('hidden', idx >= maxCount);
+          setTxt(b, data.isBoatCompass ? `#${idx}` : `#${idx + 1}`);
+          b.title = data.isBoatCompass
+            ? tr(`Chỉ la bàn tới Cảng ${idx}`, `Point compass to Harbor ${idx}`)
+            : tr(`Chỉ la bàn tới Sân bay #${idx + 1}`, `Point compass to Airport #${idx + 1}`);
           const siteId = data.isBoatCompass ? `earth:${idx}` : `${P.ref}:${idx}`;
           const isVisited = data.isBoatCompass
-            ? !!(this.harborsVisitedSet && this.harborsVisitedSet.has(siteId))
+            ? !!((this.harborsVisitedSet && this.harborsVisitedSet.has(siteId)) || (this.visitedHarborIds && this.visitedHarborIds.has(siteId)))
             : !!(this.airportsLandedSet && this.airportsLandedSet.has(siteId));
           b.classList.toggle('active', data.mode === idx);
           b.classList.toggle('auto-target', data.mode === 'auto' && data.targetIdx === idx);
@@ -2554,7 +2639,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         const has5Airports = this.hasSurfaceAirports(key);
         const forceOrb = isOrb || !!B.gasGiant || key === 'sun';
         const modeDesc = has5Airports
-          ? tr('🛬 5 Sân bay', '🛬 5 Airports') + (key === 'earth' ? tr(' · ⚓ 5 Cảng', ' · ⚓ 5 Harbors') : '')
+          ? tr('🛬 5 Sân bay', '🛬 5 Airports') + (key === 'earth' ? tr(' · ⚓ Cảng 0–5', ' · ⚓ Harbors 0–5') : '')
           : isPlane
             ? tr('✈️ Bay trong khí quyển', '✈️ Atmospheric Flight')
             : (forceOrb ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit') : tr('🛬 Đáp bề mặt', '🛬 Land on Surface'));
@@ -2570,10 +2655,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
             </div>`
           : '';
         const harborSubBtns = (key === 'earth' && !isPlane)
-          ? `<div class="tp-sub-row">
-              ${[0, 1, 2, 3, 4].map((idx) => {
+          ? `<div class="tp-sub-row tp-sub-harbors">
+              ${[0, 1, 2, 3, 4, 5].map((idx) => {
                 const isSel = curTarget === 'earth' && this.selectedHarborIdx === idx;
-                return `<button type="button" class="tp-sub-pill tp-sub-harbor ${isSel ? 'on' : ''}" data-tp-harbor="${idx}" title="${tr(`Trái Đất — Cảng biển #${idx + 1}`, `Earth — Harbor #${idx + 1}`)}">⚓ ${tr(`Cảng ${idx + 1}`, `Port ${idx + 1}`)}</button>`;
+                return `<button type="button" class="tp-sub-pill tp-sub-harbor ${isSel ? 'on' : ''}" data-tp-harbor="${idx}" title="${tr(`Trái Đất — Cảng ${idx}`, `Earth — Harbor ${idx}`)}">⚓ ${tr(`Cảng ${idx}`, `Port ${idx}`)}</button>`;
               }).join('')}
             </div>`
           : '';
@@ -3722,13 +3807,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           this.visitedAirportIds = new Set([...(this.airportsLandedSet || []), curApId]);
         }
         if (P.isRover) P.groundSpeed = 0;
-        if (hasHarborOpt) {
+        if (hasHarborOpt || (P.isBoat && bodyKey === 'earth')) {
           this.milestone(
-            `⚓ ${tr(`ĐÃ TỚI CẢNG BIỂN #${hIdx + 1} — TRÁI ĐẤT!`, `ARRIVED AT HARBOR #${hIdx + 1} — EARTH!`)}`,
-            tr(`Cảng biển #${hIdx + 1}/5 tại bờ biển Cape Canaveral · Nhấn W / Space để khởi hành!`, `Harbor #${hIdx + 1}/5 on the Cape Canaveral coast · Press W / Space to set sail!`)
+            `⚓ ${tr(`ĐÃ TỚI CẢNG ${hIdx} — TRÁI ĐẤT!`, `ARRIVED AT HARBOR ${hIdx} — EARTH!`)}`,
+            tr(`Cảng ${hIdx} tại bờ biển Trái Đất · Nhấn W / Space để khởi hành!`, `Harbor ${hIdx} on Earth's coast · Press W / Space to set sail!`)
           );
           this.event(
-            tr(`⚓🚢 Đã dịch chuyển tới Cảng biển #${hIdx + 1}/5 trên Trái Đất!`, `⚓🚢 Teleported to Harbor #${hIdx + 1}/5 on Earth!`),
+            tr(`⚓🚢 Đã dịch chuyển tới Cảng ${hIdx} trên Trái Đất!`, `⚓🚢 Teleported to Harbor ${hIdx} on Earth!`),
             'warn'
           );
         } else if (hasAirportOpt || (P.isPlane && this.hasSurfaceAirports(bodyKey))) {
@@ -4298,8 +4383,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.met = 0;
       const isSailBoatStack = stack.some((it) => it.type.includes('SailBoat') || it.attach.some((a) => a.includes('SailBoat')));
       this.event(isSailBoatStack
-        ? tr('⛵⚡ Thuyền nhỏ đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để lướt sóng ra khơi, A/D bẻ lái.', '⛵⚡ Small Boat moored at the Harbor ready to depart! Press W/S or throttle up to cruise out to sea, A/D to steer.')
-        : tr('🛥️⚓ Thuyền to đã cập Cảng biển sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời cảng ra khơi, A/D bẻ lái.', '🛥️⚓ Big Boat moored at the Harbor ready to depart! Press W/S or throttle up to sail out of port, A/D to steer.'));
+        ? tr('⛵⚡ Thuyền nhỏ đã xuất hiện tại Cảng 0 sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để lướt sóng ra khơi, A/D bẻ lái.', '⛵⚡ Small Boat moored at Harbor 0 ready to depart! Press W/S or throttle up to cruise out to sea, A/D to steer.')
+        : tr('🛥️⚓ Thuyền to đã xuất hiện tại Cảng 0 sẵn sàng xuất bến! Nhấn W/S hoặc tăng ga để rời Cảng 0 ra khơi, A/D bẻ lái.', '🛥️⚓ Big Boat moored at Harbor 0 ready to depart! Press W/S or throttle up to sail out of Harbor 0, A/D to steer.'));
     } else if (this.player.isRover) {
       const roverX = 0;
       const surfH = this.earthGroundWave(roverX, 0, 0.0, 0.0) + this.player.bottomOffset();
@@ -5421,19 +5506,30 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.lastVisitedHarborId = hId;
         this.visitedHarborIds.add(hId);
         this.harborsVisitedSet.add(hId);
+        const arrivedHIdx = Number(hId.split(':')[1] || 0);
         const count = this.harborsVisitedSet.size;
         const targetHb = this.mission?.targetHarbors || 0;
+        this.event(
+          tr(`⚓ Đã cập Cảng ${arrivedHIdx} an toàn!`, `⚓ Safely docked at Harbor ${arrivedHIdx}!`),
+          'ok'
+        );
+        if (targetHb === 0) {
+          this.milestone(
+            tr(`⚓ ĐÃ CẬP CẢNG ${arrivedHIdx}!`, `⚓ DOCKED AT HARBOR ${arrivedHIdx}!`),
+            tr(`Thuyền đã cập bến Cảng ${arrivedHIdx} an toàn!`, `Boat safely moored at Harbor ${arrivedHIdx}!`)
+          );
+        }
         for (let k = 1; k <= 5; k++) {
           if (count >= k && !F[`boatHarbor${k}`]) {
             this.setFlag(`boatHarbor${k}`);
             if (targetHb === k) {
               this.milestone(
                 tr(`🏆⚓ HOÀN THÀNH CẬP BẾN ${k} CẢNG BIỂN!`, `🏆⚓ COMPLETED VISITING ${k} HARBOR${k > 1 ? 'S' : ''}!`),
-                tr(`Xuất sắc! Thuyền đã ghé thăm an toàn đủ ${k}/${k} cảng biển trên Trái Đất!`, `Awesome! Boat safely visited ${k}/${k} harbor(s) on Earth!`)
+                tr(`Xuất sắc! Thuyền đã cập Cảng ${arrivedHIdx} — hoàn thành đủ ${k}/${k} cảng biển!`, `Awesome! Boat docked at Harbor ${arrivedHIdx} — visited ${k}/${k} harbor(s)!`)
               );
             } else if (targetHb > k) {
               this.milestone(
-                tr(`⚓ ĐÃ TỚI ${k}/${targetHb} CẢNG BIỂN!`, `⚓ VISITED ${k}/${targetHb} HARBORS!`),
+                tr(`⚓ ĐÃ TỚI CẢNG ${arrivedHIdx} (${k}/${targetHb} CẢNG)!`, `⚓ ARRIVED AT HARBOR ${arrivedHIdx} (${k}/${targetHb} HARBORS)!`),
                 tr(`Tiếp tục lướt sóng tới cảng biển tiếp theo (${k}/${targetHb})!`, `Keep sailing to the next harbor (${k}/${targetHb})!`)
               );
             }

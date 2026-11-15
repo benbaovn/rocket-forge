@@ -94,6 +94,7 @@ export class LaunchScene {
     this.deployedAstronauts = [];
     this.padAstronautMeshes = [];
     this.compassAirportTarget = 'auto';
+    this.compassHarborTarget = 'auto';
 
     this.initSky();
     this.initGround();
@@ -1834,7 +1835,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         audio.init();
         audio.click();
         const raw = btn.dataset.acIdx;
-        this.compassAirportTarget = raw === 'auto' ? 'auto' : Math.max(0, Math.min(4, Number(raw) || 0));
+        if (this.player?.isBoat) {
+          this.compassHarborTarget = raw === 'auto'
+            ? 'auto'
+            : Math.max(0, Math.min(HARBOR_SCATTER_Z.length - 1, Number(raw) || 0));
+        } else {
+          this.compassAirportTarget = raw === 'auto'
+            ? 'auto'
+            : Math.max(0, Math.min(AIRPORT_SCATTER_OFFSETS.length - 1, Number(raw) || 0));
+        }
         this.updateAirportCompass(this.player);
       });
     }
@@ -1984,6 +1993,17 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       const hId = `earth:${i}`;
       if (hId === curHId || hId === this.lastVisitedHarborId) continue;
       if (this.harborsVisitedSet && this.harborsVisitedSet.has(hId)) continue;
+      const hs = this.getHarborSite(i);
+      const dz = Math.abs(hs.sz - curZ);
+      if (dz < bestDist) {
+        bestDist = dz;
+        bestSite = hs;
+      }
+    }
+    if (bestSite) return bestSite;
+    for (let i = 0; i < HARBOR_SCATTER_Z.length; i++) {
+      const hId = `earth:${i}`;
+      if (hId === curHId || hId === this.lastVisitedHarborId) continue;
       const hs = this.getHarborSite(i);
       const dz = Math.abs(hs.sz - curZ);
       if (dz < bestDist) {
@@ -2143,17 +2163,158 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     };
   }
 
+  computeHarborCompassData(v = this.player) {
+    if (!v || v.dead || v.crashed || !v.isBoat || v.ref !== 'earth') {
+      return null;
+    }
+    const mode = this.compassHarborTarget ?? 'auto';
+    const site = mode === 'auto'
+      ? this.getNextUnvisitedHarborSite(v)
+      : this.getHarborSite(mode);
+    const targetIdx = site.hIdx ?? 0;
+    const targetHarborId = `earth:${targetIdx}`;
+    const curHarborId = this.getCurrentHarborId(v);
+    const onTargetHarbor = curHarborId === targetHarborId;
+    const visited = !!(
+      (this.harborsVisitedSet && this.harborsVisitedSet.has(targetHarborId)) ||
+      (this.visitedHarborIds && this.visitedHarborIds.has(targetHarborId))
+    );
+
+    const curSx = v.sx || 0;
+    const curSz = v.s ? (v.s.z || 0) : 0;
+    const directDz = site.sz - curSz;
+    const finalHarborX = Math.abs(directDz) <= 140 ? (site.berthX + 35) : (site.coastX + 260);
+    const finalHarborZ = site.sz;
+    const directDist = Math.hypot((site.berthX + 35) - curSx, directDz);
+
+    let wpX = finalHarborX;
+    let wpZ = finalHarborZ;
+    let isCapeDetour = false;
+
+    if (!onTargetHarbor && Math.abs(directDz) > 140) {
+      const startCoastX = this.earthCoastX(curSz);
+      if (curSx < startCoastX + 260) {
+        // Exit the harbor channel East into open water before turning North/South along the coast
+        wpX = startCoastX + 340;
+        wpZ = curSz;
+        isCapeDetour = true;
+      } else {
+        const samples = [];
+        const M = 240;
+        for (let i = 1; i < M; i++) samples.push(i / M);
+        const critZs = [0];
+        for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+          const dzAp = AIRPORT_SCATTER_OFFSETS[i].dz;
+          critZs.push(dzAp - 2200, dzAp, dzAp + 2200);
+        }
+        for (let i = 0; i < critZs.length; i++) {
+          const tCrit = (critZs[i] - curSz) / directDz;
+          if (tCrit > 0.001 && tCrit < 0.999) samples.push(tCrit);
+        }
+        samples.sort((a, b) => a - b);
+
+        let clearDirect = true;
+        for (let i = 0; i < samples.length; i++) {
+          const t = samples[i];
+          const z = curSz + directDz * t;
+          const lineX = curSx + (finalHarborX - curSx) * t;
+          if (lineX < this.earthCoastX(z) + 60) {
+            clearDirect = false;
+            break;
+          }
+        }
+
+        if (!clearDirect) {
+          let bestT = 1.0;
+          let bestWpX = finalHarborX;
+          let bestSlope = (finalHarborX - curSx);
+          for (let i = 0; i < samples.length; i++) {
+            const t = samples[i];
+            const z = curSz + directDz * t;
+            const dEnd = Math.min(Math.abs(z - curSz), Math.abs(finalHarborZ - z));
+            const clearance = 260 + 420 * Math.min(1, dEnd / 1600);
+            const reqX = this.earthCoastX(z) + clearance;
+            const slope = (reqX - curSx) / t;
+            if (slope > bestSlope) {
+              bestSlope = slope;
+              bestT = t;
+              bestWpX = reqX;
+            }
+          }
+          if (bestT < 0.999) {
+            wpX = bestWpX;
+            wpZ = curSz + directDz * bestT;
+            isCapeDetour = true;
+          }
+        }
+      }
+    }
+
+    const dx = wpX - curSx;
+    const dz = wpZ - curSz;
+    const legDist = Math.hypot(dx, dz);
+    const dist = onTargetHarbor
+      ? Math.hypot((site.berthX + 35) - curSx, directDz)
+      : isCapeDetour
+        ? (legDist + Math.hypot((site.berthX + 35) - wpX, finalHarborZ - wpZ))
+        : directDist;
+
+    const h = v.heading || 0;
+    const fwdX = Math.cos(h);
+    const fwdZ = -Math.sin(h);
+    const boatBearingDeg = ((Math.atan2(fwdX, -fwdZ) * 180 / Math.PI) % 360 + 360) % 360;
+    const targetBearingDeg = legDist > 1
+      ? (((Math.atan2(dx, -dz) * 180 / Math.PI) % 360 + 360) % 360)
+      : boatBearingDeg;
+
+    let relDeg = targetBearingDeg - boatBearingDeg;
+    while (relDeg > 180) relDeg -= 360;
+    while (relDeg < -180) relDeg += 360;
+    if (onTargetHarbor) relDeg = 0;
+
+    const cardIdx = Math.round(targetBearingDeg / 45) % 8;
+    const cardsVi = ['B', 'ĐB', 'Đ', 'ĐN', 'N', 'TN', 'T', 'TB'];
+    const cardsEn = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const cardinal = tr(cardsVi[cardIdx], cardsEn[cardIdx]);
+
+    return {
+      isBoatCompass: true,
+      mode,
+      targetIdx,
+      targetHarborId,
+      onTargetHarbor,
+      isCapeDetour,
+      visited,
+      dx,
+      dz,
+      dist,
+      directDist,
+      planeBearingDeg: boatBearingDeg,
+      boatBearingDeg,
+      targetBearingDeg,
+      relDeg,
+      cardinal,
+    };
+  }
+
   updateAirportCompass(P = this.player) {
     const wrap = $('airport-compass');
     if (!wrap) return;
-    const data = this.map?.visible ? null : this.computeAirportCompassData(P);
+    const isBoat = !!(P && P.isBoat);
+    const data = this.map?.visible
+      ? null
+      : isBoat
+        ? this.computeHarborCompassData(P)
+        : this.computeAirportCompassData(P);
     if (!data) {
       wrap.classList.add('hidden');
       return;
     }
     wrap.classList.remove('hidden');
+    wrap.classList.toggle('boat-mode', !!data.isBoatCompass);
 
-    const aligned = data.onTargetAirport || Math.abs(data.relDeg) <= 7;
+    const arrived = data.isBoatCompass ? data.onTargetHarbor : data.onTargetAirport;
+    const aligned = arrived || Math.abs(data.relDeg) <= 7;
     wrap.classList.toggle('aligned', aligned);
 
     const rose = $('ac-rose');
@@ -2173,10 +2334,17 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     setTxt($('ac-lbl-s'), tr('N', 'S'));
     setTxt($('ac-lbl-w'), tr('T', 'W'));
 
-    const apNum = data.targetIdx + 1;
-    const targetStr = data.onTargetAirport
-      ? tr(`🛬 Sân bay #${apNum}`, `🛬 Airport #${apNum}`)
-      : tr(`🛫 Sân bay #${apNum}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${apNum}${data.visited ? ' ✔' : ''}`);
+    const num = data.targetIdx + 1;
+    let targetStr;
+    if (data.isBoatCompass) {
+      targetStr = arrived
+        ? tr(`⚓ Cảng #${num}`, `⚓ Harbor #${num}`)
+        : tr(`⚓ Cảng #${num}${data.visited ? ' ✔' : ''}`, `⚓ Harbor #${num}${data.visited ? ' ✔' : ''}`);
+    } else {
+      targetStr = arrived
+        ? tr(`🛬 Sân bay #${num}`, `🛬 Airport #${num}`)
+        : tr(`🛫 Sân bay #${num}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${num}${data.visited ? ' ✔' : ''}`);
+    }
     setTxt($('ac-target'), targetStr);
 
     const distStr = data.dist >= 1000
@@ -2185,16 +2353,32 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     setTxt($('ac-dist'), distStr);
 
     let turnStr;
-    if (data.onTargetAirport) {
-      turnStr = tr('🛬 Đã tới sân bay!', '🛬 At airport!');
-    } else if (Math.abs(data.relDeg) <= 5) {
-      turnStr = tr('▲ Bay thẳng tiến!', '▲ Fly straight!');
-    } else if (data.relDeg < 0) {
-      const deg = Math.round(Math.abs(data.relDeg));
-      turnStr = tr(`↰ Rẽ trái ${deg}° (A)`, `↰ Turn left ${deg}° (A)`);
+    if (data.isBoatCompass) {
+      if (arrived) {
+        turnStr = tr('⚓ Đã cập cảng!', '⚓ In harbor!');
+      } else if (Math.abs(data.relDeg) <= 5) {
+        turnStr = data.isCapeDetour
+          ? tr('🌊 Lướt vòng mũi đất!', '🌊 Clear headland!')
+          : tr('▲ Lướt thẳng vào cảng!', '▲ Sail straight in!');
+      } else if (data.relDeg < 0) {
+        const deg = Math.round(Math.abs(data.relDeg));
+        turnStr = tr(`↰ Bẻ lái trái ${deg}° (A)`, `↰ Steer left ${deg}° (A)`);
+      } else {
+        const deg = Math.round(data.relDeg);
+        turnStr = tr(`↱ Bẻ lái phải ${deg}° (D)`, `↱ Steer right ${deg}° (D)`);
+      }
     } else {
-      const deg = Math.round(data.relDeg);
-      turnStr = tr(`↱ Rẽ phải ${deg}° (D)`, `↱ Turn right ${deg}° (D)`);
+      if (arrived) {
+        turnStr = tr('🛬 Đã tới sân bay!', '🛬 At airport!');
+      } else if (Math.abs(data.relDeg) <= 5) {
+        turnStr = tr('▲ Bay thẳng tiến!', '▲ Fly straight!');
+      } else if (data.relDeg < 0) {
+        const deg = Math.round(Math.abs(data.relDeg));
+        turnStr = tr(`↰ Rẽ trái ${deg}° (A)`, `↰ Turn left ${deg}° (A)`);
+      } else {
+        const deg = Math.round(data.relDeg);
+        turnStr = tr(`↱ Rẽ phải ${deg}° (D)`, `↱ Turn right ${deg}° (D)`);
+      }
     }
     setTxt($('ac-turn'), turnStr);
 
@@ -2212,8 +2396,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           b.classList.toggle('active', data.mode === 'auto');
         } else {
           const idx = Number(raw);
-          const apId = `${P.ref}:${idx}`;
-          const isVisited = !!(this.airportsLandedSet && this.airportsLandedSet.has(apId));
+          const maxCount = data.isBoatCompass ? HARBOR_SCATTER_Z.length : AIRPORT_SCATTER_OFFSETS.length;
+          b.classList.toggle('hidden', idx >= maxCount);
+          const siteId = data.isBoatCompass ? `earth:${idx}` : `${P.ref}:${idx}`;
+          const isVisited = data.isBoatCompass
+            ? !!(this.harborsVisitedSet && this.harborsVisitedSet.has(siteId))
+            : !!(this.airportsLandedSet && this.airportsLandedSet.has(siteId));
           b.classList.toggle('active', data.mode === idx);
           b.classList.toggle('auto-target', data.mode === 'auto' && data.targetIdx === idx);
           b.classList.toggle('visited', isVisited);
@@ -4251,6 +4439,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.visitedHarborIds = new Set(['earth:0']);
     this.leftHarborForVoyage = false;
     this.lastVisitedHarborId = 'earth:0';
+    this.compassHarborTarget = 'auto';
     if (isSpecial) {
       $('btn-go').classList.add('hidden');
     } else {
@@ -4922,7 +5111,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       if (dist < PAD_RADIUS + 22) return { h: 6 * (1 - (dist - PAD_RADIUS) / 22), water: false, site: 'pad' };
     }
     if (this.shipX !== null && Math.abs(sx - this.shipX) < 44 && Math.abs(sz) < 28) return { h: 3.0, water: false, site: 'ship' };
-    if (Math.abs(sx - LZ_X) < 44) return { h: 0.3, water: false, site: 'lz' };
+    if (Math.hypot(sx - LZ_X, sz) < 44) return { h: 0.3, water: false, site: 'lz' };
     let coastLimit = isRoverMode ? (dynCoastBase - 32) : isBoatMode ? (dynCoastBase + 22) : dynCoastBase;
     if (isBoatMode) {
       for (let i = 0; i < HARBOR_SCATTER_Z.length; i++) {

@@ -862,7 +862,7 @@ select.btn option { background: #111a29; }
   color: #ffffff;
 }
 
-/* ---------- Airplane Airport HSI Compass HUD ---------- */
+/* ---------- Airplane Airport & Boat Harbor HSI Compass HUD ---------- */
 #airport-compass {
   position: absolute;
   left: 50%;
@@ -878,6 +878,10 @@ select.btn option { background: #111a29; }
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(56, 189, 248, 0.14);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+#airport-compass.boat-mode {
+  border-color: rgba(45, 212, 191, 0.46);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(20, 184, 166, 0.18);
+}
 #airport-compass.aligned {
   border-color: rgba(52, 211, 153, 0.68);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 22px rgba(16, 185, 129, 0.28);
@@ -891,6 +895,11 @@ select.btn option { background: #111a29; }
   background: radial-gradient(circle at 50% 50%, rgba(15, 28, 48, 0.92) 0%, rgba(6, 12, 24, 0.96) 100%);
   border: 1.5px solid rgba(56, 189, 248, 0.45);
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.18);
+}
+#airport-compass.boat-mode .ac-dial {
+  background: radial-gradient(circle at 50% 50%, rgba(10, 38, 52, 0.94) 0%, rgba(4, 16, 28, 0.97) 100%);
+  border-color: rgba(45, 212, 191, 0.5);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.7), 0 0 12px rgba(20, 184, 166, 0.22);
 }
 #airport-compass.aligned .ac-dial {
   border-color: rgba(52, 211, 153, 0.75);
@@ -910,13 +919,18 @@ select.btn option { background: #111a29; }
 }
 .ac-rose,
 .ac-needle,
-.ac-plane-svg {
+.ac-plane-svg,
+.ac-boat-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   pointer-events: none;
+}
+#airport-compass:not(.boat-mode) .ac-boat-svg,
+#airport-compass.boat-mode .ac-plane-svg {
+  display: none;
 }
 .ac-rose,
 .ac-needle {
@@ -977,11 +991,29 @@ select.btn option { background: #111a29; }
 #airport-compass.aligned .ac-needle-tail {
   fill: #10b981;
 }
-.ac-plane-svg polygon {
+#airport-compass.boat-mode:not(.aligned) .ac-needle-shaft {
+  stroke: #2dd4bf;
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.85));
+}
+#airport-compass.boat-mode:not(.aligned) .ac-needle-head {
+  fill: #2dd4bf;
+  stroke: #ccfbf1;
+  filter: drop-shadow(0 0 5px rgba(45, 212, 191, 0.9));
+}
+#airport-compass.boat-mode:not(.aligned) .ac-needle-tail {
+  fill: #14b8a6;
+}
+.ac-plane-svg polygon,
+.ac-boat-svg path {
   fill: #f8fafc;
   stroke: rgba(15, 23, 42, 0.85);
   stroke-width: 1.2;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.55));
+}
+.ac-boat-svg .ac-boat-cabin {
+  fill: #38bdf8;
+  stroke: rgba(15, 23, 42, 0.7);
+  stroke-width: 0.9;
 }
 .ac-info {
   display: flex;

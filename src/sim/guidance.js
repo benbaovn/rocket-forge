@@ -763,7 +763,7 @@ export class BoatHarborHopProgram {
     const curCoastX = sc.getCoastX ? sc.getCoastX(curZ) : (sc.coastX + 100);
     let maxRouteCoastX = Math.max(curCoastX, site.coastX ?? site.berthX, 4460);
     if (sc.getCoastX) {
-      const steps = Math.min(96, Math.max(16, Math.ceil(Math.abs(zErr) / 2500)));
+      const steps = Math.min(720, Math.max(32, Math.ceil(Math.abs(zErr) / 900)));
       for (let i = 1; i <= steps; i++) {
         const zSample = curZ + (zErr * i) / steps;
         const cx = sc.getCoastX(zSample);
@@ -773,7 +773,7 @@ export class BoatHarborHopProgram {
     const safeOceanX = Math.max(maxRouteCoastX + 750, site.berthX + 650, 5200);
     let wpX;
     let wpZ;
-    if (Math.abs(zErr) > 36) {
+    if (Math.abs(zErr) > 95) {
       if (curX < safeOceanX - 80) {
         // Phase 1: Sail straight East out of the harbor channel into deep open ocean BEFORE turning North/South
         this.phase = 'depart';
@@ -803,9 +803,9 @@ export class BoatHarborHopProgram {
     v.heading = dist > 1 ? Math.atan2(-dz, dx) : Math.PI;
     v.turnYawRate = 0;
     if (isDocking) {
-      sc.requestWarp(dist > 800 ? 4 : dist > 320 ? 2 : 1);
+      sc.requestWarp(dist > 25000 ? 200 : dist > 10000 ? 100 : dist > 3500 ? 50 : dist > 1200 ? 10 : dist > 450 ? 4 : dist > 200 ? 2 : 1);
     } else if (this.phase === 'depart') {
-      sc.requestWarp(curX < curCoastX + 450 ? 2 : 10);
+      sc.requestWarp(curX < curCoastX + 450 ? 2 : dist > 25000 ? 200 : dist > 10000 ? 100 : dist > 3500 ? 50 : 10);
     } else {
       const absZ = Math.abs(zErr);
       sc.requestWarp(absZ > 25000 ? 200 : absZ > 12000 ? 100 : absZ > 4500 ? 50 : absZ > 1500 ? 10 : absZ > 500 ? 4 : 2);

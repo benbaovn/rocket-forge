@@ -28,11 +28,11 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: 28000,   dz: -16000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Offshore Island #1 (~29.9 km across ocean from Harbor #1 — 10x!)
-  { dx: 278000,  dz: -156000, planetDx: -250000,  planetDz: -9000 },  // Airport #2: Offshore Island #2 (~286.5 km across ocean from AP1 — 10x!)
-  { dx: 548000,  dz: 144000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3: Offshore Island #3 (~403.6 km across ocean from AP2 — 10x!)
-  { dx: 848000,  dz: -196000, planetDx: -820000,  planetDz: -11000 }, // Airport #4: Offshore Island #4 (~453.4 km across ocean from AP3 — 10x!)
-  { dx: 1178000, dz: 134000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5: Offshore Island #5 (~466.7 km across ocean from AP4 — 10x!)
+  { dx: 28000, dz: -38000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Mainland Peninsula #1 (separated by deep ocean bay from Launchpad/Harbor #1)
+  { dx: 52000, dz: -280000, planetDx: -250000,  planetDz: -9000 },  // Airport #2: Mainland Peninsula #2 (fastest route crosses ~243 km of open ocean bay)
+  { dx: 46000, dz: 110000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3: Mainland Peninsula #3 (fastest route crosses open ocean bays)
+  { dx: 58000, dz: -485000, planetDx: -820000,  planetDz: -11000 }, // Airport #4: Mainland Peninsula #4 (fastest route crosses ~205 km of open ocean bay)
+  { dx: 54000, dz: 310000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5: Mainland Peninsula #5 (fastest route crosses ~200 km of open ocean bay)
 ];
 const HARBOR_SCATTER_Z = [0, -180000, -380000, 200000, 420000, -580000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
@@ -399,26 +399,6 @@ export class LaunchScene {
     return best;
   }
 
-  singleAirportIslandDist(dx, dz, seed) {
-    const qx = Math.max(Math.abs(dx) - 1450.0, 0.0);
-    const qz = Math.max(Math.abs(dz) - 420.0, 0.0);
-    const core = Math.hypot(qx, qz) + Math.min(Math.max(Math.abs(dx) - 1450.0, Math.abs(dz) - 420.0), 0.0) - 1150.0;
-    const wob = Math.sin(dx * 0.0017 + seed * 1.7) * 185.0
-      + Math.cos(dz * 0.0023 - seed * 2.3) * 145.0
-      + Math.sin((dx - dz) * 0.0013 + seed * 0.9) * 95.0;
-    return core + wob;
-  }
-
-  earthAirportIslandDist(sx, sz) {
-    let best = Infinity;
-    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
-      const off = AIRPORT_SCATTER_OFFSETS[i];
-      const d = this.singleAirportIslandDist(sx - (off.dx + 1120.0), sz - (off.dz - 20.0), i + 1.0);
-      if (d < best) best = d;
-    }
-    return best;
-  }
-
   trigFbmJS(px, py, seed, oct = 3) {
     const fract = (v) => v - Math.floor(v);
     const TAU = 6.283185307179586;
@@ -445,8 +425,9 @@ export class LaunchScene {
   }
 
   isLagoonWater(sx, sz) {
-    if (sx > COAST_X - 300) return false;
-    if (this.earthAirportBoxDist(sx, sz) < 80.0) return false;
+    const cX = this.earthCoastX(sz);
+    if (sx > Math.min(2200.0, cX - 900.0)) return false;
+    if (this.earthAirportBoxDist(sx, sz) < 120.0) return false;
     return this.lagoonNoiseJS(sx, sz) >= 0.685;
   }
 
@@ -463,15 +444,12 @@ export class LaunchScene {
     };
     const seed = this.groundWaveSeed || 0.0;
     const cX = this.earthCoastX(sz);
-    const islDist = this.earthAirportIslandDist(sx, sz);
-    const mainlandMask = smooth(cX - 20.0, cX - 260.0, sx) * smooth(-1495000.0, -1470000.0, sx);
-    const islMask = smooth(-20.0, -260.0, islDist);
-    const landMask = Math.max(mainlandMask, islMask);
+    const landMask = smooth(cX - 20.0, cX - 260.0, sx) * smooth(-1495000.0, -1470000.0, sx);
     const padFlat = 1.0 - showPad * smooth(150.0, 95.0, Math.hypot(sx, sz));
     const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
     const boxDist = this.earthAirportBoxDist(sx, sz);
     const rwyFlat = smooth(0.0, 70.0, boxDist);
-    const lagoonFlat = sx <= 2300.0 ? (1.0 - smooth(0.66, 0.70, this.lagoonNoiseJS(sx, sz))) : 1.0;
+    const lagoonFlat = sx <= Math.min(2200.0, cX - 900.0) ? (1.0 - smooth(0.66, 0.70, this.lagoonNoiseJS(sx, sz))) : 1.0;
     const nAmp1 = this.trigFbmJS(sx * 0.014, sz * 0.014, seed + 3.7, 3);
     const nAmp2 = this.trigFbmJS(sx * 0.032, sz * 0.032, seed + 17.3, 2);
     const nHill = this.trigFbmJS(sx * 0.020, sz * 0.020, seed + 31.9, 3);
@@ -527,10 +505,17 @@ export class LaunchScene {
         return trigFbm(sx * 0.0022, -sz * 0.0022, 11.0, 4);
       }
       float coastXGLSL(float py) {
+        float sz = -py;
         float capeJut = 1450.0 * exp(-pow((py + 2200.0) / 3800.0, 2.0)) * smoothstep(650.0, 1500.0, abs(py));
         float coastWave = 1100.0 * sin(py * 0.00016) * smoothstep(2000.0, 5000.0, abs(py));
-        float coastRecede = 0.025 * min(45000.0, max(0.0, abs(py) - 3500.0));
-        return 2600.0 + capeJut + coastWave - coastRecede;
+        float u0 = sz / 10500.0;
+        float pen = 50600.0 * exp(-u0 * u0 * u0 * u0);
+${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
+  const amp = (off.dx + 52200.0).toFixed(1);
+  const dz = off.dz.toFixed(1);
+  return `        float uAp${i} = (sz - (${dz})) / 6800.0;\n        pen = max(pen, ${amp} * exp(-uAp${i} * uAp${i}));`;
+}).join('\n')}
+        return -48000.0 + pen + capeJut + coastWave;
       }
       float airportBoxDistGLSL(float sx, float sz) {
 ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
@@ -539,22 +524,6 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   return `        float d${i} = max(max(-260.0 - (sx + (${ox})), (sx + (${ox})) - 2500.0), max(-190.0 - (sz + (${oz})), (sz + (${oz})) - 130.0));`;
 }).join('\n')}
         return min(d0, min(min(d1, d2), min(d3, d4)));
-      }
-      float singleAirportIslandDist(float dx, float dz, float seed) {
-        vec2 q = abs(vec2(dx, dz)) - vec2(1450.0, 420.0);
-        float core = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 1150.0;
-        float wob = sin(dx * 0.0017 + seed * 1.7) * 185.0
-                  + cos(dz * 0.0023 - seed * 2.3) * 145.0
-                  + sin((dx - dz) * 0.0013 + seed * 0.9) * 95.0;
-        return core + wob;
-      }
-      float airportIslandDistGLSL(float sx, float sz) {
-${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
-  const cx = (off.dx + 1120.0).toFixed(1);
-  const cz = (off.dz - 20.0).toFixed(1);
-  return `        float isl${i} = singleAirportIslandDist(sx - (${cx}), sz - (${cz}), ${(i + 1).toFixed(1)});`;
-}).join('\n')}
-        return min(isl0, min(min(isl1, isl2), min(isl3, isl4)));
       }
       float singleAirportPavedDist(float lx, float lz) {
         float dRwy = max(max(-170.0 - lx, lx - 2250.0), abs(lz) - 24.0);
@@ -576,14 +545,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         float sx = p.x;
         float sz = -p.y;
         float cX = coastXGLSL(p.y);
-        float mainlandMask = smoothstep(cX - 20.0, cX - 260.0, sx) * smoothstep(-1495000.0, -1470000.0, sx);
-        float islMask = smoothstep(-20.0, -260.0, airportIslandDistGLSL(sx, sz));
-        float landMask = max(mainlandMask, islMask);
+        float landMask = smoothstep(cX - 20.0, cX - 260.0, sx) * smoothstep(-1495000.0, -1470000.0, sx);
         float padFlat = 1.0 - showPad * smoothstep(150.0, 95.0, length(vec2(sx, sz)));
         float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
         float boxDist = airportBoxDistGLSL(sx, sz);
         float rwyFlat = smoothstep(0.0, 70.0, boxDist);
-        float lagoonFlat = 1.0 - smoothstep(0.66, 0.70, lagoonNoiseGLSL(sx, sz)) * step(p.x, 2300.0);
+        float lagoonFlat = 1.0 - smoothstep(0.66, 0.70, lagoonNoiseGLSL(sx, sz)) * step(p.x, min(2200.0, cX - 900.0));
         float nAmp1 = trigFbm(sx * 0.014, sz * 0.014, uWaveSeed + 3.7, 3);
         float nAmp2 = trigFbm(sx * 0.032, sz * 0.032, uWaveSeed + 17.3, 2);
         float nHill = trigFbm(sx * 0.020, sz * 0.020, uWaveSeed + 31.9, 3);
@@ -631,14 +598,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           float segDist(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', /* glsl */`
           vec2 p = vLocal;
-          // Cape Canaveral, Florida & Atlantic coastline + 5 offshore ocean airport islands
+          // Mainland coastline with 5 jutting airport peninsulas separated by deep ocean bays (NO islands!)
           float coast = coastXGLSL(p.y);
-          float mainland = smoothstep(coast + 30.0, coast - 30.0, p.x) * smoothstep(-1495000.0, -1470000.0, p.x);
-          float islDist = airportIslandDistGLSL(p.x, -p.y);
-          float islLand = smoothstep(30.0, -30.0, islDist);
-          float land = max(mainland, islLand);
-          float inlandMain = min(coast - p.x, p.x + 1482500.0);
-          float inlandDist = max(inlandMain, -islDist);
+          float land = smoothstep(coast + 30.0, coast - 30.0, p.x) * smoothstep(-1495000.0, -1470000.0, p.x);
+          float inlandDist = min(coast - p.x, p.x + 1482500.0);
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
@@ -648,15 +611,20 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           vec3 sand = vec3(0.68, 0.61, 0.47);
           float beach = smoothstep(15.0, 180.0, inlandDist);
           vec3 landCol = mix(sand, grass, beach);
-          // Banana River & Indian River Lagoon (Merritt Island / Cape Canaveral, Florida) + Everglades marshes
+          // Mainland highways connecting Launchpad & all 5 Peninsular Airports Westward into the continent
           float road = min(segDist(p, vec2(0.0), vec2(-1500.0, 2500.0)), segDist(p, vec2(-1500.0, 2500.0), vec2(-10500.0, 2600.0)));
           road = min(road, segDist(p, vec2(-200.0, -900.0), vec2(-200.0, 6000.0)));
+${AIRPORT_SCATTER_OFFSETS.map((off) => {
+  const rx = (off.dx - 110.0).toFixed(1);
+  const ry = (-off.dz + 64.0).toFixed(1);
+  return `          road = min(road, segDist(p, vec2(${rx}, ${ry}), vec2(-65000.0, ${ry})));`;
+}).join('\n')}
           float apDry = smoothstep(20.0, 120.0, airportBoxDistGLSL(p.x, -p.y));
           float causewayBridge = smoothstep(38.0, 18.0, road);
-          float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 24000.0);
-          float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 32000.0);
+          float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 7500.0);
+          float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 7500.0);
           float lagoon = max(
-            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, coast - 300.0) * step(-1470000.0, p.x),
+            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, min(2200.0, coast - 900.0)) * step(-1470000.0, p.x),
             max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
           ) * apDry;
           landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
@@ -734,22 +702,23 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     let n = 0;
     for (let tries = 0; n < N && tries < N * 5; tries++) {
       let x, z;
-      const isIslandTree = tries % 3 === 0;
-      if (isIslandTree) {
-        const ap = AIRPORT_SCATTER_OFFSETS[Math.floor(tries / 3) % AIRPORT_SCATTER_OFFSETS.length];
-        const ang = Math.random() * Math.PI * 2, dist = 180 + Math.pow(Math.random(), 0.72) * 2350;
-        x = ap.dx + 1120 + Math.cos(ang) * dist;
-        z = ap.dz - 20 + Math.sin(ang) * dist;
-        if (this.earthAirportIslandDist(x, z) > -170.0) continue; // keep trees well inside each island above sandy beach
+      let penAp = null;
+      const isPeninsulaTree = tries % 5 !== 0;
+      if (isPeninsulaTree) {
+        penAp = AIRPORT_SCATTER_OFFSETS[Math.floor(tries / 5) % AIRPORT_SCATTER_OFFSETS.length];
+        x = penAp.dx - 16500 + Math.random() * 20200;
+        z = penAp.dz + (Math.random() - 0.5) * 12400;
+        if (x > this.earthCoastX(z) - 210.0) continue; // keep trees on mainland peninsula above sandy beach
+        if (x < penAp.dx - 80 && Math.abs(z - (penAp.dz - 64)) < 24) continue; // keep mainland peninsula highway clear
       } else {
         const ang = Math.random() * Math.PI * 2, dist = 160 + Math.pow(Math.random(), 0.7) * 2800;
         x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
-        if (x > 1800) continue;                    // near mainland coast/ocean
+        if (x > this.earthCoastX(z) - 210.0 || x > 1800) continue; // near mainland coast/ocean
       }
-      if (this.earthAirportBoxDist(x, z) < 35.0) continue; // keep all 5 scattered airport runways & aprons clear
-      if (!isIslandTree && x <= 0 && Math.abs(z) < 22) continue; // keep clear inland Rover corridor heading west
-      if (!isIslandTree && Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
-      if (!isIslandTree && this.isLagoonWater(x, z)) continue; // keep inland lagoons clear of trees
+      if (this.earthAirportBoxDist(x, z) < 40.0) continue; // keep all 5 mainland airport runways & aprons clear
+      if (!penAp && x <= 0 && Math.abs(z) < 22) continue; // keep clear inland Rover corridor heading west
+      if (!penAp && Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
+      if (this.isLagoonWater(x, z)) continue; // keep inland lagoons clear of trees
       const cluster = TX.fbm(x / 300 + 50, z / 300 + 50, 1000, 3, 7);
       if (cluster < 0.48) continue;
       const sc = 0.7 + Math.random() * 0.9;
@@ -1945,8 +1914,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
     const sw = THREE.MathUtils.clamp((Math.abs(py) - 2000.0) / (5000.0 - 2000.0), 0, 1);
     const smW = sw * sw * (3 - 2 * sw);
     const coastWave = 1100.0 * Math.sin(py * 0.00016) * smW;
-    const coastRecede = 0.025 * Math.min(45000.0, Math.max(0.0, Math.abs(py) - 3500.0));
-    return 2600.0 + capeJut + coastWave - coastRecede;
+    const u0 = sz / 10500.0;
+    let pen = 50600.0 * Math.exp(-u0 * u0 * u0 * u0);
+    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+      const off = AIRPORT_SCATTER_OFFSETS[i];
+      const uAp = (sz - off.dz) / 6800.0;
+      const pVal = (off.dx + 52200.0) * Math.exp(-uAp * uAp);
+      if (pVal > pen) pen = pVal;
+    }
+    return -48000.0 + pen + capeJut + coastWave;
   }
 
   getHarborSite(hIdx = 0) {
@@ -4783,11 +4759,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
       }
     }
     const dynCoastBase = this.earthCoastX(sz) - 100;
-    const islDist = this.earthAirportIslandDist(sx, sz);
     if (isPlaneMode) {
       if (this.shipX !== null && Math.abs(sx - this.shipX) < 44) return { h: 3.0, water: false, site: 'ship' };
-      const onIsland = islDist <= 0.0;
-      if ((sx > dynCoastBase || sx < -1482500) && !onIsland) return { h: 0, water: true, site: 'sea' };
+      if (sx > dynCoastBase || sx < -1482500) return { h: 0, water: true, site: 'sea' };
       return { h: this.earthGroundWave(sx, sz, 0.0, 1.0), water: false, site: 'land' };
     }
     if (!isRoverMode && !isBoatMode) {
@@ -4809,10 +4783,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         }
       }
     }
-    const islLimit = isRoverMode ? -28.0 : isBoatMode ? 22.0 : 0.0;
-    const onIsland = islDist <= islLimit;
-    if ((sx > coastLimit || sx < -1482500) && !onIsland) return { h: 0, water: true, site: 'sea' };
-    if (!onIsland && !isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
+    if (sx > coastLimit || sx < -1482500) return { h: 0, water: true, site: 'sea' };
+    if (!isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
     return { h: this.earthGroundWave(sx, sz, isRoverMode ? 0.0 : 1.0, 0.0), water: false, site: 'land' };
   }
 

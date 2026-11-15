@@ -641,6 +641,9 @@ export class PlaneLoopProgram {
     v.turnYawRate = 0;
     if (v.landed || v.clamped) {
       this.phase = 'takeoff';
+      this._approachingGear = false;
+      v.legsTarget = 1;
+      v.legsT = 1;
       sc.requestWarp(1);
       const rhoF = v.planeRhoFactor || 1;
       const minRotateSpd = Math.max(10, 25 * rhoF);
@@ -649,15 +652,17 @@ export class PlaneLoopProgram {
     }
     if (this.phase !== 'cruise') {
       this.phase = 'cruise';
-      if (v.legsTarget) v.legsTarget = 0;
+      this._approachingGear = false;
+      v.legsTarget = 0;
       sc.event(
         tr(
-          `✈️ Đã cất cánh! Đang bay tự động 1 vòng quanh ${B.label} (${this.targetDistKm} km).`,
-          `✈️ Airborne! Autopilot cruising 1 full lap around ${B.label} (${this.targetDistKm} km).`
+          `✈️ Đã cất cánh & tự gấp bánh đáp! Đang bay tự động 1 vòng quanh ${B.label} (${this.targetDistKm} km).`,
+          `✈️ Airborne & landing gear retracted! Autopilot cruising 1 full lap around ${B.label} (${this.targetDistKm} km).`
         )
       );
     }
-    if (v.legsTarget) v.legsTarget = 0;
+    this._approachingGear = false;
+    v.legsTarget = 0;
     const cruiseAlt = B.gasGiant
       ? Math.max(12000, Math.round((B.atm || 60000) * 0.35))
       : Math.min(2600, Math.max(1800, Math.round((B.atm || 30000) * 0.08)));
@@ -842,7 +847,7 @@ export class PlaneAirportHopProgram {
       return 'done';
     }
     if (!this._targetSite || this._targetDoneCount !== doneCount || this._targetBody !== v.ref) {
-      const rwyIdx = (doneCount + 1) % 5;
+      const rwyIdx = (doneCount + 1) % 6;
       this._targetSite = sc.getNextAirportSite
         ? sc.getNextAirportSite(v)
         : sc.getAirportSite
@@ -856,6 +861,10 @@ export class PlaneAirportHopProgram {
     if (v.landed || v.clamped) {
       this.phase = 'takeoff';
       this.airborneTime = 0;
+      this._approachingGear = false;
+      this._gearUpAnnounced = false;
+      v.legsTarget = 1;
+      v.legsT = 1;
       sc.requestWarp(1);
       v.engineOn = true;
       v.throttle = 1.0;
@@ -885,6 +894,24 @@ export class PlaneAirportHopProgram {
 
     if (!onFinal && dist > 140) {
       this.phase = 'hop';
+      if (dist <= 520) {
+        this._approachingGear = true;
+        v.legsTarget = 1;
+      } else if (this.airborneTime > 0.2 || (v.agl ?? 10) > 2.0) {
+        this._approachingGear = false;
+        if (v.legsTarget !== 0) {
+          v.legsTarget = 0;
+          if (!this._gearUpAnnounced && sc && sc.event) {
+            this._gearUpAnnounced = true;
+            sc.event(
+              tr(
+                '✈️ Đã cất cánh & tự động gấp bánh đáp!',
+                '✈️ Airborne & landing gear automatically retracted!'
+              )
+            );
+          }
+        }
+      }
       sc.requestWarp(dist > 25000 ? 300 : dist > 10000 ? 100 : dist > 4000 ? 50 : dist > 1500 ? 10 : dist > 500 ? 4 : 2);
       v.engineOn = true;
       v.throttle = 0.88;
@@ -917,6 +944,7 @@ export class PlaneAirportHopProgram {
     }
 
     this.phase = 'land';
+    this._approachingGear = true;
     sc.requestWarp(1);
     v.legsTarget = 1;
     v.legsT = 1;

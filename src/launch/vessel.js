@@ -202,7 +202,7 @@ export class Vessel {
     this.updateFrame(t);
     const B = this.body;
     // deploy animations (real time-ish)
-    const dRate = h * 0.6;
+    const dRate = h * (this.isPlane ? 1.0 : 0.6);
     this.legsT += THREE.MathUtils.clamp(this.legsTarget - this.legsT, -dRate, dRate);
     this.finsT += THREE.MathUtils.clamp(this.finsTarget - this.finsT, -h * 1.5, h * 1.5);
     const chuteOpenRate = this.chuteT < 0.35 ? 0.20 : this.chuteT < 0.75 ? 0.11 : 0.08;

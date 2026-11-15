@@ -1309,14 +1309,40 @@ function buildGridFin() {
 }
 
 // ---------------------------------------------------------------- rover & boat builders
+let _roverMats = null;
+function getRoverMaterials() {
+  if (_roverMats) return _roverMats;
+  _roverMats = {
+    pearlWhite: new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.26, roughness: 0.16 }),
+    solarAmber: new THREE.MeshStandardMaterial({ color: 0xff9500, emissive: 0xd97706, emissiveIntensity: 0.42, metalness: 0.52, roughness: 0.20 }),
+    crimson: new THREE.MeshStandardMaterial({ color: 0xff2a4b, emissive: 0xe11d48, emissiveIntensity: 0.48, metalness: 0.46, roughness: 0.20 }),
+    obsidian: new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.62, roughness: 0.24 }),
+    cyberCyan: new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x06b6d4, emissiveIntensity: 3.8, roughness: 0.08 }),
+    plasmaGold: new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfacc15, emissiveIntensity: 3.6, roughness: 0.08 }),
+    xenonWhite: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xe0f2fe, emissiveIntensity: 4.6, roughness: 0.06 }),
+    emeraldGlow: new THREE.MeshStandardMaterial({ color: 0x34d399, emissive: 0x10b981, emissiveIntensity: 3.2, roughness: 0.10 }),
+    tailRuby: new THREE.MeshStandardMaterial({ color: 0xff1744, emissive: 0xff0033, emissiveIntensity: 3.8, roughness: 0.10 }),
+    canopyGlass: new THREE.MeshStandardMaterial({ color: 0x0c4a6e, emissive: 0x0284c7, emissiveIntensity: 0.62, metalness: 0.90, roughness: 0.06, transparent: true, opacity: 0.82 }),
+    holoDash: new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x38bdf8, emissiveIntensity: 2.8, roughness: 0.12 }),
+    goldFoil: new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xb45309, emissiveIntensity: 0.36, metalness: 0.86, roughness: 0.18 }),
+  };
+  return _roverMats;
+}
+
 function buildCockpitRover() {
   const g = new THREE.Group();
   const H = PARTS.cockpitRover.height; // 0.8 (half height low-profile rover cabin)
-  // Cabin main body (low-profile aerodynamic explorer cab)
-  const bodyGeo = new THREE.BoxGeometry(2.1, H - 0.1, 1.9);
-  g.add(mesh(bodyGeo, MAT.white, 0, H / 2, 0));
+  const rm = getRoverMaterials();
 
-  // Forward nose wedge
+  // Cabin main body (glossy pearl-white explorer cab with sculpted roof crown)
+  const bodyGeo = new THREE.BoxGeometry(2.1, H - 0.1, 1.9);
+  g.add(mesh(bodyGeo, rm.pearlWhite, 0, H / 2, 0));
+  g.add(mesh(new THREE.BoxGeometry(1.56, 0.06, 1.54), rm.solarAmber, 0, H - 0.02, -0.06));
+
+  // Full-perimeter glowing Cyber-Cyan horizon trim band around cabin waist
+  g.add(mesh(new THREE.BoxGeometry(2.15, 0.032, 1.94), rm.cyberCyan, 0, 0.14, 0));
+
+  // Forward nose wedge with vibrant Solar-Amber & Crimson rally stripes
   const noseShape = new THREE.Shape();
   noseShape.moveTo(-1.05, 0);
   noseShape.lineTo(1.05, 0);
@@ -1325,47 +1351,72 @@ function buildCockpitRover() {
   noseShape.closePath();
   const noseGeo = new THREE.ExtrudeGeometry(noseShape, { depth: 0.38, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025 });
   noseGeo.rotateX(Math.PI / 2);
-  const noseM = mesh(noseGeo, MAT.darkMetal, 0, 0.38, 0.95);
-  g.add(noseM);
+  g.add(mesh(noseGeo, rm.solarAmber, 0, 0.38, 0.95));
+  g.add(mesh(new THREE.BoxGeometry(0.46, 0.045, 0.36), rm.crimson, 0, 0.395, 1.12));
+  g.add(mesh(new THREE.BoxGeometry(1.72, 0.032, 0.05), rm.cyberCyan, 0, 0.14, 1.33));
 
-  // Large panoramic windshield (sleek low-profile glass dome)
+  // Large panoramic sapphire-iridescent windshield
   const winGeo = new THREE.CylinderGeometry(0.92, 1.02, 0.36, 32, 1, false, -Math.PI * 0.45, Math.PI * 0.9);
-  const win = mesh(winGeo, MAT.glass, 0, H * 0.58, 0.1);
+  const win = mesh(winGeo, rm.canopyGlass, 0, H * 0.58, 0.1);
   win.rotation.x = 0.22;
   g.add(win);
 
-  // Interior seats & dashboard
+  // Illuminated interior sport seats & glowing holographic dashboard visible through canopy
   const seatGeo = new THREE.BoxGeometry(0.46, 0.28, 0.46);
-  g.add(mesh(seatGeo, MAT.darkMetal, -0.38, 0.24, 0.08));
-  g.add(mesh(seatGeo, MAT.darkMetal, 0.38, 0.24, 0.08));
-
-  // Roof tubular bars
-  const barGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.7, 8);
   for (const sgn of [-1, 1]) {
-    const bar = mesh(barGeo, MAT.darkMetal, sgn * 1.0, H - 0.03, 0);
+    g.add(mesh(seatGeo, rm.obsidian, sgn * 0.38, 0.24, 0.02));
+    g.add(mesh(new THREE.BoxGeometry(0.32, 0.22, 0.05), rm.solarAmber, sgn * 0.38, 0.28, -0.18));
+  }
+  const holo = mesh(new THREE.BoxGeometry(1.05, 0.11, 0.04), rm.holoDash, 0, 0.46, 0.54);
+  holo.rotation.x = -0.35;
+  g.add(holo);
+
+  // Anodized gold roof roll-cage rails + Off-Road 6-Pod Xenon/Gold Roof Light Bar
+  const barGeo = new THREE.CylinderGeometry(0.032, 0.032, 1.72, 10);
+  for (const sgn of [-1, 1]) {
+    const bar = mesh(barGeo, rm.goldFoil, sgn * 1.0, H - 0.02, 0);
     bar.rotation.x = Math.PI / 2;
     g.add(bar);
   }
+  g.add(mesh(new THREE.BoxGeometry(1.48, 0.085, 0.12), rm.obsidian, 0, H + 0.055, 0.72));
+  g.add(mesh(new THREE.BoxGeometry(1.50, 0.02, 0.13), rm.goldFoil, 0, H + 0.10, 0.72));
+  for (let lx = -0.58; lx <= 0.585; lx += 0.232) {
+    g.add(mesh(new THREE.BoxGeometry(0.17, 0.052, 0.03), Math.abs(lx) > 0.4 ? rm.plasmaGold : rm.xenonWhite, lx, H + 0.055, 0.78));
+  }
 
-  // Roof comm antenna dish
-  const mast = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.30, 8), MAT.metal, 0.65, H + 0.12, -0.55);
+  // Spinning Lidar Turret + High-Gain Gold Dish & Pulsing Beacon Mast
+  const spinGroup = new THREE.Group();
+  spinGroup.position.set(-0.58, H + 0.04, -0.52);
+  spinGroup.add(mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.09, 16), rm.obsidian, 0, 0.045, 0));
+  spinGroup.add(mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.055, 16), rm.cyberCyan, 0, 0.11, 0));
+  spinGroup.add(mesh(new THREE.BoxGeometry(0.26, 0.03, 0.06), rm.goldFoil, 0, 0.155, 0));
+  g.add(spinGroup);
+  g.userData.roverSpinGroup = spinGroup;
+
+  const mast = mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.34, 8), rm.goldFoil, 0.65, H + 0.14, -0.55);
   g.add(mast);
-  const dish = mesh(new THREE.SphereGeometry(0.16, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), MAT.silver, 0.65, H + 0.26, -0.55);
+  const dish = mesh(new THREE.SphereGeometry(0.17, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), rm.goldFoil, 0.65, H + 0.28, -0.55);
   dish.rotation.x = -0.5;
   dish.material.side = THREE.DoubleSide;
   g.add(dish);
+  const beacon = mesh(new THREE.SphereGeometry(0.048, 12, 10), rm.crimson, 0.65, H + 0.36, -0.50);
+  beacon.material = rm.tailRuby;
+  g.add(beacon);
 
-  // Dual high-power LED headlights
-  const lampGeo = new THREE.CylinderGeometry(0.10, 0.12, 0.08, 16).rotateX(Math.PI / 2);
-  const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcfe8ff, emissiveIntensity: 3 });
+  // Dual high-power Xenon headlights with glowing Cyber-Cyan Angel-Eye Halos
+  const lampGeo = new THREE.CylinderGeometry(0.10, 0.12, 0.08, 18).rotateX(Math.PI / 2);
   for (const sgn of [-1, 1]) {
-    g.add(mesh(lampGeo, lampMat, sgn * 0.72, 0.22, 1.0));
-    g.add(mesh(new THREE.TorusGeometry(0.11, 0.018, 8, 20), MAT.metal, sgn * 0.72, 0.22, 1.01));
+    g.add(mesh(lampGeo, rm.xenonWhite, sgn * 0.72, 0.22, 1.31));
+    g.add(mesh(new THREE.TorusGeometry(0.12, 0.020, 10, 24), rm.cyberCyan, sgn * 0.72, 0.22, 1.33));
+    g.add(mesh(new THREE.BoxGeometry(0.24, 0.032, 0.04), rm.plasmaGold, sgn * 0.72, 0.08, 1.33));
   }
 
-  // Side accents
-  const decalGeo = new THREE.BoxGeometry(0.05, 0.16, 1.3);
-  for (const sgn of [-1, 1]) g.add(mesh(decalGeo, MAT.orange, sgn * 1.06, H * 0.5, 0));
+  // Sculpted side armor plates with Crimson + Cyber-Cyan speed chevrons & rear brake strips
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.06, 0.24, 1.48), rm.crimson, sgn * 1.06, H * 0.48, -0.02));
+    g.add(mesh(new THREE.BoxGeometry(0.075, 0.048, 1.28), rm.cyberCyan, sgn * 1.07, H * 0.50, 0.04));
+    g.add(mesh(new THREE.BoxGeometry(0.36, 0.075, 0.04), rm.tailRuby, sgn * 0.68, H * 0.56, -0.96));
+  }
 
   return g;
 }
@@ -1373,119 +1424,149 @@ function buildCockpitRover() {
 function buildChassisRover() {
   const g = new THREE.Group();
   const H = PARTS.chassisRover.height; // 0.9 (half height low-profile rover chassis)
-  // Central core frame
+  const rm = getRoverMaterials();
+
+  // Central reinforced carbon-titanium core frame + gold upper deck trim
   const frameGeo = new THREE.BoxGeometry(2.2, H - 0.06, 2.1);
-  g.add(mesh(frameGeo, MAT.darkMetal, 0, H / 2, 0));
+  g.add(mesh(frameGeo, rm.obsidian, 0, H / 2, 0));
+  g.add(mesh(new THREE.BoxGeometry(2.24, 0.06, 2.14), rm.solarAmber, 0, H - 0.05, 0));
 
-  // Skid plate underneath
+  // Golden armored skid plate + glowing Cyber-Cyan underbody ground-effect neon rails
   const skidGeo = new THREE.BoxGeometry(2.1, 0.05, 2.2);
-  g.add(mesh(skidGeo, MAT.titanium, 0, 0.025, 0));
-
-  // High capacity battery cells on flanks
-  const battGeo = new THREE.BoxGeometry(0.32, 0.34, 1.6);
+  g.add(mesh(skidGeo, rm.goldFoil, 0, 0.025, 0));
   for (const sgn of [-1, 1]) {
-    g.add(mesh(battGeo, MAT.orange, sgn * 1.15, H / 2, 0));
-    const indGeo = new THREE.BoxGeometry(0.02, 0.06, 1.1);
-    const indMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 2 });
-    g.add(mesh(indGeo, indMat, sgn * 1.32, H / 2, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.045, 0.045, 2.06), rm.cyberCyan, sgn * 1.08, 0.06, 0));
+  }
+  for (const zs of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(2.06, 0.045, 0.045), zs > 0 ? rm.cyberCyan : rm.tailRuby, 0, 0.06, zs * 1.07));
   }
 
-  // Suspension crossbars
-  const beamGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 12).rotateZ(Math.PI / 2);
-  for (const z of [-0.65, 0.65]) g.add(mesh(beamGeo, MAT.metal, 0, 0.22, z));
+  // High-capacity Quantum Battery Side Pods with segmented Emerald & Cyan glowing energy bars
+  const battGeo = new THREE.BoxGeometry(0.34, 0.40, 1.66);
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(battGeo, rm.solarAmber, sgn * 1.15, H * 0.48, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.36, 0.08, 1.68), rm.crimson, sgn * 1.15, H * 0.68, 0));
+    for (let bi = -2; bi <= 2; bi++) {
+      g.add(mesh(new THREE.BoxGeometry(0.03, 0.18, 0.22), bi % 2 === 0 ? rm.emeraldGlow : rm.cyberCyan, sgn * 1.33, H * 0.46, bi * 0.29));
+    }
+  }
 
-  // Rear hazard stripes
-  const hzGeo = new THREE.PlaneGeometry(1.5, 0.16);
-  const hzM = mesh(hzGeo, new THREE.MeshStandardMaterial({ map: TX.hazardMap(), roughness: 0.5 }), 0, H * 0.6, -1.06);
+  // Anodized gold suspension crossbars
+  const beamGeo = new THREE.CylinderGeometry(0.065, 0.065, 2.62, 14).rotateZ(Math.PI / 2);
+  for (const z of [-0.65, 0.65]) g.add(mesh(beamGeo, rm.goldFoil, 0, 0.22, z));
+
+  // Front illuminated bumper bar (+Z) & Rear full-width Ruby Tail-Light Bar + Hazard Stripes (-Z)
+  g.add(mesh(new THREE.BoxGeometry(1.76, 0.11, 0.08), rm.goldFoil, 0, 0.28, 1.07));
+  g.add(mesh(new THREE.BoxGeometry(1.52, 0.048, 0.05), rm.plasmaGold, 0, 0.28, 1.11));
+
+  const hzGeo = new THREE.PlaneGeometry(1.56, 0.16);
+  const hzM = mesh(hzGeo, new THREE.MeshStandardMaterial({ map: TX.hazardMap(), roughness: 0.4 }), 0, H * 0.66, -1.06);
   hzM.rotation.y = Math.PI;
   g.add(hzM);
+  g.add(mesh(new THREE.BoxGeometry(1.74, 0.085, 0.05), rm.tailRuby, 0, H * 0.40, -1.07));
+  for (const sgn of [-1, 1]) {
+    g.add(mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.12, 16).rotateX(Math.PI / 2), rm.obsidian, sgn * 0.56, 0.20, -1.08));
+    g.add(mesh(new THREE.TorusGeometry(0.072, 0.016, 8, 18), rm.cyberCyan, sgn * 0.56, 0.20, -1.14));
+  }
 
   return g;
 }
 
 function buildWheelsRover() {
   const g = new THREE.Group();
-  // Angled suspension wishbone arm extending from chassis (0, 0, 0) down to hub (0.32, -0.14, 0)
-  const arm = mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.36, 12).rotateZ(Math.PI / 2), MAT.darkMetal, 0.16, -0.07, 0);
+  const rm = getRoverMaterials();
+  // Angled crimson wishbone suspension arm extending from chassis (0, 0, 0) down to hub (0.32, -0.14, 0)
+  const arm = mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.36, 12).rotateZ(Math.PI / 2), rm.crimson, 0.16, -0.07, 0);
   arm.rotation.z = -0.41;
   g.add(arm);
 
-  // Compact coilover shock absorber / spring (2x smaller scale)
+  // Glowing golden-amber coilover shock absorber / spring
   const strutGrp = new THREE.Group();
   strutGrp.position.set(0.18, -0.02, 0);
   strutGrp.rotation.z = 0.28;
-  const springGeo = new THREE.TorusGeometry(0.038, 0.011, 8, 20).rotateX(Math.PI / 2);
-  for (let y = -0.07; y <= 0.07; y += 0.035) strutGrp.add(mesh(springGeo, MAT.orange, 0, y, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.24, 12), MAT.silver, 0, 0, 0));
+  const springGeo = new THREE.TorusGeometry(0.040, 0.012, 8, 20).rotateX(Math.PI / 2);
+  for (let y = -0.07; y <= 0.07; y += 0.035) strutGrp.add(mesh(springGeo, rm.plasmaGold, 0, y, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.24, 12), MAT.silver, 0, 0, 0));
   g.add(strutGrp);
 
-  // Wheel hub & rotating wheel group (2x smaller wheel radius & width)
+  // Wheel hub & rotating wheel group (exact radius 0.27 & hub position preserved for physics)
   const wheelGroup = new THREE.Group();
   wheelGroup.position.set(0.32, -0.14, 0);
   g.add(wheelGroup);
   g.userData.wheelGroup = wheelGroup;
 
-  // Off-road tire (half size: radius 0.27, width 0.18)
   const tireRadius = 0.27, tireWidth = 0.18;
   const tireGeo = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, 32, 1, false).rotateZ(Math.PI / 2);
   wheelGroup.add(mesh(tireGeo, MAT.rubber, 0, 0, 0));
 
-  // Deep tire treads (half size)
-  const treadGeo = new THREE.BoxGeometry(tireWidth * 0.9, 0.019, 0.04);
+  // Aggressive off-road treads with alternating metallic gold & carbon chevrons
+  const treadGeo = new THREE.BoxGeometry(tireWidth * 0.92, 0.021, 0.042);
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2;
-    const tr = mesh(treadGeo, MAT.darkMetal, 0, Math.sin(a) * (tireRadius + 0.006), Math.cos(a) * (tireRadius + 0.006));
+    const tr = mesh(treadGeo, i % 4 === 0 ? rm.solarAmber : rm.obsidian, 0, Math.sin(a) * (tireRadius + 0.006), Math.cos(a) * (tireRadius + 0.006));
     tr.rotation.x = -a;
     wheelGroup.add(tr);
   }
 
-  // Alloy rim & spokes (half size)
-  const rimGeo = new THREE.CylinderGeometry(0.17, 0.17, tireWidth + 0.005, 24).rotateZ(Math.PI / 2);
-  wheelGroup.add(mesh(rimGeo, MAT.metal, 0, 0, 0));
-
-  // Hub cap & lug nuts (half size)
-  const hubGeo = new THREE.CylinderGeometry(0.065, 0.065, tireWidth + 0.015, 16).rotateZ(Math.PI / 2);
-  wheelGroup.add(mesh(hubGeo, MAT.titanium, 0, 0, 0));
-  for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * Math.PI * 2;
-    const nut = mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.015, 6).rotateZ(Math.PI / 2), MAT.silver, tireWidth / 2 + 0.01, Math.sin(a) * 0.0425, Math.cos(a) * 0.0425);
-    wheelGroup.add(nut);
+  // Deep-dish anodized gold alloy rim + glowing Cyber-Cyan LED beadlock rings on both sides
+  const rimGeo = new THREE.CylinderGeometry(0.175, 0.175, tireWidth + 0.006, 24).rotateZ(Math.PI / 2);
+  wheelGroup.add(mesh(rimGeo, rm.goldFoil, 0, 0, 0));
+  for (const sgn of [-1, 1]) {
+    const ledRing = mesh(new THREE.TorusGeometry(0.195, 0.014, 10, 28).rotateY(Math.PI / 2), rm.cyberCyan, sgn * (tireWidth * 0.5 + 0.004), 0, 0);
+    wheelGroup.add(ledRing);
   }
+
+  // 6 sculpted spokes & glowing center cap so wheel spin is unmistakably visible
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const sp = mesh(new THREE.BoxGeometry(tireWidth + 0.014, 0.026, 0.16), rm.pearlWhite, 0, Math.sin(a) * 0.085, Math.cos(a) * 0.085);
+    sp.rotation.x = -a;
+    wheelGroup.add(sp);
+  }
+  const hubGeo = new THREE.CylinderGeometry(0.068, 0.068, tireWidth + 0.022, 16).rotateZ(Math.PI / 2);
+  wheelGroup.add(mesh(hubGeo, rm.crimson, 0, 0, 0));
+  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.036, 0.036, tireWidth + 0.030, 14).rotateZ(Math.PI / 2), rm.cyberCyan, 0, 0, 0));
 
   return g;
 }
 
 function buildSolarRover() {
   const g = new THREE.Group();
-  // Mounting bracket
-  g.add(mesh(new THREE.BoxGeometry(0.16, 0.24, 0.22), MAT.darkMetal, 0.07, 0, 0));
-  // Pivot arm + actuator joint
-  g.add(mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.44, 12).rotateZ(Math.PI / 2), MAT.metal, 0.28, 0, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.26, 12).rotateX(Math.PI / 2), MAT.silver, 0.34, 0, 0));
+  const rm = getRoverMaterials();
+  // Mounting bracket + glowing emerald energy-transfer collar
+  g.add(mesh(new THREE.BoxGeometry(0.16, 0.24, 0.22), rm.crimson, 0.07, 0, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.44, 12).rotateZ(Math.PI / 2), rm.goldFoil, 0.28, 0, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.26, 14).rotateX(Math.PI / 2), rm.pearlWhite, 0.34, 0, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.064, 0.013, 8, 20).rotateY(Math.PI / 2), rm.emeraldGlow, 0.22, 0, 0));
 
-  // Tilted solar panel assembly (proper local group so frame and cells never clip)
+  // Tilted solar panel assembly with glowing Cyber-Cyan edge frame & gleaming gold busbars
   const panelGroup = new THREE.Group();
   panelGroup.position.set(0.76, 0.06, 0);
   panelGroup.rotation.z = -0.14;
   g.add(panelGroup);
 
-  // Outer aluminum frame
-  panelGroup.add(mesh(new THREE.BoxGeometry(0.84, 0.028, 1.32), MAT.silver, 0, 0, 0));
-  panelGroup.add(mesh(new THREE.BoxGeometry(0.80, 0.032, 1.28), MAT.darkMetal, 0, 0, 0));
+  panelGroup.add(mesh(new THREE.BoxGeometry(0.86, 0.026, 1.34), rm.goldFoil, 0, 0, 0));
+  panelGroup.add(mesh(new THREE.BoxGeometry(0.88, 0.014, 1.36), rm.cyberCyan, 0, 0, 0));
+  panelGroup.add(mesh(new THREE.BoxGeometry(0.80, 0.032, 1.28), rm.obsidian, 0, 0, 0));
 
-  // Photovoltaic cells (top face) with scaled UVs for crisp cell grid
+  const vividSolarMat = new THREE.MeshStandardMaterial({
+    map: MAT.solar.map,
+    color: 0x3b82f6,
+    emissive: 0x1d4ed8,
+    emissiveIntensity: 0.65,
+    metalness: 0.88,
+    roughness: 0.12,
+  });
   const cellGeo = scaleUV(new THREE.PlaneGeometry(0.76, 1.22), 1.5, 2.5);
-  const cellTop = mesh(cellGeo, MAT.solar, 0, 0.019, 0);
+  const cellTop = mesh(cellGeo, vividSolarMat, 0, 0.019, 0);
   cellTop.rotation.x = -Math.PI / 2;
   panelGroup.add(cellTop);
 
-  // Silver busbar divider strips across the top surface
   for (const z of [-0.3, 0, 0.3]) {
-    panelGroup.add(mesh(new THREE.BoxGeometry(0.76, 0.006, 0.016), MAT.silver, 0, 0.02, z));
+    panelGroup.add(mesh(new THREE.BoxGeometry(0.76, 0.007, 0.018), rm.goldFoil, 0, 0.021, z));
   }
-  panelGroup.add(mesh(new THREE.BoxGeometry(0.018, 0.006, 1.22), MAT.silver, 0, 0.02, 0));
+  panelGroup.add(mesh(new THREE.BoxGeometry(0.020, 0.007, 1.22), rm.cyberCyan, 0, 0.021, 0));
 
-  // Gold kapton thermal foil backing (bottom face)
   const goldBack = mesh(cellGeo, MAT.gold, 0, -0.019, 0);
   goldBack.rotation.x = Math.PI / 2;
   panelGroup.add(goldBack);
@@ -2836,8 +2917,113 @@ function buildMotorSailBoat() {
 }
 
 // ---------------------------------------------------------------- airplane builders
+let _jetMats = null;
+function getJetMaterials() {
+  if (_jetMats) return _jetMats;
+  _jetMats = {
+    aeroWhite: new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.16,
+      metalness: 0.24,
+    }),
+    cobaltBlue: new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      emissive: 0x0369a1,
+      emissiveIntensity: 0.28,
+      roughness: 0.20,
+      metalness: 0.58,
+    }),
+    aceCrimson: new THREE.MeshStandardMaterial({
+      color: 0xef4444,
+      emissive: 0xdc2626,
+      emissiveIntensity: 0.34,
+      roughness: 0.20,
+      metalness: 0.46,
+    }),
+    imperialGold: new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.42,
+      roughness: 0.16,
+      metalness: 0.88,
+    }),
+    jetCarbon: new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.28,
+      metalness: 0.65,
+    }),
+    neonCyan: new THREE.MeshStandardMaterial({
+      color: 0x22d3ee,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 2.8,
+      roughness: 0.12,
+      metalness: 0.18,
+    }),
+    neonAmber: new THREE.MeshStandardMaterial({
+      color: 0xfbbf24,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 2.9,
+      roughness: 0.14,
+      metalness: 0.20,
+    }),
+    xenonWhite: new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0xe0f2fe,
+      emissiveIntensity: 3.6,
+      roughness: 0.08,
+      metalness: 0.10,
+    }),
+    emeraldHud: new THREE.MeshStandardMaterial({
+      color: 0x34d399,
+      emissive: 0x10b981,
+      emissiveIntensity: 2.8,
+      roughness: 0.10,
+      transparent: true,
+      opacity: 0.86,
+    }),
+    goldCanopy: new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.42,
+      roughness: 0.05,
+      metalness: 0.72,
+      transparent: true,
+      opacity: 0.70,
+    }),
+    roundelRed: new THREE.MeshStandardMaterial({
+      color: 0xef233c,
+      emissive: 0xb91c1c,
+      emissiveIntensity: 0.42,
+      roughness: 0.25,
+      metalness: 0.22,
+    }),
+    roundelStar: new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xfacc15,
+      emissiveIntensity: 1.35,
+      roughness: 0.18,
+      metalness: 0.45,
+    }),
+  };
+  return _jetMats;
+}
+
+function addJetRoundel(parent, x, y, z, radius = 0.30, rotX = Math.PI / 2) {
+  const JM = getJetMaterials();
+  const rg = new THREE.Group();
+  rg.position.set(x, y, z);
+  rg.rotation.x = rotX;
+  rg.add(mesh(new THREE.CylinderGeometry(radius * 1.12, radius * 1.12, 0.026, 32), JM.imperialGold, 0, 0, 0));
+  rg.add(mesh(new THREE.CylinderGeometry(radius, radius, 0.034, 32), JM.roundelRed, 0, 0, 0));
+  const star = mesh(new THREE.CylinderGeometry(radius * 0.54, radius * 0.54, 0.042, 5), JM.roundelStar, 0, 0, 0);
+  star.rotation.y = Math.PI / 2;
+  rg.add(star);
+  parent.add(rg);
+}
+
 function buildCockpitPlane() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   const H = PARTS.cockpitPlane.height; // 2.8
   const rBase = R * 1.05;
   const pts = [
@@ -2853,96 +3039,153 @@ function buildCockpitPlane() {
   }
   pts.push(new THREE.Vector2(0, H));
   const bodyGeo = scaleUV(new THREE.LatheGeometry(pts, 64), 2, 1.2);
-  g.add(mesh(bodyGeo, MAT.stealth, 0, 0, 0));
+  g.add(mesh(bodyGeo, JM.aeroWhite, 0, 0, 0));
 
-  // Solid base collar ring sealing the cockpit-to-fuselage junction
-  g.add(mesh(new THREE.CylinderGeometry(rBase + 0.008, rBase + 0.008, 0.10, 64), MAT.titanium, 0, 0.03, 0));
+  // Blazing crimson supersonic radome tip & golden sensor ring
+  const radomePts = [];
+  for (let i = 18; i <= N; i++) {
+    const t = i / N;
+    const r = Math.max(0.019, rBase * Math.pow(1 - t, 0.75) + 0.006);
+    radomePts.push(new THREE.Vector2(r, t * H));
+  }
+  radomePts.push(new THREE.Vector2(0, H + 0.005));
+  g.add(mesh(new THREE.LatheGeometry(radomePts, 48), JM.aceCrimson, 0, 0, 0));
+  const rRing = rBase * Math.pow(1 - 18 / N, 0.75) + 0.012;
+  g.add(mesh(new THREE.TorusGeometry(rRing, 0.022, 12, 48).rotateX(Math.PI / 2), JM.imperialGold, 0, (18 / N) * H, 0));
 
-  // Pitot tube needle (embedded deep into nose tip)
-  g.add(mesh(new THREE.CylinderGeometry(0.015, 0.022, 0.62, 12), MAT.silver, 0, H + 0.19, 0));
-  g.add(mesh(new THREE.ConeGeometry(0.015, 0.08, 12), MAT.titanium, 0, H + 0.54, 0));
+  // Anti-glare cobalt-blue nose deck ahead of canopy
+  const deck = mesh(new THREE.CylinderGeometry(0.18, 0.42, 0.78, 24), JM.cobaltBlue, 0, 1.98, 0.16);
+  deck.scale.set(0.85, 1, 0.55);
+  deck.rotation.x = -0.24;
+  g.add(deck);
 
-  // Closed stealth bubble canopy embedded into the nose cone (no open back/bottom gap)
-  const canopyBase = mesh(new THREE.CylinderGeometry(0.42, 0.64, 1.42, 36, 1, false), MAT.darkMetal, 0, 1.06, 0.12);
+  // Solid gold + cobalt base collar rings sealing the cockpit-to-fuselage junction
+  g.add(mesh(new THREE.CylinderGeometry(rBase + 0.012, rBase + 0.012, 0.10, 64), JM.imperialGold, 0, 0.04, 0));
+  g.add(mesh(new THREE.TorusGeometry(rBase + 0.016, 0.018, 10, 56).rotateX(Math.PI / 2), JM.neonCyan, 0, 0.11, 0));
+
+  // Pitot tube needle with gold sensor collar & glowing tip
+  g.add(mesh(new THREE.CylinderGeometry(0.016, 0.026, 0.62, 14), JM.imperialGold, 0, H + 0.19, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.018, 0.10, 14), JM.neonCyan, 0, H + 0.55, 0));
+
+  // Iridescent golden-blue F-22 Raptor bubble canopy & cobalt frame
+  const canopyBase = mesh(new THREE.CylinderGeometry(0.42, 0.64, 1.42, 36, 1, false), JM.cobaltBlue, 0, 1.06, 0.12);
   canopyBase.rotation.x = 0.20;
   g.add(canopyBase);
 
-  const canopyGeo = new THREE.CylinderGeometry(0.44, 0.66, 1.38, 36, 1, false, -Math.PI * 0.48, Math.PI * 0.96);
-  const canopy = mesh(canopyGeo, MAT.glass, 0, 1.08, 0.14);
+  const canopyArch = mesh(new THREE.TorusGeometry(0.55, 0.024, 12, 36, Math.PI), JM.imperialGold, 0, 1.08, 0.16);
+  canopyArch.rotation.x = 0.20;
+  g.add(canopyArch);
+
+  const canopyGeo = new THREE.CylinderGeometry(0.445, 0.665, 1.38, 36, 1, false, -Math.PI * 0.48, Math.PI * 0.96);
+  const canopy = mesh(canopyGeo, JM.goldCanopy, 0, 1.08, 0.14);
   canopy.rotation.x = 0.20;
   g.add(canopy);
 
-  // Ejection seat & HUD inside canopy
-  const seat = mesh(new THREE.BoxGeometry(0.36, 0.48, 0.36), MAT.darkMetal, 0, 0.95, 0.08);
+  // Ejection seat, pilot helmet & dual-layer holographic HUD inside canopy
+  const seat = mesh(new THREE.BoxGeometry(0.36, 0.48, 0.36), JM.jetCarbon, 0, 0.94, 0.08);
   seat.rotation.x = 0.15;
   g.add(seat);
-  const hudGlass = mesh(new THREE.PlaneGeometry(0.16, 0.12), new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff66, emissiveIntensity: 2, transparent: true, opacity: 0.8 }), 0, 1.3, 0.36);
-  hudGlass.rotation.x = 0.3;
-  g.add(hudGlass);
+  g.add(mesh(new THREE.BoxGeometry(0.28, 0.12, 0.12), JM.aceCrimson, 0, 1.20, 0.05));
+  g.add(mesh(new THREE.SphereGeometry(0.13, 18, 14), JM.aeroWhite, 0, 1.12, 0.20));
+  g.add(mesh(new THREE.SphereGeometry(0.115, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), JM.imperialGold, 0, 1.14, 0.23));
 
-  // Conformal stealth forebody chine ridges (anchored at x = 0 and tapering along the exact nose cone curve so they never float)
+  const hudGlass = mesh(new THREE.PlaneGeometry(0.20, 0.14), JM.emeraldHud, 0, 1.33, 0.38);
+  hudGlass.rotation.x = 0.30;
+  g.add(hudGlass);
+  const hudSub = mesh(new THREE.PlaneGeometry(0.16, 0.08), JM.neonCyan, 0, 1.24, 0.42);
+  hudSub.rotation.x = 0.42;
+  g.add(hudSub);
+
+  // Conformal supersonic forebody chine ridges with crimson trim & glowing neon-cyan plasma edge
   const chineShape = new THREE.Shape();
   chineShape.moveTo(0, -0.02);
   for (let i = 0; i <= 20; i++) {
     const t = (i / 20) * 0.78;
     const y = t * H;
-    const r = rBase * Math.pow(1 - t, 0.75) + 0.07 * Math.sin((i / 20) * Math.PI);
+    const r = rBase * Math.pow(1 - t, 0.75) + 0.075 * Math.sin((i / 20) * Math.PI);
     chineShape.lineTo(r, y);
   }
   chineShape.lineTo(0, H * 0.78);
   chineShape.closePath();
   const chineGeo = new THREE.ExtrudeGeometry(chineShape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015 });
   chineGeo.translate(0, 0, -0.03);
-  g.add(mesh(chineGeo, MAT.darkMetal, 0, 0, 0));
-  const chineLeft = mesh(chineGeo, MAT.darkMetal, 0, 0, 0);
+  g.add(mesh(chineGeo, JM.aceCrimson, 0, 0, 0));
+  const chineLeft = mesh(chineGeo, JM.aceCrimson, 0, 0, 0);
   chineLeft.rotation.y = Math.PI;
   g.add(chineLeft);
+
+  for (const sgn of [-1, 1]) {
+    for (let i = 2; i <= 16; i += 2) {
+      const t = (i / 20) * 0.78;
+      const y = t * H;
+      const r = rBase * Math.pow(1 - t, 0.75) + 0.082 * Math.sin((i / 20) * Math.PI);
+      g.add(mesh(new THREE.SphereGeometry(0.022, 8, 8), JM.neonCyan, sgn * r, y, 0));
+    }
+  }
 
   return g;
 }
 
 function buildFuselagePlane() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   const H = PARTS.fuselagePlane.height; // 3.8
-  // Closed solid cylindrical fuselage overlapping slightly (+0.04m) at top & bottom so there is zero gap with cockpitPlane or tailPlane
+  // Glossy pearl-white fuselage overlapping slightly (+0.04m) at top & bottom so there is zero gap
   const bodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.05, R * 1.02, H + 0.08, 64, 1, false), 2, 2);
-  g.add(mesh(bodyGeo, MAT.stealth, 0, H / 2, 0));
+  g.add(mesh(bodyGeo, JM.aeroWhite, 0, H / 2, 0));
 
-  // Top & bottom titanium structural seam bands
-  g.add(mesh(new THREE.CylinderGeometry(R * 1.054, R * 1.054, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.04, 0));
-  g.add(mesh(new THREE.CylinderGeometry(R * 1.024, R * 1.024, 0.12, 64, 1, false), MAT.titanium, 0, 0.04, 0));
+  // Top & bottom imperial-gold structural seam bands + glowing cyan trim rings
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.056, R * 1.056, 0.12, 64, 1, false), JM.imperialGold, 0, H - 0.04, 0));
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.026, R * 1.026, 0.12, 64, 1, false), JM.imperialGold, 0, 0.04, 0));
+  g.add(mesh(new THREE.TorusGeometry(R * 1.042, 0.018, 10, 56).rotateX(Math.PI / 2), JM.neonCyan, 0, H * 0.5, 0));
 
-  // Dorsal spine embedded deep into the fuselage cylinder (z = 0.45..1.05) across full height
-  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.75));
+  // Royal cobalt-blue dorsal spine + crimson race stripe + glowing amber beacon
+  g.add(mesh(new THREE.BoxGeometry(0.66, H + 0.06, 0.60), JM.cobaltBlue, 0, H / 2, 0.75));
+  g.add(mesh(new THREE.BoxGeometry(0.22, H + 0.07, 0.06), JM.aceCrimson, 0, H / 2, 1.04));
+  g.add(mesh(new THREE.BoxGeometry(0.05, H * 0.86, 0.05), JM.neonCyan, -0.32, H / 2, 1.03));
+  g.add(mesh(new THREE.BoxGeometry(0.05, H * 0.86, 0.05), JM.neonCyan, 0.32, H / 2, 1.03));
 
-  // Dual Caret air intakes on flanks — extending from x = ±0.45 inside the cylinder out to ±1.50 so there is zero gap
+  const beaconMat = JM.neonAmber.clone();
+  g.add(mesh(new THREE.SphereGeometry(0.075, 14, 12), beaconMat, 0, H * 0.25, 1.09));
+  g.userData.planeStrobeMats = [beaconMat];
+
+  // Ventral belly race stripe
+  g.add(mesh(new THREE.BoxGeometry(0.46, H * 0.92, 0.16), JM.cobaltBlue, 0, H / 2, -0.98));
+  g.add(mesh(new THREE.BoxGeometry(0.10, H * 0.88, 0.05), JM.neonCyan, 0, H / 2, -1.06));
+
+  // Dual Caret supersonic air intakes on flanks — pearl white with blazing crimson lips, gold strakes & glowing cyan turbine fan
   for (const sgn of [-1, 1]) {
     const intakeGroup = new THREE.Group();
     intakeGroup.position.set(sgn * 0.96, H * 0.52, 0);
     intakeGroup.rotation.y = -sgn * 0.08;
 
-    // Solid intake body spanning x_local = -0.52..+0.52 (reaches x = ±0.44 inside the fuselage cylinder)
-    intakeGroup.add(mesh(new THREE.BoxGeometry(1.04, 1.85, 0.72), MAT.stealth, 0, 0, 0));
-    intakeGroup.add(mesh(new THREE.BoxGeometry(1.06, 0.10, 0.74), MAT.titanium, 0, 0.92, 0));
-    intakeGroup.add(mesh(new THREE.BoxGeometry(1.06, 0.10, 0.74), MAT.darkMetal, 0, -0.92, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.04, 1.88, 0.74), JM.aeroWhite, 0, 0, 0));
+    // Cobalt side race panel & neon cyan plasma line
+    intakeGroup.add(mesh(new THREE.BoxGeometry(0.05, 1.66, 0.44), JM.cobaltBlue, sgn * 0.51, -0.04, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(0.06, 1.54, 0.07), JM.neonCyan, sgn * 0.525, -0.04, 0.16));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(0.06, 1.54, 0.07), JM.aceCrimson, sgn * 0.525, -0.04, -0.16));
 
-    const intGeo = new THREE.BoxGeometry(0.46, 0.04, 0.60);
-    intakeGroup.add(mesh(intGeo, new THREE.MeshBasicMaterial({ color: 0x06070a }), sgn * 0.24, 0.96, 0));
+    // Crimson supersonic intake lip & gold splitter frame
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.08, 0.12, 0.78), JM.aceCrimson, 0, 0.92, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.09, 0.04, 0.80), JM.imperialGold, 0, 0.85, 0));
+    intakeGroup.add(mesh(new THREE.BoxGeometry(1.07, 0.10, 0.76), JM.cobaltBlue, 0, -0.92, 0));
+
+    // Illuminated cyan turbine intake duct
+    intakeGroup.add(mesh(new THREE.BoxGeometry(0.50, 0.05, 0.62), JM.jetCarbon, sgn * 0.24, 0.965, 0));
+    intakeGroup.add(mesh(new THREE.TorusGeometry(0.20, 0.022, 8, 24).rotateX(Math.PI / 2), JM.neonCyan, sgn * 0.26, 0.985, 0));
+    intakeGroup.add(mesh(new THREE.ConeGeometry(0.065, 0.14, 14), JM.imperialGold, sgn * 0.26, 1.02, 0));
     g.add(intakeGroup);
   }
 
-  // Vietnamese Air Force insignia mounted flush on dorsal spine
-  const roundel = mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xda251d, roughness: 0.4 }), 0, H * 0.65, 1.04);
-  g.add(roundel);
-  const yellowStar = mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.045, 5).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffdd00, emissiveIntensity: 0.6 }), 0, H * 0.65, 1.045);
-  yellowStar.rotation.z = Math.PI / 2;
-  g.add(yellowStar);
+  // Illuminated gold-ringed Vietnamese Air Force roundel mounted proudly on dorsal spine
+  addJetRoundel(g, 0, H * 0.68, 1.07, 0.34, Math.PI / 2);
 
   return g;
 }
 
 function buildWingsPlane() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   // Swept delta wing planform starting at x = -0.45 so the wing root penetrates 0.45m deep inside the cylindrical fuselage
   const wingShape = new THREE.Shape();
   wingShape.moveTo(-0.45, -1.35);
@@ -2955,58 +3198,103 @@ function buildWingsPlane() {
 
   const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.09, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022, bevelSegments: 2 });
   wingGeo.translate(0, 0, -0.045);
-  g.add(mesh(wingGeo, MAT.stealth, 0, 0, 0));
+  g.add(mesh(wingGeo, JM.aeroWhite, 0, 0, 0));
 
-  // Wing-root strake / fuselage fairing box sealing any curvature along the cylinder flank
-  g.add(mesh(new THREE.BoxGeometry(0.75, 2.75, 0.26), MAT.stealth, -0.12, 0.12, 0));
+  // Royal cobalt-blue wing-root strake fairing sealing fuselage curvature
+  g.add(mesh(new THREE.BoxGeometry(0.76, 2.76, 0.26), JM.cobaltBlue, -0.12, 0.12, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.12, 2.62, 0.28), JM.imperialGold, 0.22, 0.12, 0));
 
-  // Aileron / flaperon along trailing edge (overlapping into wing trailing edge)
-  const flaperon = mesh(new THREE.BoxGeometry(1.95, 0.28, 0.065), MAT.darkMetal, 1.62, -0.78, 0);
+  // Swept blazing crimson + cobalt delta chevron stripes on BOTH upper & lower wing surfaces (symmetric for left/right mirror)
+  const stripeShape = new THREE.Shape();
+  stripeShape.moveTo(0.38, 0.88);
+  stripeShape.lineTo(2.75, -0.18);
+  stripeShape.lineTo(2.68, -0.46);
+  stripeShape.lineTo(0.38, 0.36);
+  stripeShape.closePath();
+  const stripeGeo = new THREE.ExtrudeGeometry(stripeShape, { depth: 0.145, bevelEnabled: false });
+  stripeGeo.translate(0, 0, -0.0725);
+  g.add(mesh(stripeGeo, JM.aceCrimson, 0, 0, 0));
+
+  const subStripeShape = new THREE.Shape();
+  subStripeShape.moveTo(0.38, 0.26);
+  subStripeShape.lineTo(2.62, -0.52);
+  subStripeShape.lineTo(2.55, -0.68);
+  subStripeShape.lineTo(0.38, -0.08);
+  subStripeShape.closePath();
+  const subStripeGeo = new THREE.ExtrudeGeometry(subStripeShape, { depth: 0.142, bevelEnabled: false });
+  subStripeGeo.translate(0, 0, -0.071);
+  g.add(mesh(subStripeGeo, JM.cobaltBlue, 0, 0, 0));
+
+  // Glowing neon-cyan leading-edge plasma slat strip along the swept leading edge
+  const leadBar = mesh(new THREE.BoxGeometry(3.28, 0.09, 0.13), JM.neonCyan, 1.66, 0.80, 0);
+  leadBar.rotation.z = -0.435;
+  g.add(leadBar);
+
+  // Gold-trimmed crimson flaperon along trailing edge
+  const flaperon = mesh(new THREE.BoxGeometry(1.95, 0.28, 0.08), JM.cobaltBlue, 1.62, -0.78, 0);
   flaperon.rotation.z = 0.19;
   g.add(flaperon);
+  const flapTrim = mesh(new THREE.BoxGeometry(1.92, 0.07, 0.09), JM.imperialGold, 1.63, -0.89, 0);
+  flapTrim.rotation.z = 0.19;
+  g.add(flapTrim);
 
-  // Wingtip rail & formation light (embedded into wingtip at x = 3.12)
-  g.add(mesh(new THREE.BoxGeometry(0.12, 1.15, 0.09), MAT.titanium, 3.12, -0.22, 0));
-  g.add(mesh(new THREE.SphereGeometry(0.05, 12, 10), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 3 }), 3.15, 0.36, 0));
+  // Vietnamese Air Force roundels on both top & bottom wing surfaces
+  addJetRoundel(g, 1.85, 0.10, 0.068, 0.28, Math.PI / 2);
+  addJetRoundel(g, 1.85, 0.10, -0.068, 0.28, -Math.PI / 2);
 
-  // Wing pylon & external supersonic tank (connected solidly through the wing)
-  g.add(mesh(new THREE.BoxGeometry(0.12, 0.95, 0.26), MAT.darkMetal, 1.45, -0.02, 0));
-  const tankGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.58, 20);
-  g.add(mesh(tankGeo, MAT.silver, 1.45, 0.05, 0));
-  const coneGeo = new THREE.ConeGeometry(0.12, 0.40, 20);
-  g.add(mesh(coneGeo, MAT.titanium, 1.45, 1.02, 0));
-  const rearConeGeo = new THREE.ConeGeometry(0.12, 0.28, 20);
+  // Wingtip supersonic missile rail + blazing Xenon strobe + cyan/amber formation plasma tips
+  g.add(mesh(new THREE.BoxGeometry(0.15, 1.36, 0.12), JM.imperialGold, 3.14, -0.22, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.075, 0.34, 14), JM.aceCrimson, 3.14, 0.62, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.068, 14, 12), JM.xenonWhite, 3.18, 0.44, 0));
+  g.add(mesh(new THREE.BoxGeometry(0.06, 0.88, 0.14), JM.neonCyan, 3.21, -0.22, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.055, 12, 10), JM.neonAmber, 3.18, -0.88, 0));
+
+  // Wing pylon & gleaming supersonic drop-tank / booster pod
+  g.add(mesh(new THREE.BoxGeometry(0.13, 0.98, 0.28), JM.cobaltBlue, 1.45, -0.02, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.135, 0.135, 1.58, 24), JM.aeroWhite, 1.45, 0.05, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.140, 0.140, 0.22, 24), JM.aceCrimson, 1.45, 0.48, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.142, 0.142, 0.08, 24), JM.imperialGold, 1.45, 0.05, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.140, 0.140, 0.18, 24), JM.cobaltBlue, 1.45, -0.42, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.135, 0.42, 24), JM.aceCrimson, 1.45, 1.05, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.048, 12, 10), JM.neonCyan, 1.45, 1.25, 0));
+  const rearConeGeo = new THREE.ConeGeometry(0.135, 0.30, 24);
   rearConeGeo.rotateX(Math.PI);
-  g.add(mesh(rearConeGeo, MAT.titanium, 1.45, -0.86, 0));
+  g.add(mesh(rearConeGeo, JM.imperialGold, 1.45, -0.89, 0));
 
   return g;
 }
 
 function buildTailPlane() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   const H = PARTS.tailPlane.height; // 1.8
-  // Full-girth closed cylindrical tail hull matching fuselagePlane (1.02) and engJet afterburner (1.02)
+  // Glossy pearl-white tail hull matching fuselagePlane (1.02) and engJet afterburner (1.02)
   const tailBodyGeo = scaleUV(new THREE.CylinderGeometry(R * 1.02, 1.02, H + 0.08, 64, 1, false), 2, 1);
-  g.add(mesh(tailBodyGeo, MAT.stealth, 0, H / 2, 0));
+  g.add(mesh(tailBodyGeo, JM.aeroWhite, 0, H / 2, 0));
 
-  // Titanium structural collar rings at top & bottom junctions (matching engJet & fuselagePlane)
-  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.03, 0));
-  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, 0.03, 0));
+  // Imperial-gold structural collar rings + cyan energy band
+  g.add(mesh(new THREE.CylinderGeometry(1.03, 1.03, 0.12, 64, 1, false), JM.imperialGold, 0, H - 0.03, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.03, 1.03, 0.12, 64, 1, false), JM.imperialGold, 0, 0.03, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.026, 0.018, 10, 56).rotateX(Math.PI / 2), JM.neonCyan, 0, H * 0.5, 0));
 
-  // Dorsal spine & muscular lateral tail-boom fairings continuing flush into the afterburner cowling
-  g.add(mesh(new THREE.BoxGeometry(0.64, H + 0.06, 0.60), MAT.darkMetal, 0, H / 2, 0.75));
+  // Cobalt dorsal spine & crimson/gold lateral tail-boom fairings
+  g.add(mesh(new THREE.BoxGeometry(0.66, H + 0.06, 0.60), JM.cobaltBlue, 0, H / 2, 0.75));
+  g.add(mesh(new THREE.BoxGeometry(0.22, H + 0.07, 0.06), JM.aceCrimson, 0, H / 2, 1.04));
   for (const sgn of [-1, 1]) {
-    g.add(mesh(new THREE.BoxGeometry(0.52, H - 0.06, 0.42), MAT.stealth, sgn * 0.86, H / 2, 0));
-    g.add(mesh(new THREE.BoxGeometry(0.36, H - 0.14, 0.28), MAT.darkMetal, sgn * 0.98, H / 2, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.52, H - 0.06, 0.42), JM.cobaltBlue, sgn * 0.86, H / 2, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.36, H - 0.14, 0.28), JM.aceCrimson, sgn * 0.99, H / 2, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.06, H - 0.18, 0.08), JM.neonCyan, sgn * 1.15, H / 2, 0));
   }
 
-  // Twin canted vertical stabilizers rising dorsally (+Z) & canted outward (±X) with thick stealth airfoils
+  // Twin canted vertical stabilizers with pearl-white airfoils, crimson tips, gold flashes & glowing anti-collision strobes
+  const strobeMats = [];
   for (const sgn of [-1, 1]) {
     const finGroup = new THREE.Group();
     finGroup.position.set(sgn * 0.45, 0, 0.45);
     finGroup.rotation.y = sgn * 0.38;
 
     const finShape = new THREE.Shape();
+    finShape.moveTo(0, 0.04);
     finShape.moveTo(0, 0.04);
     finShape.lineTo(0, H - 0.04);
     finShape.lineTo(0.55, H - 0.06);
@@ -3017,14 +3305,27 @@ function buildTailPlane() {
     const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.11, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022, bevelSegments: 2 });
     finGeo.translate(0, 0, -0.055);
     finGeo.rotateY(-Math.PI / 2);
-    finGroup.add(mesh(finGeo, MAT.stealth, 0, 0, 0));
-    // Thick rudder actuator fairing & dark-metal rudder surface
-    finGroup.add(mesh(new THREE.BoxGeometry(0.22, H * 0.82, 0.38), MAT.darkMetal, 0, H * 0.48, 0.52));
-    finGroup.add(mesh(new THREE.BoxGeometry(0.13, 0.72, 0.28), MAT.darkMetal, 0, 0.52, 1.22));
+    finGroup.add(mesh(finGeo, JM.aeroWhite, 0, 0, 0));
+
+    // Cobalt actuator fairing & blazing crimson rudder + gold tip cap
+    finGroup.add(mesh(new THREE.BoxGeometry(0.22, H * 0.82, 0.38), JM.cobaltBlue, 0, H * 0.48, 0.52));
+    finGroup.add(mesh(new THREE.BoxGeometry(0.14, 0.76, 0.30), JM.aceCrimson, 0, 0.52, 1.22));
+    finGroup.add(mesh(new THREE.BoxGeometry(0.15, 0.82, 0.14), JM.imperialGold, 0, 0.56, 1.50));
+    // Neon-cyan leading-edge blade strip
+    const finLead = mesh(new THREE.BoxGeometry(0.14, 1.32, 0.07), JM.neonCyan, 0, 1.32, 1.02);
+    finLead.rotation.x = 0.88;
+    finGroup.add(finLead);
+
+    // Anti-collision strobe beacon atop each tailfin tip
+    const stMat = (sgn > 0 ? JM.xenonWhite : JM.neonAmber).clone();
+    strobeMats.push(stMat);
+    finGroup.add(mesh(new THREE.SphereGeometry(0.075, 14, 12), stMat, 0, 0.98, 1.58));
+
     g.add(finGroup);
   }
+  g.userData.planeStrobeMats = strobeMats;
 
-  // Thick, full-span all-moving horizontal tailplane elevators protruding cleanly past the 1.02m tail cylinder
+  // All-moving horizontal stabilators in cobalt blue with crimson & neon-cyan wingtip trim
   for (const sgn of [-1, 1]) {
     const stabShape = new THREE.Shape();
     stabShape.moveTo(0, 0.08);
@@ -3035,9 +3336,11 @@ function buildTailPlane() {
     stabShape.closePath();
     const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.11, bevelEnabled: true, bevelThickness: 0.024, bevelSize: 0.024, bevelSegments: 2 });
     stabGeo.translate(0, 0, -0.055);
-    const stab = mesh(stabGeo, MAT.darkMetal, sgn * 0.42, 0, 0);
+    const stab = mesh(stabGeo, JM.cobaltBlue, sgn * 0.42, 0, 0);
     stab.rotation.y = sgn > 0 ? 0 : Math.PI;
     g.add(stab);
+    g.add(mesh(new THREE.BoxGeometry(0.12, 0.60, 0.14), JM.imperialGold, sgn * 2.38, 0.40, 0));
+    g.add(mesh(new THREE.SphereGeometry(0.05, 10, 10), JM.neonCyan, sgn * 2.45, 0.68, 0));
   }
 
   return g;
@@ -3045,8 +3348,9 @@ function buildTailPlane() {
 
 function buildEngJet() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   const H = PARTS.engJet.height; // 2.2
-  // Closed top & bottom LatheGeometry overlapping +0.04m into tailPlane so there is zero seam gap
+  // Sleek cobalt & titanium-gold cowling overlapping +0.04m into tailPlane so there is zero seam gap
   const pts = [
     new THREE.Vector2(0, 0.02),
     new THREE.Vector2(0.88, 0.02),
@@ -3058,53 +3362,66 @@ function buildEngJet() {
     new THREE.Vector2(0, H + 0.04),
   ];
   const cowlGeo = scaleUV(new THREE.LatheGeometry(pts, 64), 2, 1);
-  g.add(mesh(cowlGeo, MAT.stealth, 0, 0, 0));
+  g.add(mesh(cowlGeo, JM.cobaltBlue, 0, 0, 0));
 
-  // Titanium top collar ring sealing connection with tailPlane
-  g.add(mesh(new THREE.CylinderGeometry(1.026, 1.026, 0.12, 64, 1, false), MAT.titanium, 0, H - 0.02, 0));
+  // Pearl-white upper fairing band, crimson thrust band & glowing cyan cooling vents
+  g.add(mesh(new THREE.CylinderGeometry(1.024, 1.005, 0.72, 64, 1, true), JM.aeroWhite, 0, H - 0.42, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.032, 1.032, 0.12, 64, 1, false), JM.imperialGold, 0, H - 0.02, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.992, 0.975, 0.22, 64, 1, false), JM.aceCrimson, 0, 1.18, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.996, 0.020, 10, 56).rotateX(Math.PI / 2), JM.neonCyan, 0, 1.04, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.952, 0.022, 10, 56).rotateX(Math.PI / 2), JM.imperialGold, 0, 0.62, 0));
 
-  // Solid inner exhaust nozzle cone so there are no gaps between nozzle petals
-  const nozzleLength = 0.54;
-  g.add(mesh(new THREE.CylinderGeometry(0.72, 0.86, nozzleLength + 0.06, 48, 1, false), MAT.darkMetal, 0, nozzleLength / 2, 0));
+  // Solid inner exhaust nozzle cone with glowing afterburner throat
+  const nozzleLength = 0.56;
+  g.add(mesh(new THREE.CylinderGeometry(0.72, 0.88, nozzleLength + 0.06, 48, 1, false), JM.jetCarbon, 0, nozzleLength / 2, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.66, 0.68, 0.06, 40), JM.neonAmber, 0, 0.04, 0));
 
-  // Overlapping nozzle petals around the solid inner cone
+  // Alternating imperial-gold & titanium variable-geometry thrust-vectoring nozzle petals
   const petalCount = 24;
-  const petalGeo = new THREE.BoxGeometry(0.22, nozzleLength, 0.045);
+  const petalGeo = new THREE.BoxGeometry(0.22, nozzleLength, 0.048);
   for (let i = 0; i < petalCount; i++) {
     const a = (i / petalCount) * Math.PI * 2;
-    const r = 0.78;
-    const petal = mesh(petalGeo, i % 2 === 0 ? MAT.titanium : MAT.darkMetal, Math.cos(a) * r, nozzleLength / 2, Math.sin(a) * r);
+    const r = 0.79;
+    const petal = mesh(petalGeo, i % 2 === 0 ? JM.imperialGold : MAT.titanium, Math.cos(a) * r, nozzleLength / 2, Math.sin(a) * r);
     petal.rotation.y = -a;
     petal.rotation.x = 0.12;
     g.add(petal);
   }
 
-  // Afterburner spray rings
-  g.add(mesh(new THREE.TorusGeometry(0.46, 0.025, 10, 32).rotateX(Math.PI / 2), MAT.copper, 0, 0.04, 0));
-  g.add(mesh(new THREE.TorusGeometry(0.26, 0.025, 10, 24).rotateX(Math.PI / 2), MAT.copper, 0, 0.04, 0));
+  // Glowing dual plasma afterburner flameholder rings
+  g.add(mesh(new THREE.TorusGeometry(0.50, 0.032, 12, 36).rotateX(Math.PI / 2), JM.neonAmber, 0, 0.03, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.30, 0.028, 12, 28).rotateX(Math.PI / 2), JM.neonCyan, 0, 0.025, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.16, 0.24, 20).rotateX(Math.PI), JM.xenonWhite, 0, 0.06, 0));
 
   const bellM = bellMaterial(false);
-  addNozzle(g, 0, 0, 0.4, [bellM]);
+  addNozzle(g, 0, 0, 0.44, [bellM]);
 
   return g;
 }
 
 function buildGearPlane() {
   const g = new THREE.Group();
+  const JM = getJetMaterials();
   const strutPivot = new THREE.Group();
   g.add(strutPivot);
 
   const legHeight = 1.05;
-  // Horizontal top mounting bracket & diagonal drag brace extending +0.78m into the fuselage belly (+Z) without covering the strut or wheels
-  strutPivot.add(mesh(new THREE.BoxGeometry(0.18, 0.18, 0.80), MAT.darkMetal, 0, -0.09, 0.38));
-  const dragBrace = mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.82, 12), MAT.titanium, 0, -0.28, 0.36);
+  // Horizontal top mounting bracket & gold diagonal drag brace extending +0.78m into the fuselage belly (+Z)
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.18, 0.18, 0.80), JM.cobaltBlue, 0, -0.09, 0.38));
+  const dragBrace = mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.82, 14), JM.imperialGold, 0, -0.28, 0.36);
   dragBrace.rotation.x = 1.18;
   strutPivot.add(dragBrace);
 
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.58, 16), MAT.darkMetal, 0, -0.28, 0));
-  strutPivot.add(mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.50, 16), MAT.silver, 0, -0.62, 0));
+  // Crimson upper shock oleo + gleaming chrome piston + gold collar
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.58, 18), JM.aceCrimson, 0, -0.28, 0));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.076, 0.076, 0.08, 18), JM.imperialGold, 0, -0.54, 0));
+  strutPivot.add(mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.50, 18), MAT.silver, 0, -0.62, 0));
 
-  const link = mesh(new THREE.BoxGeometry(0.045, 0.22, 0.075), MAT.darkMetal, 0.055, -0.48, 0);
+  // Pearl-white gear bay door panel with crimson trim
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.032, 0.56, 0.24), JM.aeroWhite, 0.095, -0.34, 0.02));
+  strutPivot.add(mesh(new THREE.BoxGeometry(0.036, 0.52, 0.05), JM.aceCrimson, 0.10, -0.34, 0.10));
+
+  const link = mesh(new THREE.BoxGeometry(0.045, 0.22, 0.075), JM.imperialGold, 0.055, -0.48, 0);
   link.rotation.z = 0.3;
   strutPivot.add(link);
 
@@ -3112,17 +3429,22 @@ function buildGearPlane() {
   wheelGroup.position.set(0, -legHeight, 0);
   strutPivot.add(wheelGroup);
 
-  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.36, 12).rotateZ(Math.PI / 2), MAT.silver, 0, 0, 0));
+  wheelGroup.add(mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.36, 12).rotateZ(Math.PI / 2), JM.imperialGold, 0, 0, 0));
 
   const wheelGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.12, 24).rotateZ(Math.PI / 2);
-  const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.13, 16).rotateZ(Math.PI / 2);
+  const hubGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.13, 18).rotateZ(Math.PI / 2);
+  const rimGlowGeo = new THREE.TorusGeometry(0.175, 0.016, 10, 24).rotateY(Math.PI / 2);
   for (const sgn of [-1, 1]) {
     wheelGroup.add(mesh(wheelGeo, MAT.rubber, sgn * 0.11, 0, 0));
-    wheelGroup.add(mesh(hubGeo, MAT.metal, sgn * 0.11, 0, 0));
+    wheelGroup.add(mesh(hubGeo, JM.imperialGold, sgn * 0.11, 0, 0));
+    wheelGroup.add(mesh(rimGlowGeo, JM.neonCyan, sgn * 0.172, 0, 0));
   }
 
-  const lamp = mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.06, 12).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3 }), 0, -0.38, -0.09);
+  // Dual high-intensity Xenon landing & taxi spotlights
+  const lamp = mesh(new THREE.CylinderGeometry(0.062, 0.082, 0.07, 14).rotateX(Math.PI / 2), JM.xenonWhite, 0, -0.36, -0.10);
   strutPivot.add(lamp);
+  const subLamp = mesh(new THREE.SphereGeometry(0.045, 12, 10), JM.neonCyan, 0, -0.49, -0.08);
+  strutPivot.add(subLamp);
 
   g.userData.wheelGroup = wheelGroup;
   g.userData.footY = -1.32;
@@ -14613,6 +14935,7 @@ function mergeGroupMeshesByMaterial(rootGroup, excludeSet = new Set()) {
 const DYNAMIC_PARTS = new Set(['legs', 'gridfins', 'wheelsRover', 'gearPlane', 'gunLaser', 'waterCannon', 'gunAcid', 'gunElectric']);
 
 export function buildPart(type) {
+  if (!MAT.white) initMaterials();
   const g = builders[type]();
   if (!DYNAMIC_PARTS.has(type)) {
     const exclude = new Set();
@@ -14640,6 +14963,10 @@ export function buildPart(type) {
     if (g.userData.ufoSpinGroup) {
       mergeGroupMeshesByMaterial(g.userData.ufoSpinGroup);
       exclude.add(g.userData.ufoSpinGroup);
+    }
+    if (g.userData.roverSpinGroup) {
+      mergeGroupMeshesByMaterial(g.userData.roverSpinGroup);
+      exclude.add(g.userData.roverSpinGroup);
     }
     if (g.userData.chute) exclude.add(g.userData.chute);
     if (g.userData.chutes) exclude.add(g.userData.chutes);

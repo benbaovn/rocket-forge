@@ -28,11 +28,12 @@ const PAD_TOP = 9.0;       // rocket base height on the launch mount
 const PAD_RADIUS = 45;
 const BEND = 1 / (2 * R_E);
 const AIRPORT_SCATTER_OFFSETS = [
-  { dx: 28000, dz: -38000,  planetDx: 0,        planetDz: 0 },      // Airport #1: Mainland Peninsula #1 (separated by deep ocean bay from Launchpad/Harbor 0)
-  { dx: 52000, dz: -280000, planetDx: -250000,  planetDz: -9000 },  // Airport #2: Mainland Peninsula #2 (fastest route crosses ~243 km of open ocean bay)
-  { dx: 46000, dz: 110000,  planetDx: -520000,  planetDz: 9000 },   // Airport #3: Mainland Peninsula #3 (fastest route crosses open ocean bays)
-  { dx: 58000, dz: -485000, planetDx: -820000,  planetDz: -11000 }, // Airport #4: Mainland Peninsula #4 (fastest route crosses ~205 km of open ocean bay)
-  { dx: 54000, dz: 310000,  planetDx: -1150000, planetDz: 11000 },  // Airport #5: Mainland Peninsula #5 (fastest route crosses ~200 km of open ocean bay)
+  { dx: 28000, dz: -38000,  planetDx: 0,        planetDz: 0 },      // Sân bay 0: Mainland Peninsula #0 (spawn airport, separated by deep ocean bay from Launchpad/Harbor 0)
+  { dx: 52000, dz: -280000, planetDx: -250000,  planetDz: -9000 },  // Sân bay 1: Mainland Peninsula #1 (fastest route crosses ~243 km of open ocean bay)
+  { dx: 46000, dz: 110000,  planetDx: -520000,  planetDz: 9000 },   // Sân bay 2: Mainland Peninsula #2 (fastest route crosses open ocean bays)
+  { dx: 58000, dz: -485000, planetDx: -820000,  planetDz: -11000 }, // Sân bay 3: Mainland Peninsula #3 (fastest route crosses ~205 km of open ocean bay)
+  { dx: 54000, dz: 310000,  planetDx: -1150000, planetDz: 11000 },  // Sân bay 4: Mainland Peninsula #4 (fastest route crosses ~200 km of open ocean bay)
+  { dx: 60000, dz: -690000, planetDx: -1360000, planetDz: -12000 }, // Sân bay 5: Mainland Peninsula #5 (fastest route crosses ~205 km of open ocean bay)
 ];
 const HARBOR_SCATTER_Z = [0, -180000, -380000, 200000, 420000, -580000];
 const SUN_ECI = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
@@ -112,6 +113,15 @@ export class LaunchScene {
     if (this.harborSignMats) {
       for (const item of this.harborSignMats) {
         const nextTex = this.makeHarborSignTexture(item.hIdx);
+        if (item.mat.map) item.mat.map.dispose();
+        item.mat.map = nextTex;
+        item.mat.emissiveMap = nextTex;
+        item.mat.needsUpdate = true;
+      }
+    }
+    if (this.airportSignMats) {
+      for (const item of this.airportSignMats) {
+        const nextTex = this.makeAirportSignTexture(item.aIdx);
         if (item.mat.map) item.mat.map.dispose();
         item.mat.map = nextTex;
         item.mat.emissiveMap = nextTex;
@@ -534,7 +544,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   const oz = (-off.dz).toFixed(1);
   return `        float d${i} = max(max(-260.0 - (sx + (${ox})), (sx + (${ox})) - 2500.0), max(-190.0 - (sz + (${oz})), (sz + (${oz})) - 130.0));`;
 }).join('\n')}
-        return min(d0, min(min(d1, d2), min(d3, d4)));
+        return ${AIRPORT_SCATTER_OFFSETS.map((_, i) => `d${i}`).reduce((acc, v) => `min(${acc}, ${v})`)};
       }
       float singleAirportPavedDist(float lx, float lz) {
         float dRwy = max(max(-170.0 - lx, lx - 2250.0), abs(lz) - 24.0);
@@ -549,7 +559,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
   const ox = (-off.dx).toFixed(1);
   return `        float p${i} = singleAirportPavedDist(sx + (${ox}), sz + (${oz}));`;
 }).join('\n')}
-        return min(p0, min(min(p1, p2), min(p3, p4)));
+        return ${AIRPORT_SCATTER_OFFSETS.map((_, i) => `p${i}`).reduce((acc, v) => `min(${acc}, ${v})`)};
       }
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
         if (showAirport > 0.5) return 0.0;
@@ -703,7 +713,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     for (const g of [trunk, crown1, crown2]) g.deleteAttribute('uv');
     const colorize = (g, c) => { const n = g.attributes.position.count; const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set(c, i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g; };
     const treeGeo = mergeGeometries([colorize(trunk, [0.25, 0.17, 0.1]), colorize(crown1, [0.06, 0.13, 0.05]), colorize(crown2, [0.07, 0.15, 0.06])]);
-    const N = 9000;
+    const N = 10500;
     const trees = new THREE.InstancedMesh(treeGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), N);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3();
     this.treeWaveY = [];
@@ -967,6 +977,32 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     }
   }
 
+  makeAirportSignTexture(aIdx) {
+    const cv = document.createElement('canvas');
+    cv.width = 512;
+    cv.height = 128;
+    const ctx = cv.getContext && cv.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#071426';
+      ctx.fillRect(0, 0, 512, 128);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 8;
+      if (ctx.strokeRect) ctx.strokeRect(8, 8, 496, 112);
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
+      ctx.lineWidth = 3;
+      if (ctx.strokeRect) ctx.strokeRect(18, 18, 476, 92);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '900 54px Orbitron, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tr(`🛫 SÂN BAY ${aIdx}`, `🛫 AIRPORT ${aIdx}`), 256, 66);
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
   initAirport() {
     const airport = new THREE.Group();
     airport.visible = false;
@@ -975,6 +1011,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.airportRadars = [];
     this.airportWindsocks = [];
     this.airportFoundations = [];
+    this.airportSignMats = [];
     this.airportCenterGroup = null;
 
     const conc = TX.concreteTextures();
@@ -1230,6 +1267,34 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       termRoof.position.set(0, 13.7, 1.5);
       termRoof.castShadow = true;
       termGroup.add(termRoof);
+
+      const apSignTex = this.makeAirportSignTexture(aIdx);
+      const apSignMat = new THREE.MeshStandardMaterial({
+        map: apSignTex,
+        emissive: 0xffffff,
+        emissiveMap: apSignTex,
+        emissiveIntensity: 0.95,
+        roughness: 0.25,
+        metalness: 0.14,
+      });
+      this.airportSignMats.push({ aIdx, mat: apSignMat });
+
+      const termSignBack = new THREE.Mesh(new THREE.BoxGeometry(28.0, 6.8, 1.0), termRoofMat);
+      termSignBack.position.set(0, 17.8, 17.5);
+      const termSignFront = new THREE.Mesh(new THREE.PlaneGeometry(27.0, 6.2), apSignMat);
+      termSignFront.position.set(0, 17.8, 18.06);
+      const termSignRear = new THREE.Mesh(new THREE.PlaneGeometry(27.0, 6.2), apSignMat);
+      termSignRear.rotation.y = Math.PI;
+      termSignRear.position.set(0, 17.8, 16.94);
+      termGroup.add(termSignBack, termSignFront, termSignRear);
+
+      const spawnSignGroup = new THREE.Group();
+      spawnSignGroup.position.set(8, 19.6, -54);
+      const spawnSignBack = new THREE.Mesh(new THREE.BoxGeometry(24.0, 5.8, 0.9), hangarDoorMat);
+      const spawnSignFront = new THREE.Mesh(new THREE.PlaneGeometry(23.0, 5.2), apSignMat);
+      spawnSignFront.position.z = 0.50;
+      spawnSignGroup.add(spawnSignBack, spawnSignFront);
+      subAirport.add(spawnSignGroup);
 
       for (const jx of [-26, 26]) {
         const jw = new THREE.Mesh(jetwayGeo, hangarWallMat);
@@ -2421,10 +2486,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         ? tr(`⚓ Cảng ${hNum}`, `⚓ Harbor ${hNum}`)
         : tr(`⚓ Cảng ${hNum}${data.visited ? ' ✔' : ''}`, `⚓ Harbor ${hNum}${data.visited ? ' ✔' : ''}`);
     } else {
-      const apNum = data.targetIdx + 1;
+      const apNum = data.targetIdx;
       targetStr = arrived
-        ? tr(`🛬 Sân bay #${apNum}`, `🛬 Airport #${apNum}`)
-        : tr(`🛫 Sân bay #${apNum}${data.visited ? ' ✔' : ''}`, `🛫 Airport #${apNum}${data.visited ? ' ✔' : ''}`);
+        ? tr(`🛬 Sân bay ${apNum}`, `🛬 Airport ${apNum}`)
+        : tr(`🛫 Sân bay ${apNum}${data.visited ? ' ✔' : ''}`, `🛫 Airport ${apNum}${data.visited ? ' ✔' : ''}`);
     }
     setTxt($('ac-target'), targetStr);
 
@@ -2479,10 +2544,10 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           const idx = Number(raw);
           const maxCount = data.isBoatCompass ? HARBOR_SCATTER_Z.length : AIRPORT_SCATTER_OFFSETS.length;
           b.classList.toggle('hidden', idx >= maxCount);
-          setTxt(b, data.isBoatCompass ? `#${idx}` : `#${idx + 1}`);
+          setTxt(b, `#${idx}`);
           b.title = data.isBoatCompass
             ? tr(`Chỉ la bàn tới Cảng ${idx}`, `Point compass to Harbor ${idx}`)
-            : tr(`Chỉ la bàn tới Sân bay #${idx + 1}`, `Point compass to Airport #${idx + 1}`);
+            : tr(`Chỉ la bàn tới Sân bay ${idx}`, `Point compass to Airport ${idx}`);
           const siteId = data.isBoatCompass ? `earth:${idx}` : `${P.ref}:${idx}`;
           const isVisited = data.isBoatCompass
             ? !!((this.harborsVisitedSet && this.harborsVisitedSet.has(siteId)) || (this.visitedHarborIds && this.visitedHarborIds.has(siteId)))
@@ -2530,7 +2595,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   }
 
   teleportToAirport(bodyKey, airportIdx = 0) {
-    const idx = Math.max(0, Math.min(4, Number(airportIdx) || 0));
+    const idx = Math.max(0, Math.min(AIRPORT_SCATTER_OFFSETS.length - 1, Number(airportIdx) || 0));
     this.selectedAirportBody = bodyKey;
     this.selectedAirportIdx = idx;
     this.selectedHarborIdx = undefined;
@@ -2636,21 +2701,21 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         }
         const B = BODIES[key] || BODIES.earth;
         const active = curTarget === key ? 'active' : '';
-        const has5Airports = this.hasSurfaceAirports(key);
+        const has6Airports = this.hasSurfaceAirports(key);
         const forceOrb = isOrb || !!B.gasGiant || key === 'sun';
-        const modeDesc = has5Airports
-          ? tr('🛬 5 Sân bay', '🛬 5 Airports') + (key === 'earth' ? tr(' · ⚓ Cảng 0–5', ' · ⚓ Harbors 0–5') : '')
+        const modeDesc = has6Airports
+          ? tr('🛬 Sân bay 0–5', '🛬 Airports 0–5') + (key === 'earth' ? tr(' · ⚓ Cảng 0–5', ' · ⚓ Harbors 0–5') : '')
           : isPlane
             ? tr('✈️ Bay trong khí quyển', '✈️ Atmospheric Flight')
             : (forceOrb ? tr('🛰️ Vào quỹ đạo', '🛰️ Enter Orbit') : tr('🛬 Đáp bề mặt', '🛬 Land on Surface'));
         const parentB = B.parent && B.parent !== 'sun' ? BODIES[B.parent] : null;
         const parentTag = parentB ? `${tr('Thân chủ', 'Parent')}: ${parentB.label} · ` : '';
         const atmTag = this.canPlaneTeleportTo(key) ? ` · ρ₀ = ${B.rho0} kg/m³` : '';
-        const airportSubBtns = has5Airports
+        const airportSubBtns = has6Airports
           ? `<div class="tp-sub-row">
-              ${[0, 1, 2, 3, 4].map((idx) => {
+              ${[0, 1, 2, 3, 4, 5].map((idx) => {
                 const isSel = curTarget === key && this.selectedAirportBody === key && this.selectedAirportIdx === idx;
-                return `<button type="button" class="tp-sub-pill tp-sub-airport ${isSel ? 'on' : ''}" data-tp-airport="${key}:${idx}" title="${B.label} — ${tr(`Sân bay #${idx + 1}`, `Airport #${idx + 1}`)}">🛫 ${tr(`SB ${idx + 1}`, `AP ${idx + 1}`)}</button>`;
+                return `<button type="button" class="tp-sub-pill tp-sub-airport ${isSel ? 'on' : ''}" data-tp-airport="${key}:${idx}" title="${B.label} — ${tr(`Sân bay ${idx}`, `Airport ${idx}`)}">🛫 ${tr(`SB ${idx}`, `AP ${idx}`)}</button>`;
               }).join('')}
             </div>`
           : '';
@@ -3820,16 +3885,16 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           );
         } else if (hasAirportOpt || (P.isPlane && this.hasSurfaceAirports(bodyKey))) {
           this.milestone(
-            `🛫 ${B.icon} ${tr(`SÂN BAY #${aIdx + 1}/5 — ${B.label.toUpperCase()}!`, `AIRPORT #${aIdx + 1}/5 — ${B.label.toUpperCase()}!`)}`,
+            `🛫 ${B.icon} ${tr(`ĐÃ TỚI SÂN BAY ${aIdx} — ${B.label.toUpperCase()}!`, `ARRIVED AT AIRPORT ${aIdx} — ${B.label.toUpperCase()}!`)}`,
             tr(
-              `Đường băng #${aIdx + 1}/5 trên ${B.label} (g = ${B.g.toFixed(2)} m/s² · ρ₀ = ${B.rho0} kg/m³) · Nhấn Space / Shift để cất cánh!`,
-              `Runway #${aIdx + 1}/5 on ${B.label} (g = ${B.g.toFixed(2)} m/s² · ρ₀ = ${B.rho0} kg/m³) · Press Space / Shift to take off!`
+              `Sân bay ${aIdx} trên ${B.label} (g = ${B.g.toFixed(2)} m/s² · ρ₀ = ${B.rho0} kg/m³) · Nhấn Space / Shift để cất cánh!`,
+              `Airport ${aIdx} on ${B.label} (g = ${B.g.toFixed(2)} m/s² · ρ₀ = ${B.rho0} kg/m³) · Press Space / Shift to take off!`
             )
           );
           this.event(
             tr(
-              `🛫${B.icon} Đã dịch chuyển tới Sân bay #${aIdx + 1}/5 trên ${B.label}!`,
-              `🛫${B.icon} Teleported to Airport #${aIdx + 1}/5 on ${B.label}!`
+              `🛫${B.icon} Đã dịch chuyển tới Sân bay ${aIdx} trên ${B.label}!`,
+              `🛫${B.icon} Teleported to Airport ${aIdx} on ${B.label}!`
             ),
             'warn'
           );
@@ -4423,7 +4488,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.ignited = true;
       this.released = true;
       this.met = 0;
-      this.event(tr('✈️ Tiêm kích phản lực đã ra Sân bay! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z / Space để chạy đà, nhấn W để bay lên, S để bay xuống, A/D để quẹo trái/phải.', '✈️ Fighter Jet on the Airport Runway! Landing gear deployed — throttle up with Shift / Z / Space to roll, press W to pitch up, S to pitch down, A/D to turn left/right.'));
+      this.event(tr('✈️ Tiêm kích phản lực đã xuất hiện tại Sân bay 0! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z / Space để chạy đà, nhấn W để bay lên, S để bay xuống, A/D để quẹo trái/phải.', '✈️ Fighter Jet ready at Airport 0! Landing gear deployed — throttle up with Shift / Z / Space to roll, press W to pitch up, S to pitch down, A/D to turn left/right.'));
     } else {
       this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
       this.player.clamped = true;
@@ -5439,6 +5504,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         if (apId && (this.wasAirborneForAirport || (apId !== this.lastLandedAirportId && (v.planeDistTotal || 0) > 40))) {
           this.wasAirborneForAirport = false;
           this.lastLandedAirportId = apId;
+          const arrivedApIdx = Number(String(apId).split(':')[1] || 0);
+          this.event(
+            tr(
+              `🛬 Đã hạ cánh an toàn xuống Sân bay ${arrivedApIdx}!`,
+              `🛬 Safely landed at Airport ${arrivedApIdx}!`
+            )
+          );
           if (!this.visitedAirportIds) this.visitedAirportIds = new Set(['earth:0']);
           this.visitedAirportIds.add(apId);
           if (!this.airportsLandedSet) this.airportsLandedSet = new Set();
@@ -6488,6 +6560,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           this.fuel[k] = this.fuelMax[k] * 0.15;
         }
         const r = this.program.update(P, this.sc, h);
+        if (P.isPlane && this.program && r !== 'done' && !P.landed && !P.clamped && this.program.phase !== 'land' && !this.program._approachingGear && (P.agl === undefined || P.agl > 2.0)) {
+          P.legsTarget = 0;
+        }
         this.checkAutoStage(P);
         if (r === 'done' && !this.programDone) {
           this.programDone = true; this.program = null; P._guidedTargetAlt = null; P.ctl.targetBeta = null; this.holdAttitude();
@@ -7971,14 +8046,26 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.harborLighthouseBeacon.rotation.y += 0.024;
       }
     }
-    // Boat propeller & UFO halo/crown rotation
+    // Boat propeller, Rover Lidar, Jet strobes & UFO halo/crown rotation
     if (this.rocket.partObjs) {
       const v = this.player;
       const spd = v ? (v.waterSpeed || 0) : 0;
       const running = v && (v.engineOn || Math.abs(spd) > 0.05);
+      const strobePhase = (this.time * 2.2) % 1.0;
+      const strobeFlash = (strobePhase < 0.08 || (strobePhase > 0.16 && strobePhase < 0.24)) ? 1.0 : 0.0;
       for (const po of this.rocket.partObjs) {
         if (po.obj.userData.ufoSpinGroup) {
           po.obj.userData.ufoSpinGroup.rotation.y += (v && v.engineOn) ? 0.036 : 0.018;
+        }
+        if (po.obj.userData.roverSpinGroup) {
+          const rSpd = v ? Math.abs(v.groundSpeed || 0) : 0;
+          po.obj.userData.roverSpinGroup.rotation.y += 0.055 + Math.min(0.08, rSpd * 0.003);
+        }
+        if (po.obj.userData.planeStrobeMats) {
+          const stInt = 1.6 + strobeFlash * 5.2;
+          for (const sm of po.obj.userData.planeStrobeMats) {
+            if (sm) sm.emissiveIntensity = stInt;
+          }
         }
         if (running) {
           const spinStep = (Math.abs(spd) * 0.4 + 12) * 0.08;
@@ -8866,14 +8953,75 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.smoke.emit(P.sx + CORE_R, y, (Math.random() - 0.5), 2 + Math.random() * 2, -1.5, (Math.random() - 0.5) * 2, { life: 3, size0: 0.6, size1: 4, alpha: 0.35, drag: 1, buoy: -0.6, color: [1, 1, 1] });
       }
     }
+    // Rover wheel dust & plasma ground glints + Airplane wingtip vapor trails
+    if (F && !F.dead && !F.crashed) {
+      if (F.isRover && F.landed && Math.abs(F.groundSpeed || 0) > 2.2) {
+        const gSpd = Math.abs(F.groundSpeed || 0);
+        const nDust = this.poisson(Math.min(55, gSpd * 1.4) * qual * simDt);
+        const hYaw = F.heading || 0;
+        const backX = -Math.cos(hYaw);
+        const backZ = Math.sin(hYaw);
+        const rightX = Math.sin(hYaw);
+        const rightZ = Math.cos(hYaw);
+        const rB = BODIES[F.ref] || BODIES.earth;
+        const dustCol = F.ref === 'mars' ? [0.85, 0.42, 0.24] : F.ref === 'earth' ? [0.72, 0.66, 0.54] : [0.68, 0.72, 0.78];
+        const baseY = (F.alt || 0) - F.bottomOffset() + 0.28;
+        for (let i = 0; i < nDust; i++) {
+          const side = Math.random() < 0.5 ? -1.45 : 1.45;
+          const axOff = Math.random() < 0.5 ? -1.4 : 1.3;
+          const wx = (F.sx || 0) + backX * (-axOff) + rightX * side;
+          const wz = (F.s?.z || 0) + backZ * (-axOff) + rightZ * side;
+          this.smoke.emit(
+            wx,
+            baseY,
+            wz,
+            backX * gSpd * 0.28 + (Math.random() - 0.5) * 3,
+            1.2 + Math.random() * 2.8,
+            backZ * gSpd * 0.28 + (Math.random() - 0.5) * 3,
+            { life: 1.4 + Math.random() * 1.2, size0: 0.45, size1: 2.2 + Math.min(2.4, gSpd * 0.05), alpha: 0.36, drag: 1.4, buoy: rB.g > 5 ? 0.3 : -0.4, color: dustCol }
+          );
+        }
+      } else if (F.isPlane && !F.landed && !F.clamped) {
+        const prF = this.airRatio(F);
+        const spdF = F.speedSurf || 0;
+        const gLoad = Math.abs(F.bank || 0) * 2.2 + Math.abs(F.ctl?.drive || 0) * 0.8;
+        if (prF > 0.015 && spdF > 48) {
+          const vapRate = Math.min(95, (spdF - 45) * 0.55 * (0.45 + gLoad)) * prF;
+          const nVap = this.poisson(vapRate * qual * simDt);
+          const tipVec = this._tmpWingTip || (this._tmpWingTip = new THREE.Vector3());
+          for (let i = 0; i < nVap; i++) {
+            for (const sgn of [-1, 1]) {
+              tipVec.set(sgn * 4.18, -0.55, 0).applyQuaternion(F.root.quaternion);
+              this.smoke.emit(
+                (F.sx || 0) + tipVec.x,
+                (F.alt || 0) + tipVec.y,
+                (F.s?.z || 0) + tipVec.z,
+                (Math.random() - 0.5) * 1.6,
+                (Math.random() - 0.5) * 1.6,
+                (Math.random() - 0.5) * 1.6,
+                { life: 0.45 + Math.random() * 0.45, size0: 0.22, size1: 0.95, alpha: Math.min(0.45, 0.18 + gLoad * 0.16), drag: 2.2, buoy: 0, color: [0.90, 0.97, 1.0] }
+              );
+            }
+          }
+        }
+      }
+    }
     // engine light & audio & haze
     const fInfo = F.info;
-    if (fInfo && fInfo.antiGrav) this.engineLight.color.setHex(0x38bdf8);
+    if (F.isRover) this.engineLight.color.setHex(0x38bdf8);
+    else if (fInfo && fInfo.antiGrav) this.engineLight.color.setHex(0x38bdf8);
     else if (fInfo && fInfo.laser) this.engineLight.color.setHex(0xff2a55);
+    else if (F.isPlane) this.engineLight.color.setHex(0xff9e3d);
     else this.engineLight.color.setHex(0xff8a3a);
-    const lowest = new THREE.Vector3(0, F.com.minY - F.com.y - 3, 0).applyQuaternion(F.root.quaternion);
+    const lowest = new THREE.Vector3(0, F.com.minY - F.com.y - (F.isRover ? 0.6 : 3), 0).applyQuaternion(F.root.quaternion);
     this.engineLight.position.copy(lowest);
-    this.engineLight.intensity = focusThr * 2.2e4 * (0.9 + Math.random() * 0.2);
+    if (F.isRover && !F.crashed) {
+      this.engineLight.intensity = 1.6e4 + Math.min(2.2e4, Math.abs(F.groundSpeed || 0) * 850);
+    } else if (F.isPlane && !F.crashed) {
+      this.engineLight.intensity = Math.max(focusThr * 2.5e4 * (0.92 + Math.random() * 0.16), 6.5e3);
+    } else {
+      this.engineLight.intensity = focusThr * 2.2e4 * (0.9 + Math.random() * 0.2);
+    }
     this.thrNorm = Math.min(1, focusThr / 2);
     const pr = this.airRatio(F);
     const near = THREE.MathUtils.clamp(1.4 - this.camera.position.length() / 1500, 0.25, 1);

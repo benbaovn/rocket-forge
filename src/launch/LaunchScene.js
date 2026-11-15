@@ -3393,6 +3393,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.docked = null;
     clearTimeout(this.completeTimer);
     this.completeTimer = null;
+    clearTimeout(this.crashTimer);
+    this.crashTimer = null;
     this.resultShown = false;
     $('result').classList.add('hidden');
     $('countdown').textContent = '';
@@ -4468,7 +4470,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.aliensKilled = 0;
     this.boosterReleased = false; this.mecoWarned = false; this.towerGone = false;
     if (this.completeTimer) clearTimeout(this.completeTimer);
-    this.resultShown = false; this.completeTimer = null; this.lastCrashSnapshot = null;
+    if (this.crashTimer) clearTimeout(this.crashTimer);
+    this.resultShown = false; this.completeTimer = null; this.crashTimer = null; this.lastCrashSnapshot = null;
     this.flagSpot = null; this.flagObj.visible = false; this.moonLandT = null;
     this.astronautsAboard = 0;
     this.clearDeployedAstronauts(false);
@@ -5035,7 +5038,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     v.dead = true;
     if (v.root) v.root.visible = false;
     if (big) { this.flash = 1; this.flashPos = { x: v.sx || 0, y: v.alt || 0, z: v.s.z || 0 }; this.shakeBoost = 3; audio.explosion(1); }
-    if (isPlayer) { audio.silenceEngine(); setTimeout(() => this.showResult(false, reason), 3500); }
+    if (isPlayer) {
+      audio.silenceEngine();
+      clearTimeout(this.crashTimer);
+      this.crashTimer = setTimeout(() => this.showResult(false, reason), 3500);
+    }
   }
 
   // =================================================================== SURFACE MODEL
@@ -5692,6 +5699,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.map.toggle(false);
     audio.silenceEngine();
     clearTimeout(this.completeTimer);
+    clearTimeout(this.crashTimer);
+    this.crashTimer = null;
   }
 
   onResize(w, h) {
@@ -6002,6 +6011,9 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     $('r-vel').textContent = fmt(this.maxVel) + ' m/s';
     $('r-time').textContent = fmt(Math.max(0, this.met)) + ' s';
     $('r-g').textContent = fmt(this.maxG, 1) + ' G';
+    const isExploded = !!(this.phase === 'crashed' || this.player?.crashed || this.player?.dead);
+    const btnContinue = $('btn-res-continue') || document.querySelector('#result [data-act="continue"]');
+    if (btnContinue) btnContinue.classList.toggle('hidden', isExploded);
     $('result').classList.remove('hidden');
   }
 

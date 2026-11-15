@@ -400,8 +400,15 @@ class App {
 
   initMenus() {
     const act = (a) => {
+      const isExploded = !!(
+        this.current === this.launch &&
+        (this.launch.phase === 'crashed' || this.launch.player?.crashed || this.launch.player?.dead)
+      );
+      if (a === 'continue' && isExploded) return;
       $('menu').classList.add('hidden');
-      $('result').classList.add('hidden');
+      if (a === 'restart' || a === 'build' || (a === 'continue' && !isExploded)) {
+        $('result').classList.add('hidden');
+      }
       this.paused = false;
       if (a === 'restart') this.goLaunch(this.launchStack);
       if (a === 'build') this.goBuild();

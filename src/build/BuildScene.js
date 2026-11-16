@@ -1921,7 +1921,7 @@ export class BuildScene {
     }
     this.rocket = buildRocket(stack);
     const hasBottomRoverWheels = !!(stack.length && stack[stack.length - 1]?.attach?.includes('wheelsRover'));
-    this.rocket.root.position.y = hasBottomRoverWheels ? 0.225 : 0;
+    this.rocket.root.position.y = hasBottomRoverWheels ? 0.42 : 0;
     this.rocketHolder.add(this.rocket.root);
     if (highlight) {
       this.rocket.root.traverse((o) => {

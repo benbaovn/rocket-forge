@@ -8967,7 +8967,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         const dustCol = F.ref === 'mars' ? [0.85, 0.42, 0.24] : F.ref === 'earth' ? [0.72, 0.66, 0.54] : [0.68, 0.72, 0.78];
         const baseY = (F.alt || 0) - F.bottomOffset() + 0.28;
         for (let i = 0; i < nDust; i++) {
-          const side = Math.random() < 0.5 ? -1.45 : 1.45;
+          const side = Math.random() < 0.5 ? -1.64 : 1.64;
           const axOff = Math.random() < 0.5 ? -1.4 : 1.3;
           const wx = (F.sx || 0) + backX * (-axOff) + rightX * side;
           const wz = (F.s?.z || 0) + backZ * (-axOff) + rightZ * side;

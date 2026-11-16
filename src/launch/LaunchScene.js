@@ -83,6 +83,11 @@ export class LaunchScene {
     } catch {
       this.spaceObjects = [];
     }
+    try {
+      this.aliensDisabled = localStorage.getItem('rf-no-aliens') === '1';
+    } catch {
+      this.aliensDisabled = false;
+    }
     this.sanitizeSpaceObjectsForSingleUfoKing();
     this.map = new MapView($('map'), $('map-legend'));
     this.map.onDeleteObject = (id) => this.deleteSpaceObject(id);
@@ -110,6 +115,7 @@ export class LaunchScene {
   refreshLanguage() {
     this.camModes = tr(CAM_MODES_VI, CAM_MODES_EN);
     this.setTeleportMode(this.teleportMode || 'surface');
+    this.syncAlienToggleUI();
     if (this.harborSignMats) {
       for (const item of this.harborSignMats) {
         const nextTex = this.makeHarborSignTexture(item.hIdx);
@@ -1883,6 +1889,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       if (k === 'b') this.toggleBoosterFocus();
       if (k === 'p') this.toggleDeploy();
       if (k === 'e') { e.preventDefault(); audio.init(); this.toggleUfoEngineMode(); }
+      if (k === 'u') { e.preventDefault(); audio.init(); audio.click(); this.toggleAliens(); }
       if (k === 'v' || e.key === 'Enter') { e.preventDefault(); audio.init(); this.fireWeapons(); }
       if (k === 'z' && !this.docked && !this.missionSuccessStopped) this.throttle = 1;
       if (k === 'x') this.throttle = 0;
@@ -1999,6 +2006,30 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.toggleUfoEngineMode();
       });
     }
+    const btnToggleAliens = $('btn-toggle-aliens');
+    if (btnToggleAliens) {
+      btnToggleAliens.addEventListener('click', () => {
+        audio.init();
+        audio.click();
+        this.toggleAliens();
+      });
+    }
+    const btnVabAliens = $('btn-vab-aliens');
+    if (btnVabAliens) {
+      btnVabAliens.addEventListener('click', () => {
+        audio.init();
+        audio.click();
+        this.setAliensDisabled(!this.aliensDisabled, this.active);
+      });
+    }
+    document.querySelectorAll('[data-aliens-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.init();
+        audio.click();
+        this.setAliensDisabled(btn.dataset.aliensMode === 'off', this.active);
+      });
+    });
+    this.syncAlienToggleUI();
     const btnFire = $('btn-fire-weapon');
     if (btnFire) {
       btnFire.addEventListener('pointerdown', (e) => {
@@ -4066,8 +4097,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.mapT = 0;
     this.updateTeleportActiveButtons(target);
 
-    // Immediately populate an initial wave of Aliens proportional to distance from Earth
-    if (!(P.ref === 'earth' && P.alt < ATM_TOP)) {
+    // Immediately populate an initial wave of Aliens proportional to distance from Earth (unless Aliens are disabled)
+    if (!this.aliensDisabled && !(P.ref === 'earth' && P.alt < ATM_TOP)) {
       if (target === 'royal1b') {
         this.setFlag('royalAliens1B');
         const spawnedKing = this.spawnRoyalAlien('king');
@@ -6195,7 +6226,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
 
   // =================================================================== SIMULATION
   getAlienFuelDrainInfo(v) {
-    if (!v || v !== this.player || v.clamped || this.docked || this.missionSuccessStopped) {
+    if (this.aliensDisabled || !v || v !== this.player || v.clamped || this.docked || this.missionSuccessStopped) {
       return { count: 0, drainMul: 1.0 };
     }
     const list = this.aliens || [];
@@ -7098,6 +7129,69 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   }
 
   // =================================================================== ALIEN INVADERS & WEAPONS (LASER GUN + 1,000,000 PSI WATER CANNON)
+  clearAllAliens() {
+    if (this.aliens && this.aliens.length) {
+      for (const a of this.aliens) {
+        if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
+      }
+      this.aliens = [];
+    }
+  }
+
+  syncAlienToggleUI() {
+    const off = !!this.aliensDisabled;
+    const btn = $('btn-toggle-aliens');
+    if (btn) {
+      btn.classList.toggle('aliens-off', off);
+      btn.innerHTML = off
+        ? `🚫👽 ${tr('Đã tắt Alien', 'Aliens OFF')} <kbd>U</kbd>`
+        : `👽 ${tr('Tắt Alien', 'No Aliens')} <kbd>U</kbd>`;
+      btn.title = off
+        ? tr('Đang tắt hoàn toàn Alien (không xuất hiện Alien) · Bấm hoặc nhấn U để bật lại Alien', 'Aliens are completely disabled · Click or press U to enable Aliens again')
+        : tr('Alien đang bật · Bấm hoặc nhấn U để tắt hoàn toàn Alien', 'Aliens are enabled · Click or press U to disable all Aliens');
+    }
+    const btnVab = $('btn-vab-aliens');
+    if (btnVab) {
+      btnVab.classList.toggle('aliens-off', off);
+      btnVab.textContent = off
+        ? `🚫👽 ${tr('Đã tắt Alien', 'Aliens OFF')}`
+        : `👽 ${tr('Tắt Alien', 'No Aliens')}`;
+      btnVab.title = off
+        ? tr('Đang tắt hoàn toàn Alien (không có Alien) · Bấm để bật lại Alien', 'Aliens are completely disabled · Click to enable Aliens again')
+        : tr('Alien đang bật · Bấm để tắt hoàn toàn Alien', 'Aliens are enabled · Click to disable all Aliens');
+    }
+    document.querySelectorAll('[data-aliens-mode]').forEach((el) => {
+      const isOffBtn = el.dataset.aliensMode === 'off';
+      el.classList.toggle('on', isOffBtn ? off : !off);
+    });
+  }
+
+  setAliensDisabled(disabled, announce = true) {
+    const next = !!disabled;
+    this.aliensDisabled = next;
+    try {
+      localStorage.setItem('rf-no-aliens', next ? '1' : '0');
+    } catch { /* ignore */ }
+    if (next) {
+      this.clearAllAliens();
+    } else if (this.active && this.player && !this.player.crashed && !(this.player.ref === 'earth' && this.player.alt < ATM_TOP)) {
+      this.alienSpawnTimer = 0.25;
+    }
+    this.syncAlienToggleUI();
+    if (announce) {
+      this.event(
+        next
+          ? tr('🚫👽 Đã tắt Alien! Sẽ không có Alien nào xuất hiện.', '🚫👽 Aliens disabled! No Aliens will spawn.')
+          : tr('👽⚡ Đã bật lại Alien! Alien sẽ xuất hiện ngoài vũ trụ.', '👽⚡ Aliens enabled! Aliens will spawn in outer space.'),
+        'warn'
+      );
+    }
+  }
+
+  toggleAliens() {
+    this.setAliensDisabled(!this.aliensDisabled, true);
+  }
+
   getActivePlayerWeapons() {
     if (!this.rocket || !this.rocket.weapons || !this.player || this.player.dead || this.player.crashed) return [];
     const ownedHasGunBat = Array.isArray(this.segs) && this.segs.some((_, k) => this.player.owns(k) && this.segInfo?.[k]?.hasGunBattery);
@@ -7185,6 +7279,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   }
 
   spawnAlien(density = this.getAlienDensityConfig()) {
+    if (this.aliensDisabled) return;
     if (!this.player || this.player.crashed) return;
     // Never spawn Aliens on Earth (only in outer space >= ATM_TOP or on other planets/moons)
     if (this.player.ref === 'earth' && this.player.alt < ATM_TOP) return;
@@ -7270,6 +7365,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
    * Spawn the colossal Alien King ('king') or Alien Queen ('queen') when reaching 1,000,000,000 km altitude
    */
   spawnRoyalAlien(role = 'king') {
+    if (this.aliensDisabled) return null;
     if (!this.player || this.player.crashed) return null;
     if (!this.aliens) this.aliens = [];
     const isKing = role === 'king';
@@ -8161,14 +8257,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.weaponCooldown = Math.max(0, this.weaponCooldown);
     }
 
-    // Never allow Aliens on Earth (< ATM_TOP); only spawn in outer space or on other planets/moons
+    // Never allow Aliens on Earth (< ATM_TOP) or when Aliens are disabled
     const onEarth = P.ref === 'earth' && P.alt < ATM_TOP;
-    if (onEarth) {
+    if (onEarth || this.aliensDisabled) {
       if (this.aliens.length) {
-        for (const a of this.aliens) {
-          if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh);
-        }
-        this.aliens = [];
+        this.clearAllAliens();
       }
     } else if (playerAlive) {
       // Spawn colossal Alien King & Alien Queen when player reaches altitude >= 1,000,000,000 km
@@ -10101,7 +10194,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     $('h-warp').textContent = fmt(this.warp) + '×';
     $('h-cam').textContent = camModes[this.camMode];
     const killsEl = $('h-alien-kills');
-    if (killsEl) killsEl.textContent = String(this.aliensKilled || 0);
+    if (killsEl) {
+      killsEl.textContent = this.aliensDisabled ? tr('TẮT', 'OFF') : String(this.aliensKilled || 0);
+      killsEl.style.color = this.aliensDisabled ? '#fbbf24' : '#4ade80';
+    }
+    this.syncAlienToggleUI();
     const info = this.getCrewRoleInfo();
     const maxAstro = this.maxAstronauts || 10;
     const astroBar = $('astronaut-bar');

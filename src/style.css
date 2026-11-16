@@ -91,6 +91,37 @@ select.btn option { background: #111a29; }
   transform: translateY(-1px) scale(1.04);
   box-shadow: 0 8px 24px rgba(79, 216, 255, 0.28);
 }
+.top-alien-btn {
+  height: 40px;
+  padding: 0 12px !important;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px !important;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.20), rgba(16, 185, 129, 0.14));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(74, 222, 128, 0.48);
+  color: #bbf7d0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.top-alien-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  border-color: #4ade80;
+  box-shadow: 0 8px 24px rgba(74, 222, 128, 0.28);
+}
+.top-alien-btn.aliens-off {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(245, 158, 11, 0.16));
+  border-color: rgba(251, 191, 36, 0.62);
+  color: #fde68a;
+}
+.top-alien-btn.aliens-off:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.28);
+}
 .panel { position: absolute; top: 74px; bottom: 86px; width: 248px; padding: 12px 13px; overflow-y: auto; }
 .panel.left { left: 16px; display: flex; flex-direction: column; overflow: hidden; }
 .panel.right { right: 16px; width: 266px; bottom: auto; height: auto; max-height: calc(100vh - 184px); }
@@ -559,6 +590,10 @@ select.btn option { background: #111a29; }
 .hud-act-btn.act-map:hover { background: rgba(56, 189, 248, 0.34); border-color: #38bdf8; color: #fff; }
 .hud-act-btn.act-tp { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.55); color: #e9d5ff; }
 .hud-act-btn.act-tp:hover { background: rgba(168, 85, 247, 0.36); border-color: #c084fc; color: #fff; }
+.hud-act-btn.act-alien { grid-column: 1 / -1; background: rgba(16, 185, 129, 0.18); border-color: rgba(52, 211, 153, 0.52); color: #6ee7b7; }
+.hud-act-btn.act-alien:hover { background: rgba(16, 185, 129, 0.34); border-color: #34d399; color: #fff; }
+.hud-act-btn.act-alien.aliens-off { background: rgba(245, 158, 11, 0.22); border-color: rgba(251, 191, 36, 0.68); color: #fde68a; }
+.hud-act-btn.act-alien.aliens-off:hover { background: rgba(245, 158, 11, 0.38); border-color: #fbbf24; color: #fff; }
 .hud-act-btn.act-ufo-eng { grid-column: 1 / -1; background: rgba(56, 189, 248, 0.22); border-color: rgba(56, 189, 248, 0.65); color: #7dd3fc; box-shadow: 0 0 12px rgba(56, 189, 248, 0.22); }
 .hud-act-btn.act-ufo-eng:hover { background: rgba(56, 189, 248, 0.38); border-color: #38bdf8; color: #fff; }
 .hud-act-btn.act-ufo-eng.mode-laser { background: rgba(244, 63, 94, 0.28); border-color: rgba(251, 113, 133, 0.78); color: #fda4af; box-shadow: 0 0 14px rgba(244, 63, 94, 0.35); }
@@ -1603,6 +1638,7 @@ body.touch .big-btn:hover, body.touch .btn:hover, body.touch .part-card:hover { 
   .top-actions { gap: 5px; }
   .top-icon-btn { width: 36px; height: 36px; font-size: 15px !important; }
   .top-icon-btn.on { background: rgba(79, 216, 255, 0.28); border-color: var(--accent); }
+  .top-alien-btn { height: 36px; padding: 0 8px !important; font-size: 11px !important; }
 
   /* --- VAB parts palette → horizontal strip at the bottom --- */
   #palette.panel.left {

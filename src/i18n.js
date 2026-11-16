@@ -1867,12 +1867,14 @@ export function applyLanguage(lang, app) {
   setTxt('#lbl-volume-1', '🔊 Âm lượng', '🔊 Volume');
   setAttr('#btn-mute-1', 'title', 'Tắt / Bật âm thanh', 'Mute / Unmute');
   setTxt('#lbl-quality-1', 'Đồ họa', 'Graphics Quality');
+  setTxt('#lbl-aliens-1', '👽 Alien ngoài vũ trụ', '👽 Space Aliens');
   setTxt('#lbl-lang-1', 'Ngôn ngữ', 'Language');
 
   setTxt('#settings h2', '⚙ Cài đặt', '⚙ Settings');
   setTxt('#lbl-volume-2', '🔊 Âm lượng', '🔊 Volume');
   setAttr('#btn-mute-2', 'title', 'Tắt / Bật âm thanh', 'Mute / Unmute');
   setTxt('#lbl-quality-2', 'Đồ họa', 'Graphics Quality');
+  setTxt('#lbl-aliens-2', '👽 Alien ngoài vũ trụ', '👽 Space Aliens');
   setTxt('#lbl-lang-2', 'Ngôn ngữ', 'Language');
   setTxt('#lbl-gpu-api', 'Phần cứng', 'API & Hardware');
   setTxt('#lbl-gpu-pipe', 'Luồng dựng hình', 'Render Pipeline');
@@ -1884,6 +1886,8 @@ export function applyLanguage(lang, app) {
   document.querySelectorAll('[data-q="ultra"]').forEach((el) => { el.textContent = lang === 'en' ? 'Ultra' : 'Siêu cao'; });
   document.querySelectorAll('[data-q="high"]').forEach((el) => { el.textContent = lang === 'en' ? 'High' : 'Cao'; });
   document.querySelectorAll('[data-q="medium"]').forEach((el) => { el.textContent = lang === 'en' ? 'Medium' : 'Trung bình'; });
+  document.querySelectorAll('[data-aliens-mode="on"]').forEach((el) => { el.textContent = lang === 'en' ? '👽 Aliens ON' : '👽 Bật Alien'; });
+  document.querySelectorAll('[data-aliens-mode="off"]').forEach((el) => { el.textContent = lang === 'en' ? '🚫 No Aliens' : '🚫 Tắt Alien'; });
 
   setTxt('#btn-lang-vi', '🇻🇳 Tiếng Việt', '🇻🇳 Vietnamese');
   setTxt('#btn-lang-en', '🇬🇧 Tiếng Anh', '🇬🇧 English');

@@ -47,6 +47,7 @@
         </select>
         <button id="btn-undo" class="btn icon top-icon-btn" type="button" title="Undo (Ctrl+Z)">↶</button>
         <button id="btn-clear" class="btn icon top-icon-btn danger" type="button" title="Clear All">🗑</button>
+        <button id="btn-vab-aliens" class="btn top-alien-btn" type="button" title="Toggle Aliens ON / OFF">👽 Tắt Alien</button>
         <button id="btn-stats-toggle" class="btn icon top-icon-btn compact-only" type="button" title="Specs">📊</button>
         <button id="btn-settings" class="btn icon top-icon-btn" type="button" title="Settings (O)">⚙</button>
       </div>
@@ -193,6 +194,7 @@
         <button id="btn-autopilot" class="btn hud-act-btn act-ap" title="Toggle Mission Autopilot (G)">🤖 Auto <kbd>G</kbd></button>
         <button id="btn-toggle-map" class="btn hud-act-btn act-map" title="3D Orbital Map (M)">🌐 Map <kbd>M</kbd></button>
         <button id="btn-teleport" class="btn hud-act-btn act-tp" title="Teleport to Planets &amp; Moons (Y)">🪐 Warp <kbd>Y</kbd></button>
+        <button id="btn-toggle-aliens" class="btn hud-act-btn act-alien" title="Toggle Aliens ON / OFF (U)">👽 Tắt Alien <kbd>U</kbd></button>
       </div>
 
       <button id="gpu-launch-badge" class="gpu-badge gpu-launch" type="button" title="GPU &amp; FPS Settings (O)">
@@ -507,6 +509,13 @@
         </div>
       </div>
       <div class="setting">
+        <label id="lbl-aliens-1">👽 Aliens</label>
+        <div class="seg" id="alien-seg1">
+          <button type="button" data-aliens-mode="on" class="on">👽 Aliens ON</button>
+          <button type="button" data-aliens-mode="off">🚫 No Aliens</button>
+        </div>
+      </div>
+      <div class="setting">
         <label id="lbl-lang-1">Language</label>
         <div class="seg" id="lang-seg">
           <button type="button" id="btn-menu-lang-en" data-lang="en" class="on">🇬🇧 English</button>
@@ -543,6 +552,13 @@
         <label id="lbl-quality-2">Graphics Quality</label>
         <div class="seg" id="quality-seg2">
           <button data-q="rtx" class="rtx-btn">⚡ RTX 4070 Ti</button><button data-q="ultra">Ultra</button><button data-q="high">High</button><button data-q="medium">Medium</button>
+        </div>
+      </div>
+      <div class="setting">
+        <label id="lbl-aliens-2">👽 Aliens</label>
+        <div class="seg" id="alien-seg2">
+          <button type="button" data-aliens-mode="on" class="on">👽 Aliens ON</button>
+          <button type="button" data-aliens-mode="off">🚫 No Aliens</button>
         </div>
       </div>
       <div class="setting">

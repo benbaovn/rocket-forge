@@ -1975,6 +1975,7 @@ export class BuildScene {
     const vType = stackVehicleType(this.stack);
     const hasParts = this.stack.length > 0;
     const isRoverStats = hasParts && vType === 'rover';
+    const isBoatStats = hasParts && vType === 'boat';
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
     const slTons = hasParts ? (st.liftoffThrustTons || 0) : 0;
@@ -1989,7 +1990,7 @@ export class BuildScene {
     if (thrustBoxEl) thrustBoxEl.classList.toggle('hidden', isRoverStats);
     if (twrBoxEl) twrBoxEl.classList.toggle('hidden', isRoverStats);
     if (dvBoxEl) dvBoxEl.classList.toggle('hidden', isRoverStats);
-    if (dvTargetEl) dvTargetEl.classList.toggle('hidden', isRoverStats);
+    if (dvTargetEl) dvTargetEl.classList.toggle('hidden', isRoverStats || isBoatStats);
     if (thrustEl) {
       thrustEl.textContent = fmtTons(slTons);
       if (!hasParts || vType === 'rover') {

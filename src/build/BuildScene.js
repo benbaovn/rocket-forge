@@ -1987,10 +1987,14 @@ export class BuildScene {
     const twrBoxEl = $('st-twr-box');
     const dvBoxEl = $('st-dv-box');
     const dvTargetEl = $('st-dv-target');
+    const stagesHeadEl = $('st-stages-head');
+    const stageListEl = $('stage-list');
     if (thrustBoxEl) thrustBoxEl.classList.toggle('hidden', isRoverStats);
     if (twrBoxEl) twrBoxEl.classList.toggle('hidden', isRoverStats);
     if (dvBoxEl) dvBoxEl.classList.toggle('hidden', isRoverStats);
     if (dvTargetEl) dvTargetEl.classList.toggle('hidden', isRoverStats || isBoatStats);
+    if (stagesHeadEl) stagesHeadEl.classList.toggle('hidden', isRoverStats);
+    if (stageListEl) stageListEl.classList.toggle('hidden', isRoverStats);
     if (thrustEl) {
       thrustEl.textContent = fmtTons(slTons);
       if (!hasParts || vType === 'rover') {
@@ -2041,9 +2045,6 @@ export class BuildScene {
     $('st-dv').textContent = fmtDv(st.totalDv);
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
     $('stage-list').innerHTML = st.stages.map((s, idx) => {
-      if (isRoverStats) {
-        return `<div class="stage-row"><span class="sn">S${s.num}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋 ${Math.round(s.batteryFuel)}t` : '🚙 Rover'}</span><span>${s.solarOnBattery ? `☀️ ${tr('Tự sạc', 'Solar')}` : '4×4'}</span></div>`;
-      }
       const stgTons = idx === 0 ? s.thrustSLTons : s.thrustTons;
       const stgKN = Math.round(stgTons * G0).toLocaleString('en-US');
       const stgTitle = `🔥 ${tr('Lực đẩy', 'Thrust')} S${s.num}: ${fmtTons(stgTons)} (${stgKN} kN)`;

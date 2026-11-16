@@ -4320,12 +4320,6 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       }
     }
     audio.beep(nextMode === 'laser' ? 1040 : 660, 0.14, 0.25);
-    this.event(
-      nextMode === 'laser'
-        ? tr('🔴 Đã chuyển sang ĐỘNG CƠ LAZER (Chỗ càng tối gia tốc càng nhanh — tối đa 3.25×)!', '🔴 Switched to LASER ENGINE (Accelerates faster in darkness — up to 3.25×)!')
-        : tr('🌀 Đã chuyển sang ĐỘNG CƠ PHẢN HẤP DẪN (Trọng lực càng mạnh gia tốc càng nhanh)!', '🌀 Switched to ANTI-GRAVITY ENGINE (Accelerates faster in stronger gravity)!'),
-      'warn'
-    );
     this.hudTimer = 0;
     this.updateHUD(0);
   }

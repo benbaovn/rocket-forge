@@ -2054,12 +2054,6 @@ export class BuildScene {
     const w = $('warnings');
     const hasSolarBat = st.stages.some((s) => s.solarOnBattery > 0);
     const hasGunBat = st.stages.some((s) => s.hasGunBattery);
-    const royalStage = st.stages.find((s) => s.hasRoyalUfo);
-    const royalBadge = royalStage
-      ? (royalStage.ufoEngineMode === 'laser'
-        ? ` · 🔴 ${tr('Động cơ Lazer (Phím E đổi)', 'Laser Engine (Key E to switch)')}`
-        : ` · 🌀 ${tr('Động cơ Phản Hấp Dẫn (Phím E đổi)', 'Anti-Grav Engine (Key E to switch)')}`)
-      : '';
     const totalBatFuel = st.stages.reduce((sum, s) => sum + (s.batteryFuel || 0), 0);
     const readyLabel = vType === 'boat'
       ? tr('Sẵn sàng ra cảng!', 'Ready for the harbor!')
@@ -2074,7 +2068,7 @@ export class BuildScene {
     if (this.incompatWarning) allWarnings.unshift(this.incompatWarning);
     w.innerHTML = allWarnings.length
       ? allWarnings.map((x) => `<div>⚠ ${x}</div>`).join('')
-      : `<div class="ok">✔ ${readyLabel}${royalBadge}${totalBatFuel > 0 ? ` · 🔋 ${tr('Pin', 'Battery')}: ${Math.round(totalBatFuel)}t` : ''}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
+      : `<div class="ok">✔ ${readyLabel}${totalBatFuel > 0 ? ` · 🔋 ${tr('Pin', 'Battery')}: ${Math.round(totalBatFuel)}t` : ''}${hasSolarBat ? ` · ☀️⚡ ${tr('Pin gắn Solar Panel tự hồi năng lượng', 'Solar Battery auto-recharges')}` : ''}${hasGunBat ? ` · 🔋🔫 ${tr('Đã gắn Pin Siêu Siêu Nhỏ cho Súng', 'Ultra-Tiny Gun Battery active')}` : ''}</div>`;
     const btnLaunch = $('btn-launchpad');
     if (btnLaunch) {
       btnLaunch.disabled = !st.canLaunch;

@@ -380,6 +380,8 @@ export function createBeamVisual(type, startPos, endPos) {
   const diff = new THREE.Vector3().subVectors(endPos, startPos);
   const len = Math.max(0.5, diff.length());
   const mid = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
+  const farR = len > 80 ? (1 + Math.min(34, (len - 80) / 130)) : 1;
+  const nearR = len > 80 ? (1 + Math.min(3.5, (len - 80) / 600)) : 1;
 
   const group = new THREE.Group();
   group.position.copy(mid);
@@ -388,7 +390,7 @@ export function createBeamVisual(type, startPos, endPos) {
 
   if (type === 'water') {
     // 1,000,000 PSI Supersonic Hydro-Jet (bright cyan-white core + expanding high-pressure spray sheath)
-    const coreGeo = new THREE.CylinderGeometry(0.16, 0.07, len, 12, 1, true);
+    const coreGeo = new THREE.CylinderGeometry(0.16 * farR, 0.07 * nearR, len, 12, 1, true);
     const coreMat = new THREE.MeshBasicMaterial({
       color: 0xe0f2fe,
       transparent: true,
@@ -397,7 +399,7 @@ export function createBeamVisual(type, startPos, endPos) {
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    const outerGeo = new THREE.CylinderGeometry(0.48, 0.14, len, 12, 1, true);
+    const outerGeo = new THREE.CylinderGeometry(0.48 * farR, 0.14 * nearR, len, 12, 1, true);
     const outerMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
@@ -411,7 +413,7 @@ export function createBeamVisual(type, startPos, endPos) {
     group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.18, maxLife: 0.18 };
   } else if (type === 'acid') {
     // Corrosive Acid Stream (toxic lime-yellow core + expanding neon-green acid spray sheath)
-    const coreGeo = new THREE.CylinderGeometry(0.15, 0.08, len, 12, 1, true);
+    const coreGeo = new THREE.CylinderGeometry(0.15 * farR, 0.08 * nearR, len, 12, 1, true);
     const coreMat = new THREE.MeshBasicMaterial({
       color: 0xd9f99d,
       transparent: true,
@@ -420,7 +422,7 @@ export function createBeamVisual(type, startPos, endPos) {
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    const outerGeo = new THREE.CylinderGeometry(0.46, 0.14, len, 12, 1, true);
+    const outerGeo = new THREE.CylinderGeometry(0.46 * farR, 0.14 * nearR, len, 12, 1, true);
     const outerMat = new THREE.MeshBasicMaterial({
       color: 0x22c55e,
       transparent: true,
@@ -434,7 +436,7 @@ export function createBeamVisual(type, startPos, endPos) {
     group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.21, maxLife: 0.21 };
   } else if (type === 'electric') {
     // 1,000,000 WATT High-Voltage Tesla Lightning Arc (golden-white core + electric cyan sheath + jagged lightning zig-zag)
-    const coreGeo = new THREE.CylinderGeometry(0.11, 0.11, len, 10, 1, true);
+    const coreGeo = new THREE.CylinderGeometry(0.11 * farR, 0.11 * nearR, len, 10, 1, true);
     const coreMat = new THREE.MeshBasicMaterial({
       color: 0xfef08a,
       transparent: true,
@@ -443,7 +445,7 @@ export function createBeamVisual(type, startPos, endPos) {
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    const outerGeo = new THREE.CylinderGeometry(0.42, 0.42, len, 12, 1, true);
+    const outerGeo = new THREE.CylinderGeometry(0.42 * farR, 0.42 * nearR, len, 12, 1, true);
     const outerMat = new THREE.MeshBasicMaterial({
       color: 0x00e5ff,
       transparent: true,
@@ -458,17 +460,18 @@ export function createBeamVisual(type, startPos, endPos) {
     // Jagged 3D lightning arc segments spiraling along the beam
     const segs = 8;
     const pts = [];
+    const jitScale = 1.35 * Math.sqrt(farR);
     for (let i = 0; i <= segs; i++) {
       const f = i / segs;
       const y = (f - 0.5) * len;
-      const jx = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * 1.35;
-      const jz = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * 1.35;
+      const jx = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * jitScale;
+      const jz = (i === 0 || i === segs) ? 0 : (Math.random() - 0.5) * jitScale;
       pts.push(new THREE.Vector3(jx, y, jz));
     }
     const curve = new THREE.CatmullRomCurve3(pts);
-    const arcGeo = new THREE.TubeGeometry(curve, 20, 0.12, 6, false);
+    const arcGeo = new THREE.TubeGeometry(curve, 20, 0.12 * Math.sqrt(farR), 6, false);
     group.add(new THREE.Mesh(arcGeo, coreMat));
-    group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.19, maxLife: 0.19 };
+    group.userData = { coreGeo, outerGeo, arcGeo, coreMat, outerMat, life: 0.19, maxLife: 0.19 };
   } else if (type === 'alienLaser') {
     // Alien Bio-Plasma Beam (neon green core + purple outer aura) for warrior/boss Alien brawls
     const coreGeo = new THREE.CylinderGeometry(0.08, 0.08, len, 10, 1, true);
@@ -493,7 +496,7 @@ export function createBeamVisual(type, startPos, endPos) {
     group.userData = { coreGeo, outerGeo, coreMat, outerMat, life: 0.16, maxLife: 0.16 };
   } else {
     // High-Energy Plasma-Ruby Laser Beam
-    const coreGeo = new THREE.CylinderGeometry(0.09, 0.09, len, 10, 1, true);
+    const coreGeo = new THREE.CylinderGeometry(0.09 * farR, 0.09 * nearR, len, 10, 1, true);
     const coreMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
@@ -501,7 +504,7 @@ export function createBeamVisual(type, startPos, endPos) {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    const outerGeo = new THREE.CylinderGeometry(0.28, 0.28, len, 12, 1, true);
+    const outerGeo = new THREE.CylinderGeometry(0.28 * farR, 0.28 * nearR, len, 12, 1, true);
     const outerMat = new THREE.MeshBasicMaterial({
       color: 0xff1744,
       transparent: true,

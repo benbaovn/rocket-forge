@@ -490,23 +490,29 @@ export function createSunSphere() {
   const rnd = mulberry(4242);
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
+  const astPos = new Float32Array(N_AST * 3);
+  const astRadii = new Float32Array(N_AST);
   for (let i = 0; i < N_AST; i++) {
     const ang = rnd() * Math.PI * 2;
     const u = 0.5 + (rnd() - 0.5) * 0.65 + (rnd() - 0.5) * 0.35;
     const r = beltRInner + Math.max(0.02, Math.min(0.98, u)) * (beltROuter - beltRInner);
     const zOff = (rnd() - 0.5) * 1800e3;
-    dummy.position.set(Math.sin(ang) * r, Math.cos(ang) * r, zOff);
+    const px = Math.sin(ang) * r, py = Math.cos(ang) * r;
+    dummy.position.set(px, py, zOff);
     dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
     const sz = (rnd() < 0.06 ? 180e3 + rnd() * 140e3 : 45e3 + Math.pow(rnd(), 2.0) * 110e3);
     dummy.scale.set(sz * (0.75 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     astMesh.setMatrixAt(i, dummy.matrix);
+    astPos[i * 3] = px; astPos[i * 3 + 1] = py; astPos[i * 3 + 2] = zOff;
+    astRadii[i] = sz;
     const b = 0.38 + rnd() * 0.36;
     col.setRGB(b + 0.04, b + 0.01, b - 0.02);
     astMesh.setColorAt(i, col);
   }
   astMesh.instanceMatrix.needsUpdate = true;
   if (astMesh.instanceColor) astMesh.instanceColor.needsUpdate = true;
+  initInstancedBeltRockMeta(astMesh, 'asteroid', astPos, astRadii, true);
   group.add(astMesh);
 
   // Outer Kuiper Belt (icy KBOs & comets encompassing Pluto, Haumea, Makemake & Eris) in 3D space pass (layer 1)
@@ -514,17 +520,22 @@ export function createSunSphere() {
   const kboMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_KBO);
   kboMesh.layers.set(1);
   kboMesh.frustumCulled = false;
+  const kboPos = new Float32Array(N_KBO * 3);
+  const kboRadii = new Float32Array(N_KBO);
   for (let i = 0; i < N_KBO; i++) {
     const ang = rnd() * Math.PI * 2;
     const u = 0.5 + (rnd() - 0.5) * 0.68 + (rnd() - 0.5) * 0.32;
-    const r = KUIPER_BELT_INNER + Math.max(0.01, Math.min(0.99, u)) * (KUIPER_BELT_OUTER - KUIPER_BELT_INNER);
+    const r = KUIPER_BELT_INNER + Math.max(0.01, Math.min(99e-2, u)) * (KUIPER_BELT_OUTER - KUIPER_BELT_INNER);
     const zOff = (rnd() - 0.5) * 8500e3;
-    dummy.position.set(Math.sin(ang) * r, Math.cos(ang) * r, zOff);
+    const px = Math.sin(ang) * r, py = Math.cos(ang) * r;
+    dummy.position.set(px, py, zOff);
     dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
     const sz = (rnd() < 0.08 ? 280e3 + rnd() * 240e3 : 75e3 + Math.pow(rnd(), 2.0) * 180e3);
     dummy.scale.set(sz * (0.75 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     kboMesh.setMatrixAt(i, dummy.matrix);
+    kboPos[i * 3] = px; kboPos[i * 3 + 1] = py; kboPos[i * 3 + 2] = zOff;
+    kboRadii[i] = sz;
     const roll = rnd();
     if (roll < 0.22) {
       // Reddish tholin KBO
@@ -538,6 +549,7 @@ export function createSunSphere() {
   }
   kboMesh.instanceMatrix.needsUpdate = true;
   if (kboMesh.instanceColor) kboMesh.instanceColor.needsUpdate = true;
+  initInstancedBeltRockMeta(kboMesh, 'kuiper', kboPos, kboRadii, true);
   group.add(kboMesh);
 
   // Outer 3D Spherical Oort Cloud (Hills torus + spherical cometary shell) in 3D space pass (layer 1)
@@ -545,6 +557,8 @@ export function createSunSphere() {
   const oortMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_OORT);
   oortMesh.layers.set(1);
   oortMesh.frustumCulled = false;
+  const oortPos = new Float32Array(N_OORT * 3);
+  const oortRadii = new Float32Array(N_OORT);
   const oortHillsOuter = OORT_CLOUD_INNER + (OORT_CLOUD_OUTER - OORT_CLOUD_INNER) * 0.42;
   for (let i = 0; i < N_OORT; i++) {
     const theta = rnd() * Math.PI * 2;
@@ -570,6 +584,8 @@ export function createSunSphere() {
     dummy.scale.set(sz * (0.9 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     oortMesh.setMatrixAt(i, dummy.matrix);
+    oortPos[i * 3] = x; oortPos[i * 3 + 1] = y; oortPos[i * 3 + 2] = z;
+    oortRadii[i] = sz;
     const cRoll = rnd();
     if (cRoll < 0.3) {
       col.setRGB(0.75 + rnd() * 0.2, 0.70 + rnd() * 0.22, 0.96 + rnd() * 0.04);
@@ -581,6 +597,7 @@ export function createSunSphere() {
   }
   oortMesh.instanceMatrix.needsUpdate = true;
   if (oortMesh.instanceColor) oortMesh.instanceColor.needsUpdate = true;
+  initInstancedBeltRockMeta(oortMesh, 'oort', oortPos, oortRadii, true);
   group.add(oortMesh);
 
   group.userData.coreMat = mat;
@@ -595,6 +612,61 @@ export function createSunSphere() {
 /**
  * Procedural 3D planet / moon sphere for Mars, Venus, Mercury, Phobos, or Deimos (rendered in space pass layer 1).
  */
+function initInstancedBeltRockMeta(im, beltKind, localPos, radii, isMacro = false) {
+  const count = im.count;
+  const origMatrices = new Float32Array(im.instanceMatrix.array);
+  const origColors = im.instanceColor ? new Float32Array(im.instanceColor.array) : null;
+  const alive = new Uint8Array(count);
+  alive.fill(1);
+  const maxHp = new Float32Array(count);
+  const hp = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    const r = radii[i] || 30;
+    const m = isMacro ? 60 : r < 48 ? 28 : r < 95 ? 56 : 95;
+    maxHp[i] = m;
+    hp[i] = m;
+  }
+  im.userData.beltRocks = {
+    beltKind,
+    isMacro,
+    count,
+    origMatrices,
+    origColors,
+    localPos,
+    radii,
+    alive,
+    maxHp,
+    hp,
+  };
+}
+
+export function resetBeltRocksInGroup(root) {
+  if (!root) return;
+  const restoreMesh = (im) => {
+    const meta = im?.userData?.beltRocks;
+    if (!meta) return;
+    im.instanceMatrix.array.set(meta.origMatrices);
+    im.instanceMatrix.needsUpdate = true;
+    if (meta.origColors && im.instanceColor) {
+      im.instanceColor.array.set(meta.origColors);
+      im.instanceColor.needsUpdate = true;
+    }
+    meta.alive.fill(1);
+    meta.hp.set(meta.maxHp);
+  };
+  if (root.isInstancedMesh) {
+    restoreMesh(root);
+  } else if (root.traverse) {
+    root.traverse((o) => {
+      if (o.isInstancedMesh) restoreMesh(o);
+    });
+  }
+}
+
+export function createRockShardGeometry(seed = 4.2) {
+  return rockGeometry(1, seed);
+}
+
 export function createPlanetSphere(name) {
   const B = BODIES[name] || BODIES.mercury;
   const R = B.R || R_MERCURY;
@@ -1413,14 +1485,25 @@ export function createCeresAsteroidBelt() {
     const g = rockGeometry(1, 3.1 + sIdx * 2.7);
     const im = new THREE.InstancedMesh(g, rockMat, N_PER_SHAPE);
     im.frustumCulled = false;
+    const localPos = new Float32Array(N_PER_SHAPE * 3);
+    const radii = new Float32Array(N_PER_SHAPE);
     for (let i = 0; i < N_PER_SHAPE; i++) {
-      const x = (rnd() - 0.5) * 32000;
-      const z = (rnd() - 0.5) * 18000;
-      const archDrop = (x * x) / (2 * 95000);
-      const y = 2600 + Math.pow(rnd(), 1.35) * 9200 - archDrop;
+      let x, y, z, sz;
+      if (i < 55) {
+        // Low-altitude shootable boulders hovering 280m - 2600m above Ceres
+        x = (rnd() - 0.5) * 8500;
+        z = (rnd() - 0.5) * 4200;
+        y = 280 + Math.pow(rnd(), 1.15) * 2320;
+        sz = 18 + Math.pow(rnd(), 1.5) * 56;
+      } else {
+        x = (rnd() - 0.5) * 32000;
+        z = (rnd() - 0.5) * 18000;
+        const archDrop = (x * x) / (2 * 95000);
+        y = 2600 + Math.pow(rnd(), 1.35) * 9200 - archDrop;
+        sz = rnd() < 0.08 ? 85 + rnd() * 115 : 16 + Math.pow(rnd(), 1.8) * 64;
+      }
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-      const sz = rnd() < 0.08 ? 85 + rnd() * 115 : 16 + Math.pow(rnd(), 1.8) * 64;
       dummy.scale.set(
         sz * (0.75 + rnd() * 0.55),
         sz * (0.62 + rnd() * 0.45),
@@ -1428,6 +1511,8 @@ export function createCeresAsteroidBelt() {
       );
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);
+      localPos[i * 3] = x; localPos[i * 3 + 1] = y; localPos[i * 3 + 2] = z;
+      radii[i] = sz;
 
       const shade = 0.52 + rnd() * 0.42;
       const warm = (rnd() - 0.3) * 0.08;
@@ -1436,6 +1521,7 @@ export function createCeresAsteroidBelt() {
     }
     im.instanceMatrix.needsUpdate = true;
     if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    initInstancedBeltRockMeta(im, 'asteroid', localPos, radii, false);
     group.add(im);
   }
 
@@ -1466,14 +1552,25 @@ export function createKuiperBeltCanopy() {
     const g = rockGeometry(1, 5.2 + sIdx * 3.1);
     const im = new THREE.InstancedMesh(g, iceMat, N_PER_SHAPE);
     im.frustumCulled = false;
+    const localPos = new Float32Array(N_PER_SHAPE * 3);
+    const radii = new Float32Array(N_PER_SHAPE);
     for (let i = 0; i < N_PER_SHAPE; i++) {
-      const x = (rnd() - 0.5) * 34000;
-      const z = (rnd() - 0.5) * 19000;
-      const archDrop = (x * x) / (2 * 110000);
-      const y = 2800 + Math.pow(rnd(), 1.35) * 9600 - archDrop;
+      let x, y, z, sz;
+      if (i < 55) {
+        // Low-altitude shootable icy/tholin boulders hovering 280m - 2800m overhead
+        x = (rnd() - 0.5) * 8500;
+        z = (rnd() - 0.5) * 4200;
+        y = 280 + Math.pow(rnd(), 1.15) * 2520;
+        sz = 18 + Math.pow(rnd(), 1.5) * 58;
+      } else {
+        x = (rnd() - 0.5) * 34000;
+        z = (rnd() - 0.5) * 19000;
+        const archDrop = (x * x) / (2 * 110000);
+        y = 2800 + Math.pow(rnd(), 1.35) * 9600 - archDrop;
+        sz = rnd() < 0.08 ? 90 + rnd() * 120 : 18 + Math.pow(rnd(), 1.8) * 68;
+      }
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-      const sz = rnd() < 0.08 ? 90 + rnd() * 120 : 18 + Math.pow(rnd(), 1.8) * 68;
       dummy.scale.set(
         sz * (0.75 + rnd() * 0.55),
         sz * (0.62 + rnd() * 0.45),
@@ -1481,6 +1578,8 @@ export function createKuiperBeltCanopy() {
       );
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);
+      localPos[i * 3] = x; localPos[i * 3 + 1] = y; localPos[i * 3 + 2] = z;
+      radii[i] = sz;
 
       if (rnd() < 0.24) {
         col.setRGB(0.85 + rnd() * 0.14, 0.52 + rnd() * 0.16, 0.40 + rnd() * 0.12);
@@ -1492,6 +1591,84 @@ export function createKuiperBeltCanopy() {
     }
     im.instanceMatrix.needsUpdate = true;
     if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    initInstancedBeltRockMeta(im, 'kuiper', localPos, radii, false);
+    group.add(im);
+  }
+
+  return group;
+}
+
+/**
+ * 3D Surrounding Asteroid Belt / Kuiper Belt space boulder field when flying in space inside those belts.
+ */
+export function createBeltSpaceField(beltKind = 'asteroid') {
+  const isKuiper = beltKind === 'kuiper';
+  const group = new THREE.Group();
+  group.name = isKuiper ? 'kuiperSpaceField' : 'asteroidSpaceField';
+  group.visible = false;
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: isKuiper ? 0.52 : 0.88,
+    metalness: isKuiper ? 0.16 : 0.12,
+    emissive: isKuiper ? 0x0f172a : 0x1c1917,
+    emissiveIntensity: 0.35,
+    flatShading: true,
+  });
+
+  const rnd = mulberry(isKuiper ? 77531 : 66421);
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const N_PER_SHAPE = 190;
+
+  for (let sIdx = 0; sIdx < 3; sIdx++) {
+    const g = rockGeometry(1, (isKuiper ? 6.1 : 2.8) + sIdx * 2.9);
+    const im = new THREE.InstancedMesh(g, mat, N_PER_SHAPE);
+    im.frustumCulled = false;
+    const localPos = new Float32Array(N_PER_SHAPE * 3);
+    const radii = new Float32Array(N_PER_SHAPE);
+    for (let i = 0; i < N_PER_SHAPE; i++) {
+      const theta = rnd() * Math.PI * 2;
+      const cosPhi = (rnd() - 0.5) * 1.35;
+      const sinPhi = Math.sqrt(Math.max(0.04, 1 - cosPhi * cosPhi));
+      const r = i < 55
+        ? (52 + Math.pow(rnd(), 0.9) * 850)
+        : (650 + Math.pow(rnd(), 0.85) * 13800);
+      const x = r * sinPhi * Math.cos(theta);
+      const y = r * cosPhi;
+      const z = r * sinPhi * Math.sin(theta);
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
+      const sz = i < 55
+        ? (6 + Math.pow(rnd(), 1.5) * 28)
+        : (rnd() < 0.09 ? 70 + rnd() * 95 : 14 + Math.pow(rnd(), 1.8) * 54);
+      dummy.scale.set(
+        sz * (0.80 + rnd() * 0.50),
+        sz * (0.62 + rnd() * 0.42),
+        sz * (0.75 + rnd() * 0.48)
+      );
+      dummy.updateMatrix();
+      im.setMatrixAt(i, dummy.matrix);
+      localPos[i * 3] = x; localPos[i * 3 + 1] = y; localPos[i * 3 + 2] = z;
+      radii[i] = sz;
+
+      if (isKuiper) {
+        if (rnd() < 0.25) {
+          col.setRGB(0.86 + rnd() * 0.13, 0.50 + rnd() * 0.16, 0.38 + rnd() * 0.12);
+        } else {
+          const shade = 0.70 + rnd() * 0.28;
+          col.setRGB(shade * 0.86, shade * 0.96, Math.min(1, shade * 1.08));
+        }
+      } else {
+        const shade = 0.54 + rnd() * 0.40;
+        const warm = (rnd() - 0.28) * 0.10;
+        col.setRGB(shade + warm, shade + warm * 0.45, shade - warm * 0.32);
+      }
+      im.setColorAt(i, col);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    initInstancedBeltRockMeta(im, isKuiper ? 'kuiper' : 'asteroid', localPos, radii, false);
     group.add(im);
   }
 
@@ -1524,19 +1701,24 @@ export function createOortCloudCanopy() {
     const g = rockGeometry(1, 7.4 + sIdx * 3.5);
     const im = new THREE.InstancedMesh(g, cometMat, N_PER_SHAPE);
     im.frustumCulled = false;
+    const localPos = new Float32Array(N_PER_SHAPE * 3);
+    const radii = new Float32Array(N_PER_SHAPE);
     for (let i = 0; i < N_PER_SHAPE; i++) {
-      // Full 3D spherical distribution around the spacecraft (with clear safe zone near origin)
+      // Full 3D spherical distribution around the spacecraft (close combat ring + outer cometary shell)
       const theta = rnd() * Math.PI * 2;
       const cosPhi = 2 * rnd() - 1;
       const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
-      const r = 180 + Math.pow(rnd(), 0.75) * 18000;
-      dummy.position.set(
-        r * sinPhi * Math.cos(theta),
-        r * cosPhi,
-        r * sinPhi * Math.sin(theta)
-      );
+      const r = i < 55
+        ? (52 + Math.pow(rnd(), 0.9) * 880)
+        : (320 + Math.pow(rnd(), 0.75) * 16500);
+      const x = r * sinPhi * Math.cos(theta);
+      const y = r * cosPhi;
+      const z = r * sinPhi * Math.sin(theta);
+      dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-      const sz = rnd() < 0.09 ? 65 + rnd() * 95 : 12 + Math.pow(rnd(), 1.8) * 52;
+      const sz = i < 55
+        ? (6 + Math.pow(rnd(), 1.5) * 26)
+        : (rnd() < 0.09 ? 65 + rnd() * 95 : 12 + Math.pow(rnd(), 1.8) * 52);
       dummy.scale.set(
         sz * (0.95 + rnd() * 0.55),
         sz * (0.62 + rnd() * 0.42),
@@ -1544,6 +1726,8 @@ export function createOortCloudCanopy() {
       );
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);
+      localPos[i * 3] = x; localPos[i * 3 + 1] = y; localPos[i * 3 + 2] = z;
+      radii[i] = sz;
 
       const cPick = rnd();
       if (cPick < 0.32) {
@@ -1556,6 +1740,7 @@ export function createOortCloudCanopy() {
     }
     im.instanceMatrix.needsUpdate = true;
     if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    initInstancedBeltRockMeta(im, 'oort', localPos, radii, false);
     group.add(im);
   }
 

@@ -13,13 +13,13 @@ import * as TX from '../textures.js';
 import { audio } from '../audio.js';
 import { Vessel } from './vessel.js';
 import { RailOrbit, moonAngle, moonPos, moonVel, bodyPos, bodyAngle, wrapPi, angOf, predict, bodyRotation, bodyState, coastStep, rk4, refBody, bodyInfo } from '../sim/orbit.js';
-import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI, OORT_CLOUD_INNER, OORT_CLOUD_OUTER } from '../sim/constants.js';
+import { R_E, R_M, ISS_R, MOON_PHASE0, OMEGA_E, LZ_X, COAST_X, G0 as G_E, MU_E, MU_M, ATM_TOP, BODIES, NON_EARTH_BODIES, SUN_SOI, ASTEROID_BELT_INNER, ASTEROID_BELT_OUTER, KUIPER_BELT_INNER, KUIPER_BELT_OUTER, OORT_CLOUD_INNER, OORT_CLOUD_OUTER } from '../sim/constants.js';
 import { AscentProgram, BoosterRecovery, RendezvousProgram, MoonProgram, PlaneLoopProgram, PlaneAirportHopProgram, BoatCruiseProgram, BoatHarborHopProgram, vesselElements, progradeBeta } from '../sim/guidance.js';
 import { MapView } from '../ui/MapView.js';
 import { MISSIONS, missionById, isMissionCompleted, markMissionCompleted } from '../missions.js';
 import { createISS } from '../env/iss.js';
 import { createLandingZone, createDroneShip, createFlag } from '../env/sites.js';
-import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, createKuiperBeltCanopy, createOortCloudCanopy, OLYMPUS_PSI } from '../fx/moon.js';
+import { createMoon, createSunSphere, createPlanetSphere, createMoonSurface, moonHeight, createOlympusMonsLandmarks, createCeresAsteroidBelt, createKuiperBeltCanopy, createBeltSpaceField, createOortCloudCanopy, resetBeltRocksInGroup, createRockShardGeometry, OLYMPUS_PSI } from '../fx/moon.js';
 import { createAlienMesh, createBeamVisual, createSupernovaMesh } from '../fx/aliens.js';
 import { tr } from '../i18n.js';
 
@@ -2007,25 +2007,40 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.firingHeld = true;
         this.fireWeapons();
       });
-      window.addEventListener('pointerup', () => { this.firingHeld = false; });
+      window.addEventListener('pointerup', () => {
+        this.firingHeld = false;
+        this.lastClickedRock = null;
+      });
     }
     this.app.canvas.addEventListener('pointerdown', (e) => {
-      if (!this.active || this.map.visible || !this.aliens.length) return;
+      if (!this.active || this.map.visible) return;
+      const ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
       const ray = new THREE.Raycaster();
-      ray.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), this.camera);
-      const hits = ray.intersectObjects(this.aliens.map((a) => a.mesh), true);
-      if (hits.length) {
-        let obj = hits[0].object;
-        const hitAlien = this.aliens.find((a) => {
-          let cur = obj;
-          while (cur) { if (cur === a.mesh) return true; cur = cur.parent; }
-          return false;
-        });
-        if (hitAlien) {
-          audio.init();
-          this.firingHeld = true;
-          this.fireWeapons(hitAlien);
+      ray.setFromCamera(ndc, this.camera);
+      if (this.aliens && this.aliens.length) {
+        const hits = ray.intersectObjects(this.aliens.map((a) => a.mesh), true);
+        if (hits.length) {
+          let obj = hits[0].object;
+          const hitAlien = this.aliens.find((a) => {
+            let cur = obj;
+            while (cur) { if (cur === a.mesh) return true; cur = cur.parent; }
+            return false;
+          });
+          if (hitAlien) {
+            audio.init();
+            this.firingHeld = true;
+            this.lastClickedRock = null;
+            this.fireWeapons(hitAlien, null);
+            return;
+          }
         }
+      }
+      const hitRock = this.pickBeltRockByRay(ray);
+      if (hitRock) {
+        audio.init();
+        this.firingHeld = true;
+        this.lastClickedRock = hitRock;
+        this.fireWeapons(null, hitRock);
       }
     });
   }
@@ -2636,7 +2651,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       },
       {
         title: tr('☀️ Mặt Trời, Hành Tinh Đá, Hệ Sao Hỏa & Vành Đai Tiểu Hành Tinh', '☀️ Sun, Inner Rocky Planets, Mars System & Asteroid Belt'),
-        items: ['mercury', 'venus', 'mars', 'olympus', 'phobos', 'deimos', 'ceres', 'sun'],
+        items: ['mercury', 'venus', 'mars', 'olympus', 'phobos', 'deimos', 'ceres', 'asteroid_belt', 'sun'],
       },
       {
         title: tr('🟠 Hệ Sao Mộc & 4 Mặt Trăng Galilean', '🟠 Jupiter System & Galilean Moons'),
@@ -2651,8 +2666,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         items: ['uranus', 'miranda', 'ariel', 'umbriel', 'titania', 'oberon'],
       },
       {
-        title: tr('🔵 Hệ Sao Hải Vương & Các Hành Tinh Lùn Vành Đai Kuiper (Pluto, Haumea, Makemake, Eris)', '🔵 Neptune, Triton & Kuiper Belt Dwarf Planets (Pluto, Haumea, Makemake, Eris)'),
-        items: ['neptune', 'triton', 'pluto', 'haumea', 'makemake', 'eris'],
+        title: tr('🔵 Hệ Sao Hải Vương & Vành Đai Kuiper (Pluto, Haumea, Makemake, Eris)', '🔵 Neptune, Triton & Kuiper Belt (Pluto, Haumea, Makemake, Eris)'),
+        items: ['neptune', 'triton', 'pluto', 'haumea', 'makemake', 'eris', 'kuiper_belt'],
       },
       {
         title: tr('☄️ Đám Mây Oort & 🌌 Không Gian Liên Sao (Ngoài Hệ Mặt Trời)', '☄️ Oort Cloud & 🌌 Interstellar Space (Beyond Solar System)'),
@@ -2676,6 +2691,20 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           return `<button type="button" class="tp-card-btn ${active}" data-tp="olympus">
             <span class="tp-card-top">🌋 ${tr('Đỉnh Olympus Mons', 'Olympus Mons Summit')}</span>
             <span class="tp-card-sub">${tr('Sao Hỏa · Đỉnh 21,9 km & Miệng núi lửa', 'Mars · 21.9 km Summit & Caldera')}</span>
+          </button>`;
+        }
+        if (key === 'asteroid_belt') {
+          const active = curTarget === 'asteroid_belt' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="asteroid_belt">
+            <span class="tp-card-top">🪨 ${tr('Vành Đai Tiểu Hành Tinh', 'Main Asteroid Belt')}</span>
+            <span class="tp-card-sub">${tr('Vành đai đá giữa Sao Hỏa & Sao Mộc (98.000 – 126.000 km)', 'Rocky Belt between Mars & Jupiter (98,000 – 126,000 km)')}</span>
+          </button>`;
+        }
+        if (key === 'kuiper_belt') {
+          const active = curTarget === 'kuiper_belt' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="kuiper_belt">
+            <span class="tp-card-top">🧊 ${tr('Vành Đai Kuiper', 'Kuiper Belt')}</span>
+            <span class="tp-card-sub">${tr('Vành đai thiên thể băng 3D (740.000 – 1.040.000 km)', '3D Icy Belt beyond Neptune (740,000 – 1,040,000 km)')}</span>
           </button>`;
         }
         if (key === 'oort') {
@@ -3532,6 +3561,71 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         tr('⚡🛰️ Đã dịch chuyển tức thời tới Trạm Vũ Trụ Quốc Tế (ISS)!', '⚡🛰️ Teleported directly to the International Space Station (ISS)!'),
         'warn'
       );
+    } else if (target === 'asteroid_belt' || target === 'kuiper_belt') {
+      const isK = target === 'kuiper_belt';
+      const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
+      bodyState('sun', this.simT, bp, bv);
+      const r = isK
+        ? (KUIPER_BELT_INNER + KUIPER_BELT_OUTER) * 0.5
+        : (ASTEROID_BELT_INNER + ASTEROID_BELT_OUTER) * 0.5;
+      // Pick an orbital angle clear of Ceres / Kuiper dwarf planets' SOI
+      let beltAng = sunPhi + 0.92;
+      const checkKeys = isK ? ['pluto', 'haumea', 'makemake', 'eris'] : ['ceres'];
+      for (let guard = 0; guard < 8; guard++) {
+        const tx = bp.x + Math.sin(beltAng) * r;
+        const ty = bp.y + Math.cos(beltAng) * r;
+        const hitBody = checkKeys.some((bk) => {
+          const cp = bodyPos(bk, this.simT);
+          return Math.hypot(tx - cp.x, ty - cp.y) < ((BODIES[bk]?.soi || 5000e3) * 1.3);
+        });
+        if (!hitBody) break;
+        beltAng += 0.65;
+      }
+      const ux = Math.sin(beltAng), uy = Math.cos(beltAng);
+      const ex = uy, ey = -ux;
+      const vCirc = Math.sqrt(BODIES.sun.mu / r);
+      P.s.x = bp.x + ux * r;
+      P.s.y = bp.y + uy * r;
+      P.s.z = bp.z || 0;
+      P.s.vx = bv.x + ex * vCirc;
+      P.s.vy = bv.y + ey * vCirc;
+      P.s.vz = bv.z || 0;
+      P.beta = wrapPi(beltAng + Math.PI / 2);
+      P.omega = 0;
+      P.clamped = false;
+      P.landed = null;
+      P.updateFrame(this.simT);
+      P.syncDir3DFromBeta();
+      if (P.holdDir3D) P.holdDir3D.copy(P.dir3D);
+      this.holdBeta = P.beta;
+      this.phase = 'flight';
+      this.ignited = true;
+      this.released = true;
+      this.lifted = true;
+      this.throttle = 0;
+      P.throttle = 0;
+      P.engineOn = false;
+      this.inAtmoBody = null;
+      this.setFlag('space');
+      if (isK) {
+        this.milestone(
+          tr('🧊 TIẾN VÀO VÀNH ĐAI KUIPER!', '🧊 ENTERED THE KUIPER BELT!'),
+          tr('Hàng ngàn tảng đá băng bay xung quanh · Nhấn V hoặc click vào đá để bắn vỡ!', 'Thousands of icy boulders all around · Press V or click on boulders to blast them!')
+        );
+        this.event(
+          tr('⚡🧊 Đã dịch chuyển vào Vành đai Kuiper! Nhấn V hoặc click chuột vào các cục đá băng để bắn nổ.', '⚡🧊 Teleported into the Kuiper Belt! Press V or click on icy boulders to shoot and shatter them.'),
+          'warn'
+        );
+      } else {
+        this.milestone(
+          tr('🪨 TIẾN VÀO VÀNH ĐAI TIỂU HÀNH TINH!', '🪨 ENTERED THE MAIN ASTEROID BELT!'),
+          tr('Vành đai đá giữa Sao Hỏa & Sao Mộc · Nhấn V hoặc click vào đá để bắn vỡ!', 'Rocky Asteroid Belt between Mars & Jupiter · Press V or click on rocks to blast them!')
+        );
+        this.event(
+          tr('⚡🪨 Đã dịch chuyển vào Vành đai đá giữa Sao Hỏa và Sao Mộc! Nhấn V hoặc click chuột vào các cục đá để bắn nổ.', '⚡🪨 Teleported into the Asteroid Belt between Mars and Jupiter! Press V or click on asteroids to shoot and shatter them.'),
+          'warn'
+        );
+      }
     } else if (target === 'oort') {
       const bp = { x: 0, y: 0, z: 0 }, bv = { x: 0, y: 0, z: 0 };
       bodyState('sun', this.simT, bp, bv);
@@ -4092,10 +4186,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.scene.add(this.olympusMons.group);
     this.ceresBelt = createCeresAsteroidBelt();
     this.scene.add(this.ceresBelt);
+    this.asteroidSpaceField = createBeltSpaceField('asteroid');
+    this.scene.add(this.asteroidSpaceField);
     this.kuiperBelt = createKuiperBeltCanopy();
     this.scene.add(this.kuiperBelt);
+    this.kuiperSpaceField = createBeltSpaceField('kuiper');
+    this.scene.add(this.kuiperSpaceField);
     this.oortCloud = createOortCloudCanopy();
     this.scene.add(this.oortCloud);
+    this.rockFragments = [];
     this.issOrbit = new RailOrbit(ISS_R, -0.3);
     this.iss = createISS();
     this.iss.visible = false;
@@ -4364,11 +4463,16 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     for (const r of roots) { r.parent && r.parent.remove(r); freeGPU(r); }
     for (const a of (this.aliens || [])) { if (a.mesh && a.mesh.parent) a.mesh.parent.remove(a.mesh); }
     for (const b of (this.weaponBeams || [])) { if (b.mesh && b.mesh.parent) b.mesh.parent.remove(b.mesh); }
+    for (const rf of (this.rockFragments || [])) {
+      if (rf.mesh && rf.mesh.parent) rf.mesh.parent.remove(rf.mesh);
+    }
     for (const sn of (this.supernovas || [])) {
       if (sn.mesh && sn.mesh.parent) sn.mesh.parent.remove(sn.mesh);
       if (sn.mesh?.userData?.dispose) sn.mesh.userData.dispose();
     }
-    this.aliens = []; this.weaponBeams = []; this.supernovas = [];
+    this.aliens = []; this.weaponBeams = []; this.rockFragments = []; this.supernovas = [];
+    this.lastClickedRock = null;
+    this.resetAllBeltRocks();
     this.alienSpawnTimer = 1.0; this.weaponCooldown = 0; this.firingHeld = false;
     this.supernovaSpawnTimer = 900 + Math.random() * 600;
     this.supernovaDistAcc = 0;
@@ -7242,7 +7346,325 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     return baseCooldown / this.getCrewFireRateMultiplier();
   }
 
-  fireWeapons(targetAlien = null) {
+  resetAllBeltRocks() {
+    resetBeltRocksInGroup(this.ceresBelt);
+    resetBeltRocksInGroup(this.asteroidSpaceField);
+    resetBeltRocksInGroup(this.kuiperBelt);
+    resetBeltRocksInGroup(this.kuiperSpaceField);
+    resetBeltRocksInGroup(this.oortCloud);
+    const ud = this.sunSphere?.userData;
+    if (ud) {
+      resetBeltRocksInGroup(ud.asteroidBelt);
+      resetBeltRocksInGroup(ud.kuiperBelt);
+      resetBeltRocksInGroup(ud.oortCloud);
+    }
+  }
+
+  getVisibleLocalBeltMeshes() {
+    const out = [];
+    const groups = [this.ceresBelt, this.asteroidSpaceField, this.kuiperBelt, this.kuiperSpaceField, this.oortCloud];
+    for (const grp of groups) {
+      if (!grp || !grp.visible) continue;
+      grp.updateMatrixWorld(true);
+      for (const ch of grp.children) {
+        if (ch && ch.isInstancedMesh && ch.userData?.beltRocks) out.push(ch);
+      }
+    }
+    return out;
+  }
+
+  getVisibleMacroBeltMeshes() {
+    const out = [];
+    const F = this.focus || this.player;
+    if (!F || (F.ref === 'earth' && F.alt < 25e3)) return out;
+    const ud = this.sunSphere?.userData;
+    if (!ud) return out;
+    this.sunSphere.updateMatrixWorld(true);
+    for (const im of [ud.asteroidBelt, ud.kuiperBelt, ud.oortCloud]) {
+      if (im && im.visible && im.isInstancedMesh && im.userData?.beltRocks) out.push(im);
+    }
+    return out;
+  }
+
+  isRockTargetAlive(rt) {
+    if (!rt || !rt.im) return false;
+    const meta = rt.im.userData?.beltRocks;
+    return !!(meta && rt.index >= 0 && rt.index < meta.count && meta.alive[rt.index]);
+  }
+
+  getBeltRockWorldPos(rt, out = new THREE.Vector3()) {
+    const meta = rt?.im?.userData?.beltRocks;
+    if (!meta) return out.set(0, 0, 0);
+    const idx3 = rt.index * 3;
+    out.set(meta.localPos[idx3], meta.localPos[idx3 + 1], meta.localPos[idx3 + 2]);
+    return out.applyMatrix4(rt.im.matrixWorld);
+  }
+
+  pickBeltRockByRay(ray) {
+    const localMeshes = this.getVisibleLocalBeltMeshes();
+    if (localMeshes.length) {
+      const hits = ray.intersectObjects(localMeshes, false);
+      for (const h of hits) {
+        const meta = h.object?.userData?.beltRocks;
+        const idx = h.instanceId;
+        if (meta && idx !== undefined && meta.alive[idx]) {
+          return {
+            im: h.object,
+            index: idx,
+            radius: meta.radii[idx] || 24,
+            beltKind: meta.beltKind,
+            isMacro: !!meta.isMacro,
+          };
+        }
+      }
+      // Generous ray-cone assist for small/moving rocks
+      const tmp = this._tmpRockPos || (this._tmpRockPos = new THREE.Vector3());
+      const diff = this._tmpRockDiff || (this._tmpRockDiff = new THREE.Vector3());
+      let best = null;
+      let bestScore = Infinity;
+      for (const im of localMeshes) {
+        const meta = im.userData.beltRocks;
+        for (let i = 0; i < meta.count; i++) {
+          if (!meta.alive[i]) continue;
+          const i3 = i * 3;
+          tmp.set(meta.localPos[i3], meta.localPos[i3 + 1], meta.localPos[i3 + 2]).applyMatrix4(im.matrixWorld);
+          diff.subVectors(tmp, ray.origin);
+          const tRay = diff.dot(ray.direction);
+          if (tRay <= 1) continue;
+          const perpSq = Math.max(0, diff.lengthSq() - tRay * tRay);
+          const rad = meta.radii[i] || 20;
+          const allowR = rad * 1.45 + tRay * 0.032;
+          if (perpSq <= allowR * allowR) {
+            const sc = Math.sqrt(perpSq) + tRay * 0.015;
+            if (sc < bestScore) {
+              bestScore = sc;
+              best = { im, index: i, radius: rad, beltKind: meta.beltKind, isMacro: false };
+            }
+          }
+        }
+      }
+      if (best) return best;
+    }
+
+    // Also allow clicking distant macro belt boulders (Asteroid Belt, Kuiper Belt, Oort Cloud)
+    const macroMeshes = this.getVisibleMacroBeltMeshes();
+    if (macroMeshes.length) {
+      const tmp = this._tmpRockPos || (this._tmpRockPos = new THREE.Vector3());
+      const diff = this._tmpRockDiff || (this._tmpRockDiff = new THREE.Vector3());
+      let best = null;
+      let bestScore = Infinity;
+      for (const im of macroMeshes) {
+        const meta = im.userData.beltRocks;
+        for (let i = 0; i < meta.count; i++) {
+          if (!meta.alive[i]) continue;
+          const i3 = i * 3;
+          tmp.set(meta.localPos[i3], meta.localPos[i3 + 1], meta.localPos[i3 + 2]).applyMatrix4(im.matrixWorld);
+          diff.subVectors(tmp, ray.origin);
+          const tRay = diff.dot(ray.direction);
+          if (tRay <= 100 || tRay > 4.5e8) continue;
+          const perpSq = Math.max(0, diff.lengthSq() - tRay * tRay);
+          const rad = meta.radii[i] || 80e3;
+          const allowR = rad * 1.35 + tRay * 0.018;
+          if (perpSq <= allowR * allowR) {
+            const sc = Math.sqrt(perpSq) / Math.max(1, allowR) + tRay * 1e-9;
+            if (sc < bestScore) {
+              bestScore = sc;
+              best = { im, index: i, radius: rad, beltKind: meta.beltKind, isMacro: true };
+            }
+          }
+        }
+      }
+      if (best) return best;
+    }
+    return null;
+  }
+
+  findAutoTargetBeltRock() {
+    const P = this.player;
+    if (!P) return null;
+    const localMeshes = this.getVisibleLocalBeltMeshes();
+    if (!localMeshes.length) return null;
+    const pWorld = P.root.position;
+    const tmp = this._tmpRockPos || (this._tmpRockPos = new THREE.Vector3());
+    const ndc = this._tmpRockNdc || (this._tmpRockNdc = new THREE.Vector3());
+    let bestInView = null;
+    let bestInViewScore = Infinity;
+    let bestAny = null;
+    let bestAnyDist = Infinity;
+
+    this.camera.updateMatrixWorld();
+    for (const im of localMeshes) {
+      const meta = im.userData.beltRocks;
+      for (let i = 0; i < meta.count; i++) {
+        if (!meta.alive[i]) continue;
+        const i3 = i * 3;
+        tmp.set(meta.localPos[i3], meta.localPos[i3 + 1], meta.localPos[i3 + 2]).applyMatrix4(im.matrixWorld);
+        const dist = tmp.distanceTo(pWorld);
+        if (dist < 8 || dist > 18000) continue;
+        if (dist < bestAnyDist) {
+          bestAnyDist = dist;
+          bestAny = { im, index: i, radius: meta.radii[i] || 24, beltKind: meta.beltKind, isMacro: false };
+        }
+        ndc.copy(tmp).project(this.camera);
+        if (ndc.z > 0 && ndc.z < 1 && Math.abs(ndc.x) <= 0.94 && Math.abs(ndc.y) <= 0.94) {
+          const offCenter = Math.hypot(ndc.x, ndc.y);
+          const score = dist * (0.42 + 0.90 * offCenter);
+          if (score < bestInViewScore) {
+            bestInViewScore = score;
+            bestInView = { im, index: i, radius: meta.radii[i] || 24, beltKind: meta.beltKind, isMacro: false };
+          }
+        }
+      }
+    }
+    return bestInView || bestAny;
+  }
+
+  ensureRockShardAssets() {
+    if (this._rockShardMats) return;
+    this._rockShardGeos = [
+      createRockShardGeometry(2.3),
+      createRockShardGeometry(5.7),
+      createRockShardGeometry(8.9),
+    ];
+    this._rockShardMats = {
+      asteroid: new THREE.MeshStandardMaterial({
+        color: 0xa8a29e,
+        emissive: 0xea580c,
+        emissiveIntensity: 0.75,
+        roughness: 0.85,
+        flatShading: true,
+      }),
+      kuiper: new THREE.MeshStandardMaterial({
+        color: 0xbae6fd,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.85,
+        roughness: 0.42,
+        flatShading: true,
+      }),
+      oort: new THREE.MeshStandardMaterial({
+        color: 0xe0f2fe,
+        emissive: 0x6366f1,
+        emissiveIntensity: 0.95,
+        roughness: 0.38,
+        flatShading: true,
+      }),
+    };
+  }
+
+  damageBeltRock(rt, dmg, weaponType, beamHitPos) {
+    if (!this.isRockTargetAlive(rt)) return false;
+    const meta = rt.im.userData.beltRocks;
+    const idx = rt.index;
+    meta.hp[idx] -= dmg;
+    if (meta.hp[idx] <= 0) {
+      this.destroyBeltRock(rt, weaponType, beamHitPos);
+      return true;
+    }
+    // Flash hot/cracked tint on surviving heavy boulder
+    if (rt.im.instanceColor) {
+      const cCol = this._tmpCrackCol || (this._tmpCrackCol = new THREE.Color());
+      if (meta.beltKind === 'asteroid') cCol.setRGB(1.0, 0.52, 0.18);
+      else if (meta.beltKind === 'kuiper') cCol.setRGB(0.45, 0.95, 1.0);
+      else cCol.setRGB(0.75, 0.85, 1.0);
+      rt.im.setColorAt(idx, cCol);
+      rt.im.instanceColor.needsUpdate = true;
+    }
+    return false;
+  }
+
+  destroyBeltRock(rt, weaponType, beamHitPos) {
+    if (!this.isRockTargetAlive(rt)) return;
+    const meta = rt.im.userData.beltRocks;
+    const idx = rt.index;
+    meta.alive[idx] = 0;
+    meta.hp[idx] = 0;
+    const zeroM = this._zeroMat4 || (this._zeroMat4 = new THREE.Matrix4().makeScale(0, 0, 0));
+    rt.im.setMatrixAt(idx, zeroM);
+    rt.im.instanceMatrix.needsUpdate = true;
+    if (this.lastClickedRock && this.lastClickedRock.im === rt.im && this.lastClickedRock.index === idx) {
+      this.lastClickedRock = null;
+    }
+
+    const P = this.player;
+    const pWorld = P ? P.root.position : new THREE.Vector3();
+    const rawPos = this.getBeltRockWorldPos(rt, new THREE.Vector3());
+    const hitPos = beamHitPos ? beamHitPos.clone() : rawPos;
+    const distFromShip = Math.max(10, hitPos.distanceTo(pWorld));
+    const effRadius = rt.isMacro
+      ? THREE.MathUtils.clamp(distFromShip * 0.045, 18, 220)
+      : THREE.MathUtils.clamp(rt.radius || 24, 8, 220);
+
+    const hitX = (P ? P.sx : 0) + (hitPos.x - pWorld.x);
+    const hitY = (P ? P.alt : 0) + (hitPos.y - pWorld.y);
+    const hitZ = (P ? (P.s.z || 0) : 0) + (hitPos.z - pWorld.z);
+    const pScale = THREE.MathUtils.clamp(Math.max(effRadius * 0.28, distFromShip * 0.012), 2.5, 95);
+    const spdScale = THREE.MathUtils.clamp(effRadius * 0.85, 14, 140);
+
+    const isAst = meta.beltKind === 'asteroid';
+    const isKuiper = meta.beltKind === 'kuiper';
+    for (let i = 0; i < 42; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize()
+        .multiplyScalar((0.35 + Math.random() * 0.95) * spdScale);
+      const col = isAst
+        ? (i % 2 === 0 ? [6.8, 3.1, 0.7] : [4.2, 2.4, 1.2])
+        : isKuiper
+          ? (i % 3 === 0 ? [5.8, 1.8, 1.4] : [1.1, 5.4, 7.6])
+          : (i % 2 === 0 ? [1.4, 5.8, 8.2] : [4.6, 2.4, 7.8]);
+      this.fire.emit(
+        hitX, hitY, hitZ,
+        (P?.vSurf?.e || 0) + d.x, (P?.vSurf?.u || 0) + d.y, d.z,
+        { life: 0.5 + Math.random() * 0.65, size0: pScale * 0.45, size1: pScale * 1.9, alpha: 0.95, drag: 0.85, buoy: 0, color: col }
+      );
+    }
+    for (let i = 0; i < 24; i++) {
+      const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize()
+        .multiplyScalar((0.25 + Math.random() * 0.7) * spdScale);
+      const sCol = isAst ? [0.62, 0.55, 0.48] : isKuiper ? [0.72, 0.90, 0.98] : [0.80, 0.88, 1.0];
+      this.smoke.emit(
+        hitX, hitY, hitZ,
+        (P?.vSurf?.e || 0) + d.x, (P?.vSurf?.u || 0) + d.y, d.z,
+        { life: 1.6 + Math.random() * 1.6, size0: pScale * 0.6, size1: pScale * 2.4, alpha: 0.65, drag: 0.35, buoy: 0, color: sCol }
+      );
+    }
+
+    // Spawn 8 tumbling 3D rock/ice shard meshes
+    this.ensureRockShardAssets();
+    if (!this.rockFragments) this.rockFragments = [];
+    if (this.rockFragments.length < 96) {
+      const shardMat = this._rockShardMats[meta.beltKind] || this._rockShardMats.asteroid;
+      for (let s = 0; s < 8; s++) {
+        const geo = this._rockShardGeos[s % this._rockShardGeos.length];
+        const m = new THREE.Mesh(geo, shardMat);
+        const shScale = Math.max(1.4, effRadius * (0.16 + Math.random() * 0.18));
+        m.scale.set(shScale * (0.8 + Math.random() * 0.5), shScale * (0.6 + Math.random() * 0.5), shScale * (0.8 + Math.random() * 0.5));
+        m.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+        const relPos = hitPos.clone().sub(pWorld);
+        m.position.copy(hitPos);
+        this.scene.add(m);
+        const vel = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+          .normalize()
+          .multiplyScalar((0.45 + Math.random() * 0.9) * spdScale);
+        this.rockFragments.push({
+          mesh: m,
+          relPos,
+          vel,
+          rotVel: new THREE.Vector3((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6),
+          baseScale: m.scale.clone(),
+          life: 1.25 + Math.random() * 0.55,
+          maxLife: 1.8,
+        });
+      }
+    }
+
+    this.rocksDestroyed = (this.rocksDestroyed || 0) + 1;
+    audio.alienBoom(0.52);
+    this.flash = Math.max(this.flash || 0, 0.32);
+    this.flashPos = { x: hitX, y: hitY, z: hitZ };
+  }
+
+  fireWeapons(targetAlien = null, targetRock = null) {
     const P = this.player;
     if (!P || P.dead || P.crashed) return;
     if (this.weaponCooldown > 0) return;
@@ -7277,9 +7699,14 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     const cd = this.getWeaponCooldown();
     this.weaponCooldown = Math.max(cd * 0.25, (this.weaponCooldown || 0) + cd);
 
-    // Pick target Alien (either clicked Alien, or Royal King/Queen first, then closest Alien)
-    let tgt = targetAlien;
-    if (!tgt && this.aliens && this.aliens.length) {
+    // 1) Explicit clicked rock or held clicked rock
+    let rockTgt = this.isRockTargetAlive(targetRock)
+      ? targetRock
+      : (this.isRockTargetAlive(this.lastClickedRock) ? this.lastClickedRock : null);
+
+    // 2) Pick target Alien (either clicked Alien, or Royal King/Queen first, then closest Alien)
+    let tgt = rockTgt ? null : targetAlien;
+    if (!rockTgt && !tgt && this.aliens && this.aliens.length) {
       let bestRoyalD = Infinity;
       for (const a of this.aliens) {
         if (!a.isRoyal || a.dead || a.hp <= 0) continue;
@@ -7294,6 +7721,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           if (d < bestD) { bestD = d; tgt = a; }
         }
       }
+    }
+
+    // 3) Auto-lock onto nearby Asteroid Belt / Kuiper Belt / Oort Cloud rock when no Alien is targeted
+    if (!rockTgt && !tgt) {
+      rockTgt = this.findAutoTargetBeltRock();
     }
 
     let firedLaser = false;
@@ -7313,12 +7745,28 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         startPos.copy(pWorld);
       }
 
+      if (!this.isRockTargetAlive(rockTgt)) {
+        rockTgt = !tgt ? this.findAutoTargetBeltRock() : null;
+      }
+
       const endPos = new THREE.Vector3();
+      let isShootingRock = false;
       if (tgt && tgt.mesh) {
         endPos.copy(tgt.mesh.position);
         endPos.x += (Math.random() - 0.5) * 0.8;
         endPos.y += 0.35 + (Math.random() - 0.5) * 0.6;
         endPos.z += (Math.random() - 0.5) * 0.8;
+      } else if (rockTgt && this.isRockTargetAlive(rockTgt)) {
+        isShootingRock = true;
+        const rawRockPos = this.getBeltRockWorldPos(rockTgt, new THREE.Vector3());
+        const rJit = Math.min(40, (rockTgt.radius || 20) * 0.18);
+        rawRockPos.x += (Math.random() - 0.5) * rJit;
+        rawRockPos.y += (Math.random() - 0.5) * rJit;
+        rawRockPos.z += (Math.random() - 0.5) * rJit;
+        const rawDiff = rawRockPos.clone().sub(startPos);
+        const rawDist = Math.max(1, rawDiff.length());
+        const clampedDist = Math.min(rawDist, 180000);
+        endPos.copy(startPos).addScaledVector(rawDiff.divideScalar(rawDist), clampedDist);
       } else {
         const fwd = (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
         endPos.copy(startPos).addScaledVector(fwd, 85);
@@ -7372,6 +7820,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           tgt.vel.addScaledVector(dir, 24);
           tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
           if (tgt.hp <= 0) this.destroyAlien(tgt, 'water');
+        } else if (isShootingRock && rockTgt) {
+          this.damageBeltRock(rockTgt, 34, 'water', endPos);
         }
       } else if (w.weaponType === 'acid') {
         firedAcid = true;
@@ -7403,6 +7853,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           tgt.vel.addScaledVector(dir, 12);
           tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
           if (tgt.hp <= 0) this.destroyAlien(tgt, 'acid');
+        } else if (isShootingRock && rockTgt) {
+          this.damageBeltRock(rockTgt, 36, 'acid', endPos);
         }
       } else if (w.weaponType === 'electric') {
         firedElectric = true;
@@ -7446,6 +7898,37 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           }
 
           if (tgt.hp <= 0) this.destroyAlien(tgt, 'electric');
+        } else if (isShootingRock && rockTgt) {
+          const srcPos = endPos.clone();
+          this.damageBeltRock(rockTgt, 42, 'electric', srcPos);
+          // Chain lightning arcs to up to 2 nearby belt boulders!
+          if (!rockTgt.isMacro) {
+            const localMeshes = this.getVisibleLocalBeltMeshes();
+            const cPos = new THREE.Vector3();
+            let chainedRocks = 0;
+            for (const im of localMeshes) {
+              const meta = im.userData.beltRocks;
+              for (let i = 0; i < meta.count; i++) {
+                if (!meta.alive[i] || (im === rockTgt.im && i === rockTgt.index)) continue;
+                const i3 = i * 3;
+                cPos.set(meta.localPos[i3], meta.localPos[i3 + 1], meta.localPos[i3 + 2]).applyMatrix4(im.matrixWorld);
+                if (cPos.distanceTo(srcPos) < 950) {
+                  const chainBeam = createBeamVisual('electric', srcPos, cPos);
+                  this.scene.add(chainBeam);
+                  this.weaponBeams.push({
+                    mesh: chainBeam,
+                    relStart: srcPos.clone().sub(pWorld),
+                    relEnd: cPos.clone().sub(pWorld),
+                    life: chainBeam.userData.life,
+                    maxLife: chainBeam.userData.maxLife,
+                  });
+                  this.damageBeltRock({ im, index: i, radius: meta.radii[i] || 20, beltKind: meta.beltKind, isMacro: false }, 32, 'electric', cPos);
+                  if (++chainedRocks >= 2) break;
+                }
+              }
+              if (chainedRocks >= 2) break;
+            }
+          }
         }
       } else {
         firedLaser = true;
@@ -7464,6 +7947,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           tgt.vel.addScaledVector(dir, 8);
           tgt.mesh.userData.setHp(tgt.hp / tgt.maxHp);
           if (tgt.hp <= 0) this.destroyAlien(tgt, 'laser');
+        } else if (isShootingRock && rockTgt) {
+          this.damageBeltRock(rockTgt, 38, 'laser', endPos);
         }
       }
     }
@@ -7851,6 +8336,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         if (b.mesh.parent) b.mesh.parent.remove(b.mesh);
         if (b.mesh.userData.coreGeo) b.mesh.userData.coreGeo.dispose();
         if (b.mesh.userData.outerGeo) b.mesh.userData.outerGeo.dispose();
+        if (b.mesh.userData.arcGeo) b.mesh.userData.arcGeo.dispose();
         this.weaponBeams.splice(i, 1);
       } else {
         const f = b.life / b.maxLife;
@@ -7859,6 +8345,26 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         b.mesh.position.addVectors(startW, endW).multiplyScalar(0.5);
         if (b.mesh.userData.coreMat) b.mesh.userData.coreMat.opacity = f;
         if (b.mesh.userData.outerMat) b.mesh.userData.outerMat.opacity = f * 0.7;
+      }
+    }
+
+    // Update tumbling 3D shattered asteroid / Kuiper / Oort rock fragments
+    if (this.rockFragments && this.rockFragments.length) {
+      for (let i = this.rockFragments.length - 1; i >= 0; i--) {
+        const rf = this.rockFragments[i];
+        rf.life -= dt;
+        if (rf.life <= 0) {
+          if (rf.mesh && rf.mesh.parent) rf.mesh.parent.remove(rf.mesh);
+          this.rockFragments.splice(i, 1);
+        } else {
+          rf.relPos.addScaledVector(rf.vel, dt);
+          rf.mesh.position.copy(pWorld).add(rf.relPos);
+          rf.mesh.rotation.x += rf.rotVel.x * dt;
+          rf.mesh.rotation.y += rf.rotVel.y * dt;
+          rf.mesh.rotation.z += rf.rotVel.z * dt;
+          const shrink = Math.min(1, rf.life / (rf.maxLife * 0.4));
+          rf.mesh.scale.copy(rf.baseScale).multiplyScalar(shrink);
+        }
       }
     }
 
@@ -8141,12 +8647,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     // celestial bodies
     const _v = this._tv || (this._tv = new THREE.Vector3());
     const sp = bodyPos('sun', t);
+    const rSunF = Math.hypot(S.x - sp.x, S.y - sp.y, (S.z || 0) - (sp.z || 0));
     if (this.sunSphere) {
       proj(sp.x, sp.y, sp.z, this.sunSphere.position);
       this.sunSphere.rotation.set(0, 0, phi - bodyRotation('sun', t));
       const ud = this.sunSphere.userData;
       if (ud.coreMat) ud.coreMat.uniforms.uTime.value = this.time;
-      if (ud.asteroidBelt) ud.asteroidBelt.visible = (F.ref === 'sun' || F.ref === 'ceres');
+      if (ud.asteroidBelt) ud.asteroidBelt.visible = (F.ref !== 'earth' || F.alt > 25e3);
       const atSun = F.ref === 'sun';
       if (ud.coreMesh) ud.coreMesh.scale.setScalar(atSun ? 1.0 : 0.012);
       if (ud.coronaMesh) {
@@ -8247,31 +8754,64 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         }
       }
     }
+    const isCeresLow = F.ref === 'ceres' && F.alt < 2200;
+    const isKuiperDwarf = F.ref === 'pluto' || F.ref === 'haumea' || F.ref === 'makemake' || F.ref === 'eris';
+    const isKuiperLow = isKuiperDwarf && F.alt < 2200;
     if (this.ceresBelt) {
       const showCeresBelt = F.ref === 'ceres' && F.alt < 90e3;
       this.ceresBelt.visible = !!showCeresBelt;
       if (showCeresBelt) {
         const driftX = ((this.time * 18) % 8000) - 4000;
         this.ceresBelt.position.set(driftX, -F.alt, -S.z);
+        this.ceresBelt.updateMatrixWorld(true);
+      }
+    }
+    if (this.asteroidSpaceField) {
+      const showAstSpace = !isCeresLow && (
+        (F.ref === 'ceres' && F.alt >= 2200) ||
+        (rSunF >= ASTEROID_BELT_INNER - 4000e3 && rSunF <= ASTEROID_BELT_OUTER + 4000e3)
+      );
+      this.asteroidSpaceField.visible = !!showAstSpace;
+      if (showAstSpace) {
+        const driftX = ((this.time * 16) % 5000) - 2500;
+        const driftY = Math.sin(this.time * 0.18) * 320;
+        this.asteroidSpaceField.position.set(driftX, driftY, 0);
+        this.asteroidSpaceField.rotation.y = this.time * 0.010;
+        this.asteroidSpaceField.updateMatrixWorld(true);
       }
     }
     if (this.kuiperBelt) {
-      const showKuiperBelt = (F.ref === 'pluto' || F.ref === 'haumea' || F.ref === 'makemake' || F.ref === 'eris') && F.alt < 90e3;
+      const showKuiperBelt = isKuiperDwarf && F.alt < 90e3;
       this.kuiperBelt.visible = !!showKuiperBelt;
       if (showKuiperBelt) {
         const driftX = ((this.time * 14) % 8000) - 4000;
         this.kuiperBelt.position.set(driftX, -F.alt, -S.z);
+        this.kuiperBelt.updateMatrixWorld(true);
+      }
+    }
+    if (this.kuiperSpaceField) {
+      const showKuiperSpace = !isKuiperLow && (
+        (isKuiperDwarf && F.alt >= 2200) ||
+        (rSunF >= KUIPER_BELT_INNER - 10000e3 && rSunF <= KUIPER_BELT_OUTER + 10000e3)
+      );
+      this.kuiperSpaceField.visible = !!showKuiperSpace;
+      if (showKuiperSpace) {
+        const driftX = ((this.time * 13) % 5000) - 2500;
+        const driftY = Math.sin(this.time * 0.16 + 1.1) * 350;
+        this.kuiperSpaceField.position.set(driftX, driftY, 0);
+        this.kuiperSpaceField.rotation.y = this.time * 0.009;
+        this.kuiperSpaceField.updateMatrixWorld(true);
       }
     }
     if (this.oortCloud) {
-      const rSunF = Math.hypot(S.x - sp.x, S.y - sp.y, (S.z || 0) - (sp.z || 0));
-      const showOortCloud = rSunF >= OORT_CLOUD_INNER && rSunF <= OORT_CLOUD_OUTER;
+      const showOortCloud = rSunF >= OORT_CLOUD_INNER - 15000e3 && rSunF <= OORT_CLOUD_OUTER + 15000e3;
       this.oortCloud.visible = !!showOortCloud;
       if (showOortCloud) {
         const driftX = ((this.time * 12) % 6000) - 3000;
         const driftY = Math.sin(this.time * 0.15) * 400;
         this.oortCloud.position.set(driftX, driftY, 0);
         this.oortCloud.rotation.y = this.time * 0.008;
+        this.oortCloud.updateMatrixWorld(true);
       }
     }
     if (this.flagSpot) {

@@ -848,6 +848,14 @@ export class BuildScene {
     }
   }
 
+  getMissionCategoryForCurrentStack() {
+    const vType = stackVehicleType(this.stack);
+    if (vType === 'rover' || vType === 'plane' || vType === 'boat') return vType;
+    if (vType === 'rocket' || vType === 'ufo') return 'rocket';
+    const curM = missionById(this.missionId || 'free');
+    return (curM && curM.id !== 'free' && curM.category) ? curM.category : 'rocket';
+  }
+
   renderMissionCards() {
     const cards = $('mission-cards');
     if (!cards) return;
@@ -1065,15 +1073,12 @@ export class BuildScene {
       audio.click();
     };
     $('btn-mission').onclick = () => {
-      const curM = missionById(this.missionId || 'free');
-      const vType = stackVehicleType(this.stack);
-      if (curM && curM.id !== 'free' && curM.category) {
-        this.missionCategory = curM.category;
-      } else if (vType === 'boat' || vType === 'rover' || vType === 'plane') {
-        this.missionCategory = vType;
-      }
+      this.missionCategory = this.getMissionCategoryForCurrentStack();
       this.renderMissionCards();
+      const cards = $('mission-cards');
+      if (cards) cards.scrollTop = 0;
       $('mission-modal').classList.remove('hidden');
+      audio.click();
     };
     $('btn-mission-close').onclick = closeMissionModal;
     if ($('btn-mission-x')) $('btn-mission-x').onclick = closeMissionModal;

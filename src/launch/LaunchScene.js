@@ -2014,14 +2014,6 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         this.toggleAliens();
       });
     }
-    const btnVabAliens = $('btn-vab-aliens');
-    if (btnVabAliens) {
-      btnVabAliens.addEventListener('click', () => {
-        audio.init();
-        audio.click();
-        this.setAliensDisabled(!this.aliensDisabled, this.active);
-      });
-    }
     document.querySelectorAll('[data-aliens-mode]').forEach((btn) => {
       btn.addEventListener('click', () => {
         audio.init();
@@ -7143,16 +7135,6 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       btn.title = off
         ? tr('Đang tắt hoàn toàn Alien (không xuất hiện Alien) · Bấm hoặc nhấn U để bật lại Alien', 'Aliens are completely disabled · Click or press U to enable Aliens again')
         : tr('Alien đang bật · Bấm hoặc nhấn U để tắt hoàn toàn Alien', 'Aliens are enabled · Click or press U to disable all Aliens');
-    }
-    const btnVab = $('btn-vab-aliens');
-    if (btnVab) {
-      btnVab.classList.toggle('aliens-off', off);
-      btnVab.textContent = off
-        ? `🚫👽 ${tr('Đã tắt Alien', 'Aliens OFF')}`
-        : `👽 ${tr('Tắt Alien', 'No Aliens')}`;
-      btnVab.title = off
-        ? tr('Đang tắt hoàn toàn Alien (không có Alien) · Bấm để bật lại Alien', 'Aliens are completely disabled · Click to enable Aliens again')
-        : tr('Alien đang bật · Bấm để tắt hoàn toàn Alien', 'Aliens are enabled · Click to disable all Aliens');
     }
     document.querySelectorAll('[data-aliens-mode]').forEach((el) => {
       const isOffBtn = el.dataset.aliensMode === 'off';

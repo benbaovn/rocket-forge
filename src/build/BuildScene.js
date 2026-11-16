@@ -1408,7 +1408,9 @@ export class BuildScene {
     if (def.kind === 'radial') {
       let best = null, bd = 1e9;
       lay.parts.forEach((p) => {
-        if (p.item.attach.includes(type)) return;
+        const maxSame = (type === 'solarUfo' && isUfoPart(p.item.type)) ? 2 : 1;
+        const curCnt = p.item.attach.filter((x) => x === type).length;
+        if (curCnt >= maxSame) return;
         if (!canPartAttachToStack(type, this.stack, p.index)) return;
         const [sx, sy] = this.screenOf(p.y + (p.height ?? p.def.height) / 2);
         const d = Math.hypot(sx - mx, sy - my);
@@ -1449,10 +1451,15 @@ export class BuildScene {
   showPreview(type, cand) {
     if (!cand) { this.indicator.visible = false; this.rebuild(); return; }
     const st = cloneStack(this.stack);
-    let hiIndex, hiAttach = null;
-    if (cand.attach !== undefined) { st[cand.attach].attach.push(type); hiIndex = cand.attach; hiAttach = type; }
+    let hiIndex, hiAttach = null, hiAttachOcc;
+    if (cand.attach !== undefined) {
+      st[cand.attach].attach.push(type);
+      hiIndex = cand.attach;
+      hiAttach = type;
+      hiAttachOcc = st[cand.attach].attach.filter((x) => x === type).length - 1;
+    }
     else { st.splice(cand.insert, 0, newItem(type)); hiIndex = cand.insert; }
-    this.rebuild(false, st, { index: hiIndex, attach: hiAttach });
+    this.rebuild(false, st, { index: hiIndex, attach: hiAttach, attachOcc: hiAttachOcc });
     const lay = layout(st);
     const p = lay.parts[hiIndex];
     this.indicator.visible = true;
@@ -1468,15 +1475,18 @@ export class BuildScene {
     }
     this.incompatWarning = null;
     this.pushHistory();
+    let postSelect = null;
     if (cand.attach !== undefined) {
       this.stack[cand.attach].attach.push(type);
-      if (type === 'batteryGun' || type === 'solarUltra') {
-        this.select({ index: cand.attach, attach: type });
+      const occ = this.stack[cand.attach].attach.filter((x) => x === type).length - 1;
+      if (type === 'batteryGun' || type === 'solarUltra' || (type === 'solarUfo' && occ > 0)) {
+        postSelect = { index: cand.attach, attach: type, attachOcc: occ };
       }
     }
     else this.stack.splice(cand.insert, 0, newItem(type));
     audio.click();
     this.rebuild(true);
+    if (postSelect) this.select(postSelect);
   }
 
   flashIncompatibleWarning(type) {
@@ -1556,10 +1566,37 @@ export class BuildScene {
         this.select({ index: firstAttachedIdx, attach: 'solarUltra' });
       }
     } else if (type === 'solarUfo' || type === 'solarPanel' || type === 'gunLaser' || type === 'waterCannon' || type === 'gunAcid' || type === 'gunElectric') {
-      // For solarUfo, prefer UFO saucers first, then battery packs
+      // For solarUfo, prefer UFO saucers first (1st straight set, then 2nd diagonal set up to 2 per saucer)
       if (type === 'solarUfo') {
         for (let i = 0; i < st.length; i++) {
-          if (isUfoPart(st[i].type) && !st[i].attach.includes(type)) { st[i].attach.push(type); placed = true; break; }
+          if (isUfoPart(st[i].type) && !st[i].attach.includes('solarUfo')) {
+            st[i].attach.push('solarUfo');
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          for (let i = 0; i < st.length; i++) {
+            const cnt = st[i].attach.filter((x) => x === 'solarUfo').length;
+            if (isUfoPart(st[i].type) && cnt < 2) {
+              st[i].attach.push('solarUfo');
+              audio.click();
+              this.rebuild(true);
+              this.select({ index: i, attach: 'solarUfo', attachOcc: 1 });
+              return;
+            }
+          }
+        }
+        if (!placed && st.some((it) => isUfoPart(it.type))) {
+          this.history.pop();
+          const existingIdx = st.findIndex((it) => isUfoPart(it.type) && it.attach.includes('solarUfo'));
+          if (existingIdx >= 0) {
+            const maxOcc = st[existingIdx].attach.filter((x) => x === 'solarUfo').length - 1;
+            this.select({ index: existingIdx, attach: 'solarUfo', attachOcc: Math.max(0, maxOcc) });
+          }
+          audio.click();
+          this.rebuild(true);
+          return;
         }
       }
       // For solarPanel / solarUfo, prefer battery packs next so it recharges battery energy
@@ -1632,7 +1669,7 @@ export class BuildScene {
     let o = hits[0].object;
     while (o && o.userData.index === undefined) o = o.parent;
     if (!o) { this.select(null); return; }
-    this.select({ index: o.userData.index, attach: o.userData.attach || null });
+    this.select({ index: o.userData.index, attach: o.userData.attach || null, attachOcc: o.userData.attachOcc ?? 0 });
     audio.click();
   }
 
@@ -1658,7 +1695,10 @@ export class BuildScene {
     }
     const selType = sel.attach || it.type;
     const def = PARTS[selType];
-    $('sel-name').textContent = def.name;
+    const isDiagSolar = sel.attach === 'solarUfo' && (sel.attachOcc ?? 0) > 0;
+    $('sel-name').textContent = isDiagSolar
+      ? `${def.name} (${tr('Bộ chéo', 'Diagonal')})`
+      : def.name;
     let descTxt = def.desc;
     if (def.thrustVac) {
       const cnt = sel.attach ? (def.count || 2) : 1;
@@ -1784,7 +1824,8 @@ export class BuildScene {
     const it = this.stack[sel.index];
     if (!it) return [0, 0, 0];
     if (sel.attach) {
-      return (it.attachRot && it.attachRot[sel.attach]) || [0, 0, 0];
+      const rotKey = (sel.attach === 'solarUfo' && (sel.attachOcc ?? 0) > 0) ? `${sel.attach}#${sel.attachOcc}` : sel.attach;
+      return (it.attachRot && (it.attachRot[rotKey] || it.attachRot[sel.attach])) || [0, 0, 0];
     }
     return it.rot || [0, 0, 0];
   }
@@ -1825,9 +1866,10 @@ export class BuildScene {
     };
 
     if (sel.attach) {
+      const rotKey = (sel.attach === 'solarUfo' && (sel.attachOcc ?? 0) > 0) ? `${sel.attach}#${sel.attachOcc}` : sel.attach;
       if (!it.attachRot) it.attachRot = {};
-      if (!it.attachRot[sel.attach]) it.attachRot[sel.attach] = [0, 0, 0];
-      const r = it.attachRot[sel.attach];
+      if (!it.attachRot[rotKey]) it.attachRot[rotKey] = [0, 0, 0];
+      const r = it.attachRot[rotKey];
       r[axisIdx] = norm(r[axisIdx] + delta);
     } else {
       if (!it.rot) it.rot = [0, 0, 0];
@@ -1851,8 +1893,9 @@ export class BuildScene {
     const it = this.stack[sel.index];
     if (!it) return;
     if (sel.attach) {
-      if (it.attachRot && it.attachRot[sel.attach]) {
-        it.attachRot[sel.attach] = [0, 0, 0];
+      const rotKey = (sel.attach === 'solarUfo' && (sel.attachOcc ?? 0) > 0) ? `${sel.attach}#${sel.attachOcc}` : sel.attach;
+      if (it.attachRot && it.attachRot[rotKey]) {
+        it.attachRot[rotKey] = [0, 0, 0];
       }
     } else {
       it.rot = [0, 0, 0];
@@ -1875,6 +1918,7 @@ export class BuildScene {
       let p = o;
       while (p && p.userData.index === undefined) p = p.parent;
       if (!p || p.userData.index !== sel.index || (p.userData.attach || null) !== sel.attach) return;
+      if (sel.attach && sel.attachOcc !== undefined && (p.userData.attachOcc ?? 0) !== sel.attachOcc) return;
       o.userData.origMat = o.material;
       let m = this.selMat.get(o.material);
       if (!m) { m = o.material.clone(); m.emissive = new THREE.Color(0x4fd8ff); m.emissiveIntensity = 0.35; this.selMat.set(o.material, m); }
@@ -1888,8 +1932,23 @@ export class BuildScene {
     this.pushHistory();
     if (sel.attach) {
       const a = this.stack[sel.index].attach;
-      a.splice(a.indexOf(sel.attach), 1);
-      if (this.stack[sel.index].attachRot) delete this.stack[sel.index].attachRot[sel.attach];
+      let rmIdx = -1;
+      if (sel.attachOcc !== undefined) {
+        let seen = 0;
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] === sel.attach) {
+            if (seen === sel.attachOcc) { rmIdx = i; break; }
+            seen++;
+          }
+        }
+      }
+      if (rmIdx < 0) rmIdx = a.indexOf(sel.attach);
+      if (rmIdx >= 0) a.splice(rmIdx, 1);
+      if (this.stack[sel.index].attachRot) {
+        const rotKey = (sel.attach === 'solarUfo' && (sel.attachOcc ?? 0) > 0) ? `${sel.attach}#${sel.attachOcc}` : sel.attach;
+        delete this.stack[sel.index].attachRot[rotKey];
+        if (!a.includes(sel.attach)) delete this.stack[sel.index].attachRot[sel.attach];
+      }
       if (isWeaponPart(sel.attach) && !a.some(isWeaponPart)) {
         const bgIdx = a.indexOf('batteryGun');
         if (bgIdx >= 0) {
@@ -1933,7 +1992,13 @@ export class BuildScene {
         if (!o.isMesh) return;
         let p = o;
         while (p && p.userData.index === undefined) p = p.parent;
-        if (p && p.userData.index === highlight.index && (p.userData.attach || null) === highlight.attach) o.material = this.holoMat;
+        if (
+          p && p.userData.index === highlight.index
+          && (p.userData.attach || null) === highlight.attach
+          && (highlight.attachOcc === undefined || (p.userData.attachOcc ?? 0) === highlight.attachOcc)
+        ) {
+          o.material = this.holoMat;
+        }
       });
     } else this.applyHighlight();
     const h = this.rocket.layout.height;

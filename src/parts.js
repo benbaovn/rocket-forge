@@ -15035,7 +15035,7 @@ export function buildPart(type) {
 }
 
 /** Positions for radial / side attachments (local to parent part) */
-export function radialPlacements(type) {
+export function radialPlacements(type, occ = 0) {
   if (type === 'fins' || type === 'legs') return [0, 1, 2, 3].map((i) => ({ angle: Math.PI / 4 + i * Math.PI / 2, dist: 0 }));
   if (type === 'gridfins') return [0, 1, 2, 3].map((i) => ({ angle: i * Math.PI / 2, dist: 0 }));
   if (type === 'wheelsRover') {
@@ -15059,8 +15059,9 @@ export function radialPlacements(type) {
     ];
   }
   if (type === 'solarUfo') {
+    const baseAngle = (occ % 2 === 1) ? (Math.PI / 4) : 0;
     return [0, 1, 2, 3].map((i) => ({
-      angle: Math.PI / 4 + i * (Math.PI / 2),
+      angle: baseAngle + i * (Math.PI / 2),
       dist: R - 0.05,
       offsetZ: 0,
     }));

@@ -291,11 +291,16 @@ export function sanitizeStack(stack) {
     if (Array.isArray(it.attach)) {
       const hasGun = it.attach.some(isWeaponPart);
       const hasGunBat = hasGun && !isBigBatteryPart(it.type) && it.attach.includes('batteryGun');
+      let solarUfoCount = 0;
       it.attach = it.attach.filter((a) => {
         if (vStack === 'boat' && (isWeaponPart(a) || a === 'batteryGun' || a === 'solarUltra')) return false;
         if (vStack === 'ufo' && (a === 'solarPanel' || a === 'batteryGun' || a === 'solarUltra')) return false;
         if (a === 'batteryGun' && (!hasGun || isBigBatteryPart(it.type))) return false;
         if (a === 'solarUltra' && !hasGunBat) return false;
+        if (a === 'solarUfo') {
+          solarUfoCount++;
+          if (solarUfoCount > 2) return false;
+        }
         const va = partVehicleType(a);
         return va === 'any' || va === vStack;
       });
@@ -834,10 +839,12 @@ function getGunPlacementCoords(itemType, defHeight, pY, gunType, pl) {
   const isSlsOrion = itemType === 'slsOrion' || itemType.startsWith('atlasV') || itemType.startsWith('f9') || itemType === 'fhStage2' || itemType.startsWith('proton') || itemType.startsWith('d4h') || itemType.startsWith('titan4');
   const effH = (itemType === 'saturnApollo' || itemType === 'apollo11CM' || itemType === 'soyuzNose' || itemType === 'n1Tower' || itemType === 'buranNose' || itemType === 'energiaNose' || itemType === 'cz5Fairing' || itemType === 'ariane5Fairing' || itemType === 'slsOrion' || itemType === 'atlasVFairing' || itemType === 'fhFairing' || itemType === 'f9Dragon' || itemType === 'shuttleNose' || itemType === 'protonFairing' || itemType === 'd4hFairing' || itemType === 'titan4Fairing' || itemType === 'starshipNose') ? 3.6 : defHeight;
   const effDist = isUfo ? (ufoDist * ufoRadRatio) : isBuran ? 1.98 : isCz5 ? 1.36 : isSlsOrion ? 1.06 : pl.dist;
+  const effAngle = isUfo ? (pl.angle + Math.PI / 8) : pl.angle;
   return {
-    posX: Math.cos(pl.angle) * effDist,
+    posX: Math.cos(effAngle) * effDist,
     posY: isUfo ? (pY + ufoY * ufoHScale) : (pY + effH * hFrac),
-    posZ: Math.sin(pl.angle) * effDist + (pl.offsetZ || 0),
+    posZ: Math.sin(effAngle) * effDist + (pl.offsetZ || 0),
+    rotY: isUfo ? -effAngle : undefined,
   };
 }
 
@@ -936,11 +943,15 @@ export function buildRocket(stack) {
     if (p.item.type === 'dockPort' && !dockPort) dockPort = { obj, seg: k };
     const att = p.item.attach;
     const isBoatItem = stackVehicleType(stack) === 'boat' || p.item.type.includes('Boat');
+    const occMap = {};
     for (const a of att) {
       if (!PARTS[a]) continue;
       if (isBoatItem && (isWeaponPart(a) || a === 'batteryGun')) continue;
-      const attRot = (p.item.attachRot && p.item.attachRot[a]) || [0, 0, 0];
-      let places = radialPlacements(a);
+      const occ = occMap[a] || 0;
+      occMap[a] = occ + 1;
+      const rotKey = (a === 'solarUfo' && occ > 0) ? `${a}#${occ}` : a;
+      const attRot = (p.item.attachRot && (p.item.attachRot[rotKey] || p.item.attachRot[a])) || [0, 0, 0];
+      let places = radialPlacements(a, occ);
       // avoid overlaps when several radial types share one tank
       if (a === 'fins' && att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: i * Math.PI / 2, dist: 0 }));
       if (a === 'gridfins' && att.includes('booster') && !att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: Math.PI / 4 + i * Math.PI / 2, dist: 0 }));
@@ -953,13 +964,15 @@ export function buildRocket(stack) {
             const ao = buildPart('batteryGun');
             ao.userData.index = p.index;
             ao.userData.attach = 'batteryGun';
+            ao.userData.attachOcc = occ;
             ao.userData.itemId = p.item.id;
-            const { posX, posY, posZ } = getGunPlacementCoords(p.item.type, partH, p.y, gType, pl);
+            const { posX, posY, posZ, rotY } = getGunPlacementCoords(p.item.type, partH, p.y, gType, pl);
             const pivot = new THREE.Group();
             pivot.position.set(posX, posY, posZ);
-            pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
+            pivot.rotation.y = rotY !== undefined ? rotY : (pl.rotY !== undefined ? pl.rotY : -pl.angle);
             pivot.userData.index = p.index;
             pivot.userData.attach = 'batteryGun';
+            pivot.userData.attachOcc = occ;
             pivot.userData.itemId = p.item.id;
             ao.rotation.set(attRot[0], attRot[1], attRot[2]);
             pivot.add(ao);
@@ -978,13 +991,15 @@ export function buildRocket(stack) {
             const ao = buildPart('solarUltra');
             ao.userData.index = p.index;
             ao.userData.attach = 'solarUltra';
+            ao.userData.attachOcc = occ;
             ao.userData.itemId = p.item.id;
-            const { posX, posY, posZ } = getGunPlacementCoords(p.item.type, partH, p.y, gType, pl);
+            const { posX, posY, posZ, rotY } = getGunPlacementCoords(p.item.type, partH, p.y, gType, pl);
             const pivot = new THREE.Group();
             pivot.position.set(posX, posY, posZ);
-            pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
+            pivot.rotation.y = rotY !== undefined ? rotY : (pl.rotY !== undefined ? pl.rotY : -pl.angle);
             pivot.userData.index = p.index;
             pivot.userData.attach = 'solarUltra';
+            pivot.userData.attachOcc = occ;
             pivot.userData.itemId = p.item.id;
             ao.rotation.set(attRot[0], attRot[1], attRot[2]);
             pivot.add(ao);
@@ -998,8 +1013,10 @@ export function buildRocket(stack) {
         const ao = buildPart(a);
         ao.userData.index = p.index;
         ao.userData.attach = a;
+        ao.userData.attachOcc = occ;
         ao.userData.itemId = p.item.id;
         let posX = 0, posY = p.y, posZ = 0;
+        let customRotY;
         if (a === 'fins') {
           posX = 0; posY = p.y + 0.05; posZ = 0;
         } else if (a === 'legs') {
@@ -1041,6 +1058,7 @@ export function buildRocket(stack) {
         } else if (a === 'gunLaser' || a === 'waterCannon' || a === 'gunAcid' || a === 'gunElectric') {
           const gc = getGunPlacementCoords(p.item.type, partH, p.y, a, pl);
           posX = gc.posX; posY = gc.posY; posZ = gc.posZ;
+          if (gc.rotY !== undefined) customRotY = gc.rotY;
           if (isUfoPart(p.item.type) && (p.def.ufoScale || 1) > 1) {
             ao.scale.setScalar(1 + ((p.def.ufoScale || 1) - 1) * 0.55);
           }
@@ -1086,9 +1104,10 @@ export function buildRocket(stack) {
 
         const pivot = new THREE.Group();
         pivot.position.set(posX, posY, posZ);
-        pivot.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
+        pivot.rotation.y = customRotY !== undefined ? customRotY : (pl.rotY !== undefined ? pl.rotY : -pl.angle);
         pivot.userData.index = p.index;
         pivot.userData.attach = a;
+        pivot.userData.attachOcc = occ;
         pivot.userData.itemId = p.item.id;
 
         ao.rotation.set(attRot[0], attRot[1], attRot[2]);

@@ -1488,52 +1488,52 @@ function buildWheelsRover() {
   };
 
   // Upper tubular shock-tower hoop anchored solidly into chassisRover
-  const shockTop = [-0.01, 0.34, 0];
-  const shockBot = [0.35, -0.29, 0];
-  addLink([-0.15, 0.02, 0.10], shockTop, 0.022, rm.crimson);
-  addLink([-0.15, 0.02, -0.10], shockTop, 0.022, rm.crimson);
-  addLink([-0.22, 0.34, 0], shockTop, 0.024, rm.goldFoil);
-  g.add(mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.07, 14).rotateX(Math.PI / 2), rm.goldFoil, ...shockTop));
-  g.add(mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.09, 12).rotateX(Math.PI / 2), rm.cyberCyan, ...shockTop));
+  const shockTop = [-0.04, 0.47, 0];
+  const shockBot = [0.49, -0.485, 0];
+  addLink([-0.18, 0.04, 0.11], shockTop, 0.023, rm.crimson);
+  addLink([-0.18, 0.04, -0.11], shockTop, 0.023, rm.crimson);
+  addLink([-0.24, 0.40, 0], shockTop, 0.025, rm.goldFoil);
+  g.add(mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.075, 14).rotateX(Math.PI / 2), rm.goldFoil, ...shockTop));
+  g.add(mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.095, 12).rotateX(Math.PI / 2), rm.cyberCyan, ...shockTop));
 
   // Long-travel off-road dual-tube lower A-arm wishbone & upper control link
-  addLink([-0.06, -0.02, 0.11], [0.36, -0.34, 0.04], 0.028, rm.crimson);
-  addLink([-0.06, -0.02, -0.11], [0.36, -0.34, -0.04], 0.028, rm.crimson);
-  addLink([0.16, -0.18, 0.08], [0.16, -0.18, -0.08], 0.020, rm.goldFoil);
-  addLink([-0.06, 0.11, 0], [0.34, -0.21, 0], 0.019, MAT.silver);
+  addLink([-0.06, -0.02, 0.12], [0.50, -0.54, 0.045], 0.029, rm.crimson);
+  addLink([-0.06, -0.02, -0.12], [0.50, -0.54, -0.045], 0.029, rm.crimson);
+  addLink([0.22, -0.28, 0.085], [0.22, -0.28, -0.085], 0.021, rm.goldFoil);
+  addLink([-0.06, 0.14, 0], [0.48, -0.38, 0], 0.020, MAT.silver);
 
   // CNC upright steering knuckle & lower clevis mount
-  g.add(mesh(new THREE.BoxGeometry(0.055, 0.18, 0.085), rm.obsidian, 0.36, -0.28, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.14, 14).rotateZ(Math.PI / 2), MAT.silver, 0.41, -0.34, 0));
-  g.add(mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.065, 12).rotateX(Math.PI / 2), rm.goldFoil, ...shockBot));
+  g.add(mesh(new THREE.BoxGeometry(0.058, 0.20, 0.088), rm.obsidian, 0.50, -0.46, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.029, 0.029, 0.14, 14).rotateZ(Math.PI / 2), MAT.silver, 0.55, -0.54, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.030, 0.030, 0.068, 12).rotateX(Math.PI / 2), rm.goldFoil, ...shockBot));
 
-  // 3x longer (~0.726m vs 0.24m), ~30°-tilted long-travel helical coilover spring & piggyback shock
+  // 1.5x longer (~1.092m vs 0.726m), ~29°-tilted ultra-long-travel helical coilover spring & piggyback shock
   const vBot = new THREE.Vector3(...shockBot);
   const vTop = new THREE.Vector3(...shockTop);
   const shockVec = vTop.clone().sub(vBot);
-  const shockLen = shockVec.length(); // ~0.726m (3x the original 0.24m shock)
+  const shockLen = shockVec.length(); // ~1.092m (1.5x of 0.726m = 4.55x of original 0.24m)
   const strutGrp = new THREE.Group();
   strutGrp.position.copy(vBot).addScaledVector(shockVec, 0.5);
   strutGrp.quaternion.setFromUnitVectors(upAxis, shockVec.clone().normalize());
 
   // Full-length chrome shock piston rod + upper anodized damper body + piggyback reservoir
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.018, 0.018, shockLen, 14), MAT.silver, 0, 0, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.031, 0.031, shockLen * 0.42, 16), rm.crimson, 0, shockLen * 0.22, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.020, 0.020, 0.20, 14), rm.goldFoil, 0.048, shockLen * 0.24, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.028, 14), rm.cyberCyan, 0.048, shockLen * 0.24 + 0.10, 0));
-  strutGrp.add(mesh(new THREE.BoxGeometry(0.036, 0.032, 0.028), rm.obsidian, 0.024, shockLen * 0.31, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.019, 0.019, shockLen, 14), MAT.silver, 0, 0, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.032, 0.032, shockLen * 0.42, 16), rm.crimson, 0, shockLen * 0.22, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.28, 14), rm.goldFoil, 0.050, shockLen * 0.24, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.023, 0.023, 0.032, 14), rm.cyberCyan, 0.050, shockLen * 0.24 + 0.14, 0));
+  strutGrp.add(mesh(new THREE.BoxGeometry(0.038, 0.034, 0.030), rm.obsidian, 0.025, shockLen * 0.31, 0));
 
   // Upper, tender-divider & lower CNC spring perch collars
-  const springHalf = 0.275; // 0.55m helical coil span (~3.9x the original 0.14m coil stack)
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.026, 20), rm.cyberCyan, 0, springHalf + 0.01, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.026, 20), rm.cyberCyan, 0, -springHalf - 0.01, 0));
-  strutGrp.add(mesh(new THREE.CylinderGeometry(0.053, 0.053, 0.018, 20), rm.obsidian, 0, 0.08, 0));
+  const springHalf = 0.415; // 0.83m helical coil span (1.51x of 0.55m)
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.028, 20), rm.cyberCyan, 0, springHalf + 0.012, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.028, 20), rm.cyberCyan, 0, -springHalf - 0.012, 0));
+  strutGrp.add(mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.020, 20), rm.obsidian, 0, 0.13, 0));
 
-  // Continuous 3D spiral helical coil spring (12.5 turns) in glowing Plasma-Gold
-  const turns = 12.5;
+  // Continuous 3D spiral helical coil spring (17.5 turns) in glowing Plasma-Gold
+  const turns = 17.5;
   const coilPts = [];
-  const coilSteps = 150;
-  const coilR = 0.047;
+  const coilSteps = 210;
+  const coilR = 0.049;
   for (let i = 0; i <= coilSteps; i++) {
     const t = i / coilSteps;
     const ang = t * turns * Math.PI * 2;
@@ -1541,13 +1541,13 @@ function buildWheelsRover() {
     coilPts.push(new THREE.Vector3(Math.cos(ang) * coilR, y, Math.sin(ang) * coilR));
   }
   const helixCurve = new THREE.CatmullRomCurve3(coilPts);
-  const helixGeo = new THREE.TubeGeometry(helixCurve, 160, 0.0135, 10, false);
+  const helixGeo = new THREE.TubeGeometry(helixCurve, 220, 0.014, 10, false);
   strutGrp.add(new THREE.Mesh(helixGeo, rm.plasmaGold));
   g.add(strutGrp);
 
-  // Wheel hub & rotating wheel group positioned at the bottom of the long-travel suspension
+  // Wheel hub & rotating wheel group positioned at the bottom of the ultra-long-travel suspension
   const wheelGroup = new THREE.Group();
-  wheelGroup.position.set(0.46, -0.34, 0);
+  wheelGroup.position.set(0.60, -0.54, 0);
   g.add(wheelGroup);
   g.userData.wheelGroup = wheelGroup;
 

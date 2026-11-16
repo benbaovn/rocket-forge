@@ -1921,7 +1921,7 @@ export class BuildScene {
     }
     this.rocket = buildRocket(stack);
     const hasBottomRoverWheels = !!(stack.length && stack[stack.length - 1]?.attach?.includes('wheelsRover'));
-    this.rocket.root.position.y = hasBottomRoverWheels ? 0.42 : 0;
+    this.rocket.root.position.y = hasBottomRoverWheels ? 0.62 : 0;
     this.rocketHolder.add(this.rocket.root);
     if (highlight) {
       this.rocket.root.traverse((o) => {
@@ -1974,6 +1974,7 @@ export class BuildScene {
     this.syncRocketNameUI();
     const vType = stackVehicleType(this.stack);
     const hasParts = this.stack.length > 0;
+    const isRoverStats = hasParts && vType === 'rover';
     $('st-mass').textContent = st.totalMass.toFixed(1) + ' t';
     $('st-height').textContent = st.height.toFixed(1) + ' m';
     const slTons = hasParts ? (st.liftoffThrustTons || 0) : 0;
@@ -1982,6 +1983,13 @@ export class BuildScene {
     const thrustEl = $('st-thrust');
     const thrustSubEl = $('st-thrust-sub');
     const thrustBoxEl = $('st-thrust-box');
+    const twrBoxEl = $('st-twr-box');
+    const dvBoxEl = $('st-dv-box');
+    const dvTargetEl = $('st-dv-target');
+    if (thrustBoxEl) thrustBoxEl.classList.toggle('hidden', isRoverStats);
+    if (twrBoxEl) twrBoxEl.classList.toggle('hidden', isRoverStats);
+    if (dvBoxEl) dvBoxEl.classList.toggle('hidden', isRoverStats);
+    if (dvTargetEl) dvTargetEl.classList.toggle('hidden', isRoverStats);
     if (thrustEl) {
       thrustEl.textContent = fmtTons(slTons);
       if (!hasParts || vType === 'rover') {
@@ -2032,6 +2040,9 @@ export class BuildScene {
     $('st-dv').textContent = fmtDv(st.totalDv);
     $('dv-fill').style.width = Math.min(100, (st.totalDv / 9000) * 100) + '%';
     $('stage-list').innerHTML = st.stages.map((s, idx) => {
+      if (isRoverStats) {
+        return `<div class="stage-row"><span class="sn">S${s.num}${s.batteryFuel > 0 ? ' 🔋' : ''}${s.solarOnBattery ? '☀️' : ''}${s.hasGunBattery ? ' 🔋🔫' : ''}</span><span>${s.batteryFuel > 0 ? `🔋 ${Math.round(s.batteryFuel)}t` : '🚙 Rover'}</span><span>${s.solarOnBattery ? `☀️ ${tr('Tự sạc', 'Solar')}` : '4×4'}</span></div>`;
+      }
       const stgTons = idx === 0 ? s.thrustSLTons : s.thrustTons;
       const stgKN = Math.round(stgTons * G0).toLocaleString('en-US');
       const stgTitle = `🔥 ${tr('Lực đẩy', 'Thrust')} S${s.num}: ${fmtTons(stgTons)} (${stgKN} kN)`;

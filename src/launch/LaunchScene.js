@@ -9851,14 +9851,19 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     // Live Aliens near the player vessel (when in space or at another planet/moon)
     const E = P.east, U = P.up;
     let hasLiveKingAlien = false;
+    let hasLiveQueenAlien = false;
     const liveAlienMapObjs = [];
     for (let idx = 0; idx < (this.aliens || []).length; idx++) {
       const a = this.aliens[idx];
       if (!a || a.dead) continue;
       const isKingAlien = a.tier === 'king';
+      const isQueenAlien = a.tier === 'queen';
       if (isKingAlien) {
         if (hasLiveKingAlien) continue;
         hasLiveKingAlien = true;
+      } else if (isQueenAlien) {
+        if (hasLiveQueenAlien) continue;
+        hasLiveQueenAlien = true;
       }
       const rx = a.relPos.x, ry = a.relPos.y, rz = a.relPos.z;
       const relX = E.x * rx + U.x * ry;
@@ -9874,6 +9879,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           ? tr('Alien Vua Khổng Lồ · Siêu Trùm 1 Tỷ km', 'Colossal Alien King · 1B km Mega-Boss')
           : tr('UFO Vua · Siêu Trùm 1 Tỷ km', 'King UFO · 1B km Mega-Boss');
         seenKingOnMap = true;
+      } else if (isQueenAlien) {
+        aLabel = seenQueenOnMap
+          ? tr('Alien Hoàng Hậu Khổng Lồ · Siêu Trùm 1 Tỷ km', 'Colossal Alien Queen · 1B km Mega-Boss')
+          : tr('UFO Hoàng Hậu · Siêu Trùm 1 Tỷ km', 'Queen UFO · 1B km Mega-Boss');
+        seenQueenOnMap = true;
       }
       liveAlienMapObjs.push({
         id: a.id,
@@ -9886,6 +9896,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         isLiveAlien: true,
         tier: a.tier || 'scout',
         isKingUfo: isKingAlien,
+        isQueenUfo: isQueenAlien,
         isRoyalAlien: !!a.isRoyal,
         alt: Math.max(0, P.alt + ry),
         speedOrb: P.speedOrb,
@@ -10017,7 +10028,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       };
     });
 
-    const others = [...royalKingMapObjs, ...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
+    const others = [...royalMapObjs, ...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
     const _sunP = { x: 0, y: 0, z: 0 };
     bodyPos('sun', t, _sunP);

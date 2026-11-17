@@ -856,6 +856,20 @@ export class BuildScene {
     return (curM && curM.id !== 'free' && curM.category) ? curM.category : 'rocket';
   }
 
+  /** Auto-switch active mission whenever the VAB vehicle changes to a different category */
+  syncMissionWithStack() {
+    const vType = stackVehicleType(this.stack);
+    if (!vType) return;
+    const targetCat = (vType === 'rover' || vType === 'plane' || vType === 'boat') ? vType : 'rocket';
+    const curM = missionById(this.missionId || 'free');
+    const curCat = curM ? (curM.category || 'rocket') : 'rocket';
+    if (curCat === targetCat) return;
+    const firstMission = MISSIONS.find((m) => (m.category || 'rocket') === targetCat) || MISSIONS[0];
+    if (firstMission) {
+      this.setMission(firstMission.id, false);
+    }
+  }
+
   renderMissionCards() {
     const cards = $('mission-cards');
     if (!cards) return;
@@ -2041,6 +2055,7 @@ export class BuildScene {
     }
     this.desiredTarget.set(0, Math.max(3, h * 0.45), 0);
     if (commit) {
+      this.syncMissionWithStack();
       this.saveStack();
       this.updateStats();
       this.fitTime = 0.8;

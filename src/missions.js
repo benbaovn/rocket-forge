@@ -357,9 +357,10 @@ export const MISSIONS = [
   },
   // ================= ROVER MISSIONS (Sorted Easiest -> Hardest) =================
   {
-    id: 'rover_free', icon: '🚙', name: 'Lăn bánh xe tự do', preset: 'Xe địa hình Rover 4x4',
+    id: 'rover_free', icon: '🚙', name: 'Lăn bánh xe tự do', nameEn: 'Free Rover Roaming', preset: 'Xe địa hình Rover 4x4',
     category: 'rover', noAutopilot: true,
     desc: 'Tự do điều khiển Xe địa hình Rover 4x4 khám phá bề mặt hành tinh mà không bị giới hạn mục tiêu (Không có chế độ Lái tự động).',
+    descEn: 'Free-roam driving with the 4x4 Rover without mission constraints (No Autopilot).',
     objectives: [],
   },
   {
@@ -394,9 +395,10 @@ export const MISSIONS = [
   },
   // ================= BOAT MISSIONS (Sorted Easiest -> Hardest) =================
   {
-    id: 'boat_free', icon: '🛥️', name: 'Bơi tự do', preset: 'Canô lướt sóng siêu tốc',
+    id: 'boat_free', icon: '🛥️', name: 'Bơi tự do', nameEn: 'Free Boat Roaming', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat',
     desc: 'Tự do lái thuyền khám phá đại dương bao la.',
+    descEn: 'Free-roam sailing across the vast ocean.',
     objectives: [],
   },
   {
@@ -482,9 +484,10 @@ export const MISSIONS = [
   },
   // ================= AIRPLANE AIRPORT LANDING MISSIONS (1 -> 5 Airports) =================
   {
-    id: 'plane_free', icon: '🛫', name: 'Bay tự do', preset: 'Tiêm kích phản lực F-22',
+    id: 'plane_free', icon: '🛫', name: 'Bay tự do', nameEn: 'Free Flight Roaming', preset: 'Tiêm kích phản lực F-22',
     category: 'plane',
     desc: 'Tự do bay lượn trên bầu trời.',
+    descEn: 'Free-roam flight in the open sky.',
     objectives: [],
   },
   {

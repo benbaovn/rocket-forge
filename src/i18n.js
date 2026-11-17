@@ -581,6 +581,42 @@ const MISSION_I18N = {
       objs: {},
     },
   },
+  rover_free: {
+    vi: {
+      name: 'Lăn bánh xe tự do',
+      desc: 'Tự do điều khiển Xe địa hình Rover 4x4 khám phá bề mặt hành tinh mà không bị giới hạn mục tiêu (Không có chế độ Lái tự động).',
+      objs: {},
+    },
+    en: {
+      name: 'Free Rover Roaming',
+      desc: 'Free-roam driving with the 4x4 Rover without mission constraints (No Autopilot).',
+      objs: {},
+    },
+  },
+  boat_free: {
+    vi: {
+      name: 'Bơi tự do',
+      desc: 'Tự do lái thuyền khám phá đại dương bao la.',
+      objs: {},
+    },
+    en: {
+      name: 'Free Boat Roaming',
+      desc: 'Free-roam sailing across the vast ocean.',
+      objs: {},
+    },
+  },
+  plane_free: {
+    vi: {
+      name: 'Bay tự do',
+      desc: 'Tự do bay lượn trên bầu trời.',
+      objs: {},
+    },
+    en: {
+      name: 'Free Flight Roaming',
+      desc: 'Free-roam flight in the open sky.',
+      objs: {},
+    },
+  },
   alien100: {
     vi: {
       name: 'Tiêu diệt 100 Alien (Không tự lái)',

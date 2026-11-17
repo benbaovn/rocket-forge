@@ -500,7 +500,7 @@ export function createSunSphere() {
     const px = Math.sin(ang) * r, py = Math.cos(ang) * r;
     dummy.position.set(px, py, zOff);
     dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-    const sz = (rnd() < 0.06 ? 180e3 + rnd() * 140e3 : 45e3 + Math.pow(rnd(), 2.0) * 110e3);
+    const sz = (rnd() < 0.06 ? 180e3 + rnd() * 140e3 : 45e3 + Math.pow(rnd(), 2.0) * 110e3) * 3;
     dummy.scale.set(sz * (0.75 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     astMesh.setMatrixAt(i, dummy.matrix);
@@ -530,7 +530,7 @@ export function createSunSphere() {
     const px = Math.sin(ang) * r, py = Math.cos(ang) * r;
     dummy.position.set(px, py, zOff);
     dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-    const sz = (rnd() < 0.08 ? 280e3 + rnd() * 240e3 : 75e3 + Math.pow(rnd(), 2.0) * 180e3);
+    const sz = (rnd() < 0.08 ? 280e3 + rnd() * 240e3 : 75e3 + Math.pow(rnd(), 2.0) * 180e3) * 3;
     dummy.scale.set(sz * (0.75 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     kboMesh.setMatrixAt(i, dummy.matrix);
@@ -580,7 +580,7 @@ export function createSunSphere() {
     }
     dummy.position.set(x, y, z);
     dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-    const sz = rnd() < 0.08 ? 420e3 + rnd() * 340e3 : 110e3 + Math.pow(rnd(), 1.8) * 260e3;
+    const sz = (rnd() < 0.08 ? 420e3 + rnd() * 340e3 : 110e3 + Math.pow(rnd(), 1.8) * 260e3) * 3;
     dummy.scale.set(sz * (0.9 + rnd() * 0.5), sz * (0.65 + rnd() * 0.45), sz * (0.75 + rnd() * 0.5));
     dummy.updateMatrix();
     oortMesh.setMatrixAt(i, dummy.matrix);
@@ -612,6 +612,8 @@ export function createSunSphere() {
 /**
  * Procedural 3D planet / moon sphere for Mars, Venus, Mercury, Phobos, or Deimos (rendered in space pass layer 1).
  */
+const ROCK_SIZE_MUL = 3; // Belt rocks rendered 3x bigger
+
 function initInstancedBeltRockMeta(im, beltKind, localPos, radii, isMacro = false) {
   const count = im.count;
   const origMatrices = new Float32Array(im.instanceMatrix.array);
@@ -1493,7 +1495,7 @@ export function createCeresAsteroidBelt() {
         // Low-altitude shootable boulders hovering 280m - 2600m above Ceres
         x = (rnd() - 0.5) * 8500;
         z = (rnd() - 0.5) * 4200;
-        y = 280 + Math.pow(rnd(), 1.15) * 2320;
+        y = 520 + Math.pow(rnd(), 1.15) * 2320;
         sz = 18 + Math.pow(rnd(), 1.5) * 56;
       } else {
         x = (rnd() - 0.5) * 32000;
@@ -1502,6 +1504,7 @@ export function createCeresAsteroidBelt() {
         y = 2600 + Math.pow(rnd(), 1.35) * 9200 - archDrop;
         sz = rnd() < 0.08 ? 85 + rnd() * 115 : 16 + Math.pow(rnd(), 1.8) * 64;
       }
+      sz *= ROCK_SIZE_MUL;
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
       dummy.scale.set(
@@ -1560,7 +1563,7 @@ export function createKuiperBeltCanopy() {
         // Low-altitude shootable icy/tholin boulders hovering 280m - 2800m overhead
         x = (rnd() - 0.5) * 8500;
         z = (rnd() - 0.5) * 4200;
-        y = 280 + Math.pow(rnd(), 1.15) * 2520;
+        y = 520 + Math.pow(rnd(), 1.15) * 2520;
         sz = 18 + Math.pow(rnd(), 1.5) * 58;
       } else {
         x = (rnd() - 0.5) * 34000;
@@ -1569,6 +1572,7 @@ export function createKuiperBeltCanopy() {
         y = 2800 + Math.pow(rnd(), 1.35) * 9600 - archDrop;
         sz = rnd() < 0.08 ? 90 + rnd() * 120 : 18 + Math.pow(rnd(), 1.8) * 68;
       }
+      sz *= ROCK_SIZE_MUL;
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
       dummy.scale.set(
@@ -1632,16 +1636,16 @@ export function createBeltSpaceField(beltKind = 'asteroid') {
       const cosPhi = (rnd() - 0.5) * 1.35;
       const sinPhi = Math.sqrt(Math.max(0.04, 1 - cosPhi * cosPhi));
       const r = i < 55
-        ? (52 + Math.pow(rnd(), 0.9) * 850)
+        ? (170 + Math.pow(rnd(), 0.9) * 1100)
         : (650 + Math.pow(rnd(), 0.85) * 13800);
       const x = r * sinPhi * Math.cos(theta);
       const y = r * cosPhi;
       const z = r * sinPhi * Math.sin(theta);
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-      const sz = i < 55
+      const sz = ROCK_SIZE_MUL * (i < 55
         ? (6 + Math.pow(rnd(), 1.5) * 28)
-        : (rnd() < 0.09 ? 70 + rnd() * 95 : 14 + Math.pow(rnd(), 1.8) * 54);
+        : (rnd() < 0.09 ? 70 + rnd() * 95 : 14 + Math.pow(rnd(), 1.8) * 54));
       dummy.scale.set(
         sz * (0.80 + rnd() * 0.50),
         sz * (0.62 + rnd() * 0.42),
@@ -1709,16 +1713,16 @@ export function createOortCloudCanopy() {
       const cosPhi = 2 * rnd() - 1;
       const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
       const r = i < 55
-        ? (52 + Math.pow(rnd(), 0.9) * 880)
+        ? (170 + Math.pow(rnd(), 0.9) * 1150)
         : (320 + Math.pow(rnd(), 0.75) * 16500);
       const x = r * sinPhi * Math.cos(theta);
       const y = r * cosPhi;
       const z = r * sinPhi * Math.sin(theta);
       dummy.position.set(x, y, z);
       dummy.rotation.set(rnd() * Math.PI * 2, rnd() * Math.PI * 2, rnd() * Math.PI * 2);
-      const sz = i < 55
+      const sz = ROCK_SIZE_MUL * (i < 55
         ? (6 + Math.pow(rnd(), 1.5) * 26)
-        : (rnd() < 0.09 ? 65 + rnd() * 95 : 12 + Math.pow(rnd(), 1.8) * 52);
+        : (rnd() < 0.09 ? 65 + rnd() * 95 : 12 + Math.pow(rnd(), 1.8) * 52));
       dummy.scale.set(
         sz * (0.95 + rnd() * 0.55),
         sz * (0.62 + rnd() * 0.42),

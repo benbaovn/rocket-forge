@@ -9801,6 +9801,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.sanitizeSpaceObjectsForSingleUfoKing();
 
     let seenKingOnMap = activeIsUfoKing;
+    let seenQueenOnMap = false;
     const liveOthers = this.vessels
       .filter((v) => v !== P && !v.dead && !v.crashed && !v.archived)
       .map((v) => {
@@ -9939,6 +9940,33 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         deletable: false,
       });
     }
+    if (!this.flags?.killQueen && !hasLiveQueenAlien) {
+      const sunPhiQ = Math.atan2(SUN_ECI.x, SUN_ECI.y) + 0.35;
+      const rQueen = R_E + (this.startAlt || 0) + 1000000000 * 1000;
+      const queenLabel = seenQueenOnMap
+        ? tr('Alien Hoàng Hậu Khổng Lồ · 1.000.000.000 km (90.500 HP)', 'Colossal Alien Queen · 1,000,000,000 km (90,500 HP)')
+        : tr('UFO Hoàng Hậu · 1.000.000.000 km (90.500 HP)', 'Queen UFO · 1,000,000,000 km (90,500 HP)');
+      seenQueenOnMap = true;
+      royalKingMapObjs.push({
+        id: 'alien_queen_boss',
+        x: Math.sin(sunPhiQ) * rQueen,
+        y: Math.cos(sunPhiQ) * rQueen,
+        z: 0,
+        alt: 1000000000 * 1000,
+        speedOrb: 18062,
+        beta: -t * 0.2,
+        ref: 'earth',
+        kind: 'alien',
+        tier: 'queen',
+        isQueenUfo: true,
+        isRoyalAlien: true,
+        isRoyalDomainMarker: true,
+        name: queenLabel,
+        color: '#f472b6',
+        el: null,
+        deletable: false,
+      });
+    }
 
     // Solar System Alien Patrols (stationed in outer space & around planets/moons; more Aliens the further from Earth)
     if (!this.mapAlienFleet) {
@@ -10028,7 +10056,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       };
     });
 
-    const others = [...royalMapObjs, ...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
+    const others = [...royalKingMapObjs, ...liveOthers, ...persistedOthers, ...liveAlienMapObjs, ...patrolAlienObjs];
     const refLabel = (BODIES[P.ref] || BODIES.earth).label;
     const _sunP = { x: 0, y: 0, z: 0 };
     bodyPos('sun', t, _sunP);

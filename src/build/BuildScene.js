@@ -1314,11 +1314,12 @@ export class BuildScene {
   }
 
   // ------------------------------------------------------------------ drag & drop
-  /** choose a mission; optionally load its recommended rocket */
+  /** choose a mission; auto-convert craft when switching mission vehicle category */
   setMission(id, loadPreset = false) {
     const m = missionById(id);
     this.missionId = m.id;
     this.app.missionId = m.id;
+    this.missionCategory = m.category || 'rocket';
     const done = isMissionCompleted(m.id);
     const nm = document.getElementById('mission-name');
     if (nm) nm.textContent = done ? `${m.name} ✔` : m.name;
@@ -1330,15 +1331,42 @@ export class BuildScene {
     document.querySelectorAll('#mission-cards .mission-card').forEach((el) => {
       el.classList.toggle('active', el.dataset.id === m.id);
     });
-    if (loadPreset && m.preset && PRESETS[m.preset]) {
-      this.pushHistory();
-      this.stack = stackFromTypes(PRESETS[m.preset]);
-      if (!this.rocketNameCustom) {
-        const presetLabel = (PRESET_LABELS[m.preset]?.[getLang()] || m.preset).replace(/\s*\([^)]*\)\s*$/, '').trim();
-        this.setRocketName(presetLabel, false);
+    if (loadPreset) {
+      const defaultCategoryPresets = {
+        rocket: 'Tên lửa Tốt Nhất (2 Tầng Siêu Cấp)',
+        rover: 'Xe địa hình Rover 4x4',
+        plane: 'Tiêm kích phản lực F-22',
+        boat: 'Canô lướt sóng siêu tốc',
+      };
+      const mCat = m.category || 'rocket';
+      const curVType = stackVehicleType(this.stack);
+      const curCat = (curVType === 'rover' || curVType === 'plane' || curVType === 'boat')
+        ? curVType
+        : (curVType === 'rocket' || curVType === 'ufo')
+          ? 'rocket'
+          : null;
+      const categoryChanged = curCat !== mCat;
+
+      let targetPreset = null;
+      if (categoryChanged) {
+        targetPreset = (m.preset && PRESETS[m.preset]) ? m.preset : defaultCategoryPresets[mCat];
+      } else if (curVType === 'rocket' && m.preset && PRESETS[m.preset]) {
+        targetPreset = m.preset;
+      } else if ((curVType === 'rover' || curVType === 'plane' || curVType === 'boat') && !computeStats(this.stack).canLaunch) {
+        targetPreset = (m.preset && PRESETS[m.preset]) ? m.preset : defaultCategoryPresets[mCat];
       }
-      this.select(null);
-      this.rebuild(true);
+
+      if (targetPreset && PRESETS[targetPreset]) {
+        this.pushHistory();
+        this.stack = stackFromTypes(PRESETS[targetPreset]);
+        if (categoryChanged || !this.rocketNameCustom) {
+          const presetLabel = (PRESET_LABELS[targetPreset]?.[getLang()] || targetPreset).replace(/\s*\([^)]*\)\s*$/, '').trim();
+          this.setRocketName(presetLabel, false);
+        }
+        this.incompatWarning = null;
+        this.select(null);
+        this.rebuild(true);
+      }
     }
   }
 

@@ -7572,7 +7572,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         const i3 = i * 3;
         tmp.set(meta.localPos[i3], meta.localPos[i3 + 1], meta.localPos[i3 + 2]).applyMatrix4(im.matrixWorld);
         const dist = tmp.distanceTo(pWorld);
-        if (dist < 8 || dist > 18000) continue;
+        if (dist < 8 || dist > 180000) continue;
         if (dist < bestAnyDist) {
           bestAnyDist = dist;
           bestAny = { im, index: i, radius: meta.radii[i] || 24, beltKind: meta.beltKind, isMacro: false };
@@ -7837,11 +7837,11 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         rawRockPos.z += (Math.random() - 0.5) * rJit;
         const rawDiff = rawRockPos.clone().sub(startPos);
         const rawDist = Math.max(1, rawDiff.length());
-        const clampedDist = Math.min(rawDist, 180000);
+        const clampedDist = Math.min(rawDist, 1800000);
         endPos.copy(startPos).addScaledVector(rawDiff.divideScalar(rawDist), clampedDist);
       } else {
         const fwd = (P.dir3D ? P.dir3D.clone() : new THREE.Vector3(0, 1, 0)).normalize();
-        endPos.copy(startPos).addScaledVector(fwd, 85);
+        endPos.copy(startPos).addScaledVector(fwd, 850);
       }
 
       const beam = createBeamVisual(w.weaponType, startPos, endPos);

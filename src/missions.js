@@ -357,6 +357,12 @@ export const MISSIONS = [
   },
   // ================= ROVER MISSIONS (Sorted Easiest -> Hardest) =================
   {
+    id: 'rover_free', icon: '🚙', name: 'Lăn bánh xe tự do', preset: 'Xe địa hình Rover 4x4',
+    category: 'rover', noAutopilot: true,
+    desc: 'Tự do điều khiển Xe địa hình Rover 4x4 khám phá bề mặt hành tinh mà không bị giới hạn mục tiêu (Không có chế độ Lái tự động).',
+    objectives: [],
+  },
+  {
     id: 'rover_500km', icon: '🚙', name: 'Chạy 500 km (Không tự lái)', preset: 'Xe địa hình Rover 4x4',
     category: 'rover', noAutopilot: true, targetDistKm: 500,
     desc: 'Tự tay điều khiển Xe địa hình Rover 4x4 chạy trên bề mặt đạt tổng quãng đường 500 km (Không có chế độ Lái tự động).',
@@ -387,6 +393,12 @@ export const MISSIONS = [
     ],
   },
   // ================= BOAT MISSIONS (Sorted Easiest -> Hardest) =================
+  {
+    id: 'boat_free', icon: '🛥️', name: 'Bơi tự do', preset: 'Canô lướt sóng siêu tốc',
+    category: 'boat',
+    desc: 'Tự do lái thuyền khám phá đại dương bao la.',
+    objectives: [],
+  },
   {
     id: 'boat_500km', icon: '🛥️', name: 'Đi 500 km trên biển', preset: 'Canô lướt sóng siêu tốc',
     category: 'boat', targetDistKm: 500,
@@ -469,6 +481,12 @@ export const MISSIONS = [
     ],
   },
   // ================= AIRPLANE AIRPORT LANDING MISSIONS (1 -> 5 Airports) =================
+  {
+    id: 'plane_free', icon: '🛫', name: 'Bay tự do', preset: 'Tiêm kích phản lực F-22',
+    category: 'plane',
+    desc: 'Tự do bay lượn trên bầu trời.',
+    objectives: [],
+  },
   {
     id: 'plane_airport_1', icon: '🛫', name: 'Đáp lên 1 sân bay', preset: 'Tiêm kích phản lực F-22',
     category: 'plane', targetAirports: 1,

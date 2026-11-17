@@ -483,7 +483,7 @@ export function createSunSphere() {
   const beltROuter = ASTEROID_BELT_OUTER;
   const rockGeo = rockGeometry(1, 2.4);
   const rockMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const N_AST = 720;
+  const N_AST = 2500;
   const astMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_AST);
   astMesh.layers.set(1);
   astMesh.frustumCulled = false;
@@ -516,7 +516,7 @@ export function createSunSphere() {
   group.add(astMesh);
 
   // Outer Kuiper Belt (icy KBOs & comets encompassing Pluto, Haumea, Makemake & Eris) in 3D space pass (layer 1)
-  const N_KBO = 1100;
+  const N_KBO = 3500;
   const kboMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_KBO);
   kboMesh.layers.set(1);
   kboMesh.frustumCulled = false;
@@ -553,7 +553,7 @@ export function createSunSphere() {
   group.add(kboMesh);
 
   // Outer 3D Spherical Oort Cloud (Hills torus + spherical cometary shell) in 3D space pass (layer 1)
-  const N_OORT = 1400;
+  const N_OORT = 4500;
   const oortMesh = new THREE.InstancedMesh(rockGeo, rockMat, N_OORT);
   oortMesh.layers.set(1);
   oortMesh.frustumCulled = false;
@@ -1481,7 +1481,7 @@ export function createCeresAsteroidBelt() {
   const rnd = mulberry(98765);
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
-  const N_PER_SHAPE = 180;
+  const N_PER_SHAPE = 540;
 
   for (let sIdx = 0; sIdx < 3; sIdx++) {
     const g = rockGeometry(1, 3.1 + sIdx * 2.7);
@@ -1549,7 +1549,7 @@ export function createKuiperBeltCanopy() {
   const rnd = mulberry(54321);
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
-  const N_PER_SHAPE = 180;
+  const N_PER_SHAPE = 540;
 
   for (let sIdx = 0; sIdx < 3; sIdx++) {
     const g = rockGeometry(1, 5.2 + sIdx * 3.1);
@@ -1623,7 +1623,7 @@ export function createBeltSpaceField(beltKind = 'asteroid') {
   const rnd = mulberry(isKuiper ? 77531 : 66421);
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
-  const N_PER_SHAPE = 190;
+  const N_PER_SHAPE = 600;
 
   for (let sIdx = 0; sIdx < 3; sIdx++) {
     const g = rockGeometry(1, (isKuiper ? 6.1 : 2.8) + sIdx * 2.9);
@@ -1699,7 +1699,7 @@ export function createOortCloudCanopy() {
   const rnd = mulberry(86420);
   const dummy = new THREE.Object3D();
   const col = new THREE.Color();
-  const N_PER_SHAPE = 210;
+  const N_PER_SHAPE = 650;
 
   for (let sIdx = 0; sIdx < 3; sIdx++) {
     const g = rockGeometry(1, 7.4 + sIdx * 3.5);

@@ -550,6 +550,7 @@ select.btn option { background: #111a29; }
 .fuel-row .fr-bar.boost div { background: linear-gradient(90deg, #b06bff, #ff6bd5); }
 .hud-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
 .hud-act-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 4px; padding: 6px 8px; font-size: 10.5px; font-weight: 800; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-act-btn.wide { grid-column: span 2; }
 .hud-act-btn kbd { font-size: 9px; padding: 1px 4px; opacity: 0.85; }
 .hud-act-btn.act-fire { background: rgba(244, 63, 94, 0.2); border-color: rgba(244, 63, 94, 0.55); color: #fda4af; }
 .hud-act-btn.act-fire:hover { background: rgba(244, 63, 94, 0.36); border-color: #fb7185; color: #fff; }

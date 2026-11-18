@@ -454,6 +454,13 @@ class App {
     $('btn-settings-close').onclick = () => this.toggleSettings(false);
     if ($('gpu-badge')) $('gpu-badge').onclick = () => this.toggleSettings(true);
     if ($('gpu-launch-badge')) $('gpu-launch-badge').onclick = () => this.toggleSettings(true);
+    if ($('btn-vab-fullscreen')) $('btn-vab-fullscreen').onclick = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.error(err));
+      } else {
+        document.exitFullscreen();
+      }
+    };
     window.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';

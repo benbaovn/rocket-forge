@@ -1922,6 +1922,16 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     if (btnTp) btnTp.onclick = () => { audio.init(); this.toggleTeleportModal(); };
     const btnTpExpand = $('btn-tp-expand');
     if (btnTpExpand) btnTpExpand.onclick = () => { audio.init(); this.toggleTeleportModal(true); };
+    const btnFs = $('btn-fullscreen');
+    if (btnFs) btnFs.onclick = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    };
     const btnTpMode = $('btn-tp-mode');
     if (btnTpMode) {
       btnTpMode.onclick = () => {

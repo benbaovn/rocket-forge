@@ -3184,14 +3184,14 @@ function buildCockpitPlane() {
 
 function createVietnameseFlagTexture() {
   const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 80;
+  canvas.width = 160;
+  canvas.height = 256;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#da251d';
-  ctx.fillRect(0, 0, 128, 80);
+  ctx.fillRect(0, 0, 160, 256);
   ctx.fillStyle = '#ffff00';
   ctx.beginPath();
-  const cx = 64, cy = 40, r = 24;
+  const cx = 80, cy = 128, r = 62;
   for (let i = 0; i < 5; i++) {
     const a = (i * 4 * Math.PI) / 5 - Math.PI / 2;
     ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
@@ -3217,10 +3217,12 @@ function buildFuselagePlane() {
   // Royal cobalt-blue dorsal spine + crimson race stripe + glowing amber beacon
   g.add(mesh(new THREE.BoxGeometry(0.66, H + 0.06, 0.60), JM.cobaltBlue, 0, H / 2, 0.75));
   
-  // Vietnamese Flag
+  // Vietnamese Flag (on top of the dorsal spine & crimson stripe, long side along the fuselage)
   const flagTex = createVietnameseFlagTexture();
-  const flagMat = new THREE.MeshBasicMaterial({ map: flagTex, side: THREE.DoubleSide });
-  g.add(mesh(new THREE.PlaneGeometry(0.5, 0.3), flagMat, 0, H / 2, 1.06));
+  flagTex.colorSpace = THREE.SRGBColorSpace;
+  const flagMat = new THREE.MeshBasicMaterial({ map: flagTex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const flagGeo = new THREE.PlaneGeometry(0.72, 1.15);
+  g.add(mesh(flagGeo, flagMat, 0, H * 0.62, 1.085));
 
   g.add(mesh(new THREE.BoxGeometry(0.22, H + 0.07, 0.06), JM.aceCrimson, 0, H / 2, 1.04));
   g.add(mesh(new THREE.BoxGeometry(0.05, H * 0.86, 0.05), JM.neonCyan, -0.32, H / 2, 1.03));

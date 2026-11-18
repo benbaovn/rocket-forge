@@ -1437,8 +1437,13 @@ export class BuildScene {
   }
 
   screenOf(y) {
-    const baseY = this.rocket?.root?.position?.y || 0;
-    const v = new THREE.Vector3(0, y + baseY, 0).project(this.camera);
+    let v;
+    if (this.vabHorizontal && this.rocket?.root) {
+      v = this.rocket.root.localToWorld(new THREE.Vector3(0, y, 0)).project(this.camera);
+    } else {
+      const baseY = this.rocket?.root?.position?.y || 0;
+      v = new THREE.Vector3(0, y + baseY, 0).project(this.camera);
+    }
     return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight];
   }
 
@@ -1506,7 +1511,14 @@ export class BuildScene {
     const p = lay.parts[hiIndex];
     this.indicator.visible = true;
     const pH = p.height ?? p.def.height;
-    this.indicator.position.y = cand.attach !== undefined ? p.y + pH / 2 : p.y + pH / 2;
+    if (this.vabHorizontal && this.rocket?.root) {
+      this.indicator.position.copy(this.rocket.root.localToWorld(new THREE.Vector3(0, p.y + pH / 2, 0)));
+      const qRoot = this.rocket.root.getWorldQuaternion(new THREE.Quaternion());
+      this.indicator.quaternion.copy(qRoot).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
+    } else {
+      this.indicator.position.set(0, p.y + pH / 2, 0);
+      this.indicator.rotation.set(Math.PI / 2, 0, 0);
+    }
     this.indicator.scale.setScalar(cand.attach !== undefined ? 1.6 : 1);
   }
 
@@ -1721,7 +1733,7 @@ export class BuildScene {
     const box = $('sel-box');
     if (!sel) {
       if (this.rocket?.layout) {
-        this.desiredTarget.set(0, Math.max(3, this.rocket.layout.height * 0.45), 0);
+        this.desiredTarget.set(0, this.vabHorizontal ? Math.max(1.5, this.vabCenterY) : Math.max(3, this.rocket.layout.height * 0.45), 0);
       }
       box.classList.add('hidden');
       this.updateRotUI();
@@ -1731,7 +1743,7 @@ export class BuildScene {
     if (!it) { box.classList.add('hidden'); return; }
     if (this.rocket?.partObjs) {
       const pObj = this.rocket.partObjs.find((p) => p.index === sel.index);
-      if (pObj) {
+      if (pObj && !this.vabHorizontal) {
         this.desiredTarget.set(0, pObj.y + (pObj.height ?? pObj.def.height) * 0.5, 0);
       }
     }
@@ -2028,6 +2040,20 @@ export class BuildScene {
     this.rocket = buildRocket(stack);
     const hasBottomRoverWheels = !!(stack.length && stack[stack.length - 1]?.attach?.includes('wheelsRover'));
     this.rocket.root.position.y = hasBottomRoverWheels ? 0.62 : 0;
+    // Airplanes are displayed lying horizontally (nose forward, dorsal spine/flag facing up)
+    this.vabHorizontal = stackVehicleType(stack) === 'plane';
+    this.vabCenterY = 0;
+    if (this.vabHorizontal) {
+      const root = this.rocket.root;
+      root.rotation.x = -Math.PI / 2;
+      root.position.set(0, 0, 0);
+      root.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(root);
+      root.position.y = -bb.min.y + 0.02;
+      root.position.z = -(bb.min.z + bb.max.z) / 2;
+      root.updateMatrixWorld(true);
+      this.vabCenterY = (bb.max.y - bb.min.y) / 2 + 0.02;
+    }
     this.rocketHolder.add(this.rocket.root);
     if (highlight) {
       this.rocket.root.traverse((o) => {
@@ -2053,13 +2079,13 @@ export class BuildScene {
       const scafX = maxUfoR > 4.5 ? Math.max(11, maxUfoR * 1.45 + 6) : 11;
       for (const sg of this.vabScaffolds) sg.position.x = sg.userData.sign * scafX;
     }
-    this.desiredTarget.set(0, Math.max(3, h * 0.45), 0);
+    this.desiredTarget.set(0, this.vabHorizontal ? Math.max(1.5, this.vabCenterY) : Math.max(3, h * 0.45), 0);
     if (commit) {
       this.syncMissionWithStack();
       this.saveStack();
       this.updateStats();
       this.fitTime = 0.8;
-      this.desiredDist = Math.max(16, h * 1.72 + 8, maxUfoR * 2.55);
+      this.desiredDist = this.vabHorizontal ? Math.max(14, h * 1.25 + 6) : Math.max(16, h * 1.72 + 8, maxUfoR * 2.55);
       if (!this.active) {
         this.controls.target.copy(this.desiredTarget);
         const off = this.camera.position.clone().sub(this.controls.target);

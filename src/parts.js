@@ -3193,7 +3193,7 @@ function createVietnameseFlagTexture() {
   ctx.beginPath();
   const cx = 80, cy = 128, r = 62;
   for (let i = 0; i < 5; i++) {
-    const a = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const a = (i * 4 * Math.PI) / 5 - Math.PI / 2 + 0.22; // tilted slightly clockwise
     ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
   }
   ctx.closePath();

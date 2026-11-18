@@ -3221,8 +3221,10 @@ function buildFuselagePlane() {
   const flagTex = createVietnameseFlagTexture();
   flagTex.colorSpace = THREE.SRGBColorSpace;
   const flagMat = new THREE.MeshBasicMaterial({ map: flagTex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-  const flagGeo = new THREE.PlaneGeometry(0.72, 1.15);
-  g.add(mesh(flagGeo, flagMat, 0, H * 0.62, 1.085));
+  const flagR = R * 1.05 + 0.03; // just outside the fuselage skin (radius ~1.31 m)
+  const flagArc = 0.80 / flagR;   // ~0.8 m wide curved decal
+  const flagGeo = new THREE.CylinderGeometry(flagR, flagR, 1.25, 24, 1, true, -flagArc / 2, flagArc);
+  g.add(mesh(flagGeo, flagMat, 0, H * 0.6, 0));
 
   g.add(mesh(new THREE.BoxGeometry(0.22, H + 0.07, 0.06), JM.aceCrimson, 0, H / 2, 1.04));
   g.add(mesh(new THREE.BoxGeometry(0.05, H * 0.86, 0.05), JM.neonCyan, -0.32, H / 2, 1.03));

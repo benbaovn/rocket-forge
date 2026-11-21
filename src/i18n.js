@@ -91,8 +91,8 @@ export const PART_I18N = {
     en: { name: 'Stabilizer Fins ×4', cat: 'Structural', desc: 'Attaches to tank – keeps rocket aerodynamic' },
   },
   legs: {
-    vi: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
-    en: { name: 'Landing Legs ×4', cat: 'Structural', desc: 'Attaches to bottom tank – deploys for landing' },
+    vi: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', desc: 'Gắn vào bồn dưới cùng của tầng hoặc đĩa bay UFO – bung ra khi hạ cánh (Phím P)' },
+    en: { name: 'Landing Legs ×4', cat: 'Structural', desc: 'Attaches to bottom tank or UFO saucer – deploys for landing (Press P)' },
   },
   gridfins: {
     vi: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
@@ -194,9 +194,17 @@ export const PART_I18N = {
     vi: { name: 'Đuôi đứng & Cánh lái', cat: 'Máy bay', desc: 'Cụm đuôi chữ V đôi nghiêng và cánh lái ngang thăng bằng' },
     en: { name: 'Twin V-Tail & Elevators', cat: 'Aircraft', desc: 'Canted twin vertical stabilizers and pitch elevators' },
   },
+  tailCurvedPlane: {
+    vi: { name: 'Đuôi bầu tròn & Cánh lái cong nhọn', cat: 'Máy bay', desc: 'Thân đuôi bầu tròn mượt mà gắn vừa khít thân máy bay, tích hợp cánh lái đứng & cặp cánh lái ngang có mũi uốn cong vuốt nhọn' },
+    en: { name: 'Smooth Rounded Tail & Curved Pointed Fins', cat: 'Aircraft', desc: 'Smooth rounded aerodynamic tailcone mating flush with the jet fuselage, featuring curved pointed vertical rudder and horizontal stabilizers' },
+  },
   engJet: {
     vi: { name: 'Động cơ phản lực Afterburner', cat: 'Máy bay', desc: 'Động cơ tuốc-bin phản lực tăng lực siêu âm, lực đẩy cực mạnh trong khí quyển' },
-    en: { name: 'Afterburning Turbofan Jet', cat: 'Aircraft', desc: 'Supersonic afterburning jet engine with high atmospheric thrust' },
+    en: { name: 'Afterburning Jet Engine', cat: 'Aircraft', desc: 'Supersonic afterburning jet engine with high atmospheric thrust' },
+  },
+  turbofanPlane: {
+    vi: { name: 'Động cơ Turbofan ×2', cat: 'Máy bay', desc: 'Cặp động cơ tuốc-bin cánh quạt (High-Bypass Turbofan) gắn dưới cánh máy bay · Cánh quạt Titanium 18 lá quay tốc độ cao, cực kỳ tiết kiệm nhiên liệu trong khí quyển' },
+    en: { name: 'High-Bypass Turbofan ×2', cat: 'Aircraft', desc: 'Twin wing-mounted high-bypass turbofan nacelles with spinning 18-blade titanium fans and ultra-high atmospheric fuel efficiency' },
   },
   gearPlane: {
     vi: { name: 'Càng đáp máy bay 3 bánh', cat: 'Máy bay', desc: 'Bộ 3 càng đáp bánh xe cao su chịu tải giúp chạy đà cất cánh & hạ cánh' },
@@ -1760,6 +1768,7 @@ export function applyLanguage(lang, app) {
   setAttr('#btn-tp-mode', 'title', 'Đổi chế độ: Bề mặt / Quỹ đạo', 'Switch mode: Surface or Orbit');
   setAttr('#btn-tp-expand', 'title', 'Mở bảng dịch chuyển (Y)', 'Open teleport panel (Y)');
   setTxt('#tp-bar-btns [data-tp="earth"]', '🌍 Trái Đất', '🌍 Earth');
+  setTxt('#tp-bar-btns [data-tp="earth_snow"]', '❄️ Khu Tuyết', '❄️ Snow Zone');
   setTxt('#tp-bar-btns [data-tp="iss"]', '🛰️ ISS', '🛰️ ISS');
   setTxt('#tp-bar-btns [data-tp="moon"]', '🌕 Mặt Trăng', '🌕 Moon');
   setTxt('#tp-bar-btns [data-tp="mercury"]', '⚪ Sao Thủy', '⚪ Mercury');
@@ -1861,7 +1870,7 @@ export function applyLanguage(lang, app) {
      <span title="Tự lái"><kbd>G</kbd> 🤖</span>
      <span title="Bản đồ 3D"><kbd>M</kbd> 🌐</span>
      <span title="Dịch chuyển"><kbd>Y</kbd> 🪐</span>
-     <span title="SAS & Chế độ"><kbd>T/F</kbd> 🧭</span>
+     <span title="SAS & Chế độ"><kbd>T/R</kbd> 🧭</span>
      <span title="Đổi Camera"><kbd>C</kbd> 🎥</span>
      <span title="Tua thời gian"><kbd>, .</kbd> ⏩</span>
      <span title="Dù / Chân đáp"><kbd>P</kbd> 🪂</span>
@@ -1874,9 +1883,9 @@ export function applyLanguage(lang, app) {
      <span title="Autopilot"><kbd>G</kbd> 🤖</span>
      <span title="3D Orbital Map"><kbd>M</kbd> 🌐</span>
      <span title="Teleport"><kbd>Y</kbd> 🪐</span>
-     <span title="SAS & Mode"><kbd>T/F</kbd> 🧭</span>
+     <span title="SAS & Mode"><kbd>T/R</kbd> 🧭</span>
      <span title="Camera"><kbd>C</kbd> 🎥</span>
-     <span title="Time Warp"><kbd>, .</kbd> ⏩</span>
+      <span title="Fullscreen"><kbd>F</kbd> ⛶</span>     <span title="Time Warp"><kbd>, .</kbd> ⏩</span>
      <span title="Chute / Legs"><kbd>P</kbd> 🪂</span>
      <span title="Menu"><kbd>Esc</kbd> ⚙</span>`
   );

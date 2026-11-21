@@ -196,6 +196,15 @@ export function canPartAttachToStack(type, stack, targetIndex = null) {
   if (type === 'solarUfo' && (!Array.isArray(stack) || stack.length === 0)) {
     return false;
   }
+  // Landing legs (`legs`) can attach to both Rockets and UFOs
+  if (type === 'legs') {
+    if (!Array.isArray(stack) || stack.length === 0) return true;
+    if (targetIndex !== null && stack[targetIndex]) {
+      const vt = partVehicleType(stack[targetIndex].type);
+      if (vt !== 'rocket' && vt !== 'ufo' && vt !== 'any') return false;
+    }
+    return vStack === null || vStack === 'rocket' || vStack === 'ufo';
+  }
   const vNew = partVehicleType(type);
   if (vNew === 'any') return true;
   if (!Array.isArray(stack) || stack.length === 0) {
@@ -302,6 +311,7 @@ export function sanitizeStack(stack) {
           if (solarUfoCount > 2) return false;
         }
         const va = partVehicleType(a);
+        if (a === 'legs' && vStack === 'ufo') return true;
         return va === 'any' || va === vStack;
       });
     }
@@ -357,11 +367,11 @@ export const PRESETS = {
   'Tàu Phản Trọng Lực Lượng Tử': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engAntiGrav'],
   'Tàu Chiến Lazer Liên Hành Tinh': ['dockPort', 'capsule', 'heatShield', 'batteryPack+solarPanel+legs+gunLaser+waterCannon', 'engLaser', 'decoupler', 'batteryPack+fins', 'engLaser'],
   'Chiến Hạm Diệt Alien (Lazer + Nước 1M PSI)': ['dockPort', 'capsule', 'heatShield', 'batteryPackL+gunLaser+waterCannon+gunAcid+gunElectric+solarPanel+legs', 'engAntiGrav', 'decoupler', 'batteryPackL+fins', 'engLaser'],
-  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
-  'UFO Chiến Binh': ['ufoWarrior+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
-  'UFO Mẹ': ['ufoMother+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
-  'UFO Hoàng Hậu': ['ufoQueen+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
-  'UFO Vua': ['ufoKing+solarUfo+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'Đĩa Bay UFO Siêu Cấp (Alien Saucer)': ['ufoSaucer+solarUfo+legs+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Chiến Binh': ['ufoWarrior+solarUfo+legs+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Mẹ': ['ufoMother+solarUfo+legs+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Hoàng Hậu': ['ufoQueen+solarUfo+legs+gunLaser+waterCannon+gunAcid+gunElectric'],
+  'UFO Vua': ['ufoKing+solarUfo+legs+gunLaser+waterCannon+gunAcid+gunElectric'],
 };
 
 export function getPresetLockedPart(presetName) {
@@ -740,7 +750,7 @@ export function computeStats(stack) {
   } else if (isPlane) {
     if (!stack.some((it) => it.type === 'cockpitPlane')) warnings.push(tr('Máy bay nên có Buồng lái tiêm kích để quan sát và điều khiển.', 'Aircraft should have a Fighter Jet Cockpit.'));
     if (!stack.some((it) => it.attach.includes('wingsPlane'))) warnings.push(tr('Máy bay cần gắn Cánh nâng phản lực ×2 để tạo lực nâng cất cánh.', 'Aircraft needs Swept Jet Wings ×2 for lift.'));
-    if (!stack.some((it) => it.type === 'engJet' || PARTS[it.type]?.thrustSL > 0)) warnings.push(tr('Máy bay cần Động cơ phản lực để tạo lực đẩy cất cánh.', 'Aircraft needs a Jet Engine for thrust.'));
+    if (!stack.some((it) => it.type === 'engJet' || PARTS[it.type]?.thrustSL > 0 || it.attach?.some((a) => PARTS[a]?.thrustSL > 0))) warnings.push(tr('Máy bay cần Động cơ phản lực để tạo lực đẩy cất cánh.', 'Aircraft needs a Jet Engine for thrust.'));
   } else {
     const st1Info = infos[infos.length - 1];
     if (!st1 || (st1.thrust <= 0 && (!st1Info || st1Info.engines === 0))) warnings.push(tr('Tầng 1 chưa có động cơ!', 'Stage 1 has no engine!'));
@@ -877,6 +887,7 @@ export function buildRocket(stack) {
   const boosters = [];
   const deployables = [];
   const roverWheels = [];
+  const fanGroups = [];
   const weapons = [];
   const heatShields = [];
   let capsule = null, dockPort = null;
@@ -954,6 +965,9 @@ export function buildRocket(stack) {
       let places = radialPlacements(a, occ);
       // avoid overlaps when several radial types share one tank
       if (a === 'fins' && att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: i * Math.PI / 2, dist: 0 }));
+      if (a === 'legs' && isUfoPart(p.item.type) && att.filter((x) => x === 'solarUfo').length >= 2) {
+        places = [0, 1, 2, 3].map((i) => ({ angle: Math.PI / 4 + Math.PI / 8 + i * Math.PI / 2, dist: 0 }));
+      }
       if (a === 'gridfins' && att.includes('booster') && !att.includes('legs')) places = [0, 1, 2, 3].map((i) => ({ angle: Math.PI / 4 + i * Math.PI / 2, dist: 0 }));
       const group = [];
       if (a === 'batteryGun') {
@@ -1020,9 +1034,22 @@ export function buildRocket(stack) {
         if (a === 'fins') {
           posX = 0; posY = p.y + 0.05; posZ = 0;
         } else if (a === 'legs') {
-          const legK = isUfoPart(p.item.type) ? ufoEngineScale(p.def.ufoScale || 1) : (p.scale || 1);
-          if (legK > 1) ao.scale.setScalar(legK);
-          posX = 0; posY = p.y; posZ = 0;
+          if (isUfoPart(p.item.type)) {
+            const ufoS = p.def.ufoScale || 1;
+            const ufoR = p.def.ufoRadius || 4.2;
+            const legK = 1 + (ufoS - 1) * 0.75;
+            if (legK !== 1) ao.scale.setScalar(legK);
+            const collarR = R * ufoEngineScale(ufoS);
+            const radShift = collarR - R * legK;
+            posX = Math.cos(pl.angle) * radShift;
+            posY = p.y + 0.16 * ufoS;
+            posZ = Math.sin(pl.angle) * radShift;
+            if (ao.userData.configureForUfo) ao.userData.configureForUfo(ufoS, ufoR, legK, radShift);
+          } else {
+            const legK = p.scale || 1;
+            if (legK > 1) ao.scale.setScalar(legK);
+            posX = 0; posY = p.y; posZ = 0;
+          }
         } else if (a === 'gridfins') {
           posX = 0; posY = p.y + partH - 0.5; posZ = 0;
         } else if (a === 'wheelsRover') {
@@ -1064,6 +1091,9 @@ export function buildRocket(stack) {
           }
         } else if (a === 'wingsPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + partH * 0.4; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+        } else if (a === 'turbofanPlane') {
+          posX = Math.cos(pl.angle) * pl.dist; posY = p.y + partH * 0.42; posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
+          if (ao.userData.propGroup) fanGroups.push({ grp: ao.userData.propGroup, seg: k });
         } else if (a === 'gearPlane') {
           posX = Math.cos(pl.angle) * pl.dist; posY = p.y + 0.1 + (pl.offsetY || 0); posZ = Math.sin(pl.angle) * pl.dist + (pl.offsetZ || 0);
           ao.userData.sideSign = 1;
@@ -1201,7 +1231,7 @@ export function buildRocket(stack) {
       }
     });
   }
-  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, weapons, heatShields, partGlowMats };
+  return { root, segGroups, partObjs, nozzles, boosters, layout: lay, segs, deployables, capsule, dockPort, wheels: roverWheels, fanGroups, weapons, heatShields, partGlowMats };
 }
 
 /** Center of mass (y) of the given set of segments, including fuel state */

@@ -659,6 +659,12 @@ export function createEarth(sunDir) {
           col *= 0.76 + 0.48 * (detail * 0.55 + micro * 0.30 + ultra * 0.15);
           vec3 beachCol = vec3(0.78, 0.70, 0.54);
           col = mix(beachCol, col, smoothstep(0.0, 0.016, h));
+          // Polar & northern continental snow zones + snow-capped mountain peaks
+          float snowLat = smoothstep(0.84, 1.06, abs(latRad) + (detail - 0.5) * 0.12);
+          float snowPeak = smoothstep(0.36, 0.56, ridge * elev) * (1.0 - padZone);
+          float orbitalSnow = max(snowLat, snowPeak);
+          vec3 snowOrbCol = mix(vec3(0.84, 0.90, 0.97), vec3(0.97, 0.99, 1.0), micro);
+          col = mix(col, snowOrbCol, orbitalSnow * 0.88);
 
           // 3D topographic bump relief shading on mountains & hills
           float eps = 0.0007;

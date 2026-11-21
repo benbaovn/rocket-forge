@@ -55,7 +55,7 @@ export class BuildScene {
     this.controls.target.set(0, 6, 0);
     this.controls.enabled = false;
     this.desiredTarget = new THREE.Vector3(0, 6, 0);
-    this.post = { bloom: 0.55, bloomRadius: 0.5, threshold: 0.9, exposure: 1.0, ao: true, vignette: 0.4, aberration: 0.003, grain: 0.025 };
+    this.post = { bloom: 0.22, bloomRadius: 0.35, threshold: 1.35, exposure: 0.88, ao: true, vignette: 0.4, aberration: 0.003, grain: 0.025 };
 
     this.stack = this.loadStack();
     this.history = [];
@@ -74,7 +74,7 @@ export class BuildScene {
     const s = this.scene;
     const pmrem = new THREE.PMREMGenerator(this.app.renderer);
     s.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    s.environmentIntensity = 0.55;
+    s.environmentIntensity = 0.42;
     s.background = new THREE.Color(0x05070b);
     s.fog = new THREE.Fog(0x06080c, 70, 190);
 
@@ -134,14 +134,14 @@ export class BuildScene {
     }
 
     // ceiling light strips
-    const stripMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xfff2e0, emissiveIntensity: 9 });
+    const stripMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xfff2e0, emissiveIntensity: 3.2 });
     for (let i = -3; i <= 3; i++) {
       const strip = new THREE.Mesh(new THREE.BoxGeometry(120, 0.25, 0.8), stripMat);
       strip.position.set(0, 70, i * 22 + 11);
       s.add(strip);
     }
     // wall accent strips (cyan)
-    const accentMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x2aa8ff, emissiveIntensity: 5 });
+    const accentMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x2aa8ff, emissiveIntensity: 2.5 });
     for (const z of [-79.3, 79.3]) {
       const a = new THREE.Mesh(new THREE.BoxGeometry(150, 0.15, 0.15), accentMat);
       a.position.set(0, 2.5, z); s.add(a);
@@ -154,7 +154,7 @@ export class BuildScene {
     // scaffold towers
     const scafMat = new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.6, roughness: 0.5 });
     const platMat = new THREE.MeshStandardMaterial({ color: 0x3a3d44, metalness: 0.7, roughness: 0.5 });
-    const lampMat = new THREE.MeshStandardMaterial({ emissive: 0xff3322, emissiveIntensity: 8, color: 0 });
+    const lampMat = new THREE.MeshStandardMaterial({ emissive: 0xff3322, emissiveIntensity: 3.5, color: 0 });
     const platGeo = new THREE.BoxGeometry(5, 0.15, 2.6);
     const lampGeo = new THREE.SphereGeometry(0.12, 8, 8);
     this.vabScaffolds = [];
@@ -178,13 +178,13 @@ export class BuildScene {
     }
 
     // lights
-    s.add(new THREE.HemisphereLight(0x8fa8d0, 0x1a1612, 0.35));
+    s.add(new THREE.HemisphereLight(0x8fa8d0, 0x1a1612, 0.45));
     const spotPos = [[-22, 44, 18], [24, 46, 16], [-18, 42, -24], [20, 40, -22]];
     this.cones = [];
     this.spotLights = [];
     const qCfg = this.app.qualityCfg || { vabSpots: 2, vabShadow: 2048 };
     spotPos.forEach((p, i) => {
-      const sp = new THREE.SpotLight(i === 1 ? 0xfff0dc : 0xe6efff, 5200, 0, 0.32, 0.65, 2);
+      const sp = new THREE.SpotLight(i === 1 ? 0xfff0dc : 0xe6efff, 2600, 0, 0.32, 0.65, 2);
       sp.position.set(...p);
       sp.target.position.set(0, 7, 0);
       sp.castShadow = i < (qCfg.vabSpots || 2);
@@ -197,7 +197,7 @@ export class BuildScene {
       this.spotLights.push(sp);
       const dir = new THREE.Vector3(0, 7, 0).sub(sp.position);
       const len = dir.length() * 1.15;
-      const cone = lightCone(len, Math.tan(0.32) * len, new THREE.Color(i === 1 ? 0xffe6c8 : 0xd6e4ff), 0.1);
+      const cone = lightCone(len, Math.tan(0.32) * len, new THREE.Color(i === 1 ? 0xffe6c8 : 0xd6e4ff), 0.028);
       cone.position.copy(sp.position);
       cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir.normalize());
       s.add(cone);
@@ -206,7 +206,7 @@ export class BuildScene {
       const lampHouse = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.2, 1.4, 24), colMat);
       lampHouse.position.copy(sp.position); lampHouse.quaternion.copy(cone.quaternion);
       s.add(lampHouse);
-      const lens = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: 30, color: 0 }));
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: 6, color: 0 }));
       lens.position.copy(sp.position).add(dir.clone().multiplyScalar(0.72));
       lens.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir.clone().negate());
       s.add(lens);
@@ -218,7 +218,7 @@ export class BuildScene {
     for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 40; pos[i * 3 + 1] = Math.random() * 45; pos[i * 3 + 2] = (Math.random() - 0.5) * 40; }
     const dg = new THREE.BufferGeometry();
     dg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.dust = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xfff4e0, size: 0.035, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.dust = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xfff4e0, size: 0.035, transparent: true, opacity: 0.14, depthWrite: false, blending: THREE.AdditiveBlending }));
     s.add(this.dust);
 
     this.rocketHolder = new THREE.Group();
@@ -722,10 +722,26 @@ export class BuildScene {
       if (type === 'batteryGun' && !q.trim() && PARTS.solarUltra && !shownParts.has('solarUltra')) {
         cats[def.cat].push('solarUltra');
       }
+      if (type === 'solarUfo' && !q.trim() && PARTS.legs && !shownParts.has('legs')) {
+        cats[def.cat].push('legs');
+      }
     }
+    const catKeyMap = new Map([
+      [PARTS.nose?.cat, 'head'],
+      [PARTS.tankS?.cat, 'fuel'],
+      [PARTS.engHeavy?.cat, 'engine'],
+      [PARTS.decoupler?.cat, 'struct'],
+      [PARTS.gunLaser?.cat, 'weapon'],
+      [PARTS.cockpitRover?.cat, 'rover'],
+      [PARTS.cabinBoat?.cat, 'boat'],
+      [PARTS.cockpitPlane?.cat, 'plane'],
+      [PARTS.ufoSaucer?.cat, 'ufo'],
+    ]);
     for (const [cat, types] of Object.entries(cats)) {
       const h = document.createElement('div');
       h.className = 'cat';
+      const ck = catKeyMap.get(cat);
+      if (ck) h.dataset.catKey = ck;
       h.textContent = cat;
       list.appendChild(h);
       const grid = document.createElement('div');
@@ -744,6 +760,89 @@ export class BuildScene {
       empty.textContent = tr('🔍 Không tìm thấy linh kiện hoặc tên lửa phù hợp', '🔍 No matching parts or rockets found');
       list.appendChild(empty);
     }
+
+    if (!this._partListScrollBound) {
+      this._partListScrollBound = true;
+      list.addEventListener('scroll', () => this.updateActiveCategoryBtn(), { passive: true });
+    }
+    this.renderPartCategoryNav();
+    this.updateActiveCategoryBtn();
+  }
+
+  renderPartCategoryNav() {
+    const nav = $('part-cat-nav');
+    if (!nav) return;
+    const navItems = [
+      { key: 'head', icon: '🚀', title: tr('Đầu (Mũi / Khoang phi hành)', 'Command & Nose') },
+      { key: 'fuel', icon: '⛽', title: tr('Nhiên liệu & Pin', 'Fuel & Batteries') },
+      { key: 'engine', icon: '🔥', title: tr('Động cơ', 'Engines') },
+      { key: 'struct', icon: '🛠️', title: tr('Cấu trúc', 'Structural') },
+      { key: 'weapon', icon: '🔫', title: tr('Vũ khí', 'Weapons') },
+      { key: 'rover', icon: '🚙', title: tr('Xe Rover', 'Rover') },
+      { key: 'boat', icon: '🛥️', title: tr('Thuyền', 'Boats') },
+      { key: 'plane', icon: '✈️', title: tr('Máy bay', 'Aircraft') },
+      { key: 'ufo', icon: '🛸', title: tr('Đĩa bay UFO', 'UFO') },
+    ];
+    nav.innerHTML = '';
+    for (const item of navItems) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'part-cat-btn';
+      btn.dataset.catKey = item.key;
+      btn.title = item.title;
+      btn.setAttribute('aria-label', item.title);
+      btn.textContent = item.icon;
+      btn.addEventListener('click', () => this.jumpToPartCategory(item.key));
+      nav.appendChild(btn);
+    }
+  }
+
+  jumpToPartCategory(catKey) {
+    const list = $('part-list');
+    if (!list) return;
+    audio.click();
+    let targetEl = list.querySelector(`.cat[data-cat-key="${catKey}"]`);
+    if (!targetEl && (this.partSearchQuery || '').trim()) {
+      this.partSearchQuery = '';
+      const inp = $('part-search');
+      if (inp) inp.value = '';
+      this.renderPalette();
+      targetEl = list.querySelector(`.cat[data-cat-key="${catKey}"]`);
+    }
+    if (!targetEl) return;
+    const listRect = list.getBoundingClientRect();
+    const tgtRect = targetEl.getBoundingClientRect();
+    const isHoriz = list.scrollWidth > list.clientWidth + 10 && list.scrollHeight <= list.clientHeight + 10;
+    if (isHoriz) {
+      list.scrollTo({ left: Math.max(0, list.scrollLeft + (tgtRect.left - listRect.left) - 4), behavior: 'smooth' });
+    } else {
+      list.scrollTo({ top: Math.max(0, list.scrollTop + (tgtRect.top - listRect.top) - 4), behavior: 'smooth' });
+    }
+    const nav = $('part-cat-nav');
+    if (nav) {
+      nav.querySelectorAll('.part-cat-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.catKey === catKey);
+      });
+    }
+  }
+
+  updateActiveCategoryBtn() {
+    const list = $('part-list');
+    const nav = $('part-cat-nav');
+    if (!list || !nav) return;
+    const headers = Array.from(list.querySelectorAll('.cat[data-cat-key]'));
+    if (!headers.length) return;
+    const listRect = list.getBoundingClientRect();
+    const isHoriz = list.scrollWidth > list.clientWidth + 10 && list.scrollHeight <= list.clientHeight + 10;
+    let activeKey = headers[0].dataset.catKey;
+    for (const h of headers) {
+      const hr = h.getBoundingClientRect();
+      const rel = isHoriz ? (hr.left - listRect.left) : (hr.top - listRect.top);
+      if (rel <= 52) activeKey = h.dataset.catKey;
+    }
+    nav.querySelectorAll('.part-cat-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.catKey === activeKey);
+    });
   }
 
   renderPresets() {
@@ -1269,6 +1368,16 @@ export class BuildScene {
           obj.add(w);
         }
       }
+      else if (type === 'turbofanPlane') {
+        obj = new THREE.Group();
+        for (const sgn of [-1, 1]) {
+          const tf = buildPart('turbofanPlane');
+          tf.position.set(sgn * 0.64, 0, 0);
+          tf.rotation.x = Math.PI * 0.38;
+          tf.rotation.z = -0.22;
+          obj.add(tf);
+        }
+      }
       else if (type === 'gearPlane') {
         obj = new THREE.Group();
         for (const pl of radialPlacements('gearPlane')) {
@@ -1277,6 +1386,12 @@ export class BuildScene {
           gp.rotation.y = pl.rotY !== undefined ? pl.rotY : -pl.angle;
           obj.add(gp);
         }
+      }
+      else if (type === 'tailCurvedPlane') {
+        obj = buildPart('tailCurvedPlane');
+        obj.rotation.order = 'YXZ';
+        obj.rotation.x = -Math.PI / 2;
+        obj.rotation.y = -1.02;
       }
       else obj = buildPart(type);
       sc.add(obj);
@@ -1516,7 +1631,8 @@ export class BuildScene {
       const qRoot = this.rocket.root.getWorldQuaternion(new THREE.Quaternion());
       this.indicator.quaternion.copy(qRoot).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
     } else {
-      this.indicator.position.set(0, p.y + pH / 2, 0);
+      const baseY = this.rocket?.root?.position?.y || 0;
+      this.indicator.position.set(0, p.y + pH / 2 + baseY, 0);
       this.indicator.rotation.set(Math.PI / 2, 0, 0);
     }
     this.indicator.scale.setScalar(cand.attach !== undefined ? 1.6 : 1);
@@ -1703,11 +1819,11 @@ export class BuildScene {
       st.splice(insIdx, 0, newItem('heatShield'));
       this.select({ index: insIdx, attach: null });
     }
-    else if (def.thrustVac || type === 'decoupler') st.push(newItem(type));
+    else if (def.thrustVac || type === 'decoupler' || type === 'tailCurvedPlane') st.push(newItem(type));
     else {
-      // tanks: above the bottom engine
+      // tanks: above the bottom engine / pointed tailcone
       let k = st.length;
-      if (k && PARTS[st[k - 1].type].thrustVac) k--;
+      if (k && (PARTS[st[k - 1].type].thrustVac || st[k - 1].type === 'tailCurvedPlane')) k--;
       st.splice(k, 0, newItem(type));
     }
     audio.click();
@@ -2039,7 +2155,21 @@ export class BuildScene {
     }
     this.rocket = buildRocket(stack);
     const hasBottomRoverWheels = !!(stack.length && stack[stack.length - 1]?.attach?.includes('wheelsRover'));
-    this.rocket.root.position.y = hasBottomRoverWheels ? 0.62 : 0;
+    const isUfoWithLegs = stackVehicleType(stack) === 'ufo' && this.rocket.deployables?.some((d) => d.type === 'legs');
+    let ufoLegLift = 0;
+    if (isUfoWithLegs) {
+      let minLegY = 0;
+      for (const d of this.rocket.deployables) {
+        if (d.type !== 'legs') continue;
+        for (const o of d.objs) if (o.userData.setDeploy) o.userData.setDeploy(1);
+        const p = this.rocket.layout.parts[d.partIndex];
+        const baseY = d.objs[0]?.parent?.position ? d.objs[0].parent.position.y : (p?.y || 0);
+        const foot = (d.objs[0]?.userData.footY ?? -3.8) * (d.objs[0]?.scale?.y || 1);
+        minLegY = Math.min(minLegY, baseY + foot);
+      }
+      ufoLegLift = Math.max(0, -minLegY);
+    }
+    this.rocket.root.position.y = hasBottomRoverWheels ? 0.62 : ufoLegLift;
     // Airplanes are displayed lying horizontally (nose forward, dorsal spine/flag facing up)
     this.vabHorizontal = stackVehicleType(stack) === 'plane';
     this.vabCenterY = 0;
@@ -2070,6 +2200,7 @@ export class BuildScene {
       });
     } else this.applyHighlight();
     const h = this.rocket.layout.height;
+    const effH = h + ufoLegLift;
     const maxUfoR = stack.reduce((mx, it) => {
       const baseR = PARTS[it.type]?.ufoRadius || 0;
       const wingExtra = (baseR > 0 && it.attach?.includes('solarUfo')) ? (1.8 * (PARTS[it.type]?.ufoScale || 1)) : 0;
@@ -2079,13 +2210,13 @@ export class BuildScene {
       const scafX = maxUfoR > 4.5 ? Math.max(11, maxUfoR * 1.45 + 6) : 11;
       for (const sg of this.vabScaffolds) sg.position.x = sg.userData.sign * scafX;
     }
-    this.desiredTarget.set(0, this.vabHorizontal ? Math.max(1.5, this.vabCenterY) : Math.max(3, h * 0.45), 0);
+    this.desiredTarget.set(0, this.vabHorizontal ? Math.max(1.5, this.vabCenterY) : Math.max(3, effH * 0.45), 0);
     if (commit) {
       this.syncMissionWithStack();
       this.saveStack();
       this.updateStats();
       this.fitTime = 0.8;
-      this.desiredDist = this.vabHorizontal ? Math.max(14, h * 1.25 + 6) : Math.max(16, h * 1.72 + 8, maxUfoR * 2.55);
+      this.desiredDist = this.vabHorizontal ? Math.max(14, h * 1.25 + 6) : Math.max(16, effH * 1.72 + 8, maxUfoR * 2.55);
       if (!this.active) {
         this.controls.target.copy(this.desiredTarget);
         const off = this.camera.position.clone().sub(this.controls.target);
@@ -2266,8 +2397,8 @@ export class BuildScene {
       this.camera.lookAt(this.controls.target);
     }
     this.rocketHolder.rotation.y += dt * (this.drag ? 0 : 0.06);
-    this.glowRing.material.emissiveIntensity = 5 + Math.sin(this.time * 2) * 1.5;
-    this.indicator.material.emissiveIntensity = 6 + Math.sin(this.time * 10) * 3;
+    this.glowRing.material.emissiveIntensity = 2.2 + Math.sin(this.time * 2) * 0.6;
+    this.indicator.material.emissiveIntensity = 3.2 + Math.sin(this.time * 10) * 1.2;
     for (const c of this.cones) c.material.uniforms.uTime.value = this.time;
     const p = this.dust.geometry.attributes.position;
     for (let i = 0; i < p.count; i++) {

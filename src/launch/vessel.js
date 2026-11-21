@@ -118,8 +118,9 @@ export class Vessel {
     this.legBottom = Infinity;
     for (const d of this.deployables('legs')) {
       const p = lay.parts[d.partIndex];
+      const baseY = d.objs[0]?.parent?.position ? d.objs[0].parent.position.y : p.y;
       const foot = (d.objs[0]?.userData.footY ?? -3.8) * (d.objs[0]?.scale?.y || 1);
-      this.legBottom = Math.min(this.legBottom, p.y + foot);
+      this.legBottom = Math.min(this.legBottom, baseY + foot);
     }
     const prevY = this.com ? this.com.y : null;
     this.com = { mass: Math.max(m, 0.05), y: my / Math.max(m, 1e-6), minY, maxY };
@@ -617,28 +618,83 @@ export class Vessel {
             else this.groundSpeed *= 0.85;
           }
         }
-        const moveSign = this.groundSpeed >= 0 ? 1 : -1;
-        let surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
-        const surfEdge = env.surface({ ...this, sx: newSx + moveSign * 2.2 * cosH, s: { ...this.s, z: newZ - moveSign * 2.2 * sinH } });
-        if (surf.water || surfEdge.water) {
-          const surfX = env.surface({ ...this, sx: newSx, s: { ...this.s, z: prevZ } });
-          const surfXEdge = env.surface({ ...this, sx: newSx + moveSign * 2.2 * cosH, s: { ...this.s, z: prevZ } });
-          const surfZ = env.surface({ ...this, sx: prevSx, s: { ...this.s, z: newZ } });
-          const surfZEdge = env.surface({ ...this, sx: prevSx, s: { ...this.s, z: newZ - moveSign * 2.2 * sinH } });
-          if (!surfX.water && !surfXEdge.water) {
-            newZ = prevZ;
-            surf = surfX;
-            this.groundSpeed *= 0.5;
-          } else if (!surfZ.water && !surfZEdge.water) {
-            newSx = prevSx;
-            surf = surfZ;
-            this.groundSpeed *= 0.5;
-          } else {
-            newSx = prevSx;
-            newZ = prevZ;
-            this.groundSpeed = 0;
-            surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
+        const isPointWet = (tx, tz) => !!env.surface({ ...this, sx: tx, s: { ...this.s, z: tz } }).water;
+        const isFootprintWet = (tx, tz) => {
+          if (isPointWet(tx, tz)) return true;
+          const fX = 3.6 * cosH, fZ = -3.6 * sinH;
+          const rX = 2.0 * sinH, rZ = 2.0 * cosH;
+          return isPointWet(tx + fX, tz + fZ)
+            || isPointWet(tx - fX, tz - fZ)
+            || isPointWet(tx + rX, tz + rZ)
+            || isPointWet(tx - rX, tz - rZ);
+        };
+        let startSx = prevSx, startZ = prevZ;
+        if (this.ref === 'earth' && isFootprintWet(startSx, startZ)) {
+          let escaped = false;
+          for (const rad of [15, 40, 90, 200, 450, 950]) {
+            for (let ai = 0; ai < 12; ai++) {
+              const ang = (ai / 12) * Math.PI * 2;
+              const cx = startSx - Math.cos(ang) * rad;
+              const cz = startZ + Math.sin(ang) * rad;
+              if (!isFootprintWet(cx, cz)) {
+                startSx = cx;
+                startZ = cz;
+                newSx = cx;
+                newZ = cz;
+                this.groundSpeed = 0;
+                escaped = true;
+                break;
+              }
+            }
+            if (escaped) break;
           }
+        }
+        const sweepToShore = (x0, z0, x1, z1) => {
+          const dist = Math.hypot(x1 - x0, z1 - z0);
+          const steps = Math.max(1, Math.min(256, Math.ceil(dist / 16)));
+          let lastOkX = x0, lastOkZ = z0, hitWater = false;
+          for (let si = 1; si <= steps; si++) {
+            const f = si / steps;
+            const tx = x0 + (x1 - x0) * f;
+            const tz = z0 + (z1 - z0) * f;
+            if (isFootprintWet(tx, tz)) {
+              hitWater = true;
+              break;
+            }
+            lastOkX = tx;
+            lastOkZ = tz;
+          }
+          return { x: lastOkX, z: lastOkZ, hitWater };
+        };
+        if (this.ref === 'earth') {
+          const sw = sweepToShore(startSx, startZ, newSx, newZ);
+          if (sw.hitWater) {
+            const swX = sweepToShore(startSx, startZ, newSx, startZ);
+            const swZ = sweepToShore(startSx, startZ, startSx, newZ);
+            const dDirect = Math.hypot(sw.x - startSx, sw.z - startZ);
+            const dX = Math.hypot(swX.x - startSx, 0);
+            const dZ = Math.hypot(0, swZ.z - startZ);
+            if (!swX.hitWater && dX > dDirect + 0.1) {
+              newSx = swX.x;
+              newZ = startZ;
+              this.groundSpeed *= 0.5;
+            } else if (!swZ.hitWater && dZ > dDirect + 0.1) {
+              newSx = startSx;
+              newZ = swZ.z;
+              this.groundSpeed *= 0.5;
+            } else {
+              newSx = sw.x;
+              newZ = sw.z;
+              this.groundSpeed = 0;
+            }
+          }
+        }
+        let surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
+        if (surf.water) {
+          newSx = startSx;
+          newZ = startZ;
+          this.groundSpeed = 0;
+          surf = env.surface({ ...this, sx: newSx, s: { ...this.s, z: newZ } });
         }
         const stepDist = this.ref === 'earth'
           ? Math.hypot(newSx - prevSx, newZ - prevZ)
@@ -870,6 +926,7 @@ export class Vessel {
         // stay on the rotating surface
         const L = this.landed || this.clampSpot;
         if (L) {
+          if (L.surfH !== undefined) L.h = L.surfH + this.bottomOffset();
           this.placeOnSurface(L.body, L.sx, L.h, t + h, this.beta + bodyOmega(L.body) * h);
           if (L.sz !== undefined) {
             this.s.z = L.sz;
@@ -1041,9 +1098,10 @@ export class Vessel {
       const sp = Math.hypot(vs.e, vs.u);
       const tilt = Math.abs(this.ang);
       const isUfo = !!(info && info.ufoTier > 0);
-      const legsOk = isUfo || (this.hasLegs() && this.legsT > 0.95);
+      const hasDeployedLegs = this.hasLegs() && this.legsT > 0.95;
+      const legsOk = isUfo || hasDeployedLegs;
       const chuteOk = this.capsule() && chute > 0.65;
-      const vLim = chuteOk ? 14 : isUfo ? 12 : legsOk ? 8 : 6;
+      const vLim = chuteOk ? 14 : (isUfo && hasDeployedLegs) ? 16 : isUfo ? 12 : legsOk ? 8 : 6;
       const details = {
         sp,
         vLim: surf.water && (chuteOk || isUfo) ? 16 : vLim,
@@ -1118,7 +1176,7 @@ export class Vessel {
   settle(surf, t, how) {
     const targetBeta = this.isPlane ? (this.phi + Math.PI / 2) : this.beta;
     const keepZ = this.s.z || 0;
-    this.landed = { body: this.ref, sx: this.sx, sz: keepZ, h: surf.h + this.bottomOffset(), site: surf.site, how };
+    this.landed = { body: this.ref, sx: this.sx, sz: keepZ, surfH: surf.h, h: surf.h + this.bottomOffset(), site: surf.site, how };
     this.landedLock = 1.0;
     this.omega = 0;
     this.placeOnSurface(this.ref, this.sx, this.landed.h, t, targetBeta);

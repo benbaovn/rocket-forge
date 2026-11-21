@@ -24,7 +24,7 @@ export const PARTS = {
   decoupler: { name: 'Bộ tách tầng', cat: 'Cấu trúc', kind: 'stack', height: 0.45, dry: 0.12, desc: 'Tách tầng bằng phím SPACE' },
   heatShield: { name: 'Khiên chống nhiệt', cat: 'Cấu trúc', kind: 'stack', height: 0.68, dry: 0.35, isHeatShield: true, desc: 'Khiên chống nhiệt màu vàng đậm chịu nhiệt độ cực cao · Chống cháy nổ do lực ma sát không khí và tăng lực cản phanh khí động mỗi khi rơi xuống bầu khí quyển' },
   fins: { name: 'Cánh ổn định ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.08, desc: 'Gắn vào bồn – giữ tên lửa bay thẳng' },
-  legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng – bung ra khi hạ cánh' },
+  legs: { name: 'Chân hạ cánh ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.25, desc: 'Gắn vào bồn dưới cùng của tầng hoặc đĩa bay UFO – bung ra khi hạ cánh (Phím P)' },
   gridfins: { name: 'Cánh lưới ×4', cat: 'Cấu trúc', kind: 'radial', count: 4, dry: 0.06, desc: 'Gắn ở bồn trên cùng của tầng – điều hướng khi rơi về' },
   solarPanel: { name: 'Cánh pin mặt trời ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.12, desc: 'Cặp cánh pin mặt trời đa tầng · Khi gắn vào Cục Pin Năng Lượng sẽ tự động sạc hồi năng lượng cho pin' },
   solarUltra: { name: 'Pin Mặt Trời Siêu Nhỏ (Ultra) ×2', cat: 'Cấu trúc', kind: 'radial', count: 2, dry: 0.004, isUltraSolar: true, desc: 'Cặp cánh pin mặt trời vi mô siêu siêu nhỏ (0.004 tấn) chỉ gắn trực tiếp vào Pin Siêu Siêu Nhỏ (Gắn Súng) để tự động sạc điện liên tục' },
@@ -49,7 +49,9 @@ export const PARTS = {
   fuselagePlane: { name: 'Thân máy bay Jet', cat: 'Máy bay', kind: 'stack', height: 3.8, dry: 1.1, fuel: 5.5, desc: 'Thân máy bay khí động học chứa thùng nhiên liệu JP-8 và cửa hút khí' },
   wingsPlane: { name: 'Cánh nâng phản lực ×2', cat: 'Máy bay', kind: 'radial', count: 2, dry: 0.45, desc: 'Cặp cánh swept-wing tạo lực nâng khí động học cất cánh và lượn trên trời' },
   tailPlane: { name: 'Đuôi đứng & Cánh lái', cat: 'Máy bay', kind: 'stack', height: 1.8, dry: 0.35, desc: 'Cụm đuôi chữ V đôi nghiêng và cánh lái ngang thăng bằng' },
+  tailCurvedPlane: { name: 'Đuôi bầu tròn & Cánh lái cong nhọn', cat: 'Máy bay', kind: 'stack', height: 2.9, dry: 0.36, desc: 'Thân đuôi bầu tròn mượt mà gắn vừa khít thân máy bay, tích hợp cánh lái đứng & cặp cánh lái ngang có mũi uốn cong vuốt nhọn' },
   engJet: { name: 'Động cơ phản lực Afterburner', cat: 'Máy bay', kind: 'stack', height: 2.2, dry: 1.2, thrustSL: 450, thrustVac: 90, ispSL: 3200, ispVac: 300, engines: 1, desc: 'Động cơ tuốc-bin phản lực tăng lực siêu âm, lực đẩy cực mạnh trong khí quyển' },
+  turbofanPlane: { name: 'Động cơ Turbofan ×2', cat: 'Máy bay', kind: 'radial', count: 2, dry: 0.55, thrustSL: 280, thrustVac: 55, ispSL: 6400, ispVac: 320, engines: 1, desc: 'Cặp động cơ tuốc-bin cánh quạt (High-Bypass Turbofan) gắn dưới cánh máy bay · Cánh quạt Titanium 18 lá quay tốc độ cao, cực kỳ tiết kiệm nhiên liệu trong khí quyển' },
   gearPlane: { name: 'Càng đáp máy bay 3 bánh', cat: 'Máy bay', kind: 'radial', count: 1, dry: 0.25, desc: 'Bộ 3 càng đáp bánh xe cao su chịu tải giúp chạy đà cất cánh & hạ cánh' },
   saturnApollo: { name: 'Tàu Chỉ Huy Apollo CM & Tháp LES · Saturn V (Tầng 8)', cat: 'Đầu', kind: 'stack', height: 6.2, dry: 1.4, fuel: 1.0, thrustSL: 85, thrustVac: 120, ispSL: 220, ispVac: 320, engines: 1, desc: 'Khoang chỉ huy Apollo (CM) của tên lửa Saturn V bọc nón trắng + tháp thoát hiểm LES & dù hạ cánh' },
   saturnSM: { name: 'Khoang Dịch Vụ Apollo SM · Saturn V (Tầng 7)', cat: 'Nhiên liệu', kind: 'stack', height: 2.6, dry: 1.1, fuel: 3.2, thrustSL: 110, thrustVac: 220, ispSL: 230, ispVac: 345, engines: 1, autoStage: true, desc: 'Khoang dịch vụ Apollo SM của tên lửa Saturn V có tấm tản nhiệt xám bạc, 4 cụm RCS và động cơ SPS' },
@@ -802,7 +804,9 @@ const builders = {
   fuselagePlane() { return buildFuselagePlane(); },
   wingsPlane() { return buildWingsPlane(); },
   tailPlane() { return buildTailPlane(); },
+  tailCurvedPlane() { return buildTailCurvedPlane(); },
   engJet() { return buildEngJet(); },
+  turbofanPlane() { return buildTurbofanPlane(); },
   gearPlane() { return buildGearPlane(); },
   saturnApollo() { return buildSaturnApollo(); },
   saturnSM() { return buildSaturnSM(); },
@@ -1172,11 +1176,14 @@ function buildLeg() {
   const pin = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.76, 12).rotateX(Math.PI / 2), MAT.metal, HX, 0, 0);
   g.add(pin);
   const SA_Y = 1.0;
-  g.add(mesh(new THREE.BoxGeometry(0.1, 0.24, 0.22), MAT.darkMetal, R + 0.04, SA_Y, 0));
+  const upperBracket = mesh(new THREE.BoxGeometry(0.1, 0.24, 0.22), MAT.darkMetal, R + 0.04, SA_Y, 0);
+  g.add(upperBracket);
 
   const pivot = new THREE.Group();
   pivot.position.set(HX, 0, 0);
   g.add(pivot);
+  const shaftG = new THREE.Group();
+  pivot.add(shaftG);
   // carbon A-frame: tapered panel with two lightening cut-outs
   const w = (y) => 0.32 + (0.1 - 0.32) * (y + 0.12) / (L + 0.12);
   const s = new THREE.Shape();
@@ -1192,7 +1199,7 @@ function buildLeg() {
   const legGeo = new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 });
   legGeo.rotateY(Math.PI / 2);
   legGeo.translate(-0.06, 0, 0);
-  pivot.add(mesh(legGeo, MAT.carbon));
+  shaftG.add(mesh(legGeo, MAT.carbon));
   // hinge lugs on the leg
   pivot.add(mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.56, 16).rotateX(Math.PI / 2), MAT.carbon, 0, 0, 0));
   // metal edge rails along the outer face
@@ -1201,12 +1208,12 @@ function buildLeg() {
     const yM = L * 0.47, wz = w(yM) - 0.02;
     const r = mesh(railGeo, MAT.metal, 0.075, yM, sgn * wz);
     r.rotation.x = sgn * Math.atan((0.32 - 0.1) / (L + 0.12));
-    pivot.add(r);
+    shaftG.add(r);
   }
   // strut fitting + tip fitting
   const PY = L * 0.52;
-  pivot.add(mesh(new THREE.BoxGeometry(0.12, 0.2, 0.34), MAT.darkMetal, -0.06, PY, 0));
-  pivot.add(mesh(new THREE.BoxGeometry(0.16, 0.22, 0.22), MAT.darkMetal, 0, L - 0.05, 0));
+  shaftG.add(mesh(new THREE.BoxGeometry(0.12, 0.2, 0.34), MAT.darkMetal, -0.06, PY, 0));
+  shaftG.add(mesh(new THREE.BoxGeometry(0.16, 0.22, 0.22), MAT.darkMetal, 0, L - 0.05, 0));
   // foot: crush-core + pad, kept level when deployed
   const padG = new THREE.Group();
   padG.position.set(0, L, 0);
@@ -1217,7 +1224,7 @@ function buildLeg() {
   // telescoping strut (body bracket -> leg fitting)
   const A = new THREE.Vector3(R + 0.06, SA_Y, 0);
   const Pl = new THREE.Vector2(-0.12, PY);
-  const legPoint = (phi, out) => out.set(HX + Pl.x * Math.cos(phi) + Pl.y * Math.sin(phi), -Pl.x * Math.sin(phi) + Pl.y * Math.cos(phi), 0);
+  const legPoint = (phi, out, ls = 1) => out.set(HX + Pl.x * Math.cos(phi) + (Pl.y * ls) * Math.sin(phi), -Pl.x * Math.sin(phi) + (Pl.y * ls) * Math.cos(phi), 0);
   const tmp = new THREE.Vector3();
   let dMin = Infinity, dMax = 0;
   for (let i = 0; i <= 20; i++) { const d = legPoint(phiD * i / 20, tmp).distanceTo(A); dMin = Math.min(dMin, d); dMax = Math.max(dMax, d); }
@@ -1231,16 +1238,23 @@ function buildLeg() {
     secs.push(c);
   }
   const Y = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(), P = new THREE.Vector3();
+  let ufoMode = false;
+  let ufoPhi0 = 1.38;
+  let ufoStowScale = 0.55;
   g.userData.footY = LEG_FOOT_Y;
   g.userData.footR = LEG_FOOT_R;
   g.userData.deploy = 0;
   g.userData.setDeploy = (t) => {
     t = Math.max(0, Math.min(1, t || 0));
     g.userData.deploy = t;
-    const phi = phiD * t;
+    const ls = ufoMode ? (ufoStowScale + (1 - ufoStowScale) * t) : 1;
+    const phi = ufoMode ? (ufoPhi0 + (phiD - ufoPhi0) * t) : (phiD * t);
+    shaftG.scale.y = ls;
+    padG.position.y = L * ls;
     pivot.rotation.z = -phi;
-    padG.rotation.z = Math.PI / 2 + (phiD - Math.PI / 2) * t;
-    legPoint(phi, P);
+    const padRot0 = ufoMode ? (ufoPhi0 + 0.18) : (Math.PI / 2);
+    padG.rotation.z = padRot0 + (phiD - padRot0) * t;
+    legPoint(phi, P, ls);
     const d = P.distanceTo(A);
     dir.subVectors(P, A).normalize();
     for (let i = 0; i < n; i++) {
@@ -1249,6 +1263,15 @@ function buildLeg() {
       secs[i].quaternion.setFromUnitVectors(Y, dir);
       secs[i].scale.y = d > secL ? 1 : d / secL;
     }
+  };
+  g.userData.configureForUfo = (ufoS = 1, ufoR = 4.2, legK = 1, radShift = 0) => {
+    ufoMode = true;
+    upperBracket.position.y = 0.34;
+    A.y = 0.34;
+    const rHinge = radShift + HX * legK;
+    const maxR = ufoR * 0.92;
+    ufoStowScale = THREE.MathUtils.clamp((maxR - rHinge) / Math.max(0.1, L * legK * Math.sin(ufoPhi0)), 0.45, 0.95);
+    g.userData.setDeploy(g.userData.deploy || 0);
   };
   g.userData.setDeploy(0);
   return g;
@@ -3431,6 +3454,255 @@ function buildTailPlane() {
   return g;
 }
 
+function buildTailCurvedPlane() {
+  const g = new THREE.Group();
+  const JM = getJetMaterials();
+  const H = PARTS.tailCurvedPlane.height; // 2.9
+  const R0 = R * 1.02; // 1.275 m — exact match to fuselagePlane aft skin radius
+
+  const tailProfile = (u, radialPad = 0) => {
+    if (u < 0) {
+      const rSleeve = R0 - 0.003 + radialPad;
+      return { y: H - u * H, zc: 0, r: rSleeve };
+    }
+    const uc = Math.min(1, Math.max(0, u));
+    const y = H * (1 - uc);
+    // Smooth Hermite upsweep: zero slope at both front seam (u=0) and rounded rear dome (u=1)
+    const zc = 0.34 * uc * uc * (3 - 2 * uc);
+    // Smooth ellipsoid/paraboloid dome profile: C1-tangent to fuselage at u=0, plump rounded dome at u=1
+    const r = R0 * Math.sqrt(Math.max(0, 1 - Math.pow(uc, 1.48))) + (uc < 1 ? radialPad : 0);
+    return { y, zc, r };
+  };
+
+  const makeTailShellGeo = (uStart, uEnd, nu, thetaStart, thetaEnd, nt, radialPad = 0, closedRing = false, capFront = false, cosineEnd = false) => {
+    const pos = [];
+    const uvs = [];
+    const idx = [];
+    const stride = nt + 1;
+    const sleeveRows = uStart < 0 ? 2 : 0;
+    const bodyNu = nu - sleeveRows;
+    const uBodyStart = uStart < 0 ? 0 : uStart;
+
+    for (let i = 0; i <= nu; i++) {
+      let u;
+      if (i < sleeveRows) {
+        u = uStart * (1 - i / sleeveRows);
+      } else {
+        const bf = (i - sleeveRows) / bodyNu;
+        u = cosineEnd
+          ? uBodyStart + (uEnd - uBodyStart) * Math.sin(bf * (Math.PI / 2))
+          : uBodyStart + (uEnd - uBodyStart) * bf;
+      }
+      const { y, zc, r } = tailProfile(u, radialPad);
+      const vCoord = 1 - Math.max(0, u);
+      for (let j = 0; j <= nt; j++) {
+        const uFrac = j / nt;
+        const th = thetaStart + (thetaEnd - thetaStart) * uFrac;
+        pos.push(Math.cos(th) * r, y, zc + Math.sin(th) * r);
+        uvs.push(uFrac * 2, vCoord * 1.5);
+      }
+    }
+
+    const hasApex = cosineEnd && uEnd >= 0.9999;
+    for (let i = 0; i < nu; i++) {
+      const isApexRow = hasApex && i === nu - 1;
+      for (let j = 0; j < nt; j++) {
+        const a = i * stride + j;
+        const b = (i + 1) * stride + j;
+        const c = (i + 1) * stride + (j + 1);
+        const d = i * stride + (j + 1);
+        if (isApexRow) {
+          idx.push(a, d, b);
+        } else {
+          idx.push(a, d, b, d, c, b);
+        }
+      }
+    }
+
+    if (capFront) {
+      const p0 = tailProfile(uStart, radialPad);
+      const centerIdx = pos.length / 3;
+      pos.push(0, p0.y, p0.zc);
+      uvs.push(0.5, 0.5);
+      for (let j = 0; j < nt; j++) {
+        idx.push(centerIdx, j + 1, j);
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+
+    const nrm = geo.getAttribute('normal');
+    if (closedRing) {
+      const maxRow = hasApex ? nu - 1 : nu;
+      for (let i = 0; i <= maxRow; i++) {
+        const i0 = i * stride;
+        const i1 = i * stride + nt;
+        const nx = nrm.getX(i0) + nrm.getX(i1);
+        const ny = nrm.getY(i0) + nrm.getY(i1);
+        const nz = nrm.getZ(i0) + nrm.getZ(i1);
+        const len = Math.hypot(nx, ny, nz) || 1;
+        nrm.setXYZ(i0, nx / len, ny / len, nz / len);
+        nrm.setXYZ(i1, nx / len, ny / len, nz / len);
+      }
+    }
+    if (hasApex) {
+      for (let j = 0; j <= nt; j++) {
+        nrm.setXYZ(nu * stride + j, 0, -1, 0);
+      }
+    }
+    nrm.needsUpdate = true;
+    return geo;
+  };
+
+  // Plump, rounded, silky-smooth pearl-white tailcone dome (+0.04m overlap sleeve into fuselagePlane)
+  const hullGeo = makeTailShellGeo(-0.04 / H, 1.0, 56, 0, Math.PI * 2, 64, 0, true, true, true);
+  g.add(mesh(hullGeo, JM.aeroWhite, 0, 0, 0));
+
+  // Forward fuselage-mating collar ring & glowing cyan seam band matching fuselagePlane (R * 1.026)
+  g.add(mesh(new THREE.CylinderGeometry(R * 1.026, R * 1.026, 0.11, 64, 1, false), JM.imperialGold, 0, H - 0.035, 0));
+  g.add(mesh(new THREE.TorusGeometry(R * 1.022, 0.018, 10, 56).rotateX(Math.PI / 2), JM.neonCyan, 0, H - 0.11, 0));
+
+  // Conformal curved dorsal spine, lateral speed stripes & ventral fairing leaving the rounded rear dome clean & smooth
+  g.add(mesh(makeTailShellGeo(0.015, 0.70, 26, Math.PI * 0.36, Math.PI * 0.64, 18, 0.005), JM.cobaltBlue, 0, 0, 0));
+  g.add(mesh(makeTailShellGeo(0.015, 0.70, 26, Math.PI * 0.468, Math.PI * 0.532, 8, 0.009), JM.aceCrimson, 0, 0, 0));
+  g.add(mesh(makeTailShellGeo(0.02, 0.66, 22, Math.PI * 1.41, Math.PI * 1.59, 14, 0.005), JM.cobaltBlue, 0, 0, 0));
+  g.add(mesh(makeTailShellGeo(0.02, 0.66, 22, Math.PI * 1.484, Math.PI * 1.516, 6, 0.009), JM.neonCyan, 0, 0, 0));
+  for (const baseAng of [0, Math.PI]) {
+    g.add(mesh(makeTailShellGeo(0.04, 0.70, 24, baseAng - 0.14, baseAng + 0.14, 10, 0.005), JM.cobaltBlue, 0, 0, 0));
+    g.add(mesh(makeTailShellGeo(0.05, 0.69, 24, baseAng - 0.028, baseAng + 0.028, 6, 0.009), JM.neonCyan, 0, 0, 0));
+  }
+  // Subtle gold & cyan accent ring framing the smooth pearl-white rear dome
+  g.add(mesh(makeTailShellGeo(0.70, 0.725, 4, 0, Math.PI * 2, 56, 0.007, true), JM.imperialGold, 0, 0, 0));
+
+  // Vertical rudder fin (+Z dorsal) with sleek curved, pointed scimitar tip ("mũi cánh cong cong nhọn nhọn")
+  const finShape = new THREE.Shape();
+  finShape.moveTo(0.94, H - 0.16);
+  finShape.bezierCurveTo(1.42, 2.38, 1.96, 1.44, 3.24, -0.36);
+  finShape.bezierCurveTo(2.44, -0.06, 1.58, 0.16, 0.52, 0.34);
+  finShape.closePath();
+  const finGeo = new THREE.ExtrudeGeometry(finShape, {
+    depth: 0.10,
+    bevelEnabled: true,
+    bevelThickness: 0.022,
+    bevelSize: 0.022,
+    bevelSegments: 3,
+    curveSegments: 30,
+  });
+  finGeo.translate(0, 0, -0.05);
+  finGeo.rotateY(-Math.PI / 2);
+  g.add(mesh(finGeo, JM.aeroWhite, 0, 0, 0));
+
+  // Curved crimson scimitar chevron flash & cobalt rudder trim on vertical fin
+  const finCrimsonShape = new THREE.Shape();
+  finCrimsonShape.moveTo(1.30, 2.24);
+  finCrimsonShape.bezierCurveTo(1.74, 1.72, 2.24, 0.98, 3.04, -0.22);
+  finCrimsonShape.bezierCurveTo(2.68, -0.08, 2.26, 0.28, 1.24, 1.66);
+  finCrimsonShape.closePath();
+  const finCrimsonGeo = new THREE.ExtrudeGeometry(finCrimsonShape, { depth: 0.150, bevelEnabled: false, curveSegments: 24 });
+  finCrimsonGeo.translate(0, 0, -0.075);
+  finCrimsonGeo.rotateY(-Math.PI / 2);
+  g.add(mesh(finCrimsonGeo, JM.aceCrimson, 0, 0, 0));
+
+  const rudderShape = new THREE.Shape();
+  rudderShape.moveTo(1.18, 0.96);
+  rudderShape.bezierCurveTo(1.72, 0.66, 2.30, 0.22, 2.94, -0.18);
+  rudderShape.bezierCurveTo(2.30, -0.02, 1.60, 0.18, 0.88, 0.36);
+  rudderShape.closePath();
+  const rudderGeo = new THREE.ExtrudeGeometry(rudderShape, { depth: 0.148, bevelEnabled: false, curveSegments: 24 });
+  rudderGeo.translate(0, 0, -0.074);
+  rudderGeo.rotateY(-Math.PI / 2);
+  g.add(mesh(rudderGeo, JM.cobaltBlue, 0, 0, 0));
+
+  // Curved glowing neon-cyan leading-edge plasma slat following the curved pointed sharkfin tip
+  const finLeadCurve = new THREE.CubicBezierCurve3(
+    new THREE.Vector3(0, H - 0.32, 1.26),
+    new THREE.Vector3(0, 2.28, 1.50),
+    new THREE.Vector3(0, 1.36, 2.04),
+    new THREE.Vector3(0, -0.34, 3.22)
+  );
+  g.add(mesh(new THREE.TubeGeometry(finLeadCurve, 32, 0.026, 10, false), JM.neonCyan, 0, 0, 0));
+
+  // Vietnamese Air Force roundels on both left & right faces of the vertical tailfin
+  for (const sgn of [-1, 1]) {
+    const rg = new THREE.Group();
+    rg.position.set(sgn * 0.076, 1.32, 1.66);
+    rg.rotation.z = -sgn * (Math.PI / 2);
+    rg.add(mesh(new THREE.CylinderGeometry(0.246, 0.246, 0.022, 32), JM.imperialGold, 0, 0, 0));
+    rg.add(mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.028, 32), JM.roundelRed, 0, 0, 0));
+    rg.add(mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.034, 5), JM.roundelStar, 0, 0, 0));
+    g.add(rg);
+  }
+
+  // Anti-collision strobe at the curved fin tip + flush rounded tail dome nav light
+  const finStrobeMat = JM.xenonWhite.clone();
+  const tailStrobeMat = JM.neonAmber.clone();
+  g.add(mesh(new THREE.SphereGeometry(0.064, 14, 12), finStrobeMat, 0, -0.36, 3.24));
+  g.add(mesh(new THREE.SphereGeometry(0.056, 16, 14), tailStrobeMat, 0, 0.015, 0.34));
+  g.userData.planeStrobeMats = [finStrobeMat, tailStrobeMat];
+
+  // Pair of horizontal stabilizers / elevators (±X) with curved, pointed scimitar wingtips
+  for (const sgn of [-1, 1]) {
+    const stabGrp = new THREE.Group();
+    stabGrp.position.set(0, 0, 0.26);
+    stabGrp.rotation.order = 'XYZ';
+    stabGrp.rotation.x = -0.08;
+    stabGrp.rotation.y = -sgn * 0.16;
+
+    const stabShape = new THREE.Shape();
+    stabShape.moveTo(0, 2.10);
+    stabShape.bezierCurveTo(sgn * 1.24, 1.92, sgn * 2.16, 1.06, sgn * 2.86, -0.34);
+    stabShape.bezierCurveTo(sgn * 2.12, 0.04, sgn * 1.22, 0.40, 0, 0.50);
+    stabShape.closePath();
+    const stabGeo = new THREE.ExtrudeGeometry(stabShape, {
+      depth: 0.09,
+      bevelEnabled: true,
+      bevelThickness: 0.020,
+      bevelSize: 0.020,
+      bevelSegments: 3,
+      curveSegments: 28,
+    });
+    stabGeo.translate(0, 0, -0.045);
+    stabGrp.add(mesh(stabGeo, JM.aeroWhite, 0, 0, 0));
+
+    // Curved crimson chevron & cobalt elevator trim on upper & lower stabilizer faces
+    const stabCrimson = new THREE.Shape();
+    stabCrimson.moveTo(sgn * 1.18, 1.56);
+    stabCrimson.bezierCurveTo(sgn * 1.68, 1.30, sgn * 2.26, 0.72, sgn * 2.72, -0.20);
+    stabCrimson.bezierCurveTo(sgn * 2.34, 0.02, sgn * 1.78, 0.52, sgn * 1.06, 1.12);
+    stabCrimson.closePath();
+    const stabCrimsonGeo = new THREE.ExtrudeGeometry(stabCrimson, { depth: 0.136, bevelEnabled: false, curveSegments: 22 });
+    stabCrimsonGeo.translate(0, 0, -0.068);
+    stabGrp.add(mesh(stabCrimsonGeo, JM.aceCrimson, 0, 0, 0));
+
+    const elevShape = new THREE.Shape();
+    elevShape.moveTo(sgn * 1.02, 0.98);
+    elevShape.bezierCurveTo(sgn * 1.58, 0.70, sgn * 2.18, 0.28, sgn * 2.66, -0.18);
+    elevShape.bezierCurveTo(sgn * 2.04, 0.08, sgn * 1.38, 0.36, sgn * 0.88, 0.50);
+    elevShape.closePath();
+    const elevGeo = new THREE.ExtrudeGeometry(elevShape, { depth: 0.134, bevelEnabled: false, curveSegments: 22 });
+    elevGeo.translate(0, 0, -0.067);
+    stabGrp.add(mesh(elevGeo, JM.cobaltBlue, 0, 0, 0));
+
+    // Curved glowing neon-cyan leading-edge slat & curved tip nav light
+    const stabLeadCurve = new THREE.CubicBezierCurve3(
+      new THREE.Vector3(sgn * 1.16, 1.72, 0),
+      new THREE.Vector3(sgn * 1.58, 1.54, 0),
+      new THREE.Vector3(sgn * 2.22, 0.94, 0),
+      new THREE.Vector3(sgn * 2.84, -0.32, 0)
+    );
+    stabGrp.add(mesh(new THREE.TubeGeometry(stabLeadCurve, 28, 0.024, 10, false), JM.neonCyan, 0, 0, 0));
+    stabGrp.add(mesh(new THREE.SphereGeometry(0.046, 12, 10), JM.neonCyan, sgn * 2.86, -0.34, 0));
+
+    g.add(stabGrp);
+  }
+
+  return g;
+}
+
 function buildEngJet() {
   const g = new THREE.Group();
   const JM = getJetMaterials();
@@ -3480,6 +3752,88 @@ function buildEngJet() {
 
   const bellM = bellMaterial(false);
   addNozzle(g, 0, 0, 0.44, [bellM]);
+
+  return g;
+}
+
+function buildTurbofanPlane() {
+  const g = new THREE.Group();
+  const JM = getJetMaterials();
+
+  // Wide high-bypass turbofan outer nacelle cowling (intake at +Y = +1.04, bypass exhaust at -Y = -0.92)
+  const cowlPts = [
+    new THREE.Vector2(0.39, -0.92),
+    new THREE.Vector2(0.44, -0.62),
+    new THREE.Vector2(0.485, -0.15),
+    new THREE.Vector2(0.49, 0.52),
+    new THREE.Vector2(0.465, 0.96),
+    new THREE.Vector2(0.435, 1.04),
+    new THREE.Vector2(0.40, 1.02),
+    new THREE.Vector2(0.40, 0.54),
+    new THREE.Vector2(0.38, -0.92),
+  ];
+  const cowlGeo = scaleUV(new THREE.LatheGeometry(cowlPts, 56), 2, 1);
+  g.add(mesh(cowlGeo, JM.aeroWhite, 0, 0, 0));
+
+  // Polished titanium anti-ice intake lip + crimson, cobalt & imperial-gold airline/fighter livery bands
+  g.add(mesh(new THREE.TorusGeometry(0.432, 0.034, 16, 52).rotateX(Math.PI / 2), MAT.silver, 0, 1.025, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.478, 0.486, 0.18, 56, 1, true), JM.aceCrimson, 0, 0.78, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.493, 0.493, 0.06, 56, 1, false), JM.imperialGold, 0, 0.66, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.492, 0.014, 10, 52).rotateX(Math.PI / 2), JM.neonCyan, 0, 0.22, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.480, 0.442, 0.34, 56, 1, true), JM.cobaltBlue, 0, -0.58, 0));
+
+  // Dark acoustic intake liner & stator bulkhead
+  g.add(mesh(new THREE.CylinderGeometry(0.398, 0.398, 0.48, 48, 1, true), JM.jetCarbon, 0, 0.78, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.395, 0.395, 0.04, 40), JM.jetCarbon, 0, 0.54, 0));
+
+  // Spinning 18-blade wide-chord Titanium Turbofan rotor assembly (+Y forward)
+  const fanGroup = new THREE.Group();
+  fanGroup.position.set(0, 0.78, 0);
+  fanGroup.userData.spinAxis = 'y';
+  g.add(fanGroup);
+  g.userData.propGroup = fanGroup;
+
+  fanGroup.add(mesh(new THREE.ConeGeometry(0.118, 0.30, 24), JM.jetCarbon, 0, 0.13, 0));
+  fanGroup.add(mesh(new THREE.TorusGeometry(0.088, 0.013, 10, 24).rotateX(Math.PI / 2), JM.imperialGold, 0, 0.07, 0));
+  fanGroup.add(mesh(new THREE.SphereGeometry(0.028, 12, 10), JM.neonCyan, 0, 0.275, 0));
+
+  const bladeCount = 18;
+  const bladeGeo = new THREE.BoxGeometry(0.275, 0.022, 0.086);
+  const edgeGeo = new THREE.BoxGeometry(0.272, 0.010, 0.018);
+  for (let i = 0; i < bladeCount; i++) {
+    const a = (i / bladeCount) * Math.PI * 2;
+    const bp = new THREE.Group();
+    bp.rotation.y = a;
+    const b = mesh(bladeGeo, MAT.titanium, 0.235, 0, 0);
+    b.rotation.x = 0.44;
+    const le = mesh(edgeGeo, MAT.silver, 0.235, 0.015, 0.032);
+    le.rotation.x = 0.44;
+    bp.add(b, le);
+    fanGroup.add(bp);
+  }
+
+  // Serrated chevron bypass nozzle & hot-section core exhaust cone (-Y aft)
+  const chevCount = 14;
+  const chevGeo = new THREE.ConeGeometry(0.055, 0.14, 4);
+  chevGeo.rotateX(Math.PI);
+  for (let i = 0; i < chevCount; i++) {
+    const a = (i / chevCount) * Math.PI * 2;
+    const ch = mesh(chevGeo, i % 2 === 0 ? JM.imperialGold : MAT.titanium, Math.cos(a) * 0.388, -0.96, Math.sin(a) * 0.388);
+    ch.rotation.y = -a;
+    g.add(ch);
+  }
+  g.add(mesh(new THREE.CylinderGeometry(0.29, 0.23, 0.30, 36, 1, false), MAT.titanium, 0, -0.98, 0));
+  g.add(mesh(new THREE.ConeGeometry(0.14, 0.30, 24).rotateX(Math.PI), JM.jetCarbon, 0, -1.16, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.21, 0.020, 10, 32).rotateX(Math.PI / 2), JM.neonAmber, 0, -1.10, 0));
+  g.add(mesh(new THREE.TorusGeometry(0.14, 0.015, 10, 24).rotateX(Math.PI / 2), JM.neonCyan, 0, -1.11, 0));
+
+  // Swept aerodynamic under-wing pylon (+Z top mounts flush into wing underside)
+  g.add(mesh(new THREE.BoxGeometry(0.13, 1.34, 0.50), JM.cobaltBlue, 0, 0.06, 0.44));
+  g.add(mesh(new THREE.BoxGeometry(0.145, 1.24, 0.07), JM.imperialGold, 0, 0.06, 0.65));
+  g.add(mesh(new THREE.BoxGeometry(0.06, 1.10, 0.06), JM.neonCyan, 0, 0.08, 0.44));
+
+  const bellM = bellMaterial(false);
+  addNozzle(g, 0, -1.10, 0.30, [bellM]);
 
   return g;
 }
@@ -15105,6 +15459,12 @@ export function radialPlacements(type, occ = 0) {
     return [
       { angle: 0, dist: 1.0, offsetZ: 0 },
       { angle: Math.PI, dist: 1.0, offsetZ: 0 },
+    ];
+  }
+  if (type === 'turbofanPlane') {
+    return [
+      { angle: 0, dist: 1.88, offsetZ: -0.48, rotY: 0 },
+      { angle: Math.PI, dist: 1.88, offsetZ: -0.48, rotY: 0 },
     ];
   }
   if (type === 'gearPlane') {

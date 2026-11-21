@@ -383,6 +383,14 @@ class App {
     audio.click();
   }
 
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => console.error(err));
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
   syncVolumeUI() {
     const pct = audio.getVolumePercent();
     const icon = pct === 0 ? '🔇' : pct < 35 ? '🔈' : pct < 70 ? '🔉' : '🔊';
@@ -454,13 +462,7 @@ class App {
     $('btn-settings-close').onclick = () => this.toggleSettings(false);
     if ($('gpu-badge')) $('gpu-badge').onclick = () => this.toggleSettings(true);
     if ($('gpu-launch-badge')) $('gpu-launch-badge').onclick = () => this.toggleSettings(true);
-    if ($('btn-vab-fullscreen')) $('btn-vab-fullscreen').onclick = () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => console.error(err));
-      } else {
-        document.exitFullscreen();
-      }
-    };
+    if ($('btn-vab-fullscreen')) $('btn-vab-fullscreen').onclick = () => this.toggleFullscreen();
     window.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
@@ -468,6 +470,9 @@ class App {
       if (e.key.toLowerCase() === 'o') {
         e.preventDefault();
         this.toggleSettings();
+      } else if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        this.toggleFullscreen();
       } else if (e.key === 'Escape' && !$('settings').classList.contains('hidden')) {
         e.preventDefault();
         this.toggleSettings(false);

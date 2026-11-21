@@ -451,11 +451,54 @@ export class LaunchScene {
     return this.trigFbmJS(sx * 0.0022, -sz * 0.0022, 11.0, 4);
   }
 
+  earthRoadDist(sx, sz) {
+    const px = sx, py = -sz;
+    const segD = (ax, ay, bx, by) => {
+      const pax = px - ax, pay = py - ay;
+      const bax = bx - ax, bay = by - ay;
+      const denom = bax * bax + bay * bay;
+      const h = denom > 0 ? THREE.MathUtils.clamp((pax * bax + pay * bay) / denom, 0, 1) : 0;
+      return Math.hypot(pax - bax * h, pay - bay * h);
+    };
+    let d = Math.min(
+      segD(0.0, 0.0, -1500.0, 2500.0),
+      segD(-1500.0, 2500.0, -10500.0, 2600.0),
+      segD(-10500.0, 2600.0, -10500.0, 6200.0),
+      segD(-200.0, -900.0, -200.0, 6000.0)
+    );
+    for (let i = 0; i < AIRPORT_SCATTER_OFFSETS.length; i++) {
+      const off = AIRPORT_SCATTER_OFFSETS[i];
+      const rx = off.dx - 110.0;
+      const ry = -off.dz + 64.0;
+      d = Math.min(d, segD(rx, ry, -65000.0, ry));
+    }
+    return d;
+  }
+
+  earthSnowAmount(sx, sz) {
+    const smooth = (e0, e1, x) => {
+      const t = THREE.MathUtils.clamp((x - e0) / (e1 - e0), 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+    const nSnow = (this.trigFbmJS(sx * 0.00045, sz * 0.00045, 73.0, 3) - 0.5) * 900.0;
+    const nearNorth = (1.0 - smooth(-4300.0, -3300.0, sz - nSnow)) * (1.0 - smooth(4500.0, 8500.0, sx));
+    const arcticNorth = 1.0 - smooth(-145000.0, -110000.0, sz - nSnow * 8.0);
+    return Math.max(nearNorth, arcticNorth);
+  }
+
   isLagoonWater(sx, sz) {
     const cX = this.earthCoastX(sz);
-    if (sx > Math.min(2200.0, cX - 900.0)) return false;
     if (this.earthAirportBoxDist(sx, sz) < 120.0) return false;
-    return this.lagoonNoiseJS(sx, sz) >= 0.685;
+    if (Math.hypot(sx + 10500.0, sz + 6200.0) < 185.0) return false;
+    const roadD = this.earthRoadDist(sx, sz);
+    if (roadD <= 26.0) return false;
+    const py = -sz;
+    if (Math.abs(py) <= 7520.0) {
+      if (Math.abs(sx - (-3900.0 + Math.sin(py * 0.00035) * 450.0)) < 752.0) return true;
+      if (Math.abs(sx - (-7800.0 + Math.cos(py * 0.00028) * 520.0)) < 952.0) return true;
+    }
+    if (sx > Math.min(2200.0, cX - 900.0) || sx < -1470000.0) return false;
+    return this.lagoonNoiseJS(sx, sz) >= 0.674;
   }
 
   earthGroundWave(sx, sz, showPad = 1.0, showAirport = 0.0) {
@@ -474,9 +517,13 @@ export class LaunchScene {
     const landMask = smooth(cX - 20.0, cX - 260.0, sx) * smooth(-1495000.0, -1470000.0, sx);
     const padFlat = 1.0 - showPad * smooth(150.0, 95.0, Math.hypot(sx, sz));
     const lzFlat = smooth(38.0, 75.0, Math.hypot(sx + 1600.0, sz));
+    const snowClearFlat = smooth(55.0, 115.0, Math.hypot(sx + 10500.0, sz + 6200.0));
+    const snowAmt = this.earthSnowAmount(sx, sz);
+    const snowBoost = 1.0 + 1.25 * snowAmt;
     const boxDist = this.earthAirportBoxDist(sx, sz);
     const rwyFlat = smooth(0.0, 70.0, boxDist);
-    const lagoonFlat = sx <= Math.min(2200.0, cX - 900.0) ? (1.0 - smooth(0.66, 0.70, this.lagoonNoiseJS(sx, sz))) : 1.0;
+    const snowHubDry = smooth(85.0, 185.0, Math.hypot(sx + 10500.0, sz + 6200.0));
+    const lagoonFlat = sx <= Math.min(2200.0, cX - 900.0) ? (1.0 - smooth(0.66, 0.70, this.lagoonNoiseJS(sx, sz)) * snowHubDry) : 1.0;
     const nAmp1 = this.trigFbmJS(sx * 0.014, sz * 0.014, seed + 3.7, 3);
     const nAmp2 = this.trigFbmJS(sx * 0.032, sz * 0.032, seed + 17.3, 2);
     const nHill = this.trigFbmJS(sx * 0.020, sz * 0.020, seed + 31.9, 3);
@@ -488,7 +535,7 @@ export class LaunchScene {
       + cosT(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
       + sinT(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
       + (nHill - 0.5) * hillAmp;
-    return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
+    return w * snowBoost * landMask * padFlat * lzFlat * snowClearFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
   }
 
   initGround() {
@@ -567,6 +614,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
 }).join('\n')}
         return ${AIRPORT_SCATTER_OFFSETS.map((_, i) => `p${i}`).reduce((acc, v) => `min(${acc}, ${v})`)};
       }
+      float snowBiomeGLSL(float sx, float sz) {
+        float nSnow = (trigFbm(sx * 0.00045, sz * 0.00045, 73.0, 3) - 0.5) * 900.0;
+        float nearNorth = (1.0 - smoothstep(-4300.0, -3300.0, sz - nSnow)) * (1.0 - smoothstep(4500.0, 8500.0, sx));
+        float arcticNorth = 1.0 - smoothstep(-145000.0, -110000.0, sz - nSnow * 8.0);
+        return max(nearNorth, arcticNorth);
+      }
       float groundWaveHeight(vec2 p, float showPad, float showAirport) {
         if (showAirport > 0.5) return 0.0;
         float sx = p.x;
@@ -575,9 +628,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
         float landMask = smoothstep(cX - 20.0, cX - 260.0, sx) * smoothstep(-1495000.0, -1470000.0, sx);
         float padFlat = 1.0 - showPad * smoothstep(150.0, 95.0, length(vec2(sx, sz)));
         float lzFlat = smoothstep(38.0, 75.0, length(vec2(sx + 1600.0, sz)));
+        float snowClearFlat = smoothstep(55.0, 115.0, length(vec2(sx + 10500.0, sz + 6200.0)));
+        float snowAmt = snowBiomeGLSL(sx, sz);
+        float snowBoost = 1.0 + 1.25 * snowAmt;
         float boxDist = airportBoxDistGLSL(sx, sz);
         float rwyFlat = smoothstep(0.0, 70.0, boxDist);
-        float lagoonFlat = 1.0 - smoothstep(0.66, 0.70, lagoonNoiseGLSL(sx, sz)) * step(p.x, min(2200.0, cX - 900.0));
+        float snowHubDry = smoothstep(85.0, 185.0, length(vec2(sx + 10500.0, sz + 6200.0)));
+        float lagoonFlat = 1.0 - smoothstep(0.66, 0.70, lagoonNoiseGLSL(sx, sz)) * snowHubDry * step(p.x, min(2200.0, cX - 900.0));
         float nAmp1 = trigFbm(sx * 0.014, sz * 0.014, uWaveSeed + 3.7, 3);
         float nAmp2 = trigFbm(sx * 0.032, sz * 0.032, uWaveSeed + 17.3, 2);
         float nHill = trigFbm(sx * 0.020, sz * 0.020, uWaveSeed + 31.9, 3);
@@ -589,7 +646,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
                 + cosTau(sx * 0.016 - sz * 0.031 + 1.1 - warp * 0.7) * 0.48 * amp2
                 + sinTau(sx * 0.055 + sz * 0.048 + 2.3 + warp * 1.3) * 0.25 * (amp1 + amp2) * 0.5
                 + (nHill - 0.5) * hillAmp;
-        return w * landMask * padFlat * lzFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
+        return w * snowBoost * landMask * padFlat * lzFlat * snowClearFlat * rwyFlat * lagoonFlat * (1.0 - showAirport);
       }
     `;
     const gmat = new THREE.MeshStandardMaterial({
@@ -632,14 +689,21 @@ ${AIRPORT_SCATTER_OFFSETS.map((off, i) => {
           float n1 = fbm3(vec3(p * 0.0011, 2.0), 6);
           float n2 = fbm3(vec3(p * 0.011, 3.0), 4);
           float n3 = fbm3(vec3(p * 0.09, 5.0), 3);
+          float snowAmt = snowBiomeGLSL(p.x, -p.y);
           vec3 grass = mix(vec3(0.065, 0.125, 0.045), vec3(0.16, 0.21, 0.08), n1);
           grass = mix(grass, vec3(0.20, 0.18, 0.11), smoothstep(0.55, 0.72, n2) * 0.65);
           grass = mix(grass, vec3(0.04, 0.095, 0.035), smoothstep(0.6, 0.8, fbm3(vec3(p * 0.004, 8.0), 4)) * 0.8);
           vec3 sand = vec3(0.68, 0.61, 0.47);
           float beach = smoothstep(15.0, 180.0, inlandDist);
           vec3 landCol = mix(sand, grass, beach);
-          // Mainland highways connecting Launchpad & all 5 Peninsular Airports Westward into the continent
+          vec3 snowGround = mix(vec3(0.68, 0.78, 0.90), vec3(0.91, 0.94, 0.99), n1);
+          snowGround = mix(snowGround, vec3(0.97, 0.99, 1.0), smoothstep(0.48, 0.72, n2) * 0.75);
+          snowGround = mix(snowGround, vec3(0.36, 0.39, 0.45), smoothstep(0.74, 0.88, fbm3(vec3(p * 0.006, 12.0), 4)) * 0.45);
+          vec3 snowBeach = vec3(0.76, 0.83, 0.90);
+          landCol = mix(landCol, mix(snowBeach, snowGround, beach), snowAmt);
+          // Mainland highways connecting Launchpad, Snow Zone & all Peninsular Airports Westward into the continent
           float road = min(segDist(p, vec2(0.0), vec2(-1500.0, 2500.0)), segDist(p, vec2(-1500.0, 2500.0), vec2(-10500.0, 2600.0)));
+          road = min(road, segDist(p, vec2(-10500.0, 2600.0), vec2(-10500.0, 6200.0)));
           road = min(road, segDist(p, vec2(-200.0, -900.0), vec2(-200.0, 6000.0)));
 ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   const rx = (off.dx - 110.0).toFixed(1);
@@ -647,32 +711,38 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   return `          road = min(road, segDist(p, vec2(${rx}, ${ry}), vec2(-65000.0, ${ry})));`;
 }).join('\n')}
           float apDry = smoothstep(20.0, 120.0, airportBoxDistGLSL(p.x, -p.y));
+          float snowHubDry = smoothstep(85.0, 185.0, length(p - vec2(-10500.0, 6200.0)));
           float causewayBridge = smoothstep(38.0, 18.0, road);
           float bananaRiver = smoothstep(750.0, 480.0, abs(p.x - (-3900.0 + sin(p.y * 0.00035) * 450.0))) * step(abs(p.y), 7500.0);
           float indianRiver = smoothstep(950.0, 620.0, abs(p.x - (-7800.0 + cos(p.y * 0.00028) * 520.0))) * step(abs(p.y), 7500.0);
           float lagoon = max(
-            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * step(p.x, min(2200.0, coast - 900.0)) * step(-1470000.0, p.x),
+            smoothstep(0.68, 0.70, lagoonNoiseGLSL(p.x, -p.y)) * snowHubDry * step(p.x, min(2200.0, coast - 900.0)) * step(-1470000.0, p.x),
             max(bananaRiver, indianRiver) * (1.0 - causewayBridge)
           ) * apDry;
-          landCol = mix(landCol, vec3(0.33, 0.31, 0.28), smoothstep(16.0, 12.0, road));
+          vec3 roadCol = mix(vec3(0.33, 0.31, 0.28), vec3(0.24, 0.27, 0.32), snowAmt);
+          landCol = mix(landCol, roadCol, smoothstep(16.0, 12.0, road));
+          float snowPadRing = (1.0 - smoothstep(32.0, 36.0, length(p - vec2(-10500.0, 6200.0)))) * smoothstep(26.0, 29.0, length(p - vec2(-10500.0, 6200.0)));
+          landCol = mix(landCol, vec3(0.38, 0.78, 0.96), snowPadRing * 0.65);
           float apPaved = smoothstep(1.5, -1.5, airportPavedDistGLSL(p.x, -p.y, uAirport0Off));
           landCol = mix(landCol, vec3(0.065, 0.07, 0.082) * (0.9 + 0.2 * n2), apPaved);
           float pad = uShowPad * smoothstep(${(PAD_RADIUS + 70).toFixed(1)}, ${(PAD_RADIUS + 55).toFixed(1)}, length(p));
           landCol = mix(landCol, vec3(0.4, 0.39, 0.37) * (0.85 + 0.3 * n2), pad);
           float ghShade = groundWaveHeight(p, uShowPad, uShowAirport);
-          landCol *= (0.78 + 0.44 * n3) * (1.0 + ghShade * 0.08);
+          float texMod = mix(0.78 + 0.44 * n3, 0.90 + 0.18 * n3, snowAmt);
+          landCol *= texMod * (1.0 + ghShade * 0.06);
           float seaDist = max(0.0, -inlandDist);
           float distOff = clamp(seaDist / 3200.0, 0.0, 1.0);
           vec3 ocean = mix(vec3(0.032, 0.145, 0.175), vec3(0.008, 0.035, 0.075), distOff);
+          ocean = mix(ocean, vec3(0.18, 0.38, 0.52), snowAmt * (1.0 - distOff) * 0.55);
           float oceanMask = max(1.0 - land, lagoon);
           vec3 col = mix(landCol, ocean, oceanMask);
-          // surf line around both mainland coast and all 5 offshore airport islands
+          // surf line & arctic sea-ice frost rim
           float shoreSigned = -inlandDist;
           float surf = smoothstep(28.0, 0.0, abs(shoreSigned - 20.0 - sin((p.x * 0.6 + p.y) * 0.01 + uTime) * 6.0)) * smoothstep(58.0, 4.0, shoreSigned);
-          col = mix(col, vec3(0.80), surf * 0.55);
+          col = mix(col, mix(vec3(0.80), vec3(0.92, 0.97, 1.0), snowAmt), surf * mix(0.55, 0.80, snowAmt));
           vec4 diffuseColor = vec4(col, opacity);
         `)
-        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.06, oceanMask);')
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.55, snowAmt * (1.0 - oceanMask));\nroughnessFactor = mix(roughnessFactor, 0.06, oceanMask);')
         .replace('#include <normal_fragment_maps>', /* glsl */`#include <normal_fragment_maps>
           if (oceanMask > 0.01) {
             vec3 q = vec3(p * 0.045, uTime * 0.35);
@@ -712,22 +782,69 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.ground = ground;
     this.world.add(ground);
 
-    // trees (instanced pines)
+    // trees (instanced pines + snow-covered arctic pines)
     const trunk = new THREE.CylinderGeometry(0.15, 0.2, 2, 5).translate(0, 1, 0);
     const crown1 = new THREE.ConeGeometry(1.6, 4, 7).translate(0, 3.6, 0);
     const crown2 = new THREE.ConeGeometry(1.2, 3, 7).translate(0, 5.4, 0);
     for (const g of [trunk, crown1, crown2]) g.deleteAttribute('uv');
     const colorize = (g, c) => { const n = g.attributes.position.count; const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set(c, i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g; };
+    const sTrunk = new THREE.CylinderGeometry(0.15, 0.2, 2, 5).translate(0, 1, 0);
+    const sCrown1 = new THREE.ConeGeometry(1.6, 3.7, 7).translate(0, 3.45, 0);
+    const sSnow1 = new THREE.ConeGeometry(1.66, 2.3, 7).translate(0, 4.25, 0);
+    const sCrown2 = new THREE.ConeGeometry(1.2, 2.8, 7).translate(0, 5.3, 0);
+    const sSnow2 = new THREE.ConeGeometry(1.25, 2.0, 7).translate(0, 5.8, 0);
+    for (const g of [sTrunk, sCrown1, sSnow1, sCrown2, sSnow2]) g.deleteAttribute('uv');
     const treeGeo = mergeGeometries([colorize(trunk, [0.25, 0.17, 0.1]), colorize(crown1, [0.06, 0.13, 0.05]), colorize(crown2, [0.07, 0.15, 0.06])]);
+    const snowTreeGeo = mergeGeometries([
+      colorize(sTrunk, [0.22, 0.16, 0.12]),
+      colorize(sCrown1, [0.05, 0.12, 0.08]),
+      colorize(sSnow1, [0.89, 0.94, 0.99]),
+      colorize(sCrown2, [0.06, 0.14, 0.09]),
+      colorize(sSnow2, [0.94, 0.97, 1.0]),
+    ]);
     const N = 10500;
+    const NSnowMax = 7500;
     const trees = new THREE.InstancedMesh(treeGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), N);
+    const snowTrees = new THREE.InstancedMesh(snowTreeGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72 }), NSnowMax);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3();
     this.treeWaveY = [];
     this.treeSpots = [];
+    this.snowTreeWaveY = [];
+    this.snowTreeSpots = [];
     this.treeGrid = new Map();
     const TREE_CELL = 32;
     let n = 0;
-    for (let tries = 0; n < N && tries < N * 5; tries++) {
+    let nSnow = 0;
+    const placeTreeAt = (x, z, forceSnow = false) => {
+      const isSnow = forceSnow || this.earthSnowAmount(x, z) > 0.35;
+      if (isSnow && nSnow >= NSnowMax) return false;
+      if (!isSnow && n >= N) return false;
+      const sc = 0.7 + Math.random() * 0.95;
+      const sy = sc * (0.82 + Math.random() * 0.5);
+      const ty = this.earthGroundWave(x, z, 0, 0);
+      const gKey = `${Math.floor(x / TREE_CELL)},${Math.floor(z / TREE_CELL)}`;
+      let bucket = this.treeGrid.get(gKey);
+      if (!bucket) {
+        bucket = [];
+        this.treeGrid.set(gKey, bucket);
+      }
+      const bucketItem = { x, z, ty, r: 1.55 * sc, h: 6.9 * sy };
+      bucket.push(bucketItem);
+      v.set(x, ty, z); s.set(sc, sy, sc);
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.random() * 6.28);
+      m.compose(v, q, s);
+      if (isSnow) {
+        this.snowTreeWaveY.push(ty);
+        this.snowTreeSpots.push({ x, z, bucketItem });
+        snowTrees.setMatrixAt(nSnow++, m);
+      } else {
+        this.treeWaveY.push(ty);
+        this.treeSpots.push({ x, z, bucketItem });
+        trees.setMatrixAt(n++, m);
+      }
+      return true;
+    };
+    for (let tries = 0; (n < N || nSnow < NSnowMax * 0.65) && tries < N * 5; tries++) {
       let x, z;
       let penAp = null;
       const isPeninsulaTree = tries % 5 !== 0;
@@ -745,31 +862,118 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       if (this.earthAirportBoxDist(x, z) < 40.0) continue; // keep all 5 mainland airport runways & aprons clear
       if (!penAp && x <= 0 && Math.abs(z) < 22) continue; // keep clear inland Rover corridor heading west
       if (!penAp && Math.abs(z + x * 2500 / 1500 * (x < 0 ? 1 : 0)) < 25 && x < 0 && x > -1500) continue;
+      if (this.earthRoadDist(x, z) < 22.0) continue;
       if (this.isLagoonWater(x, z)) continue; // keep inland lagoons clear of trees
       const cluster = TX.fbm(x / 300 + 50, z / 300 + 50, 1000, 3, 7);
       if (cluster < 0.48) continue;
-      const sc = 0.7 + Math.random() * 0.9;
-      const sy = sc * (0.8 + Math.random() * 0.5);
-      const ty = this.earthGroundWave(x, z, 0, 0);
-      this.treeWaveY.push(ty);
-      const gKey = `${Math.floor(x / TREE_CELL)},${Math.floor(z / TREE_CELL)}`;
-      let bucket = this.treeGrid.get(gKey);
-      if (!bucket) {
-        bucket = [];
-        this.treeGrid.set(gKey, bucket);
-      }
-      const bucketItem = { x, z, ty, r: 1.55 * sc, h: 6.9 * sy };
-      bucket.push(bucketItem);
-      this.treeSpots.push({ x, z, bucketItem });
-      v.set(x, ty, z); s.set(sc, sy, sc);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.random() * 6.28);
-      m.compose(v, q, s);
-      trees.setMatrixAt(n++, m);
+      placeTreeAt(x, z);
+    }
+    // Dedicated Alpine Snow Forest in the nearby Northern Snow Zone (-3500 >= sz >= -13500)
+    for (let tries = 0; nSnow < NSnowMax && tries < 22000; tries++) {
+      const x = -15500 + Math.random() * 14500;
+      const z = -3550 - Math.random() * 9800;
+      if (x > this.earthCoastX(z) - 260.0) continue;
+      if (Math.hypot(x + 10500.0, z + 6200.0) < 66.0) continue; // keep Snow Zone landing clearing open
+      if (this.earthRoadDist(x, z) < 24.0) continue;
+      if (this.isLagoonWater(x, z)) continue;
+      if (this.earthSnowAmount(x, z) < 0.45) continue;
+      const cluster = TX.fbm(x / 280 + 19, z / 280 + 83, 1000, 3, 7);
+      if (cluster < 0.44) continue;
+      placeTreeAt(x, z, true);
     }
     trees.count = n;
     trees.castShadow = true; trees.receiveShadow = true;
     this.trees = trees;
     this.world.add(trees);
+    snowTrees.count = nSnow;
+    snowTrees.castShadow = true; snowTrees.receiveShadow = true;
+    this.snowTrees = snowTrees;
+    this.world.add(snowTrees);
+
+    // 3D Snow Zone landmarks (Snowmen & glowing glacial ice crystal spires strictly on dry snow land around (-10500, -6200))
+    this.waveObjects = this.waveObjects || [];
+    const snowBodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fbff, roughness: 0.55 });
+    const coalMat = new THREE.MeshStandardMaterial({ color: 0x181c24, roughness: 0.7 });
+    const carrotMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.5 });
+    const scarfMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 });
+    const iceMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x0284c7, emissiveIntensity: 0.45, roughness: 0.15, metalness: 0.25 });
+    const isDrySnowSpot = (px, pz) => {
+      if (px > this.earthCoastX(pz) - 320.0 || px < -1470000.0) return false;
+      if (this.isLagoonWater(px, pz)) return false;
+      return this.earthSnowAmount(px, pz) > 0.65;
+    };
+    const snowmanSpots = [
+      [-10542, -6168, 0.55, 1.35],
+      [-10458, -6174, -0.65, 1.15],
+      [-10536, -6236, 1.10, 1.25],
+    ];
+    for (const [smX, smZ, rotY, smScale] of snowmanSpots) {
+      if (!isDrySnowSpot(smX, smZ)) continue;
+      const sm = new THREE.Group();
+      const b1 = new THREE.Mesh(new THREE.SphereGeometry(1.15, 16, 12), snowBodyMat); b1.position.y = 1.05;
+      const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.84, 16, 12), snowBodyMat); b2.position.y = 2.65;
+      const b3 = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 12), snowBodyMat); b3.position.y = 3.85;
+      const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.12, 8, 20).rotateX(Math.PI / 2), scarfMat); scarf.position.y = 3.32;
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.62, 10).rotateX(Math.PI / 2), carrotMat); nose.position.set(0, 3.85, 0.72);
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), coalMat); eyeL.position.set(-0.20, 4.02, 0.50);
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), coalMat); eyeR.position.set(0.20, 4.02, 0.50);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.08, 18), coalMat); brim.position.y = 4.35;
+      const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.42, 0.65, 18), coalMat); hat.position.y = 4.70;
+      sm.add(b1, b2, b3, scarf, nose, eyeL, eyeR, brim, hat);
+      sm.scale.setScalar(smScale);
+      sm.rotation.y = rotY;
+      sm.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      const smY = this.earthGroundWave(smX, smZ, 0, 0);
+      sm.position.set(smX, smY, smZ);
+      this.world.add(sm);
+      this.waveObjects.push({ obj: sm, wx: smX, wz: smZ, baseY: 0, waveY: smY });
+    }
+    const crystalSpots = [[-10464, -6234], [-10555, -6206], [-10488, -6142], [-10512, -6256]];
+    for (const [cx, cz] of crystalSpots) {
+      if (!isDrySnowSpot(cx, cz)) continue;
+      const cg = new THREE.Group();
+      for (let ci = 0; ci < 4; ci++) {
+        const ch = 2.4 + (ci % 3) * 1.3;
+        const cr = 0.35 + (ci % 2) * 0.16;
+        const shard = new THREE.Mesh(new THREE.ConeGeometry(cr, ch, 6), iceMat);
+        shard.position.set((ci - 1.5) * 0.55, ch * 0.45, ((ci * 7) % 3 - 1) * 0.45);
+        shard.rotation.z = (ci - 1.5) * 0.16;
+        shard.rotation.x = ((ci % 2) - 0.5) * 0.18;
+        shard.castShadow = true;
+        cg.add(shard);
+      }
+      const cy = this.earthGroundWave(cx, cz, 0, 0);
+      cg.position.set(cx, cy, cz);
+      this.world.add(cg);
+      this.waveObjects.push({ obj: cg, wx: cx, wz: cz, baseY: 0, waveY: cy });
+    }
+
+    // 3D Glacial Ice Slabs ("miếng băng") across Earth's Snow Zone & around the (-10500, -6200) clearing
+    this.initSnowIceSlabs(snowmanSpots);
+
+    // Ambient falling 3D snowflakes when inside Earth's Snow Zone
+    const flakeCount = 900;
+    const flakePos = new Float32Array(flakeCount * 3);
+    for (let i = 0; i < flakeCount; i++) {
+      flakePos[i * 3] = (Math.random() - 0.5) * 180;
+      flakePos[i * 3 + 1] = Math.random() * 90;
+      flakePos[i * 3 + 2] = (Math.random() - 0.5) * 180;
+    }
+    const flakeGeo = new THREE.BufferGeometry();
+    flakeGeo.setAttribute('position', new THREE.BufferAttribute(flakePos, 3));
+    const flakeMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.42,
+      transparent: true,
+      opacity: 0.85,
+      depthWrite: false,
+    });
+    this.snowFlakes = new THREE.Points(flakeGeo, flakeMat);
+    this.snowFlakes.frustumCulled = false;
+    this.snowFlakes.visible = false;
+    this.scene.add(this.snowFlakes);
+
+    this.initSnowTracks();
 
     // cloud layer
     this.cloudMat = new THREE.ShaderMaterial({
@@ -806,6 +1010,588 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     clouds.renderOrder = 3;
     this.clouds = clouds;
     this.world.add(clouds);
+  }
+
+  makeIceSlabTexture() {
+    const S = 256;
+    const cv = document.createElement('canvas');
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext && cv.getContext('2d');
+    if (ctx) {
+      const bg = ctx.createRadialGradient(S * 0.46, S * 0.44, S * 0.05, S * 0.5, S * 0.5, S * 0.62);
+      bg.addColorStop(0.0, '#bef0ff');
+      bg.addColorStop(0.48, '#7dd8fc');
+      bg.addColorStop(0.82, '#4cc3f7');
+      bg.addColorStop(1.0, '#dff7ff');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, S, S);
+
+      // Subtle internal crystalline sheen bands
+      const sheen = ctx.createLinearGradient(0, 0, S, S);
+      sheen.addColorStop(0.0, 'rgba(255, 255, 255, 0.24)');
+      sheen.addColorStop(0.35, 'rgba(14, 165, 233, 0.16)');
+      sheen.addColorStop(0.68, 'rgba(255, 255, 255, 0.30)');
+      sheen.addColorStop(1.0, 'rgba(2, 132, 199, 0.18)');
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, S, S);
+
+      // Branching glacial fracture cracks & frost veins
+      if (ctx.beginPath && ctx.stroke) {
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        const cracks = [
+          [[34, 62], [88, 96], [142, 86], [198, 124], [232, 118]],
+          [[88, 96], [108, 148], [92, 206]],
+          [[142, 86], [164, 42]],
+          [[52, 178], [108, 148], [168, 166], [216, 198]],
+          [[168, 166], [186, 222]],
+          [[64, 124], [32, 142]],
+        ];
+        for (const pts of cracks) {
+          ctx.strokeStyle = 'rgba(12, 110, 172, 0.38)';
+          ctx.lineWidth = 4.2;
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0] + 1.5, pts[0][1] + 1.5);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] + 1.5, pts[i][1] + 1.5);
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(248, 253, 255, 0.88)';
+          ctx.lineWidth = 2.1;
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+          ctx.stroke();
+        }
+      }
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.anisotropy = 8;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  initSnowIceSlabs(snowmanSpots = []) {
+    const polyVariants = [
+      [[-0.96, -0.28], [-0.58, -0.86], [0.16, -0.95], [0.84, -0.56], [0.98, 0.14], [0.62, 0.82], [-0.18, 0.94], [-0.82, 0.52]],
+      [[-0.92, -0.14], [-0.64, -0.78], [-0.04, -0.96], [0.68, -0.74], [0.96, -0.12], [0.54, 0.28], [0.76, 0.78], [0.04, 0.95], [-0.74, 0.64]],
+      [[-0.88, -0.44], [-0.26, -0.92], [0.52, -0.84], [0.95, -0.22], [0.78, 0.58], [0.08, 0.92], [-0.72, 0.68]],
+    ];
+    const slabGeos = polyVariants.map((pts) => {
+      const sh = new THREE.Shape();
+      sh.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) sh.lineTo(pts[i][0], pts[i][1]);
+      sh.closePath();
+      const geo = new THREE.ExtrudeGeometry(sh, {
+        depth: 0.38,
+        bevelEnabled: true,
+        bevelThickness: 0.055,
+        bevelSize: 0.09,
+        bevelSegments: 2,
+      });
+      geo.rotateX(Math.PI / 2);
+      geo.translate(0, 0.055, 0); // top crystal surface at +0.11m, beveled edge down to +0.055m, skirt buried to -0.38m
+      geo.computeVertexNormals();
+      const pos = geo.attributes.position;
+      const nrm = geo.attributes.normal;
+      const uvs = new Float32Array(pos.count * 2);
+      const cols = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i++) {
+        uvs[i * 2] = THREE.MathUtils.clamp(pos.getX(i) * 0.46 + 0.5, 0.02, 0.98);
+        uvs[i * 2 + 1] = THREE.MathUtils.clamp(pos.getZ(i) * 0.46 + 0.5, 0.02, 0.98);
+        const ny = nrm.getY(i);
+        if (ny > 0.92) {
+          cols[i * 3] = 0.80; cols[i * 3 + 1] = 0.95; cols[i * 3 + 2] = 1.0;
+        } else if (ny > 0.25) {
+          cols[i * 3] = 0.42; cols[i * 3 + 1] = 0.80; cols[i * 3 + 2] = 0.98;
+        } else {
+          cols[i * 3] = 0.24; cols[i * 3 + 1] = 0.62; cols[i * 3 + 2] = 0.90;
+        }
+      }
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+      return geo;
+    });
+
+    const iceSlabMat = new THREE.MeshStandardMaterial({
+      map: this.makeIceSlabTexture(),
+      vertexColors: true,
+      roughness: 0.09,
+      metalness: 0.16,
+      emissive: 0x0ea5e9,
+      emissiveIntensity: 0.14,
+    });
+
+    const spotsByVar = [[], [], []];
+    const hasTreeNear = (px, pz, rad) => {
+      if (!this.treeGrid) return false;
+      const c0x = Math.floor((px - rad) / 32), c1x = Math.floor((px + rad) / 32);
+      const c0z = Math.floor((pz - rad) / 32), c1z = Math.floor((pz + rad) / 32);
+      for (let gx = c0x; gx <= c1x; gx++) {
+        for (let gz = c0z; gz <= c1z; gz++) {
+          const b = this.treeGrid.get(`${gx},${gz}`);
+          if (!b) continue;
+          for (let k = 0; k < b.length; k++) {
+            if (Math.hypot(px - b[k].x, pz - b[k].z) < rad + b[k].r * 0.65) return true;
+          }
+        }
+      }
+      return false;
+    };
+    const hasSnowmanNear = (px, pz, rad) => {
+      for (let i = 0; i < snowmanSpots.length; i++) {
+        if (Math.hypot(px - snowmanSpots[i][0], pz - snowmanSpots[i][1]) < rad + 4.5) return true;
+      }
+      return false;
+    };
+
+    // Curated hero ice slabs right around the (-10500, -6200) Snow Zone clearing
+    const heroSlabs = [
+      [-10498, -6226, 6.8, 5.0, 0.42, 0],
+      [-10519, -6215, 4.6, 3.6, 1.85, 1],
+      [-10478, -6212, 5.8, 4.5, -0.75, 2],
+      [-10485, -6252, 8.2, 6.0, 0.95, 0],
+      [-10528, -6264, 7.4, 5.4, 2.30, 1],
+      [-10503, -6286, 9.2, 6.6, -0.35, 2],
+      [-10524, -6186, 5.2, 4.2, 1.15, 2],
+      [-10474, -6188, 6.0, 4.8, -1.25, 0],
+      [-10505, -6162, 6.8, 5.0, 0.65, 1],
+      [-10560, -6232, 6.6, 5.0, 2.60, 0],
+      [-10444, -6218, 7.4, 5.6, -0.52, 1],
+      [-10462, -6278, 8.0, 5.8, 1.72, 2],
+    ];
+    for (const [hx, hz, sx, sz, yaw, vi] of heroSlabs) {
+      if (this.earthSnowAmount(hx, hz) > 0.5 && !this.isLagoonWater(hx, hz)) {
+        spotsByVar[vi % 3].push({ x: hx, z: hz, sx, sy: 0.95 + (vi % 3) * 0.14, sz, yaw, waveY: 0 });
+      }
+    }
+
+    // Scattered natural ice slab clusters across the entire Northern Snow Zone
+    let totalScattered = 0;
+    const maxScattered = 420;
+    for (let tries = 0; totalScattered < maxScattered && tries < 6500; tries++) {
+      const cx = -15300 + Math.random() * 14100;
+      const cz = -3650 - Math.random() * 9500;
+      if (cx > this.earthCoastX(cz) - 280.0) continue;
+      if (Math.hypot(cx + 10500.0, cz + 6200.0) < 95.0) continue;
+      if (this.earthRoadDist(cx, cz) < 22.0) continue;
+      if (this.earthAirportBoxDist(cx, cz) < 65.0) continue;
+      if (this.isLagoonWater(cx, cz)) continue;
+      if (this.earthSnowAmount(cx, cz) < 0.52) continue;
+
+      const subCount = 1 + Math.floor(Math.random() * 3);
+      for (let si = 0; si < subCount && totalScattered < maxScattered; si++) {
+        const ang = Math.random() * Math.PI * 2;
+        const off = si === 0 ? 0 : (7.5 + Math.random() * 11.0);
+        const px = cx + Math.cos(ang) * off;
+        const pz = cz + Math.sin(ang) * off;
+        const rx = (si === 0 ? 4.8 : 2.8) + Math.random() * (si === 0 ? 4.6 : 2.8);
+        const rz = rx * (0.68 + Math.random() * 0.30);
+        const maxR = Math.max(rx, rz);
+        if (px > this.earthCoastX(pz) - 260.0) continue;
+        if (this.earthRoadDist(px, pz) < maxR + 14.0) continue;
+        if (this.isLagoonWater(px, pz)) continue;
+        if (this.earthSnowAmount(px, pz) < 0.50) continue;
+        if (hasTreeNear(px, pz, maxR + 1.2) || hasSnowmanNear(px, pz, maxR)) continue;
+        const vi = (totalScattered + si) % 3;
+        spotsByVar[vi].push({
+          x: px,
+          z: pz,
+          sx: rx,
+          sy: 0.85 + Math.random() * 0.45,
+          sz: rz,
+          yaw: Math.random() * Math.PI * 2,
+          waveY: 0,
+        });
+        totalScattered++;
+      }
+    }
+
+    this.snowIceSpots = spotsByVar;
+    this.snowIceMeshes = spotsByVar.map((list, vi) => {
+      const im = new THREE.InstancedMesh(slabGeos[vi], iceSlabMat, Math.max(1, list.length));
+      im.count = list.length;
+      im.receiveShadow = true;
+      im.castShadow = false;
+      this.world.add(im);
+      return im;
+    });
+    this.recomputeSnowIceWaves();
+    this.syncSnowIceSlabs(false);
+  }
+
+  recomputeSnowIceWaves() {
+    if (!this.snowIceSpots) return;
+    const upAxis = new THREE.Vector3(0, 1, 0);
+    const nrm = new THREE.Vector3();
+    const qSlope = new THREE.Quaternion();
+    const qYaw = new THREE.Quaternion();
+    const eps = 3.2;
+    for (let vi = 0; vi < this.snowIceSpots.length; vi++) {
+      const list = this.snowIceSpots[vi];
+      for (let i = 0; i < list.length; i++) {
+        const sp = list[i];
+        const yc = this.earthGroundWave(sp.x, sp.z, 0, 0);
+        const yx = this.earthGroundWave(sp.x + eps, sp.z, 0, 0);
+        const yz = this.earthGroundWave(sp.x, sp.z + eps, 0, 0);
+        nrm.set(-(yx - yc) / eps, 1, -(yz - yc) / eps).normalize();
+        qSlope.setFromUnitVectors(upAxis, nrm);
+        qYaw.setFromAxisAngle(upAxis, sp.yaw);
+        sp.waveY = yc;
+        sp.qFlat = sp.qFlat || new THREE.Quaternion();
+        sp.qSloped = sp.qSloped || new THREE.Quaternion();
+        sp.qFlat.copy(qYaw);
+        sp.qSloped.copy(qSlope).multiply(qYaw);
+      }
+    }
+  }
+
+  syncSnowIceSlabs(isAirport) {
+    if (!this.snowIceMeshes || !this.snowIceSpots) return;
+    const m = new THREE.Matrix4();
+    const v = new THREE.Vector3();
+    const s = new THREE.Vector3();
+    const qDef = new THREE.Quaternion();
+    for (let vi = 0; vi < this.snowIceMeshes.length; vi++) {
+      const im = this.snowIceMeshes[vi];
+      const list = this.snowIceSpots[vi];
+      for (let i = 0; i < list.length; i++) {
+        const sp = list[i];
+        v.set(sp.x, isAirport ? 0 : (sp.waveY || 0), sp.z);
+        s.set(sp.sx, sp.sy, sp.sz);
+        m.compose(v, (isAirport ? sp.qFlat : sp.qSloped) || qDef, s);
+        im.setMatrixAt(i, m);
+      }
+      im.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  makeSnowTrackTexture() {
+    const W = 128, H = 256;
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    const ctx = cv.getContext && cv.getContext('2d');
+    if (ctx) {
+      if (ctx.clearRect) ctx.clearRect(0, 0, W, H);
+      // Raised soft snow berms pushed out on left & right sides of tire
+      const gLeft = ctx.createLinearGradient(4, 0, 26, 0);
+      gLeft.addColorStop(0.0, 'rgba(248, 252, 255, 0.0)');
+      gLeft.addColorStop(0.55, 'rgba(248, 252, 255, 0.72)');
+      gLeft.addColorStop(1.0, 'rgba(205, 222, 242, 0.55)');
+      ctx.fillStyle = gLeft;
+      ctx.fillRect(4, 0, 22, H);
+
+      const gRight = ctx.createLinearGradient(102, 0, 124, 0);
+      gRight.addColorStop(0.0, 'rgba(205, 222, 242, 0.55)');
+      gRight.addColorStop(0.45, 'rgba(248, 252, 255, 0.72)');
+      gRight.addColorStop(1.0, 'rgba(248, 252, 255, 0.0)');
+      ctx.fillStyle = gRight;
+      ctx.fillRect(102, 0, 22, H);
+
+      // Compacted icy blue-slate snow rut floor with shadowed sidewalls
+      const gRut = ctx.createLinearGradient(24, 0, 104, 0);
+      gRut.addColorStop(0.0, 'rgba(62, 86, 118, 0.90)');
+      gRut.addColorStop(0.14, 'rgba(98, 124, 156, 0.85)');
+      gRut.addColorStop(0.46, 'rgba(112, 138, 170, 0.82)');
+      gRut.addColorStop(0.50, 'rgba(136, 162, 192, 0.80)');
+      gRut.addColorStop(0.54, 'rgba(112, 138, 170, 0.82)');
+      gRut.addColorStop(0.86, 'rgba(98, 124, 156, 0.85)');
+      gRut.addColorStop(1.0, 'rgba(62, 86, 118, 0.90)');
+      ctx.fillStyle = gRut;
+      ctx.fillRect(24, 0, 80, H);
+
+      // Repeating V-chevron off-road tire lug grooves + crisp snow ridges (seamless wrap)
+      const rows = 6;
+      const stepY = H / rows;
+      if (ctx.beginPath && ctx.stroke) {
+        ctx.lineCap = 'round';
+        for (let r = -1; r <= rows; r++) {
+          const y0 = r * stepY + stepY * 0.5;
+          // Raised compressed snow ridge between lugs
+          ctx.strokeStyle = 'rgba(226, 239, 252, 0.82)';
+          ctx.lineWidth = 5.5;
+          ctx.beginPath();
+          ctx.moveTo(28, y0 + 18);
+          ctx.lineTo(58, y0 + 8);
+          ctx.moveTo(100, y0 + 18);
+          ctx.lineTo(70, y0 + 8);
+          ctx.stroke();
+
+          // Deep off-road chevron lug impression
+          ctx.strokeStyle = 'rgba(44, 66, 96, 0.93)';
+          ctx.lineWidth = 10.5;
+          ctx.beginPath();
+          ctx.moveTo(27, y0 + 8);
+          ctx.lineTo(58, y0 - 2);
+          ctx.moveTo(101, y0 + 8);
+          ctx.lineTo(70, y0 - 2);
+          ctx.stroke();
+
+          // Outer shoulder lug notches
+          ctx.fillStyle = 'rgba(40, 60, 88, 0.88)';
+          ctx.fillRect(23, y0 + 2, 8, 11);
+          ctx.fillRect(97, y0 + 2, 8, 11);
+        }
+      }
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 8;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  initSnowTracks() {
+    const MAX_SEGS = 8192;
+    this.snowTrackMaxSegs = MAX_SEGS;
+    this.snowTrackHead = 0;
+    this.snowTrackCount = 0;
+    this.snowWheelStates = [];
+
+    const posArr = new Float32Array(MAX_SEGS * 12);
+    const nrmArr = new Float32Array(MAX_SEGS * 12);
+    for (let i = 1; i < nrmArr.length; i += 3) nrmArr[i] = 1;
+    const uvArr = new Float32Array(MAX_SEGS * 8);
+    const alphaArr = new Float32Array(MAX_SEGS * 4);
+    const idxArr = new Uint32Array(MAX_SEGS * 6);
+    for (let s = 0; s < MAX_SEGS; s++) {
+      const b = s * 4;
+      const o = s * 6;
+      idxArr[o] = b;
+      idxArr[o + 1] = b + 1;
+      idxArr[o + 2] = b + 2;
+      idxArr[o + 3] = b + 2;
+      idxArr[o + 4] = b + 1;
+      idxArr[o + 5] = b + 3;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(posArr, 3);
+    const nrmAttr = new THREE.BufferAttribute(nrmArr, 3);
+    const uvAttr = new THREE.BufferAttribute(uvArr, 2);
+    const alphaAttr = new THREE.BufferAttribute(alphaArr, 1);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    nrmAttr.setUsage(THREE.DynamicDrawUsage);
+    uvAttr.setUsage(THREE.DynamicDrawUsage);
+    alphaAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    geo.setAttribute('normal', nrmAttr);
+    geo.setAttribute('uv', uvAttr);
+    geo.setAttribute('aAlpha', alphaAttr);
+    geo.setIndex(new THREE.BufferAttribute(idxArr, 1));
+    geo.setDrawRange(0, 0);
+
+    const trackMat = new THREE.MeshStandardMaterial({
+      map: this.makeSnowTrackTexture(),
+      transparent: true,
+      depthWrite: false,
+      roughness: 0.84,
+      metalness: 0.02,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -4,
+    });
+    trackMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uBend = this.groundUniforms.uBend;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute float aAlpha;\nvarying float vTrackAlpha;\nuniform float uBend;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTrackAlpha = aAlpha;')
+        .replace('#include <project_vertex>', `
+          vec4 mvPosition = vec4( transformed, 1.0 );
+          vec4 wpB = modelMatrix * mvPosition;
+          wpB.y -= dot(wpB.xz, wpB.xz) * uBend;
+          mvPosition = viewMatrix * wpB;
+          gl_Position = projectionMatrix * mvPosition;`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vTrackAlpha;')
+        .replace('#include <alphamap_fragment>', '#include <alphamap_fragment>\ndiffuseColor.a *= vTrackAlpha;');
+    };
+
+    const trackMesh = new THREE.Mesh(geo, trackMat);
+    trackMesh.frustumCulled = false;
+    trackMesh.renderOrder = 1;
+    trackMesh.visible = false;
+    this.snowTrackMesh = trackMesh;
+    this.world.add(trackMesh);
+  }
+
+  resetSnowTrackWheelStates() {
+    if (!this.snowWheelStates) return;
+    for (let i = 0; i < this.snowWheelStates.length; i++) {
+      if (this.snowWheelStates[i]) this.snowWheelStates[i].active = false;
+    }
+  }
+
+  clearSnowTracks() {
+    this.snowTrackHead = 0;
+    this.snowTrackCount = 0;
+    this.resetSnowTrackWheelStates();
+    if (this.snowTrackMesh?.geometry) {
+      this.snowTrackMesh.geometry.setDrawRange(0, 0);
+      this.snowTrackMesh.visible = false;
+    }
+  }
+
+  updateSnowTracks(F) {
+    if (!this.snowTrackMesh) return;
+    const P = this.player;
+    const wheels = this.rocket?.wheels;
+    if (P && !P.dead && !P.crashed && P.isRover && P.ref === 'earth' && P.landed && !P.clamped && wheels && wheels.length) {
+      P.root.updateMatrixWorld(true);
+      const rootPos = P.root.position;
+      const pSx = P.sx || 0;
+      const pSz = P.s?.z || 0;
+      const wPos = this._snowWPos || (this._snowWPos = new THREE.Vector3());
+      const geo = this.snowTrackMesh.geometry;
+      const posAttr = geo.attributes.position;
+      const nrmAttr = geo.attributes.normal;
+      const uvAttr = geo.attributes.uv;
+      const alphaAttr = geo.attributes.aAlpha;
+      const posArr = posAttr.array;
+      const nrmArr = nrmAttr.array;
+      const uvArr = uvAttr.array;
+      const alphaArr = alphaAttr.array;
+      const maxSegs = this.snowTrackMaxSegs;
+      const hw = 0.20;
+      const liftY = 0.032;
+      let dirty = false;
+
+      for (let wi = 0; wi < wheels.length; wi++) {
+        const wo = wheels[wi];
+        const wg = wo?.userData?.wheelGroup || wo;
+        if (!wg) continue;
+        let ws = this.snowWheelStates[wi];
+        if (!ws) {
+          ws = { active: false, hasEdge: false, x: 0, z: 0, lx: 0, ly: 0, lz: 0, rx: 0, ry: 0, rz: 0, fx: 0, fz: 0, v: 0, a: 0 };
+          this.snowWheelStates[wi] = ws;
+        }
+        wg.getWorldPosition(wPos);
+        const wx = pSx + (wPos.x - rootPos.x);
+        const wz = pSz + (wPos.z - rootPos.z);
+        const snowAmt = this.earthSnowAmount(wx, wz);
+        const onDrySnow = snowAmt >= 0.22 && wx <= this.earthCoastX(wz) - 15.0 && !this.isLagoonWater(wx, wz);
+        if (!onDrySnow) {
+          ws.active = false;
+          ws.hasEdge = false;
+          continue;
+        }
+        const curAlpha = THREE.MathUtils.smoothstep(snowAmt, 0.22, 0.46) * 0.94;
+        if (!ws.active) {
+          ws.active = true;
+          ws.hasEdge = false;
+          ws.x = wx;
+          ws.z = wz;
+          ws.a = curAlpha;
+          continue;
+        }
+        const totalDx = wx - ws.x;
+        const totalDz = wz - ws.z;
+        const dist = Math.hypot(totalDx, totalDz);
+        if (dist > 120.0) {
+          ws.hasEdge = false;
+          ws.x = wx;
+          ws.z = wz;
+          ws.a = curAlpha;
+          continue;
+        }
+        if (dist < 0.24) continue;
+
+        const fx = totalDx / dist;
+        const fz = totalDz / dist;
+        const rtx = -fz;
+        const rtz = fx;
+        if (ws.hasEdge && (fx * ws.fx + fz * ws.fz) < 0.15) {
+          ws.hasEdge = false;
+        }
+
+        const steps = Math.max(1, Math.min(48, Math.ceil(dist / 0.52)));
+        const startX = ws.x;
+        const startZ = ws.z;
+        const startA = ws.a;
+
+        if (!ws.hasEdge) {
+          const lx0 = startX - rtx * hw, lz0 = startZ - rtz * hw;
+          const rx0 = startX + rtx * hw, rz0 = startZ + rtz * hw;
+          ws.lx = lx0; ws.ly = this.earthGroundWave(lx0, lz0, 0.0, 0.0) + liftY; ws.lz = lz0;
+          ws.rx = rx0; ws.ry = this.earthGroundWave(rx0, rz0, 0.0, 0.0) + liftY; ws.rz = rz0;
+          ws.hasEdge = true;
+        }
+
+        for (let si = 1; si <= steps; si++) {
+          const f = si / steps;
+          const cx = startX + totalDx * f;
+          const cz = startZ + totalDz * f;
+          const sAmt = si === steps ? snowAmt : this.earthSnowAmount(cx, cz);
+          const a1 = THREE.MathUtils.smoothstep(sAmt, 0.22, 0.46) * 0.94;
+          const lx1 = cx - rtx * hw, lz1 = cz - rtz * hw;
+          const rx1 = cx + rtx * hw, rz1 = cz + rtz * hw;
+          const ly1 = this.earthGroundWave(lx1, lz1, 0.0, 0.0) + liftY;
+          const ry1 = this.earthGroundWave(rx1, rz1, 0.0, 0.0) + liftY;
+          const segLen = dist / steps;
+          const v0 = ws.v;
+          const v1 = v0 + segLen * 1.45;
+
+          const s = this.snowTrackHead;
+          this.snowTrackHead = (s + 1) % maxSegs;
+          if (this.snowTrackCount < maxSegs) this.snowTrackCount++;
+
+          const b12 = s * 12;
+          posArr[b12] = ws.lx; posArr[b12 + 1] = ws.ly; posArr[b12 + 2] = ws.lz;
+          posArr[b12 + 3] = ws.rx; posArr[b12 + 4] = ws.ry; posArr[b12 + 5] = ws.rz;
+          posArr[b12 + 6] = lx1; posArr[b12 + 7] = ly1; posArr[b12 + 8] = lz1;
+          posArr[b12 + 9] = rx1; posArr[b12 + 10] = ry1; posArr[b12 + 11] = rz1;
+
+          const ux = ws.rx - ws.lx, uy = ws.ry - ws.ly, uz = ws.rz - ws.lz;
+          const vx = lx1 - ws.lx, vy = ly1 - ws.ly, vz = lz1 - ws.lz;
+          let nx = uy * vz - uz * vy;
+          let ny = uz * vx - ux * vz;
+          let nz = ux * vy - uy * vx;
+          if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+          const nLen = Math.hypot(nx, ny, nz);
+          if (nLen > 1e-5) { nx /= nLen; ny /= nLen; nz /= nLen; } else { nx = 0; ny = 1; nz = 0; }
+          for (let k = 0; k < 12; k += 3) {
+            nrmArr[b12 + k] = nx; nrmArr[b12 + k + 1] = ny; nrmArr[b12 + k + 2] = nz;
+          }
+
+          const b8 = s * 8;
+          uvArr[b8] = 0; uvArr[b8 + 1] = v0;
+          uvArr[b8 + 2] = 1; uvArr[b8 + 3] = v0;
+          uvArr[b8 + 4] = 0; uvArr[b8 + 5] = v1;
+          uvArr[b8 + 6] = 1; uvArr[b8 + 7] = v1;
+
+          const b4 = s * 4;
+          const a0 = si === 1 ? startA : ws.a;
+          alphaArr[b4] = a0; alphaArr[b4 + 1] = a0;
+          alphaArr[b4 + 2] = a1; alphaArr[b4 + 3] = a1;
+
+          ws.lx = lx1; ws.ly = ly1; ws.lz = lz1;
+          ws.rx = rx1; ws.ry = ry1; ws.rz = rz1;
+          ws.v = v1;
+          ws.a = a1;
+          dirty = true;
+        }
+        ws.x = wx;
+        ws.z = wz;
+        ws.fx = fx;
+        ws.fz = fz;
+      }
+
+      if (dirty) {
+        geo.setDrawRange(0, this.snowTrackCount * 6);
+        posAttr.needsUpdate = true;
+        nrmAttr.needsUpdate = true;
+        uvAttr.needsUpdate = true;
+        alphaAttr.needsUpdate = true;
+      }
+    }
+    this.snowTrackMesh.visible = !!(F && F.ref === 'earth' && F.alt < 12000 && this.snowTrackCount > 0);
   }
 
   // =================================================================== PAD
@@ -876,7 +1662,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       const b = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), lampMat); b.position.set(x, 110.5, z); pad.add(b); this.beacons.push(b);
     }
     this.buildingColliders = this.buildingColliders || [];
-    this.waveObjects = [];
+    this.waveObjects = this.waveObjects || [];
     // water tower
     const wt = new THREE.Group();
     const wtMat = new THREE.MeshStandardMaterial({ color: 0xd9dbe0, metalness: 0.5, roughness: 0.35 });
@@ -942,6 +1728,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
   }
 
   randomizeGroundWaves() {
+    this.clearSnowTracks();
     this.groundWaveSeed = Math.random() * 6.283185;
     if (this.groundUniforms && this.groundUniforms.uWaveSeed) {
       this.groundUniforms.uWaveSeed.value = this.groundWaveSeed;
@@ -964,6 +1751,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         if (sp.bucketItem) sp.bucketItem.ty = ty;
       }
     }
+    if (this.snowTreeSpots && this.snowTreeWaveY) {
+      for (let i = 0; i < this.snowTreeSpots.length; i++) {
+        const sp = this.snowTreeSpots[i];
+        const ty = this.earthGroundWave(sp.x, sp.z, 0, 0);
+        this.snowTreeWaveY[i] = ty;
+        if (sp.bucketItem) sp.bucketItem.ty = ty;
+      }
+    }
+    this.recomputeSnowIceWaves();
   }
 
   syncAirportFlatGround(isAirport) {
@@ -981,6 +1777,16 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       }
       this.trees.instanceMatrix.needsUpdate = true;
     }
+    if (this.snowTrees && this.snowTreeWaveY) {
+      const m = new THREE.Matrix4();
+      for (let i = 0; i < this.snowTrees.count; i++) {
+        this.snowTrees.getMatrixAt(i, m);
+        m.elements[13] = isAirport ? 0 : (this.snowTreeWaveY[i] || 0);
+        this.snowTrees.setMatrixAt(i, m);
+      }
+      this.snowTrees.instanceMatrix.needsUpdate = true;
+    }
+    this.syncSnowIceSlabs(isAirport);
   }
 
   makeAirportSignTexture(aIdx) {
@@ -1869,8 +2675,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           this.stage();
         }
       }
-      if (k === 't') { this.sas = !this.sas; if (this.player) this.holdAttitude(); }
-      if (k === 'f') {
+      if (k === 'r') { this.sas = !this.sas; if (this.player) this.holdAttitude(); }
+      if (k === 'k') {
         const sasModes = tr(SAS_MODES_VI, SAS_MODES_EN);
         this.sasMode = (this.sasMode + 1) % sasModes.length;
         this.sas = true;
@@ -2110,7 +2916,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     if (target === 'iss' || target === 'oort' || target === 'interstellar' || target === 'supernova' || target === 'royal1b' || target === 'sun') {
       return false;
     }
-    const bodyKey = target === 'olympus' ? 'mars' : target;
+    const bodyKey = target === 'olympus' ? 'mars' : target === 'earth_snow' ? 'earth' : target;
     const B = BODIES[bodyKey];
     if (!B) return false;
     return (B.atm || 0) > 0 && (B.rho0 || 0) > 0;
@@ -2118,7 +2924,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
 
   hasSurfaceAirports(target) {
     if (!this.canPlaneTeleportTo(target)) return false;
-    const bodyKey = target === 'olympus' ? 'mars' : target;
+    const bodyKey = target === 'olympus' ? 'mars' : target === 'earth_snow' ? 'earth' : target;
     const B = BODIES[bodyKey];
     return !!(B && !B.gasGiant);
   }
@@ -2680,7 +3486,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     const groups = [
       {
         title: tr('🌍 Hệ Trái Đất & Trạm Vũ Trụ', '🌍 Earth System & Space Station'),
-        items: ['earth', 'iss', 'moon'],
+        items: ['earth', 'earth_snow', 'iss', 'moon'],
       },
       {
         title: tr('☀️ Mặt Trời, Hành Tinh Đá, Hệ Sao Hỏa & Vành Đai Tiểu Hành Tinh', '☀️ Sun, Inner Rocky Planets, Mars System & Asteroid Belt'),
@@ -2712,6 +3518,13 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       const visibleItems = isPlane ? g.items.filter((k) => this.canPlaneTeleportTo(k)) : g.items;
       if (!visibleItems.length) return '';
       const cards = visibleItems.map((key) => {
+        if (key === 'earth_snow') {
+          const active = curTarget === 'earth_snow' ? 'active' : '';
+          return `<button type="button" class="tp-card-btn ${active}" data-tp="earth_snow">
+            <span class="tp-card-top">❄️ ${tr('Khu Tuyết Trái Đất', 'Earth Snow Zone')}</span>
+            <span class="tp-card-sub">${tr('Trái Đất · Rừng thông tuyết, đồi tuyết trắng & mưa tuyết rơi', 'Earth · Snowy pine forest, alpine hills & falling snow')}</span>
+          </button>`;
+        }
         if (key === 'iss') {
           const active = curTarget === 'iss' ? 'active' : '';
           return `<button type="button" class="tp-card-btn ${active}" data-tp="iss">
@@ -3773,11 +4586,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.supernovaDistAcc = 0;
     } else {
       const isOlympusSummit = target === 'olympus';
-      const bodyKey = isOlympusSummit ? 'mars' : target;
+      const isEarthSnow = target === 'earth_snow';
+      const bodyKey = isOlympusSummit ? 'mars' : isEarthSnow ? 'earth' : target;
       const B = BODIES[bodyKey] || BODIES.earth;
       const hasAirportOpt = opts && opts.airportIdx !== undefined && !B.gasGiant;
       const hasHarborOpt = opts && opts.harborIdx !== undefined;
-      const isOrbit = !isOlympusSummit && !hasAirportOpt && !hasHarborOpt && (
+      const isOrbit = !isOlympusSummit && !isEarthSnow && !hasAirportOpt && !hasHarborOpt && (
         P.isPlane
           ? !!B.gasGiant
           : (mode === 'orbit' || !!B.gasGiant || bodyKey === 'sun')
@@ -3864,54 +4678,63 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
             }
           }
         }
-        const aIdx = hasAirportOpt ? opts.airportIdx : (this.selectedAirportBody === bodyKey ? (this.selectedAirportIdx ?? 0) : 0);
-        const hIdx = hasHarborOpt ? opts.harborIdx : (this.selectedHarborIdx ?? 0);
+        const aIdx = hasAirportOpt ? opts.airportIdx : (isEarthSnow && P.isPlane) ? 1 : (this.selectedAirportBody === bodyKey ? (this.selectedAirportIdx ?? 0) : 0);
+        const hIdx = hasHarborOpt ? opts.harborIdx : (isEarthSnow && P.isBoat) ? 1 : (this.selectedHarborIdx ?? 0);
         if (bodyKey === 'earth') {
           const toHarbor = hasHarborOpt || P.isBoat;
           const toAirport = !toHarbor && (hasAirportOpt || P.isPlane);
+          const toSnowClearing = isEarthSnow && !toHarbor && !toAirport;
           if (toAirport) {
             this.selectedAirportBody = 'earth';
             this.selectedAirportIdx = aIdx;
+          } else if (toSnowClearing) {
+            this.selectedAirportBody = null;
           }
           const hSite = toHarbor ? this.getHarborSite(hIdx) : null;
           const apSite = toAirport ? this.getAirportSite('earth', aIdx) : null;
           const sx = toHarbor
-            ? (P.isBoat ? hSite.berthX : hSite.seawallX)
+            ? (P.isBoat ? hSite.berthX : P.isRover ? (hSite.coastX - 155) : hSite.seawallX)
             : toAirport
               ? apSite.sx
-              : 0;
+              : toSnowClearing
+                ? -10500
+                : 0;
           const sz = toHarbor
             ? hSite.sz
             : toAirport
               ? apSite.sz
-              : 0;
-          const roverGroundH = P.isRover ? this.earthGroundWave(sx, sz, 0.0, toAirport ? 1.0 : 0.0) : 0;
-          const baseH = P.isBoat
-            ? (P.bottomOffset() - 0.35)
-            : toHarbor
-              ? (1.5 + P.bottomOffset())
+              : toSnowClearing
+                ? -6200
+                : 0;
+          const landGroundH = (P.isRover || toSnowClearing) ? this.earthGroundWave(sx, sz, 0.0, toAirport ? 1.0 : 0.0) : 0;
+          const surfHBase = P.isBoat
+            ? -0.35
+            : (toHarbor && !P.isRover)
+              ? 1.5
               : toAirport
-                ? (0.25 + P.bottomOffset())
-                : P.isRover
-                  ? (roverGroundH + P.bottomOffset())
-                  : (PAD_TOP + P.bottomOffset());
+                ? 0.25
+                : (P.isRover || toSnowClearing)
+                  ? landGroundH
+                  : PAD_TOP;
+          const baseH = surfHBase + P.bottomOffset();
           P.placeOnSurface('earth', sx, baseH, this.simT);
           P.s.z = sz;
-          P.heading = 0;
+          P.heading = toSnowClearing ? (Math.PI * 0.5) : 0;
           if (P.isPlane) {
             P.beta = P.phi + Math.PI / 2;
           }
           P.updateFrame(this.simT);
           P.syncDir3DFromBeta();
           P.clamped = false;
-          P.clampSpot = { body: 'earth', sx, sz, h: baseH };
+          P.clampSpot = { body: 'earth', sx, sz, surfH: surfHBase, h: baseH };
           P.landed = {
             body: 'earth',
             sx,
             sz,
+            surfH: surfHBase,
             h: baseH,
-            site: toHarbor ? 'harbor' : toAirport ? 'runway' : P.isRover ? 'land' : 'pad',
-            how: P.isBoat ? 'boat' : P.isRover ? 'rover' : P.isPlane ? 'plane' : 'pad',
+            site: toHarbor ? (P.isRover ? 'land' : 'harbor') : toAirport ? 'runway' : (P.isRover || toSnowClearing) ? 'land' : 'pad',
+            how: P.isBoat ? 'boat' : P.isRover ? 'rover' : P.isPlane ? 'plane' : toSnowClearing ? 'landed' : 'pad',
           };
           P.landedLock = 0.5;
           this.startAlt = P.alt;
@@ -4001,6 +4824,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
           this.visitedAirportIds = new Set([...(this.airportsLandedSet || []), curApId]);
         }
         if (P.isRover) P.groundSpeed = 0;
+        this.resetSnowTrackWheelStates();
         if (hasHarborOpt || (P.isBoat && bodyKey === 'earth')) {
           this.milestone(
             `⚓ ${tr(`ĐÃ TỚI CẢNG ${hIdx} — TRÁI ĐẤT!`, `ARRIVED AT HARBOR ${hIdx} — EARTH!`)}`,
@@ -4023,6 +4847,15 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
               `🛫${B.icon} Đã dịch chuyển tới Sân bay ${aIdx} trên ${B.label}!`,
               `🛫${B.icon} Teleported to Airport ${aIdx} on ${B.label}!`
             ),
+            'warn'
+          );
+        } else if (isEarthSnow) {
+          this.milestone(
+            tr('❄️ ĐÃ ĐẾN KHU TUYẾT TRÁI ĐẤT!', '❄️ ARRIVED AT EARTH SNOW ZONE!'),
+            tr('Đồi tuyết trắng, rừng thông phủ tuyết, người tuyết & mưa tuyết rơi xung quanh!', 'Snowy alpine hills, snow-covered pine forests, snowmen & falling snowflakes all around!')
+          );
+          this.event(
+            tr('⚡❄️ Đã dịch chuyển tới Khu Tuyết trên Trái Đất! Lái xe hoặc bay khám phá rừng thông tuyết trắng.', '⚡❄️ Teleported to Earth\'s Snow Zone! Drive or fly across the snowy pine forest & alpine hills.'),
             'warn'
           );
         } else if (isOlympusSummit) {
@@ -4234,7 +5067,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.scene.add(this.iss);
     this.issPortLocal = this.iss.userData.port.position.clone();
     // static scenery bends with planetary curvature (same math as the ground shader)
-    this.worldStatic = this.world.children.filter((c) => c !== this.ground && c !== this.clouds);
+    this.worldStatic = this.world.children.filter((c) => c !== this.ground && c !== this.clouds && c !== this.snowTrackMesh);
     const seen = new Set();
     for (const c of this.worldStatic) c.traverse((o) => {
       if (!o.material) return;
@@ -4565,6 +5398,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.syncAirportFlatGround(!!this.player.isPlane);
     this.updatePlaneTeleportUI();
 
+    const isUfoWithLegs = (stack || []).some((s) => isUfoPart(s.type)) && this.player.hasLegs();
     if (this.player.isBoat) {
       const harborX = COAST_X + 160;
       this.player.heading = 0;
@@ -4621,9 +5455,14 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
       this.met = 0;
       this.event(tr('✈️ Tiêm kích phản lực đã xuất hiện tại Sân bay 0! Bánh đáp đã bật sẵn — tăng ga bằng Shift / Z / Space để chạy đà, nhấn W để bay lên, S để bay xuống, A/D để quẹo trái/phải.', '✈️ Fighter Jet ready at Airport 0! Landing gear deployed — throttle up with Shift / Z / Space to roll, press W to pitch up, S to pitch down, A/D to turn left/right.'));
     } else {
-      this.player.placeOnSurface('earth', 0, PAD_TOP + this.player.bottomOffset(), this.simT);
+      if (isUfoWithLegs) {
+        this.player.legsT = 1;
+        this.player.legsTarget = 1;
+      }
+      const padH = PAD_TOP + this.player.bottomOffset();
+      this.player.placeOnSurface('earth', 0, padH, this.simT);
       this.player.clamped = true;
-      this.player.clampSpot = { body: 'earth', sx: 0, h: PAD_TOP + this.player.bottomOffset() };
+      this.player.clampSpot = { body: 'earth', sx: 0, surfH: PAD_TOP, h: padH };
       this.phase = 'ready';
       this.met = -10;
     }
@@ -4632,12 +5471,12 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     this.player.engineOn = false; this.player.throttle = startThrottle;
     this.startAlt = this.player.alt;
     this.buildArms(this.rocketHeight);
-    if (this.player.isBoat || this.player.isRover || this.player.isPlane) {
+    if (this.player.isBoat || this.player.isRover || this.player.isPlane || isUfoWithLegs) {
       this.arms.forEach((a) => (a.target = 1));
       this.clamps.forEach((c) => { c.visible = false; });
     }
     for (const d of this.rocket.deployables) {
-      const initDeploy = (this.player.isPlane && d.type === 'legs') ? 1 : 0;
+      const initDeploy = ((this.player.isPlane || isUfoWithLegs) && d.type === 'legs') ? 1 : 0;
       for (const o of d.objs) {
         if (o.userData.setDeploy) {
           o.userData._dt = initDeploy;
@@ -4989,7 +5828,7 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     const on = !(v.legsTarget || v.chuteTarget || v.finsTarget);
     if (v.hasLegs()) v.legsTarget = on ? 1 : 0;
     if (v.hasGridFins()) v.finsTarget = on ? 1 : 0;
-    if (v.capsule()) v.chuteTarget = on ? 1 : 0;
+    if (v.capsule() && (!v.hasLegs() || (!v.landed && !v.clamped))) v.chuteTarget = on ? 1 : 0;
     this.event(on ? tr('Bung chân / cánh / dù.', 'Deploying legs / fins / chutes.') : tr('Thu chân / cánh / dù.', 'Retracting legs / fins / chutes.'));
   }
 
@@ -5411,8 +6250,8 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         }
       }
     }
-    if (sx > coastLimit || sx < -1482500) return { h: 0, water: true, site: 'sea' };
-    if (!isBoatMode && (!isRoverMode || Math.hypot(sx, sz) < 3200) && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
+    if (sx > coastLimit || sx < (isRoverMode ? -1482350 : -1482500)) return { h: 0, water: true, site: 'sea' };
+    if (!isBoatMode && this.isLagoonWater(sx, sz)) return { h: 0, water: true, site: 'lagoon' };
     return { h: this.earthGroundWave(sx, sz, isRoverMode ? 0.0 : 1.0, 0.0), water: false, site: 'land' };
   }
 
@@ -8664,6 +9503,17 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
         }
       }
     }
+    if (this.rocket.fanGroups && this.rocket.fanGroups.length) {
+      const v = this.player;
+      const running = v && v.engineOn && v.throttle > 0;
+      const airSpd = v ? (v.speedSurf || 0) : 0;
+      const fanStep = running ? (0.42 + (v.throttle || 0) * 0.55) : Math.min(0.22, airSpd * 0.002);
+      if (fanStep > 0) {
+        for (const fg of this.rocket.fanGroups) {
+          if (fg.grp) fg.grp.rotation.y += fanStep;
+        }
+      }
+    }
   }
 
   // =================================================================== SCENE PLACEMENT (floating origin at the focus vessel)
@@ -9199,6 +10049,29 @@ ${AIRPORT_SCATTER_OFFSETS.map((off) => {
     }
     this.ship.visible = near && this.shipX !== null;
     this.trees.visible = near && F.alt < 20000;
+    if (this.snowTrees) this.snowTrees.visible = near && F.alt < 20000;
+    if (this.snowIceMeshes) {
+      for (const im of this.snowIceMeshes) im.visible = near && F.alt < 20000;
+    }
+    this.updateSnowTracks(F);
+    if (this.snowFlakes) {
+      const snowHere = near && F.alt < 2800 ? this.earthSnowAmount(F.sx, S.z || 0) : 0;
+      this.snowFlakes.visible = snowHere > 0.25;
+      if (this.snowFlakes.visible) {
+        this.snowFlakes.position.set(this.camera.position.x, Math.max(0, this.camera.position.y - 35), this.camera.position.z);
+        this.snowFlakes.material.opacity = Math.min(0.88, (snowHere - 0.25) * 1.3);
+        const posAttr = this.snowFlakes.geometry.attributes.position;
+        const arr = posAttr.array;
+        const fallStep = 0.22;
+        for (let fi = 0; fi < arr.length; fi += 3) {
+          arr[fi] += Math.sin(this.time * 1.4 + fi) * 0.04;
+          arr[fi + 1] -= fallStep;
+          arr[fi + 2] += Math.cos(this.time * 1.1 + fi * 0.7) * 0.04;
+          if (arr[fi + 1] < 0) arr[fi + 1] += 90;
+        }
+        posAttr.needsUpdate = true;
+      }
+    }
     this.clouds.visible = near;
     const gSnap = F.alt < 250 ? 4 : 200;
     const gx = Math.round(F.sx / gSnap) * gSnap;
